@@ -1,7 +1,7 @@
 /* ==========================================
    🌟 تعلم مع أ/ طه محمد 🌟
    ملف script.js
-   نسخة الصوت الجديدة
+   نظام النطق العربي الجديد (مُحسّن)
 ========================================== */
 
 
@@ -156,221 +156,136 @@ const numberWords = {
 
 
 /* ==========================================
-   🔊 نظام النطق الجديد
-   يستخدم Speech Synthesis في المتصفح
+   🔊 نظام النطق العربي الجديد (مُحسّن)
 ========================================== */
 
 let currentUtterance = null;
 let arabicVoice = null;
 
 
-/* البحث عن أفضل صوت عربي متاح */
-
 function findArabicVoice() {
-
     if (!("speechSynthesis" in window)) {
         return null;
     }
 
     const voices = window.speechSynthesis.getVoices();
-
     if (!voices || voices.length === 0) {
         return null;
     }
 
-    /* نفضل صوت العربية */
+    // البحث عن صوت سعودي أولًا
+    let voice = voices.find(function (v) {
+        return v.lang && v.lang.toLowerCase() === "ar-sa";
+    });
 
-    const exactArabic =
-        voices.find(function(voice) {
-            return voice.lang &&
-                voice.lang.toLowerCase() === "ar-sa";
-        });
-
-    if (exactArabic) {
-        return exactArabic;
+    if (voice) {
+        return voice;
     }
 
+    // ثم أي صوت عربي آخر
+    voice = voices.find(function (v) {
+        return v.lang && v.lang.toLowerCase().startsWith("ar");
+    });
 
-    const arabic =
-        voices.find(function(voice) {
-            return voice.lang &&
-                voice.lang.toLowerCase().startsWith("ar");
-        });
-
-    if (arabic) {
-        return arabic;
-    }
-
-
-    return null;
+    return voice || null;
 }
 
-
-/* تحديث الصوت عندما تكون أصوات الجهاز جاهزة */
 
 function loadSpeechVoices() {
-
     arabicVoice = findArabicVoice();
-
 }
 
-
-/* بعض المتصفحات تحمل الأصوات بعد فتح الصفحة */
 
 if ("speechSynthesis" in window) {
-
-    window.speechSynthesis.onvoiceschanged =
-        loadSpeechVoices;
-
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = function () {
+            loadSpeechVoices();
+        };
+    }
     loadSpeechVoices();
-
 }
 
 
-/* ==========================================
-   🔊 النطق
-========================================== */
-
 function speak(text) {
-
     if (!text) return;
 
-
     if (!("speechSynthesis" in window)) {
-
-        alert(
-            "المتصفح لا يدعم النطق الصوتي."
-        );
-
+        alert("المتصفح لا يدعم النطق الصوتي");
         return;
     }
 
-
-    /* إيقاف أي نطق سابق */
-
-    window.speechSynthesis.cancel();
-
-
-    /* تنظيف النص */
-
-    const cleanText =
-        String(text)
-            .replace(/\n+/g, " ")
-            .trim();
-
-
+    // تنظيف النص
+    const cleanText = String(text).replace(/\n+/g, " ").trim();
     if (!cleanText) return;
 
+    // إيقاف أي نطق سابق مع مهلة قصيرة لاستقرار المتصفح والجوالات
+    window.speechSynthesis.cancel();
 
-    currentUtterance =
-        new SpeechSynthesisUtterance(cleanText);
+    setTimeout(function () {
+        currentUtterance = new SpeechSynthesisUtterance(cleanText);
+        currentUtterance.lang = "ar-SA";
+        currentUtterance.rate = 0.85; // سرعة هادئة ومناسبة للأطفال
+        currentUtterance.pitch = 1.1;  // نبرة حماسية لطيفة
+        currentUtterance.volume = 1;
 
+        // تحديث الصوت إذا لم يكن محملاً مسبقاً
+        if (!arabicVoice) {
+            arabicVoice = findArabicVoice();
+        }
 
-    currentUtterance.lang = "ar-SA";
+        if (arabicVoice) {
+            currentUtterance.voice = arabicVoice;
+        }
 
-    currentUtterance.rate = 0.85;
-
-    currentUtterance.pitch = 1;
-
-    currentUtterance.volume = 1;
-
-
-    /* اختيار صوت عربي */
-
-    arabicVoice = findArabicVoice();
-
-    if (arabicVoice) {
-        currentUtterance.voice = arabicVoice;
-    }
-
-
-    currentUtterance.onerror =
-        function(error) {
-
-            console.log(
-                "Speech error:",
-                error
-            );
-
+        currentUtterance.onerror = function (event) {
+            console.log("خطأ في النطق:", event.error);
         };
 
-
-    window.speechSynthesis.speak(
-        currentUtterance
-    );
-
+        window.speechSynthesis.speak(currentUtterance);
+    }, 50);
 }
 
-
-/* ==========================================
-   مدح الطفل
-========================================== */
 
 function praise() {
-
     speak("أحسنت");
-
 }
 
 
 /* ==========================================
-   النجوم والمستوى
+   ⭐ النجوم والمستوى
 ========================================== */
 
 function addStar() {
-
     stars++;
 
     if (stars % 10 === 0) {
-
         level++;
-
-        speak(
-            "رائع، حصلت على مستوى جديد"
-        );
-
+        speak("رائع، حصلت على مستوى جديد");
     }
 
     updateStats();
-
 }
 
 
 function updateStats() {
-
     const data = {
-
         stars: stars,
         level: level,
-
         rewardStars: stars,
-
         teacherStars: stars,
         teacherLevel: level,
-
         teacherLetters: correctLetters,
         teacherWords: correctWords,
         teacherNumbers: correctNumbers,
-
         teacherAddition: correctAddition,
         teacherSubtraction: correctSubtraction
-
     };
 
-
-    Object.keys(data).forEach(function(id) {
-
-        const element =
-            document.getElementById(id);
-
+    Object.keys(data).forEach(function (id) {
+        const element = document.getElementById(id);
         if (!element) return;
-
-
-        element.textContent =
-            arabicNumber(data[id]);
-
+        element.textContent = arabicNumber(data[id]);
     });
-
 }
 
 
@@ -379,25 +294,14 @@ function updateStats() {
 ========================================== */
 
 function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(function (screen) {
+        screen.classList.remove("active");
+    });
 
-    document.querySelectorAll(".screen")
-        .forEach(function(screen) {
-
-            screen.classList.remove("active");
-
-        });
-
-
-    const screen =
-        document.getElementById(id);
-
-
+    const screen = document.getElementById(id);
     if (screen) {
-
         screen.classList.add("active");
-
     }
-
 }
 
 
@@ -406,7 +310,6 @@ function showScreen(id) {
 ========================================== */
 
 const letters = [
-
     { letter: "أ", word: "أسد", emoji: "🦁" },
     { letter: "ب", word: "بطة", emoji: "🦆" },
     { letter: "ت", word: "تفاح", emoji: "🍎" },
@@ -435,17 +338,11 @@ const letters = [
     { letter: "هـ", word: "هلال", emoji: "🌙" },
     { letter: "و", word: "وردة", emoji: "🌹" },
     { letter: "ي", word: "يد", emoji: "✋" }
-
 ];
 
 
 const letterFatha = [
-
-    "أَ","بَ","تَ","ثَ","جَ","حَ","خَ",
-    "دَ","ذَ","رَ","زَ","سَ","شَ","صَ",
-    "ضَ","طَ","ظَ","عَ","غَ","فَ","قَ",
-    "كَ","لَ","مَ","نَ","هَ","وَ","يَ"
-
+    "أَ", "بَ", "تَ", "ثَ", "جَ", "حَ", "خَ", "دَ", "ذَ", "رَ", "زَ", "سَ", "شَ", "صَ", "ضَ", "طَ", "ظَ", "عَ", "غَ", "فَ", "قَ", "كَ", "لَ", "مَ", "نَ", "هَ", "وَ", "يَ"
 ];
 
 
@@ -454,199 +351,99 @@ let letterAnswered = false;
 
 
 function loadLetter() {
+    const item = letters[letterIndex];
 
-    const item =
-        letters[letterIndex];
-
-
-    const currentLetter =
-        document.getElementById(
-            "currentLetter"
-        );
-
+    const currentLetter = document.getElementById("currentLetter");
     if (currentLetter) {
-
-        currentLetter.textContent =
-            item.letter;
-
+        currentLetter.textContent = item.letter;
     }
 
+    const picture = document.getElementById("letterPicture");
+    if (picture) {
+        picture.textContent = item.emoji;
+    }
 
-    const picture =
-        document.getElementById(
-            "letterPicture"
-        );
+    const word = document.getElementById("letterWord");
+    if (word) {
+        word.textContent = item.word;
+    }
 
-    if (picture)
-        picture.textContent =
-            item.emoji;
-
-
-    const word =
-        document.getElementById(
-            "letterWord"
-        );
-
-    if (word)
-        word.textContent =
-            item.word;
-
-
-    const message =
-        document.getElementById(
-            "letterMessage"
-        );
-
-    if (message)
+    const message = document.getElementById("letterMessage");
+    if (message) {
         message.textContent = "";
-
+    }
 
     letterAnswered = false;
-
     createLetterOptions();
-
 }
 
 
 function createLetterOptions() {
-
-    const box =
-        document.getElementById(
-            "letterOptions"
-        );
-
+    const box = document.getElementById("letterOptions");
     if (!box) return;
-
 
     box.innerHTML = "";
 
-
-    let choices = [
-        letters[letterIndex].letter
-    ];
-
+    let choices = [letters[letterIndex].letter];
 
     while (choices.length < 3) {
-
-        const random =
-            letters[
-                Math.floor(
-                    Math.random() *
-                    letters.length
-                )
-            ].letter;
-
-
-        if (!choices.includes(random))
+        const random = letters[Math.floor(Math.random() * letters.length)].letter;
+        if (!choices.includes(random)) {
             choices.push(random);
-
+        }
     }
 
-
-    choices.sort(function() {
+    choices.sort(function () {
         return Math.random() - 0.5;
     });
 
-
-    choices.forEach(function(answer) {
-
-        const button =
-            document.createElement("button");
-
+    choices.forEach(function (answer) {
+        const button = document.createElement("button");
         button.className = "option";
-
         button.textContent = answer;
-
-        button.onclick = function() {
-
+        button.onclick = function () {
             checkLetter(answer);
-
         };
-
         box.appendChild(button);
-
     });
-
 }
 
 
 function checkLetter(answer) {
-
-    const message =
-        document.getElementById(
-            "letterMessage"
-        );
-
+    const message = document.getElementById("letterMessage");
     if (!message) return;
 
-
-    if (
-        answer ===
-        letters[letterIndex].letter
-    ) {
-
-        message.textContent =
-            "🎉 أحسنت!";
-
-        message.className =
-            "message success-text";
-
+    if (answer === letters[letterIndex].letter) {
+        message.textContent = "🎉 أحسنت!";
+        message.className = "message success-text";
 
         if (!letterAnswered) {
-
             correctLetters++;
-
             addStar();
-
             letterAnswered = true;
-
         }
 
         praise();
-
     } else {
-
-        message.textContent =
-            "😊 حاول مرة أخرى";
-
-        message.className =
-            "message error-text";
-
+        message.textContent = "😊 حاول مرة أخرى";
+        message.className = "message error-text";
         speak("حاول مرة أخرى");
-
     }
-
 }
 
 
 function speakCurrentLetter() {
-
-    const item =
-        letters[letterIndex];
-
-
-    speak(
-        letterFatha[letterIndex] +
-        " " +
-        item.word
-    );
-
+    const item = letters[letterIndex];
+    speak(letterFatha[letterIndex] + " " + item.word);
 }
 
 
 function nextLetter() {
-
     letterIndex++;
-
-    if (
-        letterIndex >=
-        letters.length
-    )
+    if (letterIndex >= letters.length) {
         letterIndex = 0;
-
-
+    }
     loadLetter();
-
 }
 
 
@@ -655,7 +452,6 @@ function nextLetter() {
 ========================================== */
 
 const words = [
-
     { word: "بيت", emoji: "🏠" },
     { word: "باب", emoji: "🚪" },
     { word: "ماما", emoji: "👩" },
@@ -666,7 +462,6 @@ const words = [
     { word: "تفاح", emoji: "🍎" },
     { word: "ماء", emoji: "💧" },
     { word: "شمس", emoji: "☀️" }
-
 ];
 
 
@@ -675,182 +470,94 @@ let wordAnswered = false;
 
 
 function loadWord() {
+    const item = words[wordIndex];
 
-    const item =
-        words[wordIndex];
+    const currentWord = document.getElementById("currentWord");
+    const picture = document.getElementById("wordPicture");
+    const message = document.getElementById("wordMessage");
 
+    if (currentWord) {
+        currentWord.textContent = item.word;
+    }
 
-    const currentWord =
-        document.getElementById(
-            "currentWord"
-        );
+    if (picture) {
+        picture.textContent = item.emoji;
+    }
 
-    const picture =
-        document.getElementById(
-            "wordPicture"
-        );
-
-    const message =
-        document.getElementById(
-            "wordMessage"
-        );
-
-
-    if (currentWord)
-        currentWord.textContent =
-            item.word;
-
-
-    if (picture)
-        picture.textContent =
-            item.emoji;
-
-
-    if (message)
+    if (message) {
         message.textContent = "";
-
+    }
 
     wordAnswered = false;
-
     createWordOptions();
-
 }
 
 
 function createWordOptions() {
-
-    const box =
-        document.getElementById(
-            "wordOptions"
-        );
-
+    const box = document.getElementById("wordOptions");
     if (!box) return;
-
 
     box.innerHTML = "";
 
-
-    let choices = [
-        words[wordIndex].word
-    ];
-
+    let choices = [words[wordIndex].word];
 
     while (choices.length < 3) {
-
-        const random =
-            words[
-                Math.floor(
-                    Math.random() *
-                    words.length
-                )
-            ].word;
-
-
-        if (!choices.includes(random))
+        const random = words[Math.floor(Math.random() * words.length)].word;
+        if (!choices.includes(random)) {
             choices.push(random);
-
+        }
     }
 
-
-    choices.sort(function() {
+    choices.sort(function () {
         return Math.random() - 0.5;
     });
 
-
-    choices.forEach(function(answer) {
-
-        const button =
-            document.createElement("button");
-
+    choices.forEach(function (answer) {
+        const button = document.createElement("button");
         button.className = "option";
-
-        button.textContent =
-            answer;
-
-        button.onclick = function() {
-
+        button.textContent = answer;
+        button.onclick = function () {
             checkWord(answer);
-
         };
-
         box.appendChild(button);
-
     });
-
 }
 
 
 function checkWord(answer) {
-
-    const message =
-        document.getElementById(
-            "wordMessage"
-        );
-
+    const message = document.getElementById("wordMessage");
     if (!message) return;
 
-
-    if (
-        answer ===
-        words[wordIndex].word
-    ) {
-
-        message.textContent =
-            "🎉 أحسنت!";
-
-        message.className =
-            "message success-text";
-
+    if (answer === words[wordIndex].word) {
+        message.textContent = "🎉 أحسنت!";
+        message.className = "message success-text";
 
         if (!wordAnswered) {
-
             correctWords++;
-
             addStar();
-
             wordAnswered = true;
-
         }
 
         praise();
-
     } else {
-
-        message.textContent =
-            "😊 حاول مرة أخرى";
-
-        message.className =
-            "message error-text";
-
+        message.textContent = "😊 حاول مرة أخرى";
+        message.className = "message error-text";
         speak("حاول مرة أخرى");
-
     }
-
 }
 
 
 function speakWord() {
-
-    speak(
-        words[wordIndex].word
-    );
-
+    speak(words[wordIndex].word);
 }
 
 
 function nextWord() {
-
     wordIndex++;
-
-    if (
-        wordIndex >=
-        words.length
-    )
+    if (wordIndex >= words.length) {
         wordIndex = 0;
-
-
+    }
     loadWord();
-
 }
 
 
@@ -863,184 +570,96 @@ let numberAnswered = false;
 
 
 function loadNumber() {
+    const number = document.getElementById("currentNumber");
+    const items = document.getElementById("countItems");
+    const message = document.getElementById("numberMessage");
 
-    const number =
-        document.getElementById(
-            "currentNumber"
-        );
-
-    const items =
-        document.getElementById(
-            "countItems"
-        );
-
-    const message =
-        document.getElementById(
-            "numberMessage"
-        );
-
-
-    if (number)
-        number.textContent =
-            arabicNumber(currentNumber);
-
-
-    if (items) {
-
-        if (currentNumber <= 20) {
-
-            items.textContent =
-                "🍎".repeat(currentNumber);
-
-        } else {
-
-            items.textContent =
-                "عدد التفاح: " +
-                arabicNumber(currentNumber);
-
-        }
-
+    if (number) {
+        number.textContent = arabicNumber(currentNumber);
     }
 
+    if (items) {
+        if (currentNumber <= 20) {
+            items.textContent = "🍎".repeat(currentNumber);
+        } else {
+            items.textContent = "عدد التفاح: " + arabicNumber(currentNumber);
+        }
+    }
 
-    if (message)
+    if (message) {
         message.textContent = "";
-
+    }
 
     numberAnswered = false;
-
     createNumberOptions();
-
 }
 
 
 function createNumberOptions() {
-
-    const box =
-        document.getElementById(
-            "numberOptions"
-        );
-
+    const box = document.getElementById("numberOptions");
     if (!box) return;
-
 
     box.innerHTML = "";
 
-
-    let choices = [
-        currentNumber
-    ];
-
+    let choices = [currentNumber];
 
     while (choices.length < 3) {
-
-        const random =
-            Math.floor(
-                Math.random() * 100
-            ) + 1;
-
-
-        if (!choices.includes(random))
+        const random = Math.floor(Math.random() * 100) + 1;
+        if (!choices.includes(random)) {
             choices.push(random);
-
+        }
     }
 
-
-    choices.sort(function() {
+    choices.sort(function () {
         return Math.random() - 0.5;
     });
 
-
-    choices.forEach(function(answer) {
-
-        const button =
-            document.createElement("button");
-
+    choices.forEach(function (answer) {
+        const button = document.createElement("button");
         button.className = "option";
-
-        button.textContent =
-            arabicNumber(answer);
-
-        button.onclick = function() {
-
+        button.textContent = arabicNumber(answer);
+        button.onclick = function () {
             checkNumber(answer);
-
         };
-
         box.appendChild(button);
-
     });
-
 }
 
 
 function checkNumber(answer) {
-
-    const message =
-        document.getElementById(
-            "numberMessage"
-        );
-
+    const message = document.getElementById("numberMessage");
     if (!message) return;
 
-
     if (answer === currentNumber) {
-
-        message.textContent =
-            "🎉 أحسنت!";
-
-        message.className =
-            "message success-text";
-
+        message.textContent = "🎉 أحسنت!";
+        message.className = "message success-text";
 
         if (!numberAnswered) {
-
             correctNumbers++;
-
             addStar();
-
             numberAnswered = true;
-
         }
 
         praise();
-
     } else {
-
-        message.textContent =
-            "😊 حاول مرة أخرى";
-
-        message.className =
-            "message error-text";
-
+        message.textContent = "😊 حاول مرة أخرى";
+        message.className = "message error-text";
         speak("حاول مرة أخرى");
-
     }
-
 }
 
 
 function speakNumber() {
-
-    speak(
-        numberWords[currentNumber] ||
-        "الرقم " +
-        arabicNumber(currentNumber)
-    );
-
+    speak(numberWords[currentNumber] || "الرقم " + arabicNumber(currentNumber));
 }
 
 
 function newNumber() {
-
     currentNumber++;
-
-    if (currentNumber > 100)
+    if (currentNumber > 100) {
         currentNumber = 1;
-
-
+    }
     loadNumber();
-
 }
 
 
@@ -1054,124 +673,58 @@ let additionAnswered = false;
 
 
 function newAddition() {
+    addA = Math.floor(Math.random() * 10) + 1;
+    addB = Math.floor(Math.random() * 10) + 1;
 
-    addA =
-        Math.floor(
-            Math.random() * 10
-        ) + 1;
+    const question = document.getElementById("addQuestion");
+    const pictures = document.getElementById("addPictures");
+    const answer = document.getElementById("addAnswer");
+    const message = document.getElementById("addMessage");
 
+    if (question) {
+        question.textContent = arabicNumber(addA) + " + " + arabicNumber(addB) + " = ؟";
+    }
 
-    addB =
-        Math.floor(
-            Math.random() * 10
-        ) + 1;
+    if (pictures) {
+        pictures.textContent = "🍎".repeat(addA) + " + " + "🍎".repeat(addB);
+    }
 
-
-    const question =
-        document.getElementById(
-            "addQuestion"
-        );
-
-    const pictures =
-        document.getElementById(
-            "addPictures"
-        );
-
-    const answer =
-        document.getElementById(
-            "addAnswer"
-        );
-
-    const message =
-        document.getElementById(
-            "addMessage"
-        );
-
-
-    if (question)
-        question.textContent =
-            arabicNumber(addA) +
-            " + " +
-            arabicNumber(addB) +
-            " = ؟";
-
-
-    if (pictures)
-        pictures.textContent =
-            "🍎".repeat(addA) +
-            " + " +
-            "🍎".repeat(addB);
-
-
-    if (answer)
+    if (answer) {
         answer.value = "";
+    }
 
-
-    if (message)
+    if (message) {
         message.textContent = "";
-
+    }
 
     additionAnswered = false;
-
 }
 
 
 function checkAddition() {
-
-    const input =
-        document.getElementById(
-            "addAnswer"
-        );
-
-    const message =
-        document.getElementById(
-            "addMessage"
-        );
-
+    const input = document.getElementById("addAnswer");
+    const message = document.getElementById("addMessage");
 
     if (!input || !message) return;
 
+    const answer = Number(input.value);
 
-    const answer =
-        Number(input.value);
-
-
-    if (
-        answer ===
-        addA + addB
-    ) {
-
-        message.textContent =
-            "🎉 أحسنت!";
-
-        message.className =
-            "message success-text";
-
+    if (answer === addA + addB) {
+        message.textContent = "🎉 أحسنت!";
+        message.className = "message success-text";
 
         if (!additionAnswered) {
-
             correctAddition++;
-
             addStar();
-
             additionAnswered = true;
-
         }
 
         praise();
-
     } else {
-
-        message.textContent =
-            "😊 حاول مرة أخرى";
-
-        message.className =
-            "message error-text";
-
+        message.textContent = "😊 حاول مرة أخرى";
+        message.className = "message error-text";
         speak("حاول مرة أخرى");
-
     }
-
 }
 
 
@@ -1185,123 +738,58 @@ let subtractionAnswered = false;
 
 
 function newSubtraction() {
+    subA = Math.floor(Math.random() * 10) + 1;
+    subB = Math.floor(Math.random() * (subA + 1));
 
-    subA =
-        Math.floor(
-            Math.random() * 10
-        ) + 1;
+    const question = document.getElementById("subQuestion");
+    const pictures = document.getElementById("subPictures");
+    const answer = document.getElementById("subAnswer");
+    const message = document.getElementById("subMessage");
 
+    if (question) {
+        question.textContent = arabicNumber(subA) + " - " + arabicNumber(subB) + " = ؟";
+    }
 
-    subB =
-        Math.floor(
-            Math.random() *
-            (subA + 1)
-        );
+    if (pictures) {
+        pictures.textContent = "🍎".repeat(subA);
+    }
 
-
-    const question =
-        document.getElementById(
-            "subQuestion"
-        );
-
-    const pictures =
-        document.getElementById(
-            "subPictures"
-        );
-
-    const answer =
-        document.getElementById(
-            "subAnswer"
-        );
-
-    const message =
-        document.getElementById(
-            "subMessage"
-        );
-
-
-    if (question)
-        question.textContent =
-            arabicNumber(subA) +
-            " - " +
-            arabicNumber(subB) +
-            " = ؟";
-
-
-    if (pictures)
-        pictures.textContent =
-            "🍎".repeat(subA);
-
-
-    if (answer)
+    if (answer) {
         answer.value = "";
+    }
 
-
-    if (message)
+    if (message) {
         message.textContent = "";
-
+    }
 
     subtractionAnswered = false;
-
 }
 
 
 function checkSubtraction() {
-
-    const input =
-        document.getElementById(
-            "subAnswer"
-        );
-
-    const message =
-        document.getElementById(
-            "subMessage"
-        );
-
+    const input = document.getElementById("subAnswer");
+    const message = document.getElementById("subMessage");
 
     if (!input || !message) return;
 
+    const answer = Number(input.value);
 
-    const answer =
-        Number(input.value);
-
-
-    if (
-        answer ===
-        subA - subB
-    ) {
-
-        message.textContent =
-            "🎉 أحسنت!";
-
-        message.className =
-            "message success-text";
-
+    if (answer === subA - subB) {
+        message.textContent = "🎉 أحسنت!";
+        message.className = "message success-text";
 
         if (!subtractionAnswered) {
-
             correctSubtraction++;
-
             addStar();
-
             subtractionAnswered = true;
-
         }
 
         praise();
-
     } else {
-
-        message.textContent =
-            "😊 حاول مرة أخرى";
-
-        message.className =
-            "message error-text";
-
+        message.textContent = "😊 حاول مرة أخرى";
+        message.className = "message error-text";
         speak("حاول مرة أخرى");
-
     }
-
 }
 
 
@@ -1310,63 +798,30 @@ function checkSubtraction() {
 ========================================== */
 
 const quranSurahs = [
-
     {
         name: "سورة الإخلاص",
-        text:
-            "قُلْ هُوَ اللَّهُ أَحَدٌ\n" +
-            "اللَّهُ الصَّمَدُ\n" +
-            "لَمْ يَلِدْ وَلَمْ يُولَدْ\n" +
-            "وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ"
+        text: "قُلْ هُوَ اللَّهُ أَحَدٌ\nاللَّهُ الصَّمَدُ\nلَمْ يَلِدْ وَلَمْ يُولَدْ\nوَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ"
     },
-
     {
         name: "سورة الفلق",
-        text:
-            "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ\n" +
-            "مِنْ شَرِّ مَا خَلَقَ\n" +
-            "وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ\n" +
-            "وَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ\n" +
-            "وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ"
+        text: "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ\nمِنْ شَرِّ مَا خَلَقَ\nوَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ\nوَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ\nوَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ"
     },
-
     {
         name: "سورة الناس",
-        text:
-            "قُلْ أَعُوذُ بِرَبِّ النَّاسِ\n" +
-            "مَلِكِ النَّاسِ\n" +
-            "إِلَهِ النَّاسِ\n" +
-            "مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ\n" +
-            "الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ\n" +
-            "مِنَ الْجِنَّةِ وَالنَّاسِ"
+        text: "قُلْ أَعُوذُ بِرَبِّ النَّاسِ\nمَلِكِ النَّاسِ\nإِلَهِ النَّاسِ\nمِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ\nالَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ\nمِنَ الْجِنَّةِ وَالنَّاسِ"
     },
-
     {
         name: "سورة الكوثر",
-        text:
-            "إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ\n" +
-            "فَصَلِّ لِرَبِّكَ وَانْحَرْ\n" +
-            "إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ"
+        text: "إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ\nفَصَلِّ لِرَبِّكَ وَانْحَرْ\nإِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ"
     },
-
     {
         name: "سورة العصر",
-        text:
-            "وَالْعَصْرِ\n" +
-            "إِنَّ الْإِنسَانَ لَفِي خُسْرٍ\n" +
-            "إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ\n" +
-            "وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ"
+        text: "وَالْعَصْرِ\nإِنَّ الْإِنسَانَ لَفِي خُسْرٍ\nإِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ\nوَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ"
     },
-
     {
         name: "سورة النصر",
-        text:
-            "إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ\n" +
-            "وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا\n" +
-            "فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ\n" +
-            "إِنَّهُ كَانَ تَوَّابًا"
+        text: "إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ\nوَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا\nفَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ\nإِنَّهُ كَانَ تَوَّابًا"
     }
-
 ];
 
 
@@ -1374,60 +829,31 @@ let surahIndex = 0;
 
 
 function loadSurah() {
+    const surah = quranSurahs[surahIndex];
+    const name = document.getElementById("surahName");
+    const text = document.getElementById("surahText");
 
-    const surah =
-        quranSurahs[surahIndex];
+    if (name) {
+        name.textContent = surah.name;
+    }
 
-
-    const name =
-        document.getElementById(
-            "surahName"
-        );
-
-    const text =
-        document.getElementById(
-            "surahText"
-        );
-
-
-    if (name)
-        name.textContent =
-            surah.name;
-
-
-    if (text)
-        text.innerHTML =
-            surah.text.replace(
-                /\n/g,
-                "<br><br>"
-            );
-
+    if (text) {
+        text.innerHTML = surah.text.replace(/\n/g, "<br><br>");
+    }
 }
 
 
 function speakSurah() {
-
-    speak(
-        quranSurahs[surahIndex].text
-    );
-
+    speak(quranSurahs[surahIndex].text);
 }
 
 
 function nextSurah() {
-
     surahIndex++;
-
-
-    if (
-        surahIndex >=
-        quranSurahs.length
-    )
+    if (surahIndex >= quranSurahs.length) {
         surahIndex = 0;
-
-
+    }
     loadSurah();
-
 }
 
 
@@ -1436,67 +862,56 @@ function nextSurah() {
 ========================================== */
 
 const hadiths = [
-
     {
         text: "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ",
         source: "رواه البخاري ومسلم",
         image: "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "الدِّينُ النَّصِيحَةُ",
         source: "رواه مسلم",
         image: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "مَنْ غَشَّ فَلَيْسَ مِنِّي",
         source: "رواه مسلم",
         image: "https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "إِنَّ اللَّهَ رَفِيقٌ يُحِبُّ الرِّفْقَ",
         source: "رواه البخاري ومسلم",
         image: "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "كُلُّ مَعْرُوفٍ صَدَقَةٌ",
         source: "رواه البخاري ومسلم",
         image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ",
         source: "رواه البخاري ومسلم",
         image: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ",
         source: "رواه البخاري ومسلم",
         image: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "مَنْ صَلَّى عَلَيَّ صَلَاةً صَلَّى اللَّهُ عَلَيْهِ بِهَا عَشْرًا",
         source: "رواه مسلم",
         image: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "مَنْ يُرِدِ اللَّهُ بِهِ خَيْرًا يُفَقِّهْهُ فِي الدِّينِ",
         source: "رواه البخاري",
         image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80"
     },
-
     {
         text: "تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ",
         source: "رواه الترمذي",
         image: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=800&q=80"
     }
-
 ];
 
 
@@ -1504,73 +919,37 @@ let hadithIndex = 0;
 
 
 function loadHadith() {
+    const hadith = hadiths[hadithIndex];
+    const text = document.getElementById("hadithText");
+    const source = document.getElementById("hadithSource");
+    const image = document.getElementById("hadithImage");
 
-    const hadith =
-        hadiths[hadithIndex];
-
-
-    const text =
-        document.getElementById(
-            "hadithText"
-        );
-
-    const source =
-        document.getElementById(
-            "hadithSource"
-        );
-
-    const image =
-        document.getElementById(
-            "hadithImage"
-        );
-
-
-    if (text)
-        text.textContent =
-            hadith.text;
-
-
-    if (source)
-        source.textContent =
-            hadith.source;
-
-
-    if (image) {
-
-        image.src =
-            hadith.image;
-
-        image.alt =
-            "صورة توضيحية للحديث";
-
+    if (text) {
+        text.textContent = hadith.text;
     }
 
+    if (source) {
+        source.textContent = hadith.source;
+    }
+
+    if (image) {
+        image.src = hadith.image;
+        image.alt = "صورة توضيحية للحديث";
+    }
 }
 
 
 function speakHadith() {
-
-    speak(
-        hadiths[hadithIndex].text
-    );
-
+    speak(hadiths[hadithIndex].text);
 }
 
 
 function nextHadith() {
-
     hadithIndex++;
-
-
-    if (
-        hadithIndex >=
-        hadiths.length
-    )
+    if (hadithIndex >= hadiths.length) {
         hadithIndex = 0;
-
-
+    }
     loadHadith();
-
 }
 
 
@@ -1579,42 +958,13 @@ function nextHadith() {
 ========================================== */
 
 const duas = [
-
-    {
-        title: "دعاء قبل الطعام",
-        text: "بِسْمِ اللَّهِ"
-    },
-
-    {
-        title: "دعاء بعد الطعام",
-        text: "الْحَمْدُ لِلَّهِ"
-    },
-
-    {
-        title: "دعاء عند النوم",
-        text: "بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا"
-    },
-
-    {
-        title: "دعاء الاستيقاظ",
-        text: "الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ"
-    },
-
-    {
-        title: "دعاء دخول المنزل",
-        text: "بِسْمِ اللَّهِ وَلَجْنَا وَبِسْمِ اللَّهِ خَرَجْنَا وَعَلَى رَبِّنَا تَوَكَّلْنَا"
-    },
-
-    {
-        title: "دعاء طلب العلم",
-        text: "رَبِّ زِدْنِي عِلْمًا"
-    },
-
-    {
-        title: "دعاء للوالدين",
-        text: "رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا"
-    }
-
+    { title: "دعاء قبل الطعام", text: "بِسْمِ اللَّهِ" },
+    { title: "دعاء بعد الطعام", text: "الْحَمْدُ لِلَّهِ" },
+    { title: "دعاء عند النوم", text: "بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا" },
+    { title: "دعاء الاستيقاظ", text: "الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ" },
+    { title: "دعاء دخول المنزل", text: "بِسْمِ اللَّهِ وَلَجْنَا وَبِسْمِ اللَّهِ خَرَجْنَا وَعَلَى رَبِّنَا تَوَكَّلْنَا" },
+    { title: "دعاء طلب العلم", text: "رَبِّ زِدْنِي عِلْمًا" },
+    { title: "دعاء للوالدين", text: "رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا" }
 ];
 
 
@@ -1622,57 +972,31 @@ let duaIndex = 0;
 
 
 function loadDua() {
+    const dua = duas[duaIndex];
+    const title = document.getElementById("duaTitle");
+    const text = document.getElementById("duaText");
 
-    const dua =
-        duas[duaIndex];
+    if (title) {
+        title.textContent = dua.title;
+    }
 
-
-    const title =
-        document.getElementById(
-            "duaTitle"
-        );
-
-    const text =
-        document.getElementById(
-            "duaText"
-        );
-
-
-    if (title)
-        title.textContent =
-            dua.title;
-
-
-    if (text)
-        text.textContent =
-            dua.text;
-
+    if (text) {
+        text.textContent = dua.text;
+    }
 }
 
 
 function speakDua() {
-
-    speak(
-        duas[duaIndex].text
-    );
-
+    speak(duas[duaIndex].text);
 }
 
 
 function nextDua() {
-
     duaIndex++;
-
-
-    if (
-        duaIndex >=
-        duas.length
-    )
+    if (duaIndex >= duas.length) {
         duaIndex = 0;
-
-
+    }
     loadDua();
-
 }
 
 
@@ -1686,222 +1010,89 @@ let drawing = false;
 
 
 function setupCanvas() {
-
-    canvas =
-        document.getElementById(
-            "writingCanvas"
-        );
-
-
+    canvas = document.getElementById("writingCanvas");
     if (!canvas) return;
 
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
 
-    const rect =
-        canvas.getBoundingClientRect();
-
-
-    canvas.width =
-        rect.width;
-
-    canvas.height =
-        rect.height;
-
-
-    ctx =
-        canvas.getContext("2d");
-
-
+    ctx = canvas.getContext("2d");
     ctx.lineWidth = 8;
-
     ctx.lineCap = "round";
-
     ctx.lineJoin = "round";
 
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseleave", stopDrawing);
 
-    canvas.addEventListener(
-        "mousedown",
-        startDrawing
-    );
-
-    canvas.addEventListener(
-        "mousemove",
-        draw
-    );
-
-    canvas.addEventListener(
-        "mouseup",
-        stopDrawing
-    );
-
-    canvas.addEventListener(
-        "mouseleave",
-        stopDrawing
-    );
-
-
-    canvas.addEventListener(
-        "touchstart",
-        startDrawing,
-        { passive: false }
-    );
-
-    canvas.addEventListener(
-        "touchmove",
-        draw,
-        { passive: false }
-    );
-
-    canvas.addEventListener(
-        "touchend",
-        stopDrawing
-    );
-
+    canvas.addEventListener("touchstart", startDrawing, { passive: false });
+    canvas.addEventListener("touchmove", draw, { passive: false });
+    canvas.addEventListener("touchend", stopDrawing);
 }
 
 
 function getPosition(event) {
+    const rect = canvas.getBoundingClientRect();
 
-    const rect =
-        canvas.getBoundingClientRect();
-
-
-    if (
-        event.touches &&
-        event.touches.length
-    ) {
-
+    if (event.touches && event.touches.length) {
         return {
-
-            x:
-                event.touches[0].clientX -
-                rect.left,
-
-            y:
-                event.touches[0].clientY -
-                rect.top
-
+            x: event.touches[0].clientX - rect.left,
+            y: event.touches[0].clientY - rect.top
         };
-
     }
 
-
     return {
-
-        x:
-            event.clientX -
-            rect.left,
-
-        y:
-            event.clientY -
-            rect.top
-
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
     };
-
 }
 
 
 function startDrawing(event) {
-
     if (!ctx) return;
-
-
     drawing = true;
-
-
-    const position =
-        getPosition(event);
-
-
+    const position = getPosition(event);
     ctx.beginPath();
-
-
-    ctx.moveTo(
-        position.x,
-        position.y
-    );
-
+    ctx.moveTo(position.x, position.y);
 }
 
 
 function draw(event) {
-
-    if (!drawing || !ctx)
-        return;
-
-
+    if (!drawing || !ctx) return;
     event.preventDefault();
-
-
-    const position =
-        getPosition(event);
-
-
-    ctx.lineTo(
-        position.x,
-        position.y
-    );
-
-
+    const position = getPosition(event);
+    ctx.lineTo(position.x, position.y);
     ctx.stroke();
-
 }
 
 
 function stopDrawing() {
-
     drawing = false;
-
 }
 
 
 function clearCanvas() {
-
     if (!ctx) return;
-
-
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 
 function finishWriting() {
-
     addStar();
-
-
-    const message =
-        document.getElementById(
-            "writingMessage"
-        );
-
-
+    const message = document.getElementById("writingMessage");
     if (message) {
-
-        message.textContent =
-            "🌟 رائع!";
-
-        message.className =
-            "message success-text";
-
+        message.textContent = "🌟 رائع!";
+        message.className = "message success-text";
     }
-
-
     speak("رائع");
-
 }
 
 
 function newWritingLetter() {
-
     clearCanvas();
-
     speak("حاول كتابة الحرف");
-
 }
 
 
@@ -1910,35 +1101,19 @@ function newWritingLetter() {
 ========================================== */
 
 function resetProgress() {
-
-    const answer =
-        confirm(
-            "هل تريد تصفير نتائج الطفل؟"
-        );
-
-
+    const answer = confirm("هل تريد تصفير نتائج الطفل؟");
     if (!answer) return;
 
-
     stars = 0;
-
     level = 1;
-
     correctLetters = 0;
-
     correctWords = 0;
-
     correctNumbers = 0;
-
     correctAddition = 0;
-
     correctSubtraction = 0;
 
-
     updateStats();
-
     speak("تم تصفير النتائج");
-
 }
 
 
@@ -1946,31 +1121,16 @@ function resetProgress() {
    تشغيل التطبيق
 ========================================== */
 
-window.addEventListener(
-    "load",
-    function() {
-
-        loadSpeechVoices();
-
-        updateStats();
-
-        loadLetter();
-
-        loadWord();
-
-        loadNumber();
-
-        newAddition();
-
-        newSubtraction();
-
-        loadSurah();
-
-        loadHadith();
-
-        loadDua();
-
-        setupCanvas();
-
-    }
-);
+window.addEventListener("load", function () {
+    loadSpeechVoices();
+    updateStats();
+    loadLetter();
+    loadWord();
+    loadNumber();
+    newAddition();
+    newSubtraction();
+    loadSurah();
+    loadHadith();
+    loadDua();
+    setupCanvas();
+});
