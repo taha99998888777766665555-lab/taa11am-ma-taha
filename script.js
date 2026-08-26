@@ -1,7 +1,6 @@
 /* ==========================================
    🌟 تعلم مع أ/ طه محمد 🌟
-   ملف script.js
-   نظام النطق الذكي + تلاوة القرآن بصوت الشيخ
+   ملف script.js (النسخة النهائية والمحدثة للقرآن والصوتيات)
 ========================================== */
 
 
@@ -159,6 +158,12 @@ function updateStats() {
 ========================================== */
 
 function showScreen(id) {
+    // إيقاف أي تلاوة قرآن جارية عند الانتقال لقسم آخر لمنع تداخل الصوت
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+    }
+
     document.querySelectorAll(".screen").forEach(function (screen) {
         screen.classList.remove("active");
     });
@@ -168,7 +173,7 @@ function showScreen(id) {
 
 
 /* ==========================================
-   الحروف
+   الحروف والكلمات والأرقام والجمع والطرح (تعمل بنظام النطق الذكي)
 ========================================== */
 
 const letters = [
@@ -207,14 +212,10 @@ let letterAnswered = false;
 
 function loadLetter() {
     const item = letters[letterIndex];
-    const currentLetter = document.getElementById("currentLetter");
-    if (currentLetter) currentLetter.textContent = item.letter;
-    const picture = document.getElementById("letterPicture");
-    if (picture) picture.textContent = item.emoji;
-    const word = document.getElementById("letterWord");
-    if (word) word.textContent = item.word;
-    const message = document.getElementById("letterMessage");
-    if (message) message.textContent = "";
+    document.getElementById("currentLetter").textContent = item.letter;
+    document.getElementById("letterPicture").textContent = item.emoji;
+    document.getElementById("letterWord").textContent = item.word;
+    document.getElementById("letterMessage").textContent = "";
     letterAnswered = false;
     createLetterOptions();
 }
@@ -240,15 +241,10 @@ function createLetterOptions() {
 
 function checkLetter(answer) {
     const message = document.getElementById("letterMessage");
-    if (!message) return;
     if (answer === letters[letterIndex].letter) {
         message.textContent = "🎉 أحسنت!";
         message.className = "message success-text";
-        if (!letterAnswered) {
-            correctLetters++;
-            addStar();
-            letterAnswered = true;
-        }
+        if (!letterAnswered) { correctLetters++; addStar(); letterAnswered = true; }
         praise();
     } else {
         message.textContent = "😊 حاول مرة أخرى";
@@ -257,20 +253,8 @@ function checkLetter(answer) {
     }
 }
 
-function speakCurrentLetter() {
-    speak(letters[letterIndex].sound);
-}
-
-function nextLetter() {
-    letterIndex++;
-    if (letterIndex >= letters.length) letterIndex = 0;
-    loadLetter();
-}
-
-
-/* ==========================================
-   الكلمات والأرقام والجمع والطرح
-========================================== */
+function speakCurrentLetter() { speak(letters[letterIndex].sound); }
+function nextLetter() { letterIndex = (letterIndex + 1) % letters.length; loadLetter(); }
 
 const words = [
     { word: "بيت", emoji: "🏠" }, { word: "باب", emoji: "🚪" },
@@ -429,14 +413,14 @@ function checkSubtraction() {
 
 
 /* ==========================================
-   📖 القرآن الكريم (بصوت الشيخ مباشرة من الإنترنت)
+   📖 القرآن الكريم (بصوت شيخ حقيقي 100%)
 ========================================== */
 
 const quranSurahs = [
     {
         name: "سورة الإخلاص",
         text: "قُلْ هُوَ اللَّهُ أَحَدٌ\nاللَّهُ الصَّمَدُ\nلَمْ يَلِدْ وَلَمْ يُولَدْ\nوَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ",
-        audio: "https://server11.mp3quran.net/sds/112.mp3" // سورة الإخلاص بصوت الشيخ السديس
+        audio: "https://server11.mp3quran.net/sds/112.mp3"
     },
     {
         name: "سورة الفلق",
@@ -469,33 +453,53 @@ let surahIndex = 0;
 let currentAudio = null;
 
 function loadSurah() {
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    const surah = quranSurahs[surahIndex];
-    document.getElementById("surahName").textContent = surah.name;
-    document.getElementById("surahText").innerHTML = surah.text.replace(/\n/g, "<br><br>");
-}
-
-function speakSurah() {
     if (currentAudio) {
         currentAudio.pause();
         currentAudio = null;
-        return;
     }
     const surah = quranSurahs[surahIndex];
+    const nameEl = document.getElementById("surahName");
+    const textEl = document.getElementById("surahText");
+    
+    if (nameEl) nameEl.textContent = surah.name;
+    if (textEl) textEl.innerHTML = surah.text.replace(/\n/g, "<br><br>");
+}
+
+function speakSurah() {
+    // إذا كان الصوت يعمل، قم بإيقافه؛ وإذا كان متوقفاً، قم بتشغيله
+    if (currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        return;
+    }
+
+    if (currentAudio) {
+        currentAudio.play().catch(function(e) {
+            console.log("خطأ إعادة التشغيل:", e);
+        });
+        return;
+    }
+
+    const surah = quranSurahs[surahIndex];
     currentAudio = new Audio(surah.audio);
-    currentAudio.play().catch(function(e) {
-        console.log("خطأ في تشغيل الصوت:", e);
+    
+    currentAudio.play().catch(function(error) {
+        console.log("تعذر التشغيل المباشر:", error);
+        alert("يرجى التأكد من اتصال الإنترنت لتشغيل التلاوة");
     });
 }
 
 function nextSurah() {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+    }
     surahIndex = (surahIndex + 1) % quranSurahs.length;
     loadSurah();
 }
 
 
 /* ==========================================
-   الحديث الشريف والأدعية والكتابة
+   الحديث الشريف والأدعية والكتابة والتحكم
 ========================================== */
 
 const hadiths = [
