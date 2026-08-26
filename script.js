@@ -1,6 +1,7 @@
 /* ==========================================
    🌟 تعلم مع أ/ طه محمد 🌟
    ملف script.js
+   نسخة الصوت الجديدة
 ========================================== */
 
 
@@ -23,7 +24,6 @@ let correctSubtraction = 0;
 ========================================== */
 
 function arabicNumber(number) {
-
     return String(number)
         .replace(/0/g, "٠")
         .replace(/1/g, "١")
@@ -35,16 +35,14 @@ function arabicNumber(number) {
         .replace(/7/g, "٧")
         .replace(/8/g, "٨")
         .replace(/9/g, "٩");
-
 }
 
 
 /* ==========================================
-   نطق الأرقام
+   أسماء الأرقام
 ========================================== */
 
 const numberWords = {
-
     1: "واحد",
     2: "اثنان",
     3: "ثلاثة",
@@ -154,48 +152,159 @@ const numberWords = {
     98: "ثمانية وتسعون",
     99: "تسعة وتسعون",
     100: "مئة"
-
 };
 
 
 /* ==========================================
-   الصوت العربي
+   🔊 نظام النطق الجديد
+   يستخدم Speech Synthesis في المتصفح
 ========================================== */
 
-let currentAudio = null;
+let currentUtterance = null;
+let arabicVoice = null;
+
+
+/* البحث عن أفضل صوت عربي متاح */
+
+function findArabicVoice() {
+
+    if (!("speechSynthesis" in window)) {
+        return null;
+    }
+
+    const voices = window.speechSynthesis.getVoices();
+
+    if (!voices || voices.length === 0) {
+        return null;
+    }
+
+    /* نفضل صوت العربية */
+
+    const exactArabic =
+        voices.find(function(voice) {
+            return voice.lang &&
+                voice.lang.toLowerCase() === "ar-sa";
+        });
+
+    if (exactArabic) {
+        return exactArabic;
+    }
+
+
+    const arabic =
+        voices.find(function(voice) {
+            return voice.lang &&
+                voice.lang.toLowerCase().startsWith("ar");
+        });
+
+    if (arabic) {
+        return arabic;
+    }
+
+
+    return null;
+}
+
+
+/* تحديث الصوت عندما تكون أصوات الجهاز جاهزة */
+
+function loadSpeechVoices() {
+
+    arabicVoice = findArabicVoice();
+
+}
+
+
+/* بعض المتصفحات تحمل الأصوات بعد فتح الصفحة */
+
+if ("speechSynthesis" in window) {
+
+    window.speechSynthesis.onvoiceschanged =
+        loadSpeechVoices;
+
+    loadSpeechVoices();
+
+}
+
+
+/* ==========================================
+   🔊 النطق
+========================================== */
 
 function speak(text) {
 
     if (!text) return;
 
-    if (currentAudio) {
 
-        try {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-        } catch (e) {}
+    if (!("speechSynthesis" in window)) {
 
+        alert(
+            "المتصفح لا يدعم النطق الصوتي."
+        );
+
+        return;
     }
 
-    const encodedText =
-        encodeURIComponent(text);
 
-    const audioUrl =
-        `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=ar&client=tw-ob`;
+    /* إيقاف أي نطق سابق */
 
-    currentAudio =
-        new Audio(audioUrl);
+    window.speechSynthesis.cancel();
 
-    currentAudio.volume = 1;
 
-    currentAudio.play().catch(function(error) {
+    /* تنظيف النص */
 
-        console.log("Audio error:", error);
+    const cleanText =
+        String(text)
+            .replace(/\n+/g, " ")
+            .trim();
 
-    });
+
+    if (!cleanText) return;
+
+
+    currentUtterance =
+        new SpeechSynthesisUtterance(cleanText);
+
+
+    currentUtterance.lang = "ar-SA";
+
+    currentUtterance.rate = 0.85;
+
+    currentUtterance.pitch = 1;
+
+    currentUtterance.volume = 1;
+
+
+    /* اختيار صوت عربي */
+
+    arabicVoice = findArabicVoice();
+
+    if (arabicVoice) {
+        currentUtterance.voice = arabicVoice;
+    }
+
+
+    currentUtterance.onerror =
+        function(error) {
+
+            console.log(
+                "Speech error:",
+                error
+            );
+
+        };
+
+
+    window.speechSynthesis.speak(
+        currentUtterance
+    );
 
 }
 
+
+/* ==========================================
+   مدح الطفل
+========================================== */
 
 function praise() {
 
@@ -254,32 +363,11 @@ function updateStats() {
         const element =
             document.getElementById(id);
 
-        if (element) {
+        if (!element) return;
 
-            if (
-                id === "stars" ||
-                id === "level" ||
-                id === "rewardStars" ||
-                id === "teacherStars" ||
-                id === "teacherLevel" ||
-                id === "teacherLetters" ||
-                id === "teacherWords" ||
-                id === "teacherNumbers" ||
-                id === "teacherAddition" ||
-                id === "teacherSubtraction"
-            ) {
 
-                element.textContent =
-                    arabicNumber(data[id]);
-
-            } else {
-
-                element.textContent =
-                    data[id];
-
-            }
-
-        }
+        element.textContent =
+            arabicNumber(data[id]);
 
     });
 
@@ -352,10 +440,12 @@ const letters = [
 
 
 const letterFatha = [
+
     "أَ","بَ","تَ","ثَ","جَ","حَ","خَ",
     "دَ","ذَ","رَ","زَ","سَ","شَ","صَ",
     "ضَ","طَ","ظَ","عَ","غَ","فَ","قَ",
     "كَ","لَ","مَ","نَ","هَ","وَ","يَ"
+
 ];
 
 
@@ -368,27 +458,44 @@ function loadLetter() {
     const item =
         letters[letterIndex];
 
-    document.getElementById("currentLetter")
-        ?.replaceChildren(
-            document.createTextNode(item.letter)
+
+    const currentLetter =
+        document.getElementById(
+            "currentLetter"
         );
 
+    if (currentLetter) {
+
+        currentLetter.textContent =
+            item.letter;
+
+    }
+
+
     const picture =
-        document.getElementById("letterPicture");
+        document.getElementById(
+            "letterPicture"
+        );
 
     if (picture)
-        picture.textContent = item.emoji;
+        picture.textContent =
+            item.emoji;
 
 
     const word =
-        document.getElementById("letterWord");
+        document.getElementById(
+            "letterWord"
+        );
 
     if (word)
-        word.textContent = item.word;
+        word.textContent =
+            item.word;
 
 
     const message =
-        document.getElementById("letterMessage");
+        document.getElementById(
+            "letterMessage"
+        );
 
     if (message)
         message.textContent = "";
@@ -404,11 +511,15 @@ function loadLetter() {
 function createLetterOptions() {
 
     const box =
-        document.getElementById("letterOptions");
+        document.getElementById(
+            "letterOptions"
+        );
 
     if (!box) return;
 
+
     box.innerHTML = "";
+
 
     let choices = [
         letters[letterIndex].letter
@@ -425,15 +536,16 @@ function createLetterOptions() {
                 )
             ].letter;
 
+
         if (!choices.includes(random))
             choices.push(random);
 
     }
 
 
-    choices.sort(() =>
-        Math.random() - 0.5
-    );
+    choices.sort(function() {
+        return Math.random() - 0.5;
+    });
 
 
     choices.forEach(function(answer) {
@@ -461,7 +573,9 @@ function createLetterOptions() {
 function checkLetter(answer) {
 
     const message =
-        document.getElementById("letterMessage");
+        document.getElementById(
+            "letterMessage"
+        );
 
     if (!message) return;
 
@@ -510,6 +624,7 @@ function speakCurrentLetter() {
     const item =
         letters[letterIndex];
 
+
     speak(
         letterFatha[letterIndex] +
         " " +
@@ -528,6 +643,7 @@ function nextLetter() {
         letters.length
     )
         letterIndex = 0;
+
 
     loadLetter();
 
@@ -563,21 +679,32 @@ function loadWord() {
     const item =
         words[wordIndex];
 
+
     const currentWord =
-        document.getElementById("currentWord");
+        document.getElementById(
+            "currentWord"
+        );
 
     const picture =
-        document.getElementById("wordPicture");
+        document.getElementById(
+            "wordPicture"
+        );
 
     const message =
-        document.getElementById("wordMessage");
+        document.getElementById(
+            "wordMessage"
+        );
 
 
     if (currentWord)
-        currentWord.textContent = item.word;
+        currentWord.textContent =
+            item.word;
+
 
     if (picture)
-        picture.textContent = item.emoji;
+        picture.textContent =
+            item.emoji;
+
 
     if (message)
         message.textContent = "";
@@ -593,11 +720,15 @@ function loadWord() {
 function createWordOptions() {
 
     const box =
-        document.getElementById("wordOptions");
+        document.getElementById(
+            "wordOptions"
+        );
 
     if (!box) return;
 
+
     box.innerHTML = "";
+
 
     let choices = [
         words[wordIndex].word
@@ -614,15 +745,16 @@ function createWordOptions() {
                 )
             ].word;
 
+
         if (!choices.includes(random))
             choices.push(random);
 
     }
 
 
-    choices.sort(() =>
-        Math.random() - 0.5
-    );
+    choices.sort(function() {
+        return Math.random() - 0.5;
+    });
 
 
     choices.forEach(function(answer) {
@@ -632,7 +764,8 @@ function createWordOptions() {
 
         button.className = "option";
 
-        button.textContent = answer;
+        button.textContent =
+            answer;
 
         button.onclick = function() {
 
@@ -650,7 +783,9 @@ function createWordOptions() {
 function checkWord(answer) {
 
     const message =
-        document.getElementById("wordMessage");
+        document.getElementById(
+            "wordMessage"
+        );
 
     if (!message) return;
 
@@ -707,8 +842,12 @@ function nextWord() {
 
     wordIndex++;
 
-    if (wordIndex >= words.length)
+    if (
+        wordIndex >=
+        words.length
+    )
         wordIndex = 0;
+
 
     loadWord();
 
@@ -726,13 +865,19 @@ let numberAnswered = false;
 function loadNumber() {
 
     const number =
-        document.getElementById("currentNumber");
+        document.getElementById(
+            "currentNumber"
+        );
 
     const items =
-        document.getElementById("countItems");
+        document.getElementById(
+            "countItems"
+        );
 
     const message =
-        document.getElementById("numberMessage");
+        document.getElementById(
+            "numberMessage"
+        );
 
 
     if (number)
@@ -772,11 +917,15 @@ function loadNumber() {
 function createNumberOptions() {
 
     const box =
-        document.getElementById("numberOptions");
+        document.getElementById(
+            "numberOptions"
+        );
 
     if (!box) return;
 
+
     box.innerHTML = "";
+
 
     let choices = [
         currentNumber
@@ -790,15 +939,16 @@ function createNumberOptions() {
                 Math.random() * 100
             ) + 1;
 
+
         if (!choices.includes(random))
             choices.push(random);
 
     }
 
 
-    choices.sort(() =>
-        Math.random() - 0.5
-    );
+    choices.sort(function() {
+        return Math.random() - 0.5;
+    });
 
 
     choices.forEach(function(answer) {
@@ -827,7 +977,9 @@ function createNumberOptions() {
 function checkNumber(answer) {
 
     const message =
-        document.getElementById("numberMessage");
+        document.getElementById(
+            "numberMessage"
+        );
 
     if (!message) return;
 
@@ -886,6 +1038,7 @@ function newNumber() {
     if (currentNumber > 100)
         currentNumber = 1;
 
+
     loadNumber();
 
 }
@@ -915,16 +1068,24 @@ function newAddition() {
 
 
     const question =
-        document.getElementById("addQuestion");
+        document.getElementById(
+            "addQuestion"
+        );
 
     const pictures =
-        document.getElementById("addPictures");
+        document.getElementById(
+            "addPictures"
+        );
 
     const answer =
-        document.getElementById("addAnswer");
+        document.getElementById(
+            "addAnswer"
+        );
 
     const message =
-        document.getElementById("addMessage");
+        document.getElementById(
+            "addMessage"
+        );
 
 
     if (question)
@@ -958,10 +1119,15 @@ function newAddition() {
 function checkAddition() {
 
     const input =
-        document.getElementById("addAnswer");
+        document.getElementById(
+            "addAnswer"
+        );
 
     const message =
-        document.getElementById("addMessage");
+        document.getElementById(
+            "addMessage"
+        );
+
 
     if (!input || !message) return;
 
@@ -1034,16 +1200,24 @@ function newSubtraction() {
 
 
     const question =
-        document.getElementById("subQuestion");
+        document.getElementById(
+            "subQuestion"
+        );
 
     const pictures =
-        document.getElementById("subPictures");
+        document.getElementById(
+            "subPictures"
+        );
 
     const answer =
-        document.getElementById("subAnswer");
+        document.getElementById(
+            "subAnswer"
+        );
 
     const message =
-        document.getElementById("subMessage");
+        document.getElementById(
+            "subMessage"
+        );
 
 
     if (question)
@@ -1075,10 +1249,15 @@ function newSubtraction() {
 function checkSubtraction() {
 
     const input =
-        document.getElementById("subAnswer");
+        document.getElementById(
+            "subAnswer"
+        );
 
     const message =
-        document.getElementById("subMessage");
+        document.getElementById(
+            "subMessage"
+        );
+
 
     if (!input || !message) return;
 
@@ -1199,11 +1378,16 @@ function loadSurah() {
     const surah =
         quranSurahs[surahIndex];
 
+
     const name =
-        document.getElementById("surahName");
+        document.getElementById(
+            "surahName"
+        );
 
     const text =
-        document.getElementById("surahText");
+        document.getElementById(
+            "surahText"
+        );
 
 
     if (name)
@@ -1234,11 +1418,13 @@ function nextSurah() {
 
     surahIndex++;
 
+
     if (
         surahIndex >=
         quranSurahs.length
     )
         surahIndex = 0;
+
 
     loadSurah();
 
@@ -1247,7 +1433,6 @@ function nextSurah() {
 
 /* ==========================================
    الحديث الشريف
-   كل حديث له صورة مستقلة
 ========================================== */
 
 const hadiths = [
@@ -1325,13 +1510,19 @@ function loadHadith() {
 
 
     const text =
-        document.getElementById("hadithText");
+        document.getElementById(
+            "hadithText"
+        );
 
     const source =
-        document.getElementById("hadithSource");
+        document.getElementById(
+            "hadithSource"
+        );
 
     const image =
-        document.getElementById("hadithImage");
+        document.getElementById(
+            "hadithImage"
+        );
 
 
     if (text)
@@ -1370,11 +1561,13 @@ function nextHadith() {
 
     hadithIndex++;
 
+
     if (
         hadithIndex >=
         hadiths.length
     )
         hadithIndex = 0;
+
 
     loadHadith();
 
@@ -1435,10 +1628,14 @@ function loadDua() {
 
 
     const title =
-        document.getElementById("duaTitle");
+        document.getElementById(
+            "duaTitle"
+        );
 
     const text =
-        document.getElementById("duaText");
+        document.getElementById(
+            "duaText"
+        );
 
 
     if (title)
@@ -1466,11 +1663,13 @@ function nextDua() {
 
     duaIndex++;
 
+
     if (
         duaIndex >=
         duas.length
     )
         duaIndex = 0;
+
 
     loadDua();
 
@@ -1492,6 +1691,7 @@ function setupCanvas() {
         document.getElementById(
             "writingCanvas"
         );
+
 
     if (!canvas) return;
 
@@ -1604,12 +1804,16 @@ function startDrawing(event) {
 
     if (!ctx) return;
 
+
     drawing = true;
+
 
     const position =
         getPosition(event);
 
+
     ctx.beginPath();
+
 
     ctx.moveTo(
         position.x,
@@ -1624,15 +1828,19 @@ function draw(event) {
     if (!drawing || !ctx)
         return;
 
+
     event.preventDefault();
+
 
     const position =
         getPosition(event);
+
 
     ctx.lineTo(
         position.x,
         position.y
     );
+
 
     ctx.stroke();
 
@@ -1650,6 +1858,7 @@ function clearCanvas() {
 
     if (!ctx) return;
 
+
     ctx.clearRect(
         0,
         0,
@@ -1663,6 +1872,7 @@ function clearCanvas() {
 function finishWriting() {
 
     addStar();
+
 
     const message =
         document.getElementById(
@@ -1679,6 +1889,7 @@ function finishWriting() {
             "message success-text";
 
     }
+
 
     speak("رائع");
 
@@ -1710,12 +1921,17 @@ function resetProgress() {
 
 
     stars = 0;
+
     level = 1;
 
     correctLetters = 0;
+
     correctWords = 0;
+
     correctNumbers = 0;
+
     correctAddition = 0;
+
     correctSubtraction = 0;
 
 
@@ -1733,6 +1949,8 @@ function resetProgress() {
 window.addEventListener(
     "load",
     function() {
+
+        loadSpeechVoices();
 
         updateStats();
 
