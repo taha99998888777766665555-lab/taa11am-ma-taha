@@ -1,0 +1,503 @@
+/* ==========================================
+   🌟 تعلم مع أ/ طه محمد 🌟
+   ملف style.css
+========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Tahoma", "Arial", sans-serif;
+    background: linear-gradient(135deg, #e0f7fa, #fff8e1);
+    color: #333;
+    direction: rtl;
+}
+
+header {
+    background: linear-gradient(135deg, #2196f3, #673ab7);
+    color: white;
+    text-align: center;
+    padding: 25px 15px;
+    border-radius: 0 0 30px 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+header p {
+    font-size: 18px;
+    margin: 10px 0;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.stats span {
+    background: rgba(255,255,255,0.2);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 17px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
+
+.card {
+    background: white;
+    border-radius: 25px;
+    padding: 25px;
+    margin: 15px auto;
+    text-align: center;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+}
+
+.card h2 {
+    color: #3949ab;
+    margin-top: 5px;
+}
+
+.card h3 {
+    margin-top: 25px;
+    color: #555;
+}
+
+/* ==========================================
+   القائمة الرئيسية
+========================================== */
+
+.menu {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.menu button {
+    border: none;
+    border-radius: 22px;
+    padding: 22px 10px;
+    font-size: 20px;
+    cursor: pointer;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transition: 0.2s;
+}
+
+.menu button:hover {
+    transform: translateY(-3px);
+}
+
+.menu button span {
+    display: block;
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+/* ==========================================
+   الأزرار
+========================================== */
+
+button {
+    font-family: inherit;
+}
+
+.primary,
+.secondary,
+.success,
+.danger {
+    border: none;
+    border-radius: 15px;
+    padding: 13px 22px;
+    margin: 7px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.primary {
+    background: #2196f3;
+    color: white;
+}
+
+.secondary {
+    background: #78909c;
+    color: white;
+}
+
+.success {
+    background: #43a047;
+    color: white;
+}
+
+.danger {
+    background: #e53935;
+    color: white;
+}
+
+.primary:hover,
+.secondary:hover,
+.success:hover,
+.danger:hover {
+    transform: scale(1.04);
+}
+
+/* ==========================================
+   الحروف
+========================================== */
+
+.letter {
+    font-size: 80px;
+    font-weight: bold;
+    color: #3949ab;
+    margin: 15px;
+}
+
+.picture {
+    font-size: 70px;
+    margin: 15px;
+}
+
+.word-name {
+    font-size: 30px;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.options {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.option {
+    min-width: 80px;
+    min-height: 60px;
+    border: none;
+    border-radius: 16px;
+    background: #e3f2fd;
+    color: #1565c0;
+    font-size: 28px;
+    font-weight: bold;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.option:hover {
+    background: #bbdefb;
+    transform: scale(1.05);
+}
+
+/* ==========================================
+   الكلمات
+========================================== */
+
+.big-word {
+    font-size: 55px;
+    font-weight: bold;
+    color: #6a1b9a;
+    margin: 20px;
+}
+
+/* ==========================================
+   الأرقام
+========================================== */
+
+.number {
+    font-size: 80px;
+    font-weight: bold;
+    color: #00897b;
+    margin: 20px;
+}
+
+.count-items {
+    min-height: 70px;
+    font-size: 40px;
+    line-height: 1.6;
+    margin: 15px;
+    word-break: break-word;
+}
+
+/* ==========================================
+   العمليات الحسابية
+========================================== */
+
+.operation {
+    font-size: 50px;
+    font-weight: bold;
+    color: #ef6c00;
+    margin: 20px;
+}
+
+input[type="number"] {
+    width: 150px;
+    padding: 12px;
+    border: 3px solid #90caf9;
+    border-radius: 15px;
+    font-size: 30px;
+    text-align: center;
+    outline: none;
+}
+
+input[type="number"]:focus {
+    border-color: #1976d2;
+}
+
+/* ==========================================
+   الرسائل
+========================================== */
+
+.message {
+    min-height: 35px;
+    margin: 15px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.success-text {
+    color: #2e7d32;
+}
+
+.error-text {
+    color: #d32f2f;
+}
+
+/* ==========================================
+   الكتابة
+========================================== */
+
+.writing-guide {
+    font-size: 100px;
+    font-weight: bold;
+    color: #b0bec5;
+    margin: 10px;
+}
+
+#writingCanvas {
+    display: block;
+    width: 100%;
+    height: 300px;
+    background: #fff;
+    border: 4px dashed #90caf9;
+    border-radius: 20px;
+    margin: 15px auto;
+    touch-action: none;
+}
+
+/* ==========================================
+   القرآن الكريم
+========================================== */
+
+.quran-card {
+    background: #fff;
+    border: 3px solid #81c784;
+}
+
+.surah-name {
+    font-size: 30px;
+    font-weight: bold;
+    color: #2e7d32;
+    margin: 15px;
+}
+
+.surah-text {
+    font-family: "Traditional Arabic", "Amiri", "Tahoma", serif;
+    font-size: 30px;
+    line-height: 2.3;
+    background: #f1f8e9;
+    border-radius: 20px;
+    padding: 20px;
+    color: #1b5e20;
+    margin: 15px 0;
+}
+
+/* ==========================================
+   الحديث الشريف
+========================================== */
+
+.hadith-card {
+    background: linear-gradient(135deg, #fffde7, #ffffff);
+    border: 3px solid #ffd54f;
+}
+
+.hadith-image {
+    width: 100%;
+    max-width: 420px;
+    height: 230px;
+    margin: 15px auto;
+    border-radius: 22px;
+    object-fit: cover;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.hadith-icon {
+    font-size: 70px;
+    margin: 10px;
+}
+
+.hadith-text {
+    background: #fff8e1;
+    border-radius: 20px;
+    padding: 22px;
+    font-size: 28px;
+    line-height: 2;
+    font-weight: bold;
+    color: #5d4037;
+    margin: 15px 0;
+}
+
+.hadith-source {
+    font-size: 18px;
+    color: #795548;
+    margin: 15px;
+}
+
+/* ==========================================
+   الأدعية
+========================================== */
+
+.dua-card {
+    background: linear-gradient(135deg, #e8f5e9, #ffffff);
+    border: 3px solid #81c784;
+}
+
+.dua-title {
+    font-size: 28px;
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.dua-text {
+    background: #f1f8e9;
+    padding: 25px;
+    border-radius: 20px;
+    font-size: 30px;
+    line-height: 2;
+    color: #33691e;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+/* ==========================================
+   المكافآت
+========================================== */
+
+.reward {
+    font-size: 100px;
+    margin: 20px;
+}
+
+#rewardStars {
+    color: #f9a825;
+    font-size: 40px;
+}
+
+/* ==========================================
+   متابعة الطفل
+========================================== */
+
+.teacher-stat {
+    background: #f5f5f5;
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 15px;
+    font-size: 20px;
+}
+
+.teacher-stat b {
+    color: #3949ab;
+    font-size: 24px;
+}
+
+/* ==========================================
+   تحسين الهاتف
+========================================== */
+
+@media (max-width: 600px) {
+
+    header h1 {
+        font-size: 25px;
+    }
+
+    header p {
+        font-size: 16px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    .menu {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .menu button {
+        padding: 18px 5px;
+        font-size: 18px;
+    }
+
+    .letter,
+    .number {
+        font-size: 65px;
+    }
+
+    .big-word {
+        font-size: 45px;
+    }
+
+    .operation {
+        font-size: 38px;
+    }
+
+    .surah-text,
+    .hadith-text,
+    .dua-text {
+        font-size: 24px;
+    }
+
+    .count-items {
+        font-size: 30px;
+    }
+
+    #writingCanvas {
+        height: 250px;
+    }
+
+    .primary,
+    .secondary,
+    .success,
+    .danger {
+        font-size: 16px;
+        padding: 11px 16px;
+    }
+}
