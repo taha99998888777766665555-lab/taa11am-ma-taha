@@ -168,7 +168,7 @@
 
 
 <!-- ==========================================
-     الحروف
+     الحروف (مع ربط صوتك الحقيقي alif.mp3)
 ========================================== -->
 
 <section
@@ -187,6 +187,8 @@
         <div
             class="letter"
             id="currentLetter"
+            onclick="speakCurrentLetter()"
+            style="cursor: pointer;"
         >
             أ
         </div>
@@ -212,7 +214,7 @@
             class="primary"
             onclick="speakCurrentLetter()"
         >
-            🔊 اسمع
+            🔊 اسمع صوت أستاذ طه
         </button>
 
 
@@ -1055,6 +1057,22 @@
 
 </main>
 
+
+<!-- ملف الصوت الخاص بك داخل مجلد sound -->
+<audio id="teacherAlifAudio" src="sound/alif.mp3"></audio>
+
+<script>
+    // دالة مخصصة لضمان تشغيل صوتك الحقيقي عند الضغط على الحرف
+    function speakCurrentLetter() {
+        let audio = document.getElementById('teacherAlifAudio');
+        if(audio) {
+            audio.currentTime = 0;
+            audio.play().catch(error => {
+                console.log("تأكد من وجود ملف sound/alif.mp3 في مكانه الصحيح");
+            });
+        }
+    }
+</script>
 
 <script src="script.js"></script>
 
