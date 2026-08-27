@@ -17,22 +17,13 @@
     >
 </head>
 
-
 <body>
-
-
-<!-- ==========================================
-     رأس التطبيق
-========================================== -->
 
 <header>
 
     <h1>🌟 تعلم مع أ/طه محمد 🌟</h1>
 
-    <p>
-        نتعلم معًا بطريقة ممتعة 😊
-    </p>
-
+    <p>نتعلم معًا بطريقة ممتعة 😊</p>
 
     <div class="stats">
 
@@ -40,7 +31,6 @@
             ⭐ النجوم:
             <b id="stars">٠</b>
         </span>
-
 
         <span>
             🎯 المستوى:
@@ -52,7 +42,6 @@
 </header>
 
 
-
 <main class="container">
 
 
@@ -60,188 +49,90 @@
      الرئيسية
 ========================================== -->
 
-<section
-    id="home"
-    class="screen active"
->
+<section id="home" class="screen active">
 
-    <h2>
-        ماذا تريد أن تتعلم؟ 😊
-    </h2>
-
+    <h2>ماذا تريد أن تتعلم؟ 😊</h2>
 
     <div class="menu">
 
-
-        <button
-            onclick="showScreen('letters')"
-        >
+        <button onclick="showScreen('letters')">
             🔤
             <span>الحروف</span>
         </button>
 
-
-        <button
-            onclick="showScreen('words')"
-        >
+        <button onclick="showScreen('words')">
             📖
             <span>الكلمات</span>
         </button>
 
-
-        <button
-            onclick="showScreen('numbers')"
-        >
+        <button onclick="showScreen('numbers')">
             🔢
             <span>الأرقام</span>
         </button>
 
-
-        <button
-            onclick="showScreen('writing')"
-        >
+        <button onclick="showScreen('writing')">
             ✏️
             <span>الكتابة</span>
         </button>
 
-
-        <button
-            onclick="showScreen('addition')"
-        >
+        <button onclick="showScreen('addition')">
             ➕
             <span>الجمع</span>
         </button>
 
-
-        <button
-            onclick="showScreen('subtraction')"
-        >
+        <button onclick="showScreen('subtraction')">
             ➖
             <span>الطرح</span>
         </button>
 
-
-        <button
-            onclick="showScreen('quran')"
-        >
+        <button onclick="showScreen('quran')">
             📖
             <span>القرآن الكريم</span>
         </button>
 
-
-        <button
-            onclick="showScreen('hadith')"
-        >
+        <button onclick="showScreen('hadith')">
             🕌
             <span>الحديث الشريف</span>
         </button>
 
-
-        <button
-            onclick="showScreen('duas')"
-        >
+        <button onclick="showScreen('duas')">
             🤲
             <span>الأدعية</span>
         </button>
 
-
-        <button
-            onclick="showScreen('rewards')"
-        >
+        <button onclick="showScreen('rewards')">
             🏆
             <span>مكافآتي</span>
         </button>
 
-
-        <button
-            onclick="showScreen('teacher')"
-        >
+        <button onclick="showScreen('teacher')">
             👨‍🏫
             <span>المعلم</span>
         </button>
-
 
     </div>
 
 </section>
 
 
-
 <!-- ==========================================
-     الحروف (مع ربط صوتك الحقيقي alif.mp3)
+     قائمة الحروف
 ========================================== -->
 
-<section
-    id="letters"
-    class="screen"
->
+<section id="letters" class="screen">
 
-    <div class="card">
+    <div class="card letters-card">
 
+        <h2>🔤 حروف الهجاء</h2>
 
-        <h2>
-            🔤 تعلم الحروف
-        </h2>
-
+        <p class="letters-intro">
+            اختر الحرف الذي تريد تعلمه 😊
+        </p>
 
         <div
-            class="letter"
-            id="currentLetter"
-            onclick="speakCurrentLetter()"
-            style="cursor: pointer;"
-        >
-            أ
-        </div>
-
-
-        <div
-            class="picture"
-            id="letterPicture"
-        >
-            🦁
-        </div>
-
-
-        <div
-            class="word-name"
-            id="letterWord"
-        >
-            أسد
-        </div>
-
-
-        <button
-            class="primary"
-            onclick="speakCurrentLetter()"
-        >
-            🔊 اسمع صوت أستاذ طه
-        </button>
-
-
-        <h3>
-            اختر الحرف الصحيح
-        </h3>
-
-
-        <div
-            id="letterOptions"
-            class="options"
+            id="lettersList"
+            class="letters-list"
         ></div>
-
-
-        <div
-            id="letterMessage"
-            class="message"
-        ></div>
-
-
-        <button
-            class="primary"
-            onclick="nextLetter()"
-        >
-            التالي ➡️
-        </button>
-
 
         <button
             class="secondary"
@@ -250,29 +141,167 @@
             🏠 الرئيسية
         </button>
 
+    </div>
+
+</section>
+
+
+<!-- ==========================================
+     درس الحرف
+========================================== -->
+
+<section id="letterLesson" class="screen">
+
+    <div class="card letter-lesson-card">
+
+        <div class="lesson-top">
+
+            <button
+                class="back-button"
+                onclick="showScreen('letters')"
+            >
+                ↩️ الحروف
+            </button>
+
+            <div class="lesson-progress">
+
+                ⭐
+                <span id="letterStars">٠</span>
+                /
+                <span id="letterTotalGames">١٣</span>
+
+            </div>
+
+        </div>
+
+
+        <h2 id="lessonTitle">
+            🌟 حرف الألف 🌟
+        </h2>
+
+
+        <div
+            id="lessonLetter"
+            class="lesson-letter"
+        >
+            أ
+        </div>
+
+
+        <div
+            id="lessonSound"
+            class="lesson-sound"
+        >
+            أَ
+        </div>
+
+
+        <div
+            id="lessonPicture"
+            class="lesson-picture"
+        >
+            🦁
+        </div>
+
+
+        <div
+            id="lessonWord"
+            class="lesson-word"
+        >
+            أَسَد
+        </div>
+
+
+        <button
+            class="primary"
+            onclick="speakLessonSound()"
+        >
+            🔊 اسمع صوت الحرف
+        </button>
+
+
+        <div class="game-progress">
+
+            <div class="game-progress-text">
+                اللعبة
+                <b id="currentGameNumber">١</b>
+                من
+                <b>١٣</b>
+            </div>
+
+            <div class="game-progress-bar">
+
+                <div
+                    id="gameProgressFill"
+                    class="game-progress-fill"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================
+             منطقة الألعاب
+        ======================================= -->
+
+        <div
+            id="miniGame"
+            class="mini-game"
+        ></div>
+
+
+        <div
+            id="gameMessage"
+            class="game-message"
+        ></div>
+
+
+        <button
+            id="nextGameButton"
+            class="success"
+            onclick="nextMiniGame()"
+            style="display:none;"
+        >
+            اللعبة التالية ➡️
+        </button>
+
+
+        <div
+            id="badgeArea"
+            class="badge-area"
+            style="display:none;"
+        >
+
+            <div class="badge-icon">
+                🏅
+            </div>
+
+            <h2>
+                بطل حرف الألف
+            </h2>
+
+            <p>
+                🎉 أكملت الألعاب الـ١٣ بنجاح!
+            </p>
+
+        </div>
+
 
     </div>
 
 </section>
 
 
-
 <!-- ==========================================
      الكلمات
 ========================================== -->
 
-<section
-    id="words"
-    class="screen"
->
+<section id="words" class="screen">
 
     <div class="card">
 
-
-        <h2>
-            📖 قراءة الكلمات
-        </h2>
-
+        <h2>📖 قراءة الكلمات</h2>
 
         <div
             class="picture"
@@ -281,14 +310,12 @@
             🏠
         </div>
 
-
         <div
             class="big-word"
             id="currentWord"
         >
             بيت
         </div>
-
 
         <button
             class="primary"
@@ -297,23 +324,19 @@
             🔊 اسمع الكلمة
         </button>
 
-
         <h3>
             اختر الكلمة الصحيحة
         </h3>
-
 
         <div
             id="wordOptions"
             class="options"
         ></div>
 
-
         <div
             id="wordMessage"
             class="message"
         ></div>
-
 
         <button
             class="primary"
@@ -322,7 +345,6 @@
             كلمة جديدة ➡️
         </button>
 
-
         <button
             class="secondary"
             onclick="showScreen('home')"
@@ -330,29 +352,20 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      الأرقام
 ========================================== -->
 
-<section
-    id="numbers"
-    class="screen"
->
+<section id="numbers" class="screen">
 
     <div class="card">
 
-
-        <h2>
-            🔢 الأرقام
-        </h2>
-
+        <h2>🔢 الأرقام</h2>
 
         <div
             class="number"
@@ -361,14 +374,12 @@
             ١
         </div>
 
-
         <div
             id="countItems"
             class="count-items"
         >
             🍎
         </div>
-
 
         <button
             class="primary"
@@ -377,23 +388,19 @@
             🔊 اسمع الرقم
         </button>
 
-
         <h3>
             كم عدد التفاح؟
         </h3>
-
 
         <div
             id="numberOptions"
             class="options"
         ></div>
 
-
         <div
             id="numberMessage"
             class="message"
         ></div>
-
 
         <button
             class="primary"
@@ -402,7 +409,6 @@
             رقم جديد ➡️
         </button>
 
-
         <button
             class="secondary"
             onclick="showScreen('home')"
@@ -410,34 +416,24 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      الكتابة
 ========================================== -->
 
-<section
-    id="writing"
-    class="screen"
->
+<section id="writing" class="screen">
 
     <div class="card">
 
-
-        <h2>
-            ✏️ تدريب الكتابة
-        </h2>
-
+        <h2>✏️ تدريب الكتابة</h2>
 
         <p>
             تتبع الحرف بإصبعك 👆
         </p>
-
 
         <div
             class="writing-guide"
@@ -446,11 +442,9 @@
             أ
         </div>
 
-
         <canvas
             id="writingCanvas"
         ></canvas>
-
 
         <button
             class="danger"
@@ -459,14 +453,12 @@
             🗑️ مسح
         </button>
 
-
         <button
             class="success"
             onclick="finishWriting()"
         >
             ✅ انتهيت
         </button>
-
 
         <button
             class="primary"
@@ -475,12 +467,10 @@
             حرف جديد ➡️
         </button>
 
-
         <div
             id="writingMessage"
             class="message"
         ></div>
-
 
         <button
             class="secondary"
@@ -489,29 +479,20 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      الجمع
 ========================================== -->
 
-<section
-    id="addition"
-    class="screen"
->
+<section id="addition" class="screen">
 
     <div class="card">
 
-
-        <h2>
-            ➕ الجمع
-        </h2>
-
+        <h2>➕ الجمع</h2>
 
         <div
             id="addPictures"
@@ -520,7 +501,6 @@
             🍎 + 🍎
         </div>
 
-
         <div
             id="addQuestion"
             class="operation"
@@ -528,16 +508,13 @@
             ١ + ١ = ؟
         </div>
 
-
         <input
             id="addAnswer"
             type="number"
             inputmode="numeric"
         >
 
-
         <br>
-
 
         <button
             class="success"
@@ -546,7 +523,6 @@
             ✅ تحقق
         </button>
 
-
         <button
             class="primary"
             onclick="newAddition()"
@@ -554,12 +530,10 @@
             سؤال جديد
         </button>
 
-
         <div
             id="addMessage"
             class="message"
         ></div>
-
 
         <button
             class="secondary"
@@ -568,29 +542,20 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      الطرح
 ========================================== -->
 
-<section
-    id="subtraction"
-    class="screen"
->
+<section id="subtraction" class="screen">
 
     <div class="card">
 
-
-        <h2>
-            ➖ الطرح
-        </h2>
-
+        <h2>➖ الطرح</h2>
 
         <div
             id="subPictures"
@@ -599,7 +564,6 @@
             🍎🍎🍎
         </div>
 
-
         <div
             id="subQuestion"
             class="operation"
@@ -607,16 +571,13 @@
             ٣ - ١ = ؟
         </div>
 
-
         <input
             id="subAnswer"
             type="number"
             inputmode="numeric"
         >
 
-
         <br>
-
 
         <button
             class="success"
@@ -625,7 +586,6 @@
             ✅ تحقق
         </button>
 
-
         <button
             class="primary"
             onclick="newSubtraction()"
@@ -633,12 +593,10 @@
             سؤال جديد
         </button>
 
-
         <div
             id="subMessage"
             class="message"
         ></div>
-
 
         <button
             class="secondary"
@@ -647,36 +605,24 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      القرآن الكريم
 ========================================== -->
 
-<section
-    id="quran"
-    class="screen"
->
+<section id="quran" class="screen">
 
     <div class="card quran-card">
 
+        <h2>📖 القرآن الكريم</h2>
 
-        <h2>
-            📖 القرآن الكريم
-        </h2>
-
-
-        <div
-            class="quran-decoration"
-        >
+        <div class="quran-decoration">
             🕌
         </div>
-
 
         <h3
             id="surahName"
@@ -685,14 +631,12 @@
             سورة الإخلاص
         </h3>
 
-
         <div
             id="surahText"
             class="quran-text"
         >
             قُلْ هُوَ اللَّهُ أَحَدٌ
         </div>
-
 
         <button
             class="primary"
@@ -701,14 +645,12 @@
             🔊 استمع للسورة
         </button>
 
-
         <button
             class="success"
             onclick="nextSurah()"
         >
             📖 سورة أخرى
         </button>
-
 
         <button
             class="secondary"
@@ -717,36 +659,24 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      الحديث الشريف
 ========================================== -->
 
-<section
-    id="hadith"
-    class="screen"
->
+<section id="hadith" class="screen">
 
     <div class="card hadith-card">
 
-
-        <h2>
-            🕌 الحديث الشريف
-        </h2>
-
+        <h2>🕌 الحديث الشريف</h2>
 
         <p class="hadith-intro">
             نتعلم حديثًا جميلًا كل مرة 🌟
         </p>
-
-
-        <!-- صورة الحديث -->
 
         <div
             id="hadithImage"
@@ -755,18 +685,12 @@
             ❤️
         </div>
 
-
-        <!-- نص الحديث -->
-
         <div
             id="hadithText"
             class="hadith-text"
         >
             إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ
         </div>
-
-
-        <!-- المصدر -->
 
         <div
             id="hadithSource"
@@ -775,16 +699,12 @@
             رواه البخاري ومسلم
         </div>
 
-
-        <!-- المعنى المبسط -->
-
         <div
             id="hadithMeaning"
             class="hadith-meaning"
         >
             اعمل الخير بنية طيبة
         </div>
-
 
         <button
             class="primary"
@@ -793,14 +713,12 @@
             🔊 اسمع الحديث
         </button>
 
-
         <button
             class="success"
             onclick="nextHadith()"
         >
             ➡️ حديث آخر
         </button>
-
 
         <button
             class="secondary"
@@ -809,36 +727,24 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      الأدعية
 ========================================== -->
 
-<section
-    id="duas"
-    class="screen"
->
+<section id="duas" class="screen">
 
     <div class="card dua-card">
 
+        <h2>🤲 الأدعية</h2>
 
-        <h2>
-            🤲 الأدعية
-        </h2>
-
-
-        <div
-            class="dua-image"
-        >
+        <div class="dua-image">
             🤲
         </div>
-
 
         <h3
             id="duaTitle"
@@ -847,14 +753,12 @@
             دعاء قبل الطعام
         </h3>
 
-
         <div
             id="duaText"
             class="dua-text"
         >
             بسم الله
         </div>
-
 
         <button
             class="primary"
@@ -863,14 +767,12 @@
             🔊 اسمع الدعاء
         </button>
 
-
         <button
             class="success"
             onclick="nextDua()"
         >
             🤲 دعاء آخر
         </button>
-
 
         <button
             class="secondary"
@@ -879,34 +781,24 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      المكافآت
 ========================================== -->
 
-<section
-    id="rewards"
-    class="screen"
->
+<section id="rewards" class="screen">
 
     <div class="card">
 
-
-        <h2>
-            🏆 مكافآتي
-        </h2>
-
+        <h2>🏆 مكافآتي</h2>
 
         <div class="reward">
             ⭐
         </div>
-
 
         <h2>
 
@@ -920,11 +812,9 @@
 
         </h2>
 
-
         <p>
             استمر في التعلم لتحصل على المزيد 🌟
         </p>
-
 
         <button
             class="secondary"
@@ -933,29 +823,20 @@
             🏠 الرئيسية
         </button>
 
-
     </div>
 
 </section>
-
 
 
 <!-- ==========================================
      المعلم
 ========================================== -->
 
-<section
-    id="teacher"
-    class="screen"
->
+<section id="teacher" class="screen">
 
     <div class="card">
 
-
-        <h2>
-            👨‍🏫 متابعة الطفل
-        </h2>
-
+        <h2>👨‍🏫 متابعة الطفل</h2>
 
         <div class="teacher-stat">
 
@@ -967,7 +848,6 @@
 
         </div>
 
-
         <div class="teacher-stat">
 
             🎯 المستوى:
@@ -977,7 +857,6 @@
             </b>
 
         </div>
-
 
         <div class="teacher-stat">
 
@@ -989,7 +868,6 @@
 
         </div>
 
-
         <div class="teacher-stat">
 
             📖 الكلمات الصحيحة:
@@ -999,7 +877,6 @@
             </b>
 
         </div>
-
 
         <div class="teacher-stat">
 
@@ -1011,7 +888,6 @@
 
         </div>
 
-
         <div class="teacher-stat">
 
             ➕ الجمع:
@@ -1021,7 +897,6 @@
             </b>
 
         </div>
-
 
         <div class="teacher-stat">
 
@@ -1033,7 +908,6 @@
 
         </div>
 
-
         <button
             class="danger"
             onclick="resetProgress()"
@@ -1041,14 +915,12 @@
             🔄 تصفير النتائج
         </button>
 
-
         <button
             class="secondary"
             onclick="showScreen('home')"
         >
             🏠 الرئيسية
         </button>
-
 
     </div>
 
@@ -1058,21 +930,16 @@
 </main>
 
 
-<!-- ملف الصوت الخاص بك داخل مجلد sound -->
-<audio id="teacherAlifAudio" src="sound/alif.mp3"></audio>
+<!-- ==========================================
+     الصوت الخاص بحرف الألف
+========================================== -->
 
-<script>
-    // دالة مخصصة لضمان تشغيل صوتك الحقيقي عند الضغط على الحرف
-    function speakCurrentLetter() {
-        let audio = document.getElementById('teacherAlifAudio');
-        if(audio) {
-            audio.currentTime = 0;
-            audio.play().catch(error => {
-                console.log("تأكد من وجود ملف sound/alif.mp3 في مكانه الصحيح");
-            });
-        }
-    }
-</script>
+<audio
+    id="teacherAlifAudio"
+    src="sound/alif.mp3"
+    preload="auto"
+></audio>
+
 
 <script src="script.js"></script>
 
