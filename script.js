@@ -5,56 +5,271 @@
 const letters = [
     { letter: "أ", sound: "أَ", word: "أَسَد", picture: "🦁", audio: "sound/alif.mp3" },
     { letter: "ب", sound: "بَ", word: "بَطَّة", picture: "🦆", audio: "" },
-    { letter: "ت", sound: "تَ", word: "تُفَّاح", picture: "🍎", audio: "" },
+    { letter: "ت", sound: "تَ", word: "تَمْر", picture: "🌴", audio: "" },
     { letter: "ث", sound: "ثَ", word: "ثَعْلَب", picture: "🦊", audio: "" },
     { letter: "ج", sound: "جَ", word: "جَمَل", picture: "🐪", audio: "" },
-    { letter: "ح", sound: "حَ", word: "حِصَان", picture: "🐎", audio: "" },
+    { letter: "ح", sound: "حَ", word: "حَمَامَة", picture: "🕊️", audio: "" },
     { letter: "خ", sound: "خَ", word: "خَرُوف", picture: "🐑", audio: "" },
-    { letter: "د", sound: "دَ", word: "دُبّ", picture: "🐻", audio: "" },
-    { letter: "ذ", sound: "ذَ", word: "ذُرَة", picture: "🌽", audio: "" },
-    { letter: "ر", sound: "رَ", word: "رُمَّان", picture: "🍎", audio: "" },
+    { letter: "د", sound: "دَ", word: "دَجَاجَة", picture: "🐔", audio: "" },
+    { letter: "ذ", sound: "ذَ", word: "ذَرَة", picture: "🌽", audio: "" },
+    { letter: "ر", sound: "رَ", word: "رُمَّان", picture: "🔴", audio: "" },
     { letter: "ز", sound: "زَ", word: "زَهْرَة", picture: "🌸", audio: "" },
     { letter: "س", sound: "سَ", word: "سَمَكَة", picture: "🐟", audio: "" },
     { letter: "ش", sound: "شَ", word: "شَمْس", picture: "☀️", audio: "" },
     { letter: "ص", sound: "صَ", word: "صَقْر", picture: "🦅", audio: "" },
-    { letter: "ض", sound: "ضَ", word: "ضِفْدَع", picture: "🐸", audio: "" },
+    { letter: "ض", sound: "ضَ", word: "ضَفْدَع", picture: "🐸", audio: "" },
     { letter: "ط", sound: "طَ", word: "طَائِرَة", picture: "✈️", audio: "" },
     { letter: "ظ", sound: "ظَ", word: "ظَرْف", picture: "✉️", audio: "" },
     { letter: "ع", sound: "عَ", word: "عَيْن", picture: "👁️", audio: "" },
     { letter: "غ", sound: "غَ", word: "غَزَال", picture: "🦌", audio: "" },
-    { letter: "ف", sound: "فَ", word: "فِيل", picture: "🐘", audio: "" },
+    { letter: "ف", sound: "فَ", word: "فَرَاشَة", picture: "🦋", audio: "" },
     { letter: "ق", sound: "قَ", word: "قَلَم", picture: "✏️", audio: "" },
-    { letter: "ك", sound: "كَ", word: "كِتَاب", picture: "📚", audio: "" },
+    { letter: "ك", sound: "كَ", word: "كَعْكَة", picture: "🍰", audio: "" },
     { letter: "ل", sound: "لَ", word: "لَيْمُون", picture: "🍋", audio: "" },
     { letter: "م", sound: "مَ", word: "مَوْز", picture: "🍌", audio: "" },
     { letter: "ن", sound: "نَ", word: "نَحْلَة", picture: "🐝", audio: "" },
-    { letter: "هـ", sound: "هَ", word: "هِلال", picture: "🌙", audio: "" },
+    { letter: "هـ", sound: "هَ", word: "هَلَال", picture: "🌙", audio: "" },
     { letter: "و", sound: "وَ", word: "وَرْدَة", picture: "🌹", audio: "" },
     { letter: "ي", sound: "يَ", word: "يَد", picture: "✋", audio: "" }
 ];
 
 
 /* ==========================================
-   🎮 إعداد الألعاب
+   ⭐ نظام النقاط والنجوم العام
+========================================== */
+
+let totalStars = 0;
+
+function addStar() {
+    totalStars++;
+    updateStarsDisplay();
+}
+
+function updateStarsDisplay() {
+    const starElements = document.querySelectorAll(".total-stars");
+
+    starElements.forEach(function(el) {
+        el.textContent = arabicNumber(totalStars);
+    });
+}
+
+
+/* ==========================================
+   🗣️ نظام النطق والصوت
+========================================== */
+
+let currentAudio = null;
+
+function speak(text) {
+    if (!("speechSynthesis" in window)) return;
+
+    try {
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        utterance.lang = "ar-SA";
+        utterance.rate = 0.85;
+        utterance.pitch = 1.1;
+
+        window.speechSynthesis.speak(utterance);
+    } catch (error) {
+        console.log("تعذر تشغيل النطق:", error);
+    }
+}
+
+
+function playAudio(path) {
+    try {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
+
+        currentAudio = new Audio(path);
+
+        currentAudio.play().catch(function(error) {
+            console.log("تعذر تشغيل الملف الصوتي:", error);
+
+            currentAudio = null;
+        });
+    } catch (error) {
+        console.log("خطأ في تشغيل الصوت:", error);
+    }
+}
+
+
+function praise() {
+    const phrases = [
+        "ممتاز!",
+        "أحسنت!",
+        "بطل!",
+        "رائع جداً!",
+        "بارك الله فيك!"
+    ];
+
+    const randomPhrase =
+        phrases[Math.floor(Math.random() * phrases.length)];
+
+    speak(randomPhrase);
+}
+
+
+/* ==========================================
+   🔢 تحويل الأرقام إلى العربية
+========================================== */
+
+function arabicNumber(n) {
+    const arabicNums = [
+        "٠", "١", "٢", "٣", "٤",
+        "٥", "٦", "٧", "٨", "٩"
+    ];
+
+    return String(n).replace(/\d/g, function(x) {
+        return arabicNums[x];
+    });
+}
+
+
+/* ==========================================
+   📱 التنقل بين الأقسام
+========================================== */
+
+function showScreen(screenId) {
+
+    document.querySelectorAll(".screen").forEach(function(screen) {
+        screen.classList.remove("active");
+    });
+
+    const target = document.getElementById(screenId);
+
+    if (target) {
+        target.classList.add("active");
+    }
+}
+
+
+/* ==========================================
+   🏠 تهيئة التطبيق
+========================================== */
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    renderLetterGrid();
+
+    updateStarsDisplay();
+});
+
+
+/* ==========================================
+   🔤 شبكة الحروف
+========================================== */
+
+function renderLetterGrid() {
+
+    const grid = document.getElementById("lettersGrid");
+
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    letters.forEach(function(item, index) {
+
+        const card = document.createElement("div");
+
+        card.className = "letter-card";
+
+        card.innerHTML = `
+            <div class="card-letter">${item.letter}</div>
+            <div class="card-word">${item.word}</div>
+        `;
+
+        card.onclick = function() {
+
+            currentLetterIndex = index;
+
+            openLetterLesson();
+        };
+
+        grid.appendChild(card);
+    });
+}
+
+
+/* ==========================================
+   📖 قسم درس الحرف
+========================================== */
+
+function openLetterLesson() {
+
+    showScreen("lessonScreen");
+
+    updateLetterLesson();
+}
+
+
+function updateLetterLesson() {
+
+    const item = getCurrentLetter();
+
+    const letterEl =
+        document.getElementById("lessonLetterDisplay");
+
+    const soundEl =
+        document.getElementById("lessonSoundDisplay");
+
+    const wordEl =
+        document.getElementById("lessonWordDisplay");
+
+    const pictureEl =
+        document.getElementById("lessonPictureDisplay");
+
+
+    if (letterEl) {
+        letterEl.textContent = item.letter;
+    }
+
+    if (soundEl) {
+        soundEl.textContent = item.sound;
+    }
+
+    if (wordEl) {
+        wordEl.textContent = item.word;
+    }
+
+    if (pictureEl) {
+        pictureEl.textContent = item.picture;
+    }
+
+    startLetterGames();
+}
+
+
+/* ==========================================
+   🎮 محرك الألعاب
 ========================================== */
 
 let currentGameIndex = 0;
+
 let currentLetterIndex = 0;
+
 let completedGames = [];
+
 const TOTAL_GAMES = 26;
 
 
 /* ==========================================
-   🔍 الحرف الحالي
+   🔍 الحصول على الحرف الحالي
 ========================================== */
 
 function getCurrentLetter() {
+
     return letters[currentLetterIndex];
 }
 
 
 /* ==========================================
-   🔊 نطق صوت الحرف
+   🎧 صوت درس الحرف
 ========================================== */
 
 function speakLessonSound() {
@@ -63,40 +278,44 @@ function speakLessonSound() {
 
     if (item.audio) {
 
-        const audio = new Audio(item.audio);
-
-        audio.currentTime = 0;
-
-        audio.play().catch(function(error) {
-            console.log("تعذر تشغيل الصوت:", error);
-        });
+        playAudio(item.audio);
 
         return;
     }
 
-    if (typeof speak === "function") {
-        speak(item.sound);
-    }
+    speak(item.sound);
 }
 
 
 /* ==========================================
-   ▶️ بدء الألعاب
+   ▶️ بدء ألعاب الحرف
 ========================================== */
 
 function startLetterGames() {
 
     currentGameIndex = 0;
 
-    completedGames = new Array(TOTAL_GAMES).fill(false);
+    completedGames =
+        new Array(TOTAL_GAMES).fill(false);
 
-    const badge = document.getElementById("badgeArea");
-    if (badge) badge.style.display = "none";
 
-    const nextButton = document.getElementById("nextGameButton");
-    if (nextButton) nextButton.style.display = "none";
+    const badge =
+        document.getElementById("badgeArea");
 
-    updateLetterLesson();
+    if (badge) {
+        badge.style.display = "none";
+    }
+
+
+    const nextButton =
+        document.getElementById("nextGameButton");
+
+    if (nextButton) {
+        nextButton.style.display = "none";
+    }
+
+
+    updateGameProgress();
 
     renderCurrentMiniGame();
 }
@@ -108,43 +327,46 @@ function startLetterGames() {
 
 function updateGameProgress() {
 
-    const number = document.getElementById("currentGameNumber");
-    const fill = document.getElementById("gameProgressFill");
-    const starsElement = document.getElementById("letterStars");
+    const number =
+        document.getElementById("currentGameNumber");
+
+    const fill =
+        document.getElementById("gameProgressFill");
+
+    const starsElement =
+        document.getElementById("letterStars");
+
 
     if (number) {
 
-        if (typeof arabicNumber === "function") {
-            number.textContent = arabicNumber(currentGameIndex + 1);
-        } else {
-            number.textContent = currentGameIndex + 1;
-        }
+        number.textContent =
+            arabicNumber(currentGameIndex + 1);
     }
+
 
     if (fill) {
 
         const percentage =
             (currentGameIndex / TOTAL_GAMES) * 100;
 
-        fill.style.width = percentage + "%";
+        fill.style.width =
+            percentage + "%";
     }
+
 
     if (starsElement) {
 
         const count =
             completedGames.filter(Boolean).length;
 
-        if (typeof arabicNumber === "function") {
-            starsElement.textContent = arabicNumber(count);
-        } else {
-            starsElement.textContent = count;
-        }
+        starsElement.textContent =
+            arabicNumber(count);
     }
 }
 
 
 /* ==========================================
-   ⭐ إكمال اللعبة
+   ⭐ إكمال اللعبة الحالية
 ========================================== */
 
 function completeCurrentGame() {
@@ -153,35 +375,38 @@ function completeCurrentGame() {
         return;
     }
 
+
     completedGames[currentGameIndex] = true;
 
-    if (typeof addStar === "function") {
-        addStar();
-    }
+    addStar();
+
 
     const message =
         document.getElementById("gameMessage");
 
     if (message) {
 
-        message.textContent = "⭐ ممتاز! أحسنت";
+        message.textContent = "⭐ ممتاز";
 
         message.className =
             "game-message success-text";
     }
 
-    if (typeof praise === "function") {
-        praise();
-    }
+
+    praise();
 
     updateGameProgress();
+
 
     const nextButton =
         document.getElementById("nextGameButton");
 
+
     if (nextButton) {
 
-        nextButton.style.display = "inline-block";
+        nextButton.style.display =
+            "inline-block";
+
 
         if (currentGameIndex === TOTAL_GAMES - 1) {
 
@@ -217,12 +442,11 @@ function nextMiniGame() {
                 "game-message error-text";
         }
 
-        if (typeof speak === "function") {
-            speak("أكمل اللعبة أولًا");
-        }
+        speak("أكمل اللعبة أولًا");
 
         return;
     }
+
 
     if (currentGameIndex === TOTAL_GAMES - 1) {
 
@@ -230,6 +454,7 @@ function nextMiniGame() {
 
         return;
     }
+
 
     currentGameIndex++;
 
@@ -252,28 +477,26 @@ function finishLetterBadge() {
     const nextButton =
         document.getElementById("nextGameButton");
 
+
     if (miniGame) {
-        miniGame.innerHTML = `
-            <div style="
-                text-align:center;
-                padding:30px;
-                font-size:22px;
-            ">
-                <div style="font-size:100px;">🏆</div>
-                <h2>أحسنت يا بطل! 🌟</h2>
-                <p>لقد أكملت جميع الألعاب بنجاح.</p>
-                <p style="font-size:45px;">⭐⭐⭐⭐⭐</p>
-            </div>
-        `;
+        miniGame.innerHTML = "";
     }
+
 
     if (nextButton) {
         nextButton.style.display = "none";
     }
 
+
     if (badge) {
         badge.style.display = "block";
     }
+
+
+    speak(
+        "أحسنت! انتهيت من الألعاب الستة والعشرين."
+    );
+
 
     const fill =
         document.getElementById("gameProgressFill");
@@ -281,17 +504,11 @@ function finishLetterBadge() {
     if (fill) {
         fill.style.width = "100%";
     }
-
-    if (typeof speak === "function") {
-        speak(
-            "أحسنت! انتهيت من الألعاب الستة والعشرين."
-        );
-    }
 }
 
 
 /* ==========================================
-   🎮 تشغيل اللعبة
+   🎮 تشغيل اللعبة الحالية
 ========================================== */
 
 function renderCurrentMiniGame() {
@@ -305,19 +522,26 @@ function renderCurrentMiniGame() {
     const nextButton =
         document.getElementById("nextGameButton");
 
+
     if (!container) return;
+
 
     container.innerHTML = "";
 
+
     if (message) {
         message.textContent = "";
+        message.className = "game-message";
     }
+
 
     if (nextButton) {
         nextButton.style.display = "none";
     }
 
+
     updateGameProgress();
+
 
     switch (currentGameIndex) {
 
@@ -436,34 +660,29 @@ function gameRecognizeLetter(container) {
 
     const item = getCurrentLetter();
 
+
     container.innerHTML = `
 
         <h3>🔤 تعرف على الحرف</h3>
 
-        <p>
-            اضغط على الحرف واستمع إلى صوته
-        </p>
+        <p>اضغط على الحرف واستمع إليه</p>
 
         <button
             class="option"
             id="recognizeLetterButton"
-            style="font-size:80px;"
-        >
+            style="font-size:70px;">
             ${item.letter}
         </button>
 
-        <div style="
-            font-size:80px;
-            margin:15px;
-        ">
+        <p style="font-size:40px;">
             ${item.picture}
-        </div>
-
-        <p style="font-size:25px;">
-            ${item.word}
         </p>
 
+        <p>
+            ${item.word}
+        </p>
     `;
+
 
     document
         .getElementById("recognizeLetterButton")
@@ -487,58 +706,59 @@ function gameChooseLetter(container) {
 
     const item = getCurrentLetter();
 
-    let choices = [
-        item.letter
-    ];
+    let choices = [item.letter];
 
-    while (choices.length < 4) {
+
+    while (choices.length < 3) {
 
         const random =
             letters[
                 Math.floor(
-                    Math.random() *
-                    letters.length
+                    Math.random() * letters.length
                 )
             ].letter;
+
 
         if (!choices.includes(random)) {
             choices.push(random);
         }
     }
 
+
     choices.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
         <h3>🎯 اختر الحرف الصحيح</h3>
 
         <p>
-            أين حرف ${item.letter}؟
+            اختر حرف ${item.letter}
         </p>
 
         <div
             class="options"
-            id="chooseLetterOptions"
-        ></div>
+            id="gameOptions">
+        </div>
     `;
 
+
     const box =
-        document.getElementById(
-            "chooseLetterOptions"
-        );
+        document.getElementById("gameOptions");
+
 
     choices.forEach(function(choice) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
-        button.style.fontSize = "50px";
-
         button.textContent = choice;
+
 
         button.onclick = function() {
 
@@ -546,13 +766,17 @@ function gameChooseLetter(container) {
 
                 speakLessonSound();
 
-                completeCurrentGame();
+                setTimeout(
+                    completeCurrentGame,
+                    300
+                );
 
             } else {
 
                 showGameError();
             }
         };
+
 
         box.appendChild(button);
     });
@@ -567,77 +791,74 @@ function gameChooseSound(container) {
 
     const item = getCurrentLetter();
 
+
     let choices = [
-        item.sound
+        item.sound,
+        "بَ",
+        "مَ"
     ];
+
+
+    choices = [
+        ...new Set(choices)
+    ];
+
 
     while (choices.length < 3) {
 
         const random =
             letters[
                 Math.floor(
-                    Math.random() *
-                    letters.length
+                    Math.random() * letters.length
                 )
             ].sound;
+
 
         if (!choices.includes(random)) {
             choices.push(random);
         }
     }
 
+
     choices.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
         <h3>🔊 اختر صوت الحرف</h3>
 
         <div
-            class="lesson-letter"
-            style="font-size:90px;"
-        >
+            class="lesson-letter">
             ${item.letter}
         </div>
 
-        <button
-            class="option"
-            id="listenSoundButton"
-        >
-            🔊 استمع إلى الحرف
-        </button>
-
         <p>
-            اختر الصوت الصحيح
+            ما الصوت الصحيح؟
         </p>
 
         <div
             class="options"
-            id="soundOptions"
-        ></div>
+            id="soundOptions">
+        </div>
     `;
 
-    document
-        .getElementById("listenSoundButton")
-        .onclick = function() {
-
-            speakLessonSound();
-        };
 
     const box =
-        document.getElementById(
-            "soundOptions"
-        );
+        document.getElementById("soundOptions");
+
 
     choices.forEach(function(choice) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
         button.textContent = choice;
+
 
         button.onclick = function() {
 
@@ -645,13 +866,17 @@ function gameChooseSound(container) {
 
                 speakLessonSound();
 
-                completeCurrentGame();
+                setTimeout(
+                    completeCurrentGame,
+                    400
+                );
 
             } else {
 
                 showGameError();
             }
         };
+
 
         box.appendChild(button);
     });
@@ -666,58 +891,72 @@ function gameFindLetter(container) {
 
     const item = getCurrentLetter();
 
+
     let choices = [
-        item.letter
+        item.letter,
+        "ب",
+        "م",
+        "س",
+        "ل"
     ];
 
-    while (choices.length < 6) {
+
+    while (choices.length < 5) {
 
         const random =
             letters[
                 Math.floor(
-                    Math.random() *
-                    letters.length
+                    Math.random() * letters.length
                 )
             ].letter;
+
 
         if (!choices.includes(random)) {
             choices.push(random);
         }
     }
 
+
+    choices =
+        choices.slice(0, 5);
+
+
     choices.sort(
         () => Math.random() - 0.5
     );
 
+
     container.innerHTML = `
 
-        <h3>👀 أين الحرف؟</h3>
+        <h3>
+            👀 أين حرف ${item.letter}؟
+        </h3>
 
         <p>
-            اضغط على حرف ${item.letter}
+            اضغط على الحرف الصحيح
         </p>
 
         <div
             class="options"
-            id="findOptions"
-        ></div>
+            id="findOptions">
+        </div>
     `;
 
+
     const box =
-        document.getElementById(
-            "findOptions"
-        );
+        document.getElementById("findOptions");
+
 
     choices.forEach(function(choice) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
-        button.style.fontSize = "45px";
-
         button.textContent = choice;
+
 
         button.onclick = function() {
 
@@ -730,6 +969,7 @@ function gameFindLetter(container) {
                 showGameError();
             }
         };
+
 
         box.appendChild(button);
     });
@@ -744,148 +984,61 @@ function gameCatchLetters(container) {
 
     const item = getCurrentLetter();
 
+
     let choices = [
-        item.letter,
         item.letter,
         "ب",
         "م",
         "س",
         "ت",
-        "ل",
-        "ن"
+        item.letter
     ];
+
 
     choices.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
         <h3>🎯 صيد الحروف</h3>
 
         <p>
-            اصطد حرف ${item.letter} مرتين
+            اضغط على حرف ${item.letter}
         </p>
 
         <div
             id="catchArea"
-            class="options"
-        ></div>
+            style="
+                display:flex;
+                flex-wrap:wrap;
+                justify-content:center;
+                gap:15px;
+                margin:20px 0;
+            ">
+        </div>
     `;
 
-    const area =
-        document.getElementById(
-            "catchArea"
-        );
 
-    let found = 0;
+    const area =
+        document.getElementById("catchArea");
+
 
     choices.forEach(function(choice) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
-        button.style.fontSize = "45px";
+        button.textContent = choice;
 
-        button.textContent =
-            "🎯 " + choice;
 
         button.onclick = function() {
-
-            if (button.disabled) return;
 
             if (choice === item.letter) {
-
-                button.disabled = true;
-
-                found++;
-
-                if (found === 2) {
-                    completeCurrentGame();
-                }
-
-            } else {
-
-                showGameError();
-            }
-        };
-
-        area.appendChild(button);
-    });
-}
-
-
-/* ==========================================
-   6️⃣ مطابقة الصورة
-========================================== */
-
-function gameMatchPicture(container) {
-
-    const item = getCurrentLetter();
-
-    let choices = [
-        item.word
-    ];
-
-    while (choices.length < 4) {
-
-        const random =
-            letters[
-                Math.floor(
-                    Math.random() *
-                    letters.length
-                )
-            ].word;
-
-        if (!choices.includes(random)) {
-            choices.push(random);
-        }
-    }
-
-    choices.sort(
-        () => Math.random() - 0.5
-    );
-
-    container.innerHTML = `
-
-        <h3>🖼️ طابق الصورة</h3>
-
-        <div style="
-            font-size:90px;
-            margin:20px;
-        ">
-            ${item.picture}
-        </div>
-
-        <p>
-            ما اسم هذه الصورة؟
-        </p>
-
-        <div
-            id="matchOptions"
-            class="options"
-        ></div>
-    `;
-
-    const box =
-        document.getElementById(
-            "matchOptions"
-        );
-
-    choices.forEach(function(word) {
-
-        const button =
-            document.createElement("button");
-
-        button.className = "option";
-
-        button.textContent = word;
-
-        button.onclick = function() {
-
-            if (word === item.word) {
 
                 completeCurrentGame();
 
@@ -894,6 +1047,97 @@ function gameMatchPicture(container) {
                 showGameError();
             }
         };
+
+
+        area.appendChild(button);
+    });
+}
+
+
+/* ==========================================
+   6️⃣ وصل الحرف بالصورة
+========================================== */
+
+function gameMatchPicture(container) {
+
+    const item = getCurrentLetter();
+
+
+    let choices = [
+        item.word,
+        "بَطَّة",
+        "مَوْز"
+    ];
+
+
+    while (choices.length < 3) {
+
+        const random =
+            letters[
+                Math.floor(
+                    Math.random() * letters.length
+                )
+            ].word;
+
+
+        if (!choices.includes(random)) {
+            choices.push(random);
+        }
+    }
+
+
+    choices.sort(
+        () => Math.random() - 0.5
+    );
+
+
+    container.innerHTML = `
+
+        <h3>🧩 وصل الحرف بالصورة</h3>
+
+        <div
+            style="font-size:70px;">
+            ${item.picture}
+        </div>
+
+        <p>
+            ما اسم الصورة؟
+        </p>
+
+        <div
+            class="options"
+            id="matchOptions">
+        </div>
+    `;
+
+
+    const box =
+        document.getElementById("matchOptions");
+
+
+    choices.forEach(function(choice) {
+
+        const button =
+            document.createElement("button");
+
+
+        button.className = "option";
+
+        button.textContent = choice;
+
+
+        button.onclick = function() {
+
+            if (choice === item.word) {
+
+                completeCurrentGame();
+
+            } else {
+
+                showGameError();
+            }
+        };
+
 
         box.appendChild(button);
     });
@@ -907,6 +1151,7 @@ function gameMatchPicture(container) {
 function gamePuzzle(container) {
 
     const item = getCurrentLetter();
+
 
     const pieces = [
 
@@ -926,12 +1171,15 @@ function gamePuzzle(container) {
         }
     ];
 
+
     container.innerHTML = `
 
-        <h3>🧩 بازل الحرف</h3>
+        <h3>
+            🧩 بازل حرف ${item.letter}
+        </h3>
 
         <p>
-            رتب القطع:
+            اضغط على القطع بالترتيب:
             الحرف ← الصوت ← الصورة
         </p>
 
@@ -939,46 +1187,65 @@ function gamePuzzle(container) {
             id="puzzleBoard"
             style="
                 display:flex;
+                flex-wrap:wrap;
                 justify-content:center;
                 align-items:center;
-                gap:10px;
-                flex-wrap:wrap;
+                gap:12px;
                 min-height:130px;
                 margin:20px 0;
                 padding:15px;
                 border:4px dashed #90caf9;
                 border-radius:20px;
-            "
-        ></div>
+                background:#f5faff;
+            ">
+        </div>
+
+        <p>
+            الترتيب الصحيح:
+            <strong>
+                ${item.letter}
+                ←
+                ${item.sound}
+                ←
+                ${item.picture}
+            </strong>
+        </p>
 
         <button
             class="success"
-            id="checkPuzzle"
-        >
-            ✅ تحقق
+            id="checkPuzzle">
+            ✅ تحقق من الترتيب
         </button>
 
         <button
             class="option"
-            id="resetPuzzle"
-        >
+            id="resetPuzzle">
             🔄 إعادة الخلط
         </button>
     `;
 
+
     const board =
-        document.getElementById(
-            "puzzleBoard"
-        );
+        document.getElementById("puzzleBoard");
+
+
+    let selectedOrder = [];
+
 
     function createPieces(list) {
 
         board.innerHTML = "";
 
+        selectedOrder = [];
+
+
         list.forEach(function(piece) {
 
             const element =
-                document.createElement("div");
+                document.createElement("button");
+
+
+            element.className = "option";
 
             element.dataset.id =
                 piece.id;
@@ -986,171 +1253,93 @@ function gamePuzzle(container) {
             element.textContent =
                 piece.text;
 
-            element.style.cssText = `
+
+            element.style.cssText += `
                 width:90px;
                 height:90px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                font-size:45px;
-                background:white;
-                border:4px solid #64b5f6;
-                border-radius:18px;
-                cursor:grab;
-                user-select:none;
-                touch-action:none;
+                font-size:40px;
+                margin:5px;
             `;
 
-            /* سحب بالماوس */
 
-            element.draggable = true;
+            element.onclick = function() {
 
-            element.addEventListener(
-                "dragstart",
-                function(e) {
-
-                    e.dataTransfer.setData(
-                        "text/plain",
-                        piece.id
-                    );
-
-                    element.style.opacity =
-                        "0.5";
+                if (
+                    element.disabled
+                ) {
+                    return;
                 }
-            );
 
-            element.addEventListener(
-                "dragend",
-                function() {
 
-                    element.style.opacity =
-                        "1";
-                }
-            );
+                selectedOrder.push(
+                    piece.id
+                );
 
-            element.addEventListener(
-                "dragover",
-                function(e) {
 
-                    e.preventDefault();
-                }
-            );
+                element.disabled = true;
 
-            element.addEventListener(
-                "drop",
-                function(e) {
+                element.style.opacity = "0.5";
 
-                    e.preventDefault();
 
-                    const draggedId =
-                        Number(
-                            e.dataTransfer
-                                .getData(
-                                    "text/plain"
-                                )
+                if (
+                    selectedOrder.length === 3
+                ) {
+
+                    const correct =
+                        [1, 2, 3];
+
+
+                    const isCorrect =
+                        selectedOrder.every(
+                            function(id, index) {
+                                return (
+                                    id ===
+                                    correct[index]
+                                );
+                            }
                         );
 
-                    const dragged =
-                        [
-                            ...board.children
-                        ].find(
-                            el =>
-                                Number(
-                                    el.dataset.id
-                                ) ===
-                                draggedId
-                        );
 
-                    if (
-                        dragged &&
-                        dragged !== element
-                    ) {
+                    if (isCorrect) {
 
-                        board.insertBefore(
-                            dragged,
-                            element
+                        completeCurrentGame();
+
+                    } else {
+
+                        showGameError();
+
+                        setTimeout(
+                            function() {
+
+                                selectedOrder = [];
+
+                                board
+                                    .querySelectorAll(
+                                        "button"
+                                    )
+                                    .forEach(
+                                        function(btn) {
+
+                                            btn.disabled =
+                                                false;
+
+                                            btn.style.opacity =
+                                                "1";
+                                        }
+                                    );
+
+                            },
+                            600
                         );
                     }
                 }
-            );
+            };
 
-            /* لمس الجوال */
-
-            element.addEventListener(
-                "pointerdown",
-                function() {
-
-                    let startX = 0;
-
-                    const move =
-                        function(e) {
-
-                            if (
-                                Math.abs(
-                                    e.clientX -
-                                    startX
-                                ) > 20
-                            ) {
-
-                                const children =
-                                    [
-                                        ...board
-                                            .children
-                                    ];
-
-                                const target =
-                                    children.find(
-                                        el =>
-                                            el !==
-                                                element &&
-                                            Math.abs(
-                                                el.getBoundingClientRect()
-                                                    .left -
-                                                e.clientX
-                                            ) < 80
-                                    );
-
-                                if (target) {
-
-                                    board.insertBefore(
-                                        element,
-                                        target
-                                    );
-                                }
-                            }
-                        };
-
-                    startX =
-                        event.clientX || 0;
-
-                    element.setPointerCapture(
-                        event.pointerId
-                    );
-
-                    element.addEventListener(
-                        "pointermove",
-                        move
-                    );
-
-                    element.addEventListener(
-                        "pointerup",
-                        function() {
-
-                            element.removeEventListener(
-                                "pointermove",
-                                move
-                            );
-                        },
-                        {
-                            once: true
-                        }
-                    );
-                }
-            );
 
             board.appendChild(element);
         });
     }
+
 
     createPieces(
         [...pieces].sort(
@@ -1158,42 +1347,51 @@ function gamePuzzle(container) {
         )
     );
 
-    document
-        .getElementById("checkPuzzle")
-        .onclick = function() {
 
-            const order =
-                [
-                    ...board.children
-                ].map(
-                    el =>
-                        Number(el.dataset.id)
-                );
+    document.getElementById(
+        "checkPuzzle"
+    ).onclick = function() {
 
-            if (
-                order[0] === 1 &&
-                order[1] === 2 &&
-                order[2] === 3
-            ) {
+        if (selectedOrder.length !== 3) {
 
-                completeCurrentGame();
+            showGameError();
 
-            } else {
+            return;
+        }
 
-                showGameError();
-            }
-        };
 
-    document
-        .getElementById("resetPuzzle")
-        .onclick = function() {
+        const correct = [1, 2, 3];
 
-            createPieces(
-                [...pieces].sort(
-                    () => Math.random() - 0.5
-                )
+
+        const isCorrect =
+            selectedOrder.every(
+                function(id, index) {
+                    return id === correct[index];
+                }
             );
-        };
+
+
+        if (isCorrect) {
+
+            completeCurrentGame();
+
+        } else {
+
+            showGameError();
+        }
+    };
+
+
+    document.getElementById(
+        "resetPuzzle"
+    ).onclick = function() {
+
+        createPieces(
+            [...pieces].sort(
+                () => Math.random() - 0.5
+            )
+        );
+    };
 }
 
 
@@ -1205,94 +1403,71 @@ function gameSand(container) {
 
     const item = getCurrentLetter();
 
+
     container.innerHTML = `
 
         <h3>🏖️ اكتب الحرف في الرمل</h3>
 
         <p>
-            اكتب حرف ${item.letter}
-            بإصبعك داخل الرمل
+            ارسم حرف ${item.letter}
+            بإصبعك داخل الصندوق
         </p>
 
-        <canvas
-            id="sandCanvas"
+        <div
+            id="sandArea"
             style="
-                width:100%;
-                max-width:500px;
-                height:250px;
+                height:220px;
                 background:#f5deb3;
                 border:4px dashed #c9a66b;
                 border-radius:20px;
+                position:relative;
                 touch-action:none;
-            "
-        ></canvas>
+                overflow:hidden;
+            ">
+
+            <div
+                style="
+                    position:absolute;
+                    width:100%;
+                    text-align:center;
+                    top:50px;
+                    font-size:100px;
+                    color:rgba(120,90,50,.25);
+                    pointer-events:none;
+                ">
+                ${item.letter}
+            </div>
+
+        </div>
 
         <br>
 
         <button
             class="option"
-            id="clearSand"
-        >
+            id="clearSand">
             🔄 مسح
         </button>
 
         <button
             class="success"
-            id="sandDone"
-        >
+            id="sandDone">
             ✅ انتهيت
         </button>
     `;
 
-    const canvas =
-        document.getElementById(
-            "sandCanvas"
-        );
 
-    const ctx =
-        canvas.getContext("2d");
+    const sand =
+        document.getElementById("sandArea");
 
-    function resizeCanvas() {
-
-        const rect =
-            canvas.getBoundingClientRect();
-
-        canvas.width =
-            rect.width * devicePixelRatio;
-
-        canvas.height =
-            rect.height * devicePixelRatio;
-
-        ctx.scale(
-            devicePixelRatio,
-            devicePixelRatio
-        );
-
-        ctx.font =
-            "150px Arial";
-
-        ctx.textAlign =
-            "center";
-
-        ctx.fillStyle =
-            "rgba(120,90,50,0.20)";
-
-        ctx.fillText(
-            item.letter,
-            rect.width / 2,
-            170
-        );
-    }
-
-    resizeCanvas();
 
     let drawing = false;
-    let hasDrawn = false;
 
-    function getPosition(e) {
+
+    function position(e) {
 
         const rect =
-            canvas.getBoundingClientRect();
+            sand.getBoundingClientRect();
+
 
         return {
             x: e.clientX - rect.left,
@@ -1300,54 +1475,73 @@ function gameSand(container) {
         };
     }
 
-    canvas.addEventListener(
+
+    function addSandDot(p) {
+
+        const dot =
+            document.createElement("div");
+
+
+        dot.style.position =
+            "absolute";
+
+        dot.style.width =
+            "9px";
+
+        dot.style.height =
+            "9px";
+
+        dot.style.background =
+            "#8d6e63";
+
+        dot.style.borderRadius =
+            "50%";
+
+        dot.style.left =
+            p.x + "px";
+
+        dot.style.top =
+            p.y + "px";
+
+        dot.style.pointerEvents =
+            "none";
+
+
+        sand.appendChild(dot);
+    }
+
+
+    sand.addEventListener(
         "pointerdown",
         function(e) {
 
             drawing = true;
-            hasDrawn = true;
 
-            canvas.setPointerCapture(
+            sand.setPointerCapture(
                 e.pointerId
             );
 
-            const p =
-                getPosition(e);
-
-            ctx.beginPath();
-
-            ctx.moveTo(
-                p.x,
-                p.y
+            addSandDot(
+                position(e)
             );
         }
     );
 
-    canvas.addEventListener(
+
+    sand.addEventListener(
         "pointermove",
         function(e) {
 
             if (!drawing) return;
 
-            const p =
-                getPosition(e);
-
-            ctx.lineWidth = 8;
-
-            ctx.lineCap = "round";
-
-            ctx.strokeStyle = "#8d6e63";
-
-            ctx.lineTo(
-                p.x,
-                p.y
+            addSandDot(
+                position(e)
             );
-
-            ctx.stroke();
         }
     );
 
-    canvas.addEventListener(
+
+    sand.addEventListener(
         "pointerup",
         function() {
 
@@ -1355,35 +1549,36 @@ function gameSand(container) {
         }
     );
 
-    document
-        .getElementById("clearSand")
-        .onclick = function() {
 
-            ctx.clearRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
+    sand.addEventListener(
+        "pointercancel",
+        function() {
+
+            drawing = false;
+        }
+    );
+
+
+    document.getElementById(
+        "clearSand"
+    ).onclick = function() {
+
+        sand
+            .querySelectorAll(
+                "div:not(:first-child)"
+            )
+            .forEach(
+                function(dot) {
+                    dot.remove();
+                }
             );
+    };
 
-            resizeCanvas();
 
-            hasDrawn = false;
-        };
-
-    document
-        .getElementById("sandDone")
-        .onclick = function() {
-
-            if (!hasDrawn) {
-
-                showGameError();
-
-                return;
-            }
-
-            completeCurrentGame();
-        };
+    document.getElementById(
+        "sandDone"
+    ).onclick =
+        completeCurrentGame;
 }
 
 
@@ -1395,6 +1590,7 @@ function gameTrace(container) {
 
     const item = getCurrentLetter();
 
+
     container.innerHTML = `
 
         <h3>✏️ تتبع الحرف</h3>
@@ -1404,176 +1600,76 @@ function gameTrace(container) {
             بإصبعك
         </p>
 
-        <canvas
-            id="traceCanvas"
+        <div
+            id="traceLetter"
             style="
-                width:100%;
-                max-width:500px;
-                height:250px;
+                font-size:130px;
+                color:#b0bec5;
                 border:4px dashed #90caf9;
                 border-radius:20px;
+                padding:20px;
+                margin:15px;
+                user-select:none;
                 touch-action:none;
-                background:#fff;
-            "
-        ></canvas>
-
-        <br>
-
-        <button
-            class="option"
-            id="clearTrace"
-        >
-            🔄 مسح
-        </button>
+            ">
+            ${item.letter}
+        </div>
 
         <button
             class="success"
-            id="traceDone"
-        >
+            id="traceDone">
             ✅ انتهيت
         </button>
     `;
 
-    const canvas =
+
+    const trace =
         document.getElementById(
-            "traceCanvas"
+            "traceLetter"
         );
 
-    const ctx =
-        canvas.getContext("2d");
 
-    function setup() {
+    let touched = false;
 
-        const rect =
-            canvas.getBoundingClientRect();
 
-        canvas.width =
-            rect.width * devicePixelRatio;
-
-        canvas.height =
-            rect.height * devicePixelRatio;
-
-        ctx.scale(
-            devicePixelRatio,
-            devicePixelRatio
-        );
-
-        ctx.font =
-            "170px Arial";
-
-        ctx.textAlign =
-            "center";
-
-        ctx.fillStyle =
-            "#cfd8dc";
-
-        ctx.fillText(
-            item.letter,
-            rect.width / 2,
-            180
-        );
-    }
-
-    setup();
-
-    let drawn = false;
-    let drawing = false;
-
-    function position(e) {
-
-        const rect =
-            canvas.getBoundingClientRect();
-
-        return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        };
-    }
-
-    canvas.addEventListener(
+    trace.addEventListener(
         "pointerdown",
-        function(e) {
+        function() {
 
-            drawing = true;
-            drawn = true;
+            touched = true;
 
-            canvas.setPointerCapture(
-                e.pointerId
-            );
-
-            const p =
-                position(e);
-
-            ctx.beginPath();
-
-            ctx.moveTo(
-                p.x,
-                p.y
-            );
+            trace.style.color =
+                "#42a5f5";
         }
     );
 
-    canvas.addEventListener(
+
+    trace.addEventListener(
         "pointermove",
-        function(e) {
+        function() {
 
-            if (!drawing) return;
+            if (touched) {
 
-            const p =
-                position(e);
-
-            ctx.lineWidth = 9;
-
-            ctx.lineCap = "round";
-
-            ctx.strokeStyle = "#42a5f5";
-
-            ctx.lineTo(
-                p.x,
-                p.y
-            );
-
-            ctx.stroke();
+                trace.style.color =
+                    "#42a5f5";
+            }
         }
     );
 
-    canvas.addEventListener(
+
+    trace.addEventListener(
         "pointerup",
         function() {
 
-            drawing = false;
+            touched = false;
         }
     );
 
-    document
-        .getElementById("clearTrace")
-        .onclick = function() {
 
-            ctx.clearRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            setup();
-
-            drawn = false;
-        };
-
-    document
-        .getElementById("traceDone")
-        .onclick = function() {
-
-            if (!drawn) {
-
-                showGameError();
-
-                return;
-            }
-
-            completeCurrentGame();
-        };
+    document.getElementById(
+        "traceDone"
+    ).onclick =
+        completeCurrentGame;
 }
 
 
@@ -1585,22 +1681,18 @@ function gameColor(container) {
 
     const item = getCurrentLetter();
 
+
     container.innerHTML = `
 
         <h3>🎨 لوّن الحرف</h3>
 
-        <p>
-            اختر لونًا ثم لوّن الحرف
-        </p>
-
         <div
             id="colorLetter"
             style="
-                font-size:150px;
+                font-size:140px;
                 font-weight:bold;
                 margin:20px;
-            "
-        >
+            ">
             ${item.letter}
         </div>
 
@@ -1608,29 +1700,25 @@ function gameColor(container) {
 
             <button
                 class="option"
-                data-color="red"
-            >
+                data-color="red">
                 🔴
             </button>
 
             <button
                 class="option"
-                data-color="blue"
-            >
+                data-color="blue">
                 🔵
             </button>
 
             <button
                 class="option"
-                data-color="green"
-            >
+                data-color="green">
                 🟢
             </button>
 
             <button
                 class="option"
-                data-color="orange"
-            >
+                data-color="orange">
                 🟠
             </button>
 
@@ -1638,48 +1726,34 @@ function gameColor(container) {
 
         <button
             class="success"
-            id="colorDone"
-        >
+            id="colorDone">
             ✅ انتهيت
         </button>
     `;
+
 
     const letter =
         document.getElementById(
             "colorLetter"
         );
 
-    let selected = false;
 
     document
-        .querySelectorAll(
-            "[data-color]"
-        )
+        .querySelectorAll("[data-color]")
         .forEach(function(button) {
 
-            button.onclick =
-                function() {
+            button.onclick = function() {
 
-                    selected = true;
-
-                    letter.style.color =
-                        button.dataset.color;
-                };
+                letter.style.color =
+                    button.dataset.color;
+            };
         });
 
-    document
-        .getElementById("colorDone")
-        .onclick = function() {
 
-            if (!selected) {
-
-                showGameError();
-
-                return;
-            }
-
-            completeCurrentGame();
-        };
+    document.getElementById(
+        "colorDone"
+    ).onclick =
+        completeCurrentGame;
 }
 
 
@@ -1691,67 +1765,78 @@ function gameChooseWord(container) {
 
     const item = getCurrentLetter();
 
+    const correct = item.word;
+
+
     let choices = [
-        item.word
+        correct,
+        "بَاب",
+        "مُوز"
     ];
 
-    while (choices.length < 4) {
+
+    while (choices.length < 3) {
 
         const random =
             letters[
                 Math.floor(
-                    Math.random() *
-                    letters.length
+                    Math.random() * letters.length
                 )
             ].word;
+
 
         if (!choices.includes(random)) {
             choices.push(random);
         }
     }
 
+
     choices.sort(
         () => Math.random() - 0.5
     );
 
+
     container.innerHTML = `
 
-        <h3>📖 اختر الكلمة</h3>
+        <h3>
+            📖 اختر الكلمة التي تبدأ بالحرف
+        </h3>
 
-        <div style="
-            font-size:80px;
-            margin:15px;
-        ">
+        <div
+            style="
+                font-size:70px;
+                margin:15px;
+            ">
             ${item.letter}
         </div>
 
-        <p>
-            اختر الكلمة التي تبدأ بالحرف
-        </p>
-
         <div
-            id="wordOptions"
             class="options"
-        ></div>
+            id="wordGameOptions">
+        </div>
     `;
+
 
     const box =
         document.getElementById(
-            "wordOptions"
+            "wordGameOptions"
         );
+
 
     choices.forEach(function(word) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
         button.textContent = word;
 
+
         button.onclick = function() {
 
-            if (word === item.word) {
+            if (word === correct) {
 
                 completeCurrentGame();
 
@@ -1761,34 +1846,38 @@ function gameChooseWord(container) {
             }
         };
 
+
         box.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   1️⃣2️⃣ ابحث عن جميع الحروف
+   1️⃣2️⃣ ابحث عن الحرف
 ========================================== */
 
 function gameSearchLetter(container) {
 
     const item = getCurrentLetter();
 
+
     let choices = [
         item.letter,
-        item.letter,
-        item.letter,
         "ب",
+        item.letter,
         "م",
-        "س",
         "ت",
-        "ل",
-        "ن"
+        item.letter
     ];
+
+
+    let found = 0;
+
 
     choices.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
@@ -1800,35 +1889,39 @@ function gameSearchLetter(container) {
 
         <div
             id="searchArea"
-            class="options"
-        ></div>
+            class="options">
+        </div>
     `;
+
 
     const area =
         document.getElementById(
             "searchArea"
         );
 
-    let found = 0;
 
     choices.forEach(function(choice) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
         button.textContent = choice;
 
+
         button.onclick = function() {
 
             if (button.disabled) return;
+
 
             if (choice === item.letter) {
 
                 button.disabled = true;
 
                 found++;
+
 
                 if (found === 3) {
 
@@ -1841,27 +1934,42 @@ function gameSearchLetter(container) {
             }
         };
 
+
         area.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   1️⃣3️⃣ التحدي
+   1️⃣3️⃣ التحدي النهائي
 ========================================== */
 
 function gameFinalChallenge(container) {
 
     const item = getCurrentLetter();
 
+
+    let choices = [
+        item.letter,
+        "ب",
+        "م"
+    ];
+
+
+    choices.sort(
+        () => Math.random() - 0.5
+    );
+
+
     container.innerHTML = `
 
-        <h3>🏆 تحدي الحرف</h3>
+        <h3>🏆 التحدي النهائي</h3>
 
-        <div style="
-            font-size:90px;
-            margin:15px;
-        ">
+        <div
+            style="
+                font-size:80px;
+                margin:15px;
+            ">
             ${item.picture}
         </div>
 
@@ -1870,64 +1978,29 @@ function gameFinalChallenge(container) {
             ${item.word}؟
         </p>
 
-        <button
-            class="option"
-            id="finalListen"
-        >
-            🔊 استمع إلى الكلمة
-        </button>
-
         <div
-            id="finalOptions"
             class="options"
-        ></div>
+            id="finalOptions">
+        </div>
     `;
 
-    document
-        .getElementById("finalListen")
-        .onclick = function() {
-
-            if (typeof speak === "function") {
-                speak(item.word);
-            }
-        };
-
-    let choices = [
-        item.letter
-    ];
-
-    while (choices.length < 4) {
-
-        const random =
-            letters[
-                Math.floor(
-                    Math.random() *
-                    letters.length
-                )
-            ].letter;
-
-        if (!choices.includes(random)) {
-            choices.push(random);
-        }
-    }
-
-    choices.sort(
-        () => Math.random() - 0.5
-    );
 
     const box =
         document.getElementById(
             "finalOptions"
         );
 
+
     choices.forEach(function(choice) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
         button.textContent = choice;
+
 
         button.onclick = function() {
 
@@ -1941,81 +2014,92 @@ function gameFinalChallenge(container) {
             }
         };
 
+
         box.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   1️⃣4️⃣ البالونات
+   1️⃣4️⃣ فرقع الحرف 🎈
 ========================================== */
 
 function gameBalloons(container) {
 
     const item = getCurrentLetter();
 
+
     let balloons = [
-        item.letter,
         item.letter,
         "ب",
         "م",
         "س",
-        "ت",
-        "ل"
+        item.letter,
+        "ت"
     ];
+
 
     balloons.sort(
         () => Math.random() - 0.5
     );
 
+
     container.innerHTML = `
 
-        <h3>🎈 فرقع البالونات</h3>
+        <h3>🎈 فرقع الحرف</h3>
 
         <p>
-            فرقع بالونين يحملان حرف
-            ${item.letter}
+            فرقع البالونات التي تحمل
+            حرف ${item.letter}
         </p>
 
         <div
             id="balloonArea"
-            class="options"
-        ></div>
+            style="
+                display:flex;
+                flex-wrap:wrap;
+                justify-content:center;
+                gap:15px;
+            ">
+        </div>
     `;
+
 
     const area =
         document.getElementById(
             "balloonArea"
         );
 
+
     let found = 0;
+
 
     balloons.forEach(function(letter) {
 
         const button =
             document.createElement("button");
 
-        button.className = "option";
 
-        button.style.fontSize = "35px";
+        button.className = "option";
 
         button.textContent =
             "🎈 " + letter;
+
 
         button.onclick = function() {
 
             if (button.disabled) return;
 
+
             if (letter === item.letter) {
 
                 button.disabled = true;
 
-                button.textContent =
-                    "💥";
-
                 found++;
 
+
                 if (found === 2) {
+
                     completeCurrentGame();
                 }
 
@@ -2025,41 +2109,37 @@ function gameBalloons(container) {
             }
         };
 
+
         area.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   1️⃣5️⃣ النحلة
+   1️⃣5️⃣ النحلة تجمع الحرف 🐝
 ========================================== */
 
 function gameBee(container) {
 
     const item = getCurrentLetter();
 
+
     let choices = [
         item.letter,
         "ب",
-        "م",
         "ت",
-        "س"
+        "م"
     ];
+
 
     choices.sort(
         () => Math.random() - 0.5
     );
 
+
     container.innerHTML = `
 
-        <h3>🐝 ساعد النحلة</h3>
-
-        <div style="
-            font-size:80px;
-            margin:15px;
-        ">
-            🐝
-        </div>
+        <h3>🐝 النحلة تجمع الحرف</h3>
 
         <p>
             ساعد النحلة في جمع حرف
@@ -2067,32 +2147,41 @@ function gameBee(container) {
         </p>
 
         <div
+            style="
+                font-size:70px;
+                margin:15px;
+            ">
+            🐝
+        </div>
+
+        <div
             id="beeOptions"
-            class="options"
-        ></div>
+            class="options">
+        </div>
     `;
+
 
     const box =
         document.getElementById(
             "beeOptions"
         );
 
+
     choices.forEach(function(choice) {
 
         const button =
             document.createElement("button");
+
 
         button.className = "option";
 
         button.textContent =
             "🌸 " + choice;
 
+
         button.onclick = function() {
 
             if (choice === item.letter) {
-
-                button.textContent =
-                    "🐝❤️ " + choice;
 
                 completeCurrentGame();
 
@@ -2102,68 +2191,78 @@ function gameBee(container) {
             }
         };
 
+
         box.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   1️⃣6️⃣ سيارة الحرف
+   1️⃣6️⃣ سيارة الحرف 🚗
 ========================================== */
 
 function gameCar(container) {
 
     const item = getCurrentLetter();
 
-    let choices = [
+
+    let roads = [
         item.letter,
         "ب",
-        "م",
-        "س"
+        "م"
     ];
 
-    choices.sort(
+
+    roads.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
         <h3>🚗 سيارة الحرف</h3>
 
-        <div style="
-            font-size:70px;
-        ">
-            🚗
-        </div>
-
         <p>
-            اختر الطريق الذي يحمل حرف
-            ${item.letter}
+            اختر الطريق الذي يحمل
+            حرف ${item.letter}
         </p>
 
         <div
+            style="
+                font-size:60px;
+                margin:15px;
+            ">
+            🚗
+        </div>
+
+        <div
             id="roadOptions"
-            class="options"
-        ></div>
+            class="options">
+        </div>
     `;
+
 
     const box =
         document.getElementById(
             "roadOptions"
         );
 
-    choices.forEach(function(letter) {
+
+    roads.forEach(function(letter) {
 
         const button =
             document.createElement("button");
+
 
         button.className = "option";
 
         button.style.minWidth =
             "100px";
 
+
         button.textContent =
             "🛣️ " + letter;
+
 
         button.onclick = function() {
 
@@ -2177,69 +2276,76 @@ function gameCar(container) {
             }
         };
 
+
         box.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   1️⃣7️⃣ صوّب على الحرف
+   1️⃣7️⃣ صوّب على الحرف 🎯
 ========================================== */
 
 function gameTarget(container) {
 
     const item = getCurrentLetter();
 
+
     let targets = [
-        item.letter,
         item.letter,
         "ب",
         "م",
         "س",
-        "ت"
+        item.letter
     ];
+
 
     targets.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
         <h3>🎯 صوّب على الحرف</h3>
 
         <p>
-            اضغط على الهدفين اللذين يحملان
+            اضغط على الهدف الذي يحمل
             حرف ${item.letter}
         </p>
 
         <div
             id="targetArea"
-            class="options"
-        ></div>
+            class="options">
+        </div>
     `;
+
 
     const area =
         document.getElementById(
             "targetArea"
         );
 
+
     let found = 0;
+
 
     targets.forEach(function(letter) {
 
         const button =
             document.createElement("button");
 
-        button.className = "option";
 
-        button.style.fontSize = "35px";
+        button.className = "option";
 
         button.textContent =
             "🎯 " + letter;
 
+
         button.onclick = function() {
 
             if (button.disabled) return;
+
 
             if (letter === item.letter) {
 
@@ -2247,7 +2353,9 @@ function gameTarget(container) {
 
                 found++;
 
+
                 if (found === 2) {
+
                     completeCurrentGame();
                 }
 
@@ -2257,56 +2365,60 @@ function gameTarget(container) {
             }
         };
 
+
         area.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   1️⃣8️⃣ الذاكرة
+   1️⃣8️⃣ لعبة الذاكرة 🧠
 ========================================== */
 
 function gameMemory(container) {
 
     const item = getCurrentLetter();
 
+
     const cards = [
 
         {
             id: 1,
-            pair: "letter",
+            pair: "A",
             value: item.letter
         },
 
         {
             id: 2,
-            pair: "letter",
+            pair: "A",
             value: item.letter
         },
 
         {
             id: 3,
-            pair: "picture",
+            pair: "B",
             value: item.picture
         },
 
         {
             id: 4,
-            pair: "picture",
+            pair: "B",
             value: item.picture
         }
     ];
 
+
     cards.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
         <h3>🧠 لعبة الذاكرة</h3>
 
         <p>
-            طابق كل عنصر مع مثيله
+            طابق الحرف مع صورته
         </p>
 
         <div
@@ -2314,68 +2426,85 @@ function gameMemory(container) {
             style="
                 display:grid;
                 grid-template-columns:
-                    repeat(2,110px);
+                    repeat(2,100px);
                 gap:15px;
                 justify-content:center;
-            "
-        ></div>
+            ">
+        </div>
     `;
+
 
     const area =
         document.getElementById(
             "memoryArea"
         );
 
+
     let first = null;
-    let locked = false;
+
+    let second = null;
+
     let matched = 0;
+
+    let locked = false;
+
 
     cards.forEach(function(card) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
         button.style.height =
-            "110px";
+            "100px";
 
         button.style.fontSize =
-            "45px";
+            "35px";
 
-        button.textContent =
-            "❓";
+
+        button.textContent = "❓";
+
 
         button.onclick = function() {
 
             if (
                 locked ||
                 button.disabled
-            ) return;
+            ) {
+                return;
+            }
+
 
             button.textContent =
                 card.value;
 
+
             if (!first) {
 
                 first = {
-                    button: button,
-                    card: card
+                    button,
+                    card
                 };
 
                 return;
             }
 
-            const second = {
-                button: button,
-                card: card
+
+            second = {
+                button,
+                card
             };
 
+
             locked = true;
+
 
             const isPair =
                 first.card.pair ===
                 second.card.pair;
+
 
             setTimeout(
                 function() {
@@ -2390,7 +2519,9 @@ function gameMemory(container) {
 
                         matched++;
 
+
                         if (matched === 2) {
+
                             completeCurrentGame();
                         }
 
@@ -2403,7 +2534,10 @@ function gameMemory(container) {
                             "❓";
                     }
 
+
                     first = null;
+
+                    second = null;
 
                     locked = false;
 
@@ -2412,44 +2546,47 @@ function gameMemory(container) {
             );
         };
 
+
         area.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   1️⃣9️⃣ ضع الحرف في البيت
+   1️⃣9️⃣ ضع الحرف في مكانه 🏠
 ========================================== */
 
 function gameDragPlace(container) {
 
     const item = getCurrentLetter();
 
+
     let choices = [
         item.letter,
         "ب",
-        "م",
-        "س"
+        "م"
     ];
+
 
     choices.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
         <h3>🏠 ضع الحرف في مكانه</h3>
 
         <p>
-            اسحب حرف ${item.letter}
-            إلى البيت
+            اختر حرف ${item.letter}
+            ثم ضعه في البيت
         </p>
 
         <div
             id="dropHouse"
             style="
-                width:240px;
-                height:140px;
+                width:220px;
+                height:120px;
                 margin:20px auto;
                 border:4px dashed #64b5f6;
                 border-radius:20px;
@@ -2458,149 +2595,85 @@ function gameDragPlace(container) {
                 justify-content:center;
                 font-size:30px;
                 touch-action:none;
-            "
-        >
+            ">
             🏠
         </div>
 
         <div
             id="dragLetters"
-            class="options"
-        ></div>
+            class="options">
+        </div>
     `;
+
 
     const house =
         document.getElementById(
             "dropHouse"
         );
 
+
     const area =
         document.getElementById(
             "dragLetters"
         );
 
-    let selectedLetter = null;
 
     choices.forEach(function(letter) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
-        button.textContent =
-            letter;
+        button.textContent = letter;
 
-        button.draggable = true;
 
-        button.addEventListener(
-            "dragstart",
-            function(e) {
+        /*
+         * اختيار باللمس للموبايل
+         */
+        button.onclick = function() {
 
-                e.dataTransfer.setData(
-                    "text/plain",
-                    letter
-                );
+            if (letter === item.letter) {
+
+                house.textContent =
+                    "🏠 " + letter;
+
+                completeCurrentGame();
+
+            } else {
+
+                showGameError();
             }
-        );
+        };
 
-        /* دعم الجوال */
-
-        button.addEventListener(
-            "click",
-            function() {
-
-                selectedLetter =
-                    letter;
-
-                document
-                    .querySelectorAll(
-                        "#dragLetters .option"
-                    )
-                    .forEach(
-                        b =>
-                            b.style.border =
-                                ""
-                    );
-
-                button.style.border =
-                    "5px solid #4caf50";
-            }
-        );
 
         area.appendChild(button);
     });
-
-    house.addEventListener(
-        "dragover",
-        function(e) {
-
-            e.preventDefault();
-        }
-    );
-
-    house.addEventListener(
-        "drop",
-        function(e) {
-
-            e.preventDefault();
-
-            const letter =
-                e.dataTransfer
-                    .getData(
-                        "text/plain"
-                    );
-
-            checkDrop(letter);
-        }
-    );
-
-    house.addEventListener(
-        "click",
-        function() {
-
-            if (!selectedLetter) {
-
-                showGameError();
-
-                return;
-            }
-
-            checkDrop(
-                selectedLetter
-            );
-        }
-    );
-
-    function checkDrop(letter) {
-
-        if (letter === item.letter) {
-
-            house.innerHTML =
-                "🏠 ❤️ " +
-                item.letter;
-
-            completeCurrentGame();
-
-        } else {
-
-            showGameError();
-        }
-    }
 }
 
 
 /* ==========================================
-   2️⃣0️⃣ الحرف المختلف
+   2️⃣0️⃣ الحرف المختلف 🔥
 ========================================== */
 
 function gameDifferent(container) {
 
     const item = getCurrentLetter();
 
-    let different;
 
-    do {
+    let different =
+        letters[
+            Math.floor(
+                Math.random() *
+                letters.length
+            )
+        ].letter;
+
+
+    while (
+        different === item.letter
+    ) {
 
         different =
             letters[
@@ -2609,12 +2682,11 @@ function gameDifferent(container) {
                     letters.length
                 )
             ].letter;
+    }
 
-    } while (
-        different === item.letter
-    );
 
     let choices = [
+
         item.letter,
         item.letter,
         item.letter,
@@ -2622,9 +2694,11 @@ function gameDifferent(container) {
         different
     ];
 
+
     choices.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
@@ -2636,34 +2710,31 @@ function gameDifferent(container) {
 
         <div
             id="differentArea"
-            class="options"
-        ></div>
+            class="options">
+        </div>
     `;
+
 
     const area =
         document.getElementById(
             "differentArea"
         );
 
+
     choices.forEach(function(letter) {
 
         const button =
             document.createElement("button");
 
+
         button.className = "option";
 
-        button.style.fontSize =
-            "45px";
+        button.textContent = letter;
 
-        button.textContent =
-            letter;
 
         button.onclick = function() {
 
             if (letter === different) {
-
-                button.textContent =
-                    "⭐ " + letter;
 
                 completeCurrentGame();
 
@@ -2673,687 +2744,82 @@ function gameDifferent(container) {
             }
         };
 
+
         area.appendChild(button);
     });
 }
 
 
 /* ==========================================
-   2️⃣1️⃣ صيد السمك
+   2️⃣1️⃣ صيد السمك 🐠
 ========================================== */
 
 function gameFish(container) {
 
     const item = getCurrentLetter();
 
+
     let fish = [
-        item.letter,
         item.letter,
         "ب",
         "م",
-        "ت",
-        "س"
+        item.letter,
+        "ت"
     ];
+
 
     fish.sort(
         () => Math.random() - 0.5
     );
+
 
     container.innerHTML = `
 
         <h3>🐠 صيد السمك</h3>
 
         <p>
-            اصطد سمكتين تحملان حرف
-            ${item.letter}
+            اصطد السمكة التي تحمل
+            حرف ${item.letter}
         </p>
 
         <div
             id="fishArea"
-            class="options"
-        ></div>
+            class="options">
+        </div>
     `;
+
 
     const area =
         document.getElementById(
             "fishArea"
         );
 
+
     let found = 0;
+
 
     fish.forEach(function(letter) {
 
         const button =
             document.createElement("button");
 
-        button.className = "option";
 
-        button.style.fontSize =
-            "35px";
+        button.className = "option";
 
         button.textContent =
             "🐠 " + letter;
+
 
         button.onclick = function() {
 
             if (button.disabled) return;
 
+
             if (letter === item.letter) {
 
                 button.disabled = true;
-
-                button.textContent =
-                    "🎣";
 
                 found++;
 
-                if (found === 2) {
-                    completeCurrentGame();
-                }
 
-            } else {
-
-                showGameError();
-            }
-        };
-
-        area.appendChild(button);
-    });
-}
-
-
-/* ==========================================
-   2️⃣2️⃣ قطار الحروف
-========================================== */
-
-function gameTrain(container) {
-
-    const item = getCurrentLetter();
-
-    const firstLetter =
-        item.word.charAt(0);
-
-    let choices = [
-        firstLetter
-    ];
-
-    while (choices.length < 4) {
-
-        const random =
-            letters[
-                Math.floor(
-                    Math.random() *
-                    letters.length
-                )
-            ].letter;
-
-        if (!choices.includes(random)) {
-            choices.push(random);
-        }
-    }
-
-    choices.sort(
-        () => Math.random() - 0.5
-    );
-
-    container.innerHTML = `
-
-        <h3>🚂 قطار الحروف</h3>
-
-        <div style="
-            font-size:80px;
-        ">
-            🚂
-        </div>
-
-        <p>
-            اختر الحرف الذي تبدأ به
-            ${item.word}
-        </p>
-
-        <div
-            id="trainOptions"
-            class="options"
-        ></div>
-    `;
-
-    const area =
-        document.getElementById(
-            "trainOptions"
-        );
-
-    choices.forEach(function(letter) {
-
-        const button =
-            document.createElement("button");
-
-        button.className = "option";
-
-        button.textContent =
-            "🚃 " + letter;
-
-        button.onclick = function() {
-
-            if (letter === firstLetter) {
-
-                completeCurrentGame();
-
-            } else {
-
-                showGameError();
-            }
-        };
-
-        area.appendChild(button);
-    });
-}
-
-
-/* ==========================================
-   2️⃣3️⃣ الحرف المخفي
-========================================== */
-
-function gameHidden(container) {
-
-    const item = getCurrentLetter();
-
-    let choices = [];
-
-    for (let i = 0; i < 20; i++) {
-
-        choices.push(
-            letters[
-                Math.floor(
-                    Math.random() *
-                    letters.length
-                )
-            ].letter
-        );
-    }
-
-    const hiddenIndex =
-        Math.floor(
-            Math.random() *
-            choices.length
-        );
-
-    choices[hiddenIndex] =
-        item.letter;
-
-    container.innerHTML = `
-
-        <h3>🔍 اكتشف الحرف المخفي</h3>
-
-        <p>
-            اضغط على حرف ${item.letter}
-        </p>
-
-        <div
-            id="hiddenArea"
-            class="options"
-        ></div>
-    `;
-
-    const area =
-        document.getElementById(
-            "hiddenArea"
-        );
-
-    choices.forEach(function(letter) {
-
-        const button =
-            document.createElement("button");
-
-        button.className = "option";
-
-        button.style.margin =
-            "5px";
-
-        button.style.fontSize =
-            "35px";
-
-        button.textContent =
-            letter;
-
-        button.onclick = function() {
-
-            if (letter === item.letter) {
-
-                button.textContent =
-                    "⭐ " + letter;
-
-                completeCurrentGame();
-
-            } else {
-
-                showGameError();
-            }
-        };
-
-        area.appendChild(button);
-    });
-}
-
-
-/* ==========================================
-   2️⃣4️⃣ التلوين المتقدم
-========================================== */
-
-function gameAdvancedColor(container) {
-
-    const item = getCurrentLetter();
-
-    const colors = [
-        "red",
-        "blue",
-        "green",
-        "orange",
-        "purple"
-    ];
-
-    container.innerHTML = `
-
-        <h3>🎨 لوّن الحرف</h3>
-
-        <p>
-            اختر اللون الذي يعجبك
-        </p>
-
-        <div
-            id="advancedColorLetter"
-            style="
-                font-size:150px;
-                font-weight:bold;
-                margin:20px;
-            "
-        >
-            ${item.letter}
-        </div>
-
-        <div
-            id="advancedColors"
-            class="options"
-        ></div>
-
-        <button
-            class="success"
-            id="advancedColorDone"
-        >
-            ✅ انتهيت
-        </button>
-    `;
-
-    const letter =
-        document.getElementById(
-            "advancedColorLetter"
-        );
-
-    const area =
-        document.getElementById(
-            "advancedColors"
-        );
-
-    let selected = false;
-
-    colors.forEach(function(color) {
-
-        const button =
-            document.createElement("button");
-
-        button.className = "option";
-
-        button.textContent =
-            "🎨";
-
-        button.style.background =
-            color;
-
-        button.onclick = function() {
-
-            selected = true;
-
-            letter.style.color =
-                color;
-        };
-
-        area.appendChild(button);
-    });
-
-    document
-        .getElementById(
-            "advancedColorDone"
-        )
-        .onclick = function() {
-
-            if (!selected) {
-
-                showGameError();
-
-                return;
-            }
-
-            completeCurrentGame();
-        };
-}
-
-
-/* ==========================================
-   2️⃣5️⃣ طابق الحرف والصوت والصورة
-========================================== */
-
-function gameMatchAll(container) {
-
-    const item = getCurrentLetter();
-
-    const cards = [
-
-        {
-            type: "letter",
-            value: item.letter
-        },
-
-        {
-            type: "sound",
-            value: item.sound
-        },
-
-        {
-            type: "picture",
-            value: item.picture
-        }
-    ];
-
-    cards.sort(
-        () => Math.random() - 0.5
-    );
-
-    container.innerHTML = `
-
-        <h3>🧩 طابق الحرف والصوت والصورة</h3>
-
-        <p>
-            اضغط بالترتيب:
-            الحرف ← الصوت ← الصورة
-        </p>
-
-        <div
-            id="matchAllArea"
-            class="options"
-        ></div>
-    `;
-
-    const area =
-        document.getElementById(
-            "matchAllArea"
-        );
-
-    let step = 0;
-
-    cards.forEach(function(card) {
-
-        const button =
-            document.createElement("button");
-
-        button.className = "option";
-
-        button.style.fontSize =
-            "45px";
-
-        button.textContent =
-            card.value;
-
-        button.onclick = function() {
-
-            const correctType =
-                [
-                    "letter",
-                    "sound",
-                    "picture"
-                ][step];
-
-            if (
-                card.type ===
-                correctType
-            ) {
-
-                button.disabled = true;
-
-                step++;
-
-                if (step === 3) {
-
-                    completeCurrentGame();
-                }
-
-            } else {
-
-                showGameError();
-            }
-        };
-
-        area.appendChild(button);
-    });
-}
-
-
-/* ==========================================
-   2️⃣6️⃣ الاختبار الشامل
-========================================== */
-
-function gameFinalTest(container) {
-
-    const item = getCurrentLetter();
-
-    container.innerHTML = `
-
-        <h3>🏆 الاختبار الشامل</h3>
-
-        <div
-            id="finalTestContent"
-        >
-            <p>
-                استمع إلى صوت الحرف
-                ثم اختر الحرف الصحيح
-            </p>
-
-            <button
-                class="option"
-                id="listenFinal"
-            >
-                🔊 استمع
-            </button>
-
-            <div
-                id="finalTestOptions"
-                class="options"
-            ></div>
-        </div>
-    `;
-
-    document
-        .getElementById("listenFinal")
-        .onclick = function() {
-
-            speakLessonSound();
-        };
-
-    let choices = [
-        item.letter
-    ];
-
-    while (choices.length < 4) {
-
-        const random =
-            letters[
-                Math.floor(
-                    Math.random() *
-                    letters.length
-                )
-            ].letter;
-
-        if (!choices.includes(random)) {
-            choices.push(random);
-        }
-    }
-
-    choices.sort(
-        () => Math.random() - 0.5
-    );
-
-    const box =
-        document.getElementById(
-            "finalTestOptions"
-        );
-
-    choices.forEach(function(letter) {
-
-        const button =
-            document.createElement("button");
-
-        button.className = "option";
-
-        button.style.fontSize =
-            "50px";
-
-        button.textContent =
-            letter;
-
-        button.onclick = function() {
-
-            if (letter !== item.letter) {
-
-                showGameError();
-
-                return;
-            }
-
-            button.disabled = true;
-
-            /* المرحلة الثانية */
-
-            box.innerHTML = `
-
-                <p>
-                    الآن اختر صورة كلمة
-                    ${item.word}
-                </p>
-
-                <div
-                    class="options"
-                    id="finalPictureOptions"
-                ></div>
-            `;
-
-            const pictureBox =
-                document.getElementById(
-                    "finalPictureOptions"
-                );
-
-            let pictures = [
-                item.picture
-            ];
-
-            while (
-                pictures.length < 3
-            ) {
-
-                const random =
-                    letters[
-                        Math.floor(
-                            Math.random() *
-                            letters.length
-                        )
-                    ].picture;
-
-                if (
-                    !pictures.includes(
-                        random
-                    )
-                ) {
-
-                    pictures.push(
-                        random
-                    );
-                }
-            }
-
-            pictures.sort(
-                () =>
-                    Math.random() - 0.5
-            );
-
-            pictures.forEach(
-                function(picture) {
-
-                    const pictureButton =
-                        document.createElement(
-                            "button"
-                        );
-
-                    pictureButton.className =
-                        "option";
-
-                    pictureButton.style.fontSize =
-                        "60px";
-
-                    pictureButton.textContent =
-                        picture;
-
-                    pictureButton.onclick =
-                        function() {
-
-                            if (
-                                picture ===
-                                item.picture
-                            ) {
-
-                                completeCurrentGame();
-
-                            } else {
-
-                                showGameError();
-                            }
-                        };
-
-                    pictureBox.appendChild(
-                        pictureButton
-                    );
-                }
-            );
-        };
-
-        box.appendChild(button);
-    });
-}
-
-
-/* ==========================================
-   ❌ إجابة خاطئة
-========================================== */
-
-function showGameError() {
-
-    const message =
-        document.getElementById(
-            "gameMessage"
-        );
-
-    if (message) {
-
-        message.textContent =
-            "😊 حاول مرة أخرى";
-
-        message.className =
-            "game-message error-text";
-    }
-
-    if (typeof speak === "function") {
-
-        speak("حاول مرة أخرى");
-    }
-}
-
-
-/* ==========================================
-   🏁 نهاية ألعاب الحروف
-========================================== */
+                if (found =
