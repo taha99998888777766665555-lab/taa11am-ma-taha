@@ -1,15 +1,10 @@
 /* ==========================================
    🌟 تعلم مع أ/ طه محمد 🌟
-   style.css
+   ملف style.css
 ========================================== */
 
 * {
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-}
-
-html {
-    scroll-behavior: smooth;
 }
 
 body {
@@ -19,23 +14,54 @@ body {
     background: linear-gradient(135deg, #e0f7fa, #fff8e1);
     color: #333;
     direction: rtl;
-    min-height: 100vh;
+    line-height: 1.6;
 }
-
-button,
-input {
-    font-family: inherit;
-}
-
-button {
-    cursor: pointer;
-    touch-action: manipulation;
-}
-
 
 /* ==========================================
-   رأس التطبيق
+   إمكانية الوصول: التركيز (Focus)
+   مهم جدًا لمن يستخدم لوحة مفاتيح أو
+   أجهزة تحكم بديلة
 ========================================== */
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+.option:focus-visible {
+    outline: 4px solid #ff6f00;
+    outline-offset: 3px;
+    border-radius: 12px;
+}
+
+.screen:focus-visible,
+.screen:focus {
+    outline: none;
+}
+
+/* ==========================================
+   احترام إعداد "تقليل الحركة" في الجهاز
+   لبعض الأطفال ذوي الحساسية الحسية
+========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .menu button:hover,
+    .primary:hover,
+    .secondary:hover,
+    .success:hover,
+    .danger:hover,
+    .option:hover {
+        transform: none !important;
+    }
+}
 
 header {
     background: linear-gradient(135deg, #2196f3, #673ab7);
@@ -71,11 +97,6 @@ header p {
     font-size: 17px;
 }
 
-
-/* ==========================================
-   الحاوية والشاشات
-========================================== */
-
 .container {
     max-width: 900px;
     margin: auto;
@@ -88,6 +109,16 @@ header p {
 
 .screen.active {
     display: block;
+    animation: gentleFadeIn 0.3s ease;
+}
+
+@keyframes gentleFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .card {
@@ -109,7 +140,6 @@ header p {
     color: #555;
 }
 
-
 /* ==========================================
    القائمة الرئيسية
 ========================================== */
@@ -121,22 +151,27 @@ header p {
     margin-top: 25px;
 }
 
+@media (min-width: 700px) {
+
+    .menu {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+}
+
 .menu button {
     border: none;
     border-radius: 22px;
     padding: 22px 10px;
     font-size: 20px;
+    cursor: pointer;
     background: #ffffff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     transition: 0.2s;
 }
 
 .menu button:hover {
-    transform: translateY(-3px);
-}
-
-.menu button:active {
-    transform: scale(0.97);
+    transform: translateY(-2px);
 }
 
 .menu button span {
@@ -145,10 +180,13 @@ header p {
     font-weight: bold;
 }
 
-
 /* ==========================================
    الأزرار
 ========================================== */
+
+button {
+    font-family: inherit;
+}
 
 .primary,
 .secondary,
@@ -159,6 +197,7 @@ header p {
     padding: 13px 22px;
     margin: 7px;
     font-size: 18px;
+    cursor: pointer;
     transition: 0.2s;
 }
 
@@ -186,554 +225,19 @@ header p {
 .secondary:hover,
 .success:hover,
 .danger:hover {
-    transform: scale(1.04);
+    transform: scale(1.03);
 }
-
-.primary:active,
-.secondary:active,
-.success:active,
-.danger:active {
-    transform: scale(0.97);
-}
-
 
 /* ==========================================
-   🔤 قائمة الحروف
+   الحروف
 ========================================== */
 
-.letters-card {
-    max-width: 650px;
-}
-
-.letters-card h2 {
-    font-size: 30px;
-}
-
-.letters-intro {
-    font-size: 20px;
-    color: #666;
-    margin-bottom: 20px;
-}
-
-.letters-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin: 20px auto;
-}
-
-.letter-list-button {
-    width: 100%;
-    min-height: 70px;
-    border: none;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.10);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 22px;
-    color: #333;
-    transition: 0.2s;
-}
-
-.letter-list-button:hover {
-    transform: translateX(-4px);
-}
-
-.letter-list-button:active {
-    transform: scale(0.98);
-}
-
-.letter-list-letter {
-    font-size: 42px;
-    font-weight: bold;
-    color: #3949ab;
-    min-width: 70px;
-}
-
-.letter-list-word {
-    font-size: 22px;
-    font-weight: bold;
-    flex: 1;
-    text-align: right;
-    color: #555;
-}
-
-.letter-list-picture {
-    font-size: 38px;
-    min-width: 60px;
-}
-
-
-/* ==========================================
-   🌟 درس الحرف
-========================================== */
-
-.letter-lesson-card {
-    max-width: 750px;
-    border: 3px solid #90caf9;
-    background: linear-gradient(180deg, #ffffff, #f8fbff);
-}
-
-.lesson-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.back-button {
-    border: none;
-    background: #eceff1;
-    color: #455a64;
-    padding: 10px 16px;
-    border-radius: 14px;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-.lesson-progress {
-    background: #fff8e1;
-    color: #f57f17;
-    border-radius: 20px;
-    padding: 10px 16px;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-#lessonTitle {
-    font-size: 30px;
-    color: #3949ab;
-}
-
-.lesson-letter {
-    font-size: 100px;
-    line-height: 1;
-    font-weight: bold;
-    color: #3949ab;
-    margin: 15px 0 5px;
-}
-
-.lesson-sound {
-    display: inline-block;
-    font-size: 34px;
-    font-weight: bold;
-    color: #e65100;
-    background: #fff3e0;
-    padding: 8px 25px;
-    border-radius: 18px;
-    margin: 5px 0 15px;
-}
-
-.lesson-picture {
-    font-size: 90px;
-    margin: 10px;
-}
-
-.lesson-word {
-    font-size: 34px;
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 15px;
-}
-
-
-/* ==========================================
-   تقدم الألعاب
-========================================== */
-
-.game-progress {
-    margin: 25px 0 15px;
-}
-
-.game-progress-text {
-    font-size: 19px;
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 10px;
-}
-
-.game-progress-bar {
-    height: 16px;
-    background: #eceff1;
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-.game-progress-fill {
-    width: 7.69%;
-    height: 100%;
-    background: linear-gradient(90deg, #42a5f5, #7e57c2);
-    border-radius: 20px;
-    transition: width 0.4s ease;
-}
-
-
-/* ==========================================
-   🎮 منطقة اللعبة
-========================================== */
-
-.mini-game {
-    background: #f8fbff;
-    border: 2px solid #e3f2fd;
-    border-radius: 22px;
-    padding: 22px;
-    margin-top: 15px;
-    min-height: 250px;
-}
-
-.game-title {
-    font-size: 25px;
-    color: #3949ab;
-    margin: 5px 0 15px;
-}
-
-.game-instruction {
-    font-size: 19px;
-    color: #555;
-    margin-bottom: 20px;
-}
-
-.game-big-letter {
-    font-size: 100px;
+.letter {
+    font-size: 80px;
     font-weight: bold;
     color: #3949ab;
     margin: 15px;
 }
-
-.game-picture {
-    font-size: 85px;
-    margin: 15px;
-}
-
-.game-word {
-    font-size: 42px;
-    font-weight: bold;
-    color: #5e35b1;
-    margin: 15px;
-}
-
-
-/* ==========================================
-   خيارات الألعاب
-========================================== */
-
-.game-options {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin: 20px 0;
-}
-
-.game-option {
-    min-width: 90px;
-    min-height: 65px;
-    border: 3px solid #bbdefb;
-    border-radius: 18px;
-    background: white;
-    color: #1565c0;
-    font-size: 30px;
-    font-weight: bold;
-    padding: 10px 20px;
-    transition: 0.2s;
-}
-
-.game-option:hover {
-    background: #e3f2fd;
-    transform: scale(1.05);
-}
-
-.game-option:active {
-    transform: scale(0.96);
-}
-
-
-/* ==========================================
-   🔊 زر الصوت
-========================================== */
-
-.sound-button {
-    border: none;
-    border-radius: 18px;
-    background: #2196f3;
-    color: white;
-    padding: 13px 24px;
-    font-size: 19px;
-    font-weight: bold;
-    margin: 8px;
-}
-
-.sound-button:hover {
-    transform: scale(1.04);
-}
-
-
-/* ==========================================
-   🎯 صيد الحروف
-========================================== */
-
-.hunt-area {
-    position: relative;
-    width: 100%;
-    height: 280px;
-    background: #e8f5e9;
-    border-radius: 20px;
-    overflow: hidden;
-    border: 3px dashed #81c784;
-}
-
-.hunt-letter {
-    position: absolute;
-    font-size: 45px;
-    font-weight: bold;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.15s;
-}
-
-.hunt-letter:hover {
-    transform: scale(1.2);
-}
-
-
-/* ==========================================
-   🧩 البازل
-========================================== */
-
-.puzzle-container {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin: 20px auto;
-}
-
-.puzzle-piece {
-    width: 100px;
-    height: 80px;
-    border: 3px dashed #90caf9;
-    border-radius: 16px;
-    background: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 38px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.puzzle-piece.selected {
-    background: #e3f2fd;
-    border-color: #1976d2;
-}
-
-
-/* ==========================================
-   ✋ الرمل / التتبع
-========================================== */
-
-.sand-board {
-    position: relative;
-    width: 100%;
-    height: 280px;
-    background:
-        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.5) 0 2px, transparent 3px),
-        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.4) 0 2px, transparent 3px),
-        #f3e5ab;
-    background-size: 30px 30px;
-    border-radius: 22px;
-    overflow: hidden;
-    touch-action: none;
-}
-
-.sand-guide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 170px;
-    font-weight: bold;
-    color: rgba(121, 85, 72, 0.25);
-    pointer-events: none;
-}
-
-#sandCanvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    touch-action: none;
-}
-
-
-/* ==========================================
-   ✏️ لوحة التتبع
-========================================== */
-
-.trace-board {
-    position: relative;
-    width: 100%;
-    max-width: 500px;
-    height: 300px;
-    margin: 15px auto;
-    border: 3px dashed #90caf9;
-    border-radius: 20px;
-    background: white;
-    touch-action: none;
-    overflow: hidden;
-}
-
-.trace-guide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 190px;
-    font-weight: bold;
-    color: #e0e0e0;
-    pointer-events: none;
-}
-
-#traceCanvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    touch-action: none;
-}
-
-
-/* ==========================================
-   🎨 التلوين
-========================================== */
-
-.color-letter {
-    font-size: 150px;
-    font-weight: bold;
-    color: #eeeeee;
-    -webkit-text-stroke: 3px #555;
-    margin: 20px;
-    user-select: none;
-}
-
-.color-buttons {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 15px 0;
-}
-
-.color-choice {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 3px solid #777;
-    cursor: pointer;
-}
-
-.color-choice.selected {
-    outline: 4px solid #222;
-    outline-offset: 3px;
-}
-
-
-/* ==========================================
-   🎨 تلوين الكلمة
-========================================== */
-
-.word-color-area {
-    background: #fffde7;
-    border-radius: 20px;
-    padding: 20px;
-    margin: 15px 0;
-}
-
-.color-word-letter {
-    display: inline-block;
-    font-size: 55px;
-    font-weight: bold;
-    color: #eeeeee;
-    -webkit-text-stroke: 2px #555;
-    margin: 4px;
-    cursor: pointer;
-    transition: 0.15s;
-}
-
-.color-word-letter.colored {
-    -webkit-text-stroke: 1px #333;
-}
-
-
-/* ==========================================
-   💬 رسائل الألعاب
-========================================== */
-
-.game-message {
-    min-height: 45px;
-    margin: 15px;
-    font-size: 25px;
-    font-weight: bold;
-}
-
-.game-success {
-    color: #2e7d32;
-}
-
-.game-error {
-    color: #d32f2f;
-}
-
-
-/* ==========================================
-   🏅 الشارة
-========================================== */
-
-.badge-area {
-    background: linear-gradient(135deg, #fff8e1, #fffde7);
-    border: 3px solid #ffd54f;
-    border-radius: 25px;
-    padding: 25px;
-    margin-top: 20px;
-    animation: badgeAppear 0.6s ease;
-}
-
-.badge-icon {
-    font-size: 110px;
-    margin: 10px;
-}
-
-.badge-area h2 {
-    color: #f57f17;
-    font-size: 30px;
-}
-
-.badge-area p {
-    font-size: 20px;
-    color: #795548;
-}
-
-@keyframes badgeAppear {
-    from {
-        transform: scale(0.6);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-
-/* ==========================================
-   الكلمات
-========================================== */
 
 .picture {
     font-size: 70px;
@@ -744,13 +248,7 @@ header p {
     font-size: 30px;
     font-weight: bold;
     color: #555;
-}
-
-.big-word {
-    font-size: 55px;
-    font-weight: bold;
-    color: #6a1b9a;
-    margin: 20px;
+    margin-bottom: 15px;
 }
 
 .options {
@@ -771,8 +269,24 @@ header p {
     font-size: 28px;
     font-weight: bold;
     padding: 10px 20px;
+    cursor: pointer;
 }
 
+.option:hover {
+    background: #bbdefb;
+    transform: scale(1.05);
+}
+
+/* ==========================================
+   الكلمات
+========================================== */
+
+.big-word {
+    font-size: 55px;
+    font-weight: bold;
+    color: #6a1b9a;
+    margin: 20px;
+}
 
 /* ==========================================
    الأرقام
@@ -792,7 +306,6 @@ header p {
     margin: 15px;
     word-break: break-word;
 }
-
 
 /* ==========================================
    العمليات الحسابية
@@ -819,9 +332,8 @@ input[type="number"]:focus {
     border-color: #1976d2;
 }
 
-
 /* ==========================================
-   الرسائل القديمة
+   الرسائل
 ========================================== */
 
 .message {
@@ -838,7 +350,6 @@ input[type="number"]:focus {
 .error-text {
     color: #d32f2f;
 }
-
 
 /* ==========================================
    الكتابة
@@ -862,7 +373,6 @@ input[type="number"]:focus {
     touch-action: none;
 }
 
-
 /* ==========================================
    القرآن الكريم
 ========================================== */
@@ -872,7 +382,14 @@ input[type="number"]:focus {
     border: 3px solid #81c784;
 }
 
-.quran-text {
+.surah-name {
+    font-size: 30px;
+    font-weight: bold;
+    color: #2e7d32;
+    margin: 15px;
+}
+
+.surah-text {
     font-family: "Traditional Arabic", "Amiri", "Tahoma", serif;
     font-size: 30px;
     line-height: 2.3;
@@ -883,13 +400,10 @@ input[type="number"]:focus {
     margin: 15px 0;
 }
 
-.surah-name {
-    font-size: 30px;
-    font-weight: bold;
-    color: #2e7d32;
-    margin: 15px;
+.quran-decoration {
+    font-size: 60px;
+    margin: 10px;
 }
-
 
 /* ==========================================
    الحديث الشريف
@@ -911,6 +425,17 @@ input[type="number"]:focus {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+.hadith-icon {
+    font-size: 70px;
+    margin: 10px;
+}
+
+.hadith-intro {
+    font-size: 17px;
+    color: #795548;
+    margin: 10px 0;
+}
+
 .hadith-text {
     background: #fff8e1;
     border-radius: 20px;
@@ -929,12 +454,13 @@ input[type="number"]:focus {
 }
 
 .hadith-meaning {
-    background: #f5f5f5;
-    padding: 15px;
-    border-radius: 15px;
-    font-size: 20px;
+    background: #fff3e0;
+    border-radius: 16px;
+    padding: 14px;
+    font-size: 19px;
+    color: #6d4c41;
+    margin: 10px 15px 20px;
 }
-
 
 /* ==========================================
    الأدعية
@@ -946,8 +472,8 @@ input[type="number"]:focus {
 }
 
 .dua-image {
-    font-size: 70px;
-    margin: 15px;
+    font-size: 60px;
+    margin: 10px;
 }
 
 .dua-title {
@@ -967,7 +493,6 @@ input[type="number"]:focus {
     margin: 20px 0;
 }
 
-
 /* ==========================================
    المكافآت
 ========================================== */
@@ -981,7 +506,6 @@ input[type="number"]:focus {
     color: #f9a825;
     font-size: 40px;
 }
-
 
 /* ==========================================
    متابعة الطفل
@@ -1000,6 +524,54 @@ input[type="number"]:focus {
     font-size: 24px;
 }
 
+/* ==========================================
+   نافذة التأكيد الهادئة
+   (بديل هادئ لنافذة confirm الفجائية)
+========================================== */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(50, 50, 60, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+    animation: gentleFadeIn 0.25s ease;
+}
+
+.modal-overlay[hidden] {
+    display: none;
+}
+
+.modal-box {
+    background: #ffffff;
+    border-radius: 25px;
+    padding: 30px 25px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.2);
+}
+
+.modal-icon {
+    font-size: 45px;
+    margin-bottom: 10px;
+}
+
+.modal-text {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin: 0 0 20px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 
 /* ==========================================
    تحسين الهاتف
@@ -1033,79 +605,7 @@ input[type="number"]:focus {
         font-size: 18px;
     }
 
-    .lesson-letter {
-        font-size: 80px;
-    }
-
-    .lesson-sound {
-        font-size: 28px;
-    }
-
-    .lesson-picture {
-        font-size: 70px;
-    }
-
-    .lesson-word {
-        font-size: 28px;
-    }
-
-    .game-big-letter {
-        font-size: 80px;
-    }
-
-    .game-word {
-        font-size: 34px;
-    }
-
-    .mini-game {
-        padding: 15px;
-    }
-
-    .hunt-area {
-        height: 240px;
-    }
-
-    .letter-list-button {
-        min-height: 65px;
-        padding: 8px 14px;
-    }
-
-    .letter-list-letter {
-        font-size: 34px;
-        min-width: 55px;
-    }
-
-    .letter-list-word {
-        font-size: 18px;
-    }
-
-    .letter-list-picture {
-        font-size: 30px;
-        min-width: 45px;
-    }
-
-    .game-option {
-        min-width: 75px;
-        font-size: 26px;
-    }
-
-    .color-letter {
-        font-size: 110px;
-    }
-
-    .trace-guide,
-    .sand-guide {
-        font-size: 140px;
-    }
-
-    .primary,
-    .secondary,
-    .success,
-    .danger {
-        font-size: 16px;
-        padding: 11px 16px;
-    }
-
+    .letter,
     .number {
         font-size: 65px;
     }
@@ -1118,7 +618,7 @@ input[type="number"]:focus {
         font-size: 38px;
     }
 
-    .quran-text,
+    .surah-text,
     .hadith-text,
     .dua-text {
         font-size: 24px;
@@ -1130,5 +630,13 @@ input[type="number"]:focus {
 
     #writingCanvas {
         height: 250px;
+    }
+
+    .primary,
+    .secondary,
+    .success,
+    .danger {
+        font-size: 16px;
+        padding: 11px 16px;
     }
 }
