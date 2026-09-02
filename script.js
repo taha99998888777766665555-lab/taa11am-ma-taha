@@ -1,2178 +1,2006 @@
-// ==========================================
-// 🌟 تعلم مع أ/ طه محمد
-// script.js متوافق مع index.html الحالي
-// ==========================================
+/* =========================================================
+   🌟 تعلم مع أ/ طه محمد 🌟
+   script.js - النسخة الكاملة
+   ========================================================= */
 
+"use strict";
 
-// ==========================================
-// ⭐ نظام النقاط والمستويات
-// ==========================================
+/* =========================================================
+   🔧 أدوات عامة
+   ========================================================= */
 
-let starsCount = 0;
-let level = 1;
+const $ = (id) => document.getElementById(id);
 
-function convertToEasternArabicNumerals(num) {
-    const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-
-    return String(num).replace(/\d/g, function (digit) {
-        return arabicNumbers[digit];
-    });
+function arabicNumber(number) {
+    return String(number).replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
 }
 
-function normalizeArabicNumber(value) {
-    if (value === null || value === undefined) return '';
+function shuffle(array) {
+    const arr = [...array];
 
-    return String(value)
-        .replace(/[٠-٩]/g, function (digit) {
-            return '٠١٢٣٤٥٦٧٨٩'.indexOf(digit);
-        })
-        .replace(/[۰-۹]/g, function (digit) {
-            return '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit);
-        });
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+
+    return arr;
 }
 
-function addStars(amount) {
-    starsCount += amount;
-
-    if (starsCount < 0) {
-        starsCount = 0;
-    }
-
-    level = Math.floor(starsCount / 50) + 1;
-
-    updateDisplay();
-    updateTeacherStats();
-    saveProgress();
+function unique(array) {
+    return [...new Set(array)];
 }
 
-function updateDisplay() {
-    const starsEl = document.getElementById('stars');
-    const levelEl = document.getElementById('level');
-    const rewardStarsEl = document.getElementById('rewardStars');
+/* =========================================================
+   🔊 الصوت
+   ========================================================= */
 
-    if (starsEl) {
-        starsEl.textContent =
-            convertToEasternArabicNumerals(starsCount);
-    }
+let arabicVoice = null;
 
-    if (levelEl) {
-        levelEl.textContent =
-            convertToEasternArabicNumerals(level);
-    }
+function findArabicVoice() {
+    const voices = speechSynthesis.getVoices();
 
-    if (rewardStarsEl) {
-        rewardStarsEl.textContent =
-            convertToEasternArabicNumerals(starsCount);
-    }
+    arabicVoice =
+        voices.find(v => v.lang === "ar-SA") ||
+        voices.find(v => v.lang.startsWith("ar")) ||
+        null;
 
-    const teacherStars =
-        document.getElementById('teacherStars');
-
-    const teacherLevel =
-        document.getElementById('teacherLevel');
-
-    if (teacherStars) {
-        teacherStars.textContent =
-            convertToEasternArabicNumerals(starsCount);
-    }
-
-    if (teacherLevel) {
-        teacherLevel.textContent =
-            convertToEasternArabicNumerals(level);
-    }
+    return arabicVoice;
 }
 
-
-// ==========================================
-// 💾 حفظ واسترجاع التقدم
-// ==========================================
-
-function saveProgress() {
-    try {
-        localStorage.setItem(
-            'taha_app_stars',
-            String(starsCount)
-        );
-
-        localStorage.setItem(
-            'taha_app_level',
-            String(level)
-        );
-    } catch (error) {
-        console.log('تعذر حفظ التقدم:', error);
-    }
+if ("speechSynthesis" in window) {
+    speechSynthesis.onvoiceschanged = findArabicVoice;
+    findArabicVoice();
 }
 
-function loadProgress() {
-    try {
-        const savedStars =
-            localStorage.getItem('taha_app_stars');
+function speak(text, options = {}) {
+    if (!("speechSynthesis" in window)) return;
 
-        if (savedStars !== null) {
-            const parsedStars =
-                parseInt(savedStars, 10);
+    speechSynthesis.cancel();
 
-            if (!isNaN(parsedStars) && parsedStars >= 0) {
-                starsCount = parsedStars;
-            }
-        }
+    const utterance = new SpeechSynthesisUtterance(text);
 
-        // المستوى يتم حسابه من النجوم
-        level = Math.floor(starsCount / 50) + 1;
+    utterance.lang = options.lang || "ar-SA";
+    utterance.rate = options.rate ?? 0.82;
+    utterance.pitch = options.pitch ?? 1;
+    utterance.volume = options.volume ?? 1;
 
-        updateDisplay();
-        updateTeacherStats();
-
-    } catch (error) {
-        console.log('تعذر تحميل التقدم:', error);
+    if (!arabicVoice) {
+        findArabicVoice();
     }
-}
-
-
-// ==========================================
-// 🖥️ التنقل بين الأقسام
-// ==========================================
-
-function showScreen(screenId) {
-
-    try {
-
-        // إيقاف الكلام
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-
-        // إيقاف القرآن
-        stopQuranAudio();
-
-        const screens =
-            document.querySelectorAll('.screen');
-
-        screens.forEach(function (screen) {
-            screen.classList.remove('active');
-        });
-
-        const targetScreen =
-            document.getElementById(screenId);
-
-        if (!targetScreen) {
-            console.log(
-                'الشاشة غير موجودة:',
-                screenId
-            );
-            return;
-        }
-
-        targetScreen.classList.add('active');
-
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-
-
-        // تهيئة القسم المطلوب
-
-        if (screenId === 'letters') {
-            newLetter();
-        }
-
-        if (screenId === 'words') {
-            newWord();
-        }
-
-        if (screenId === 'numbers') {
-            newNumber();
-        }
-
-        if (screenId === 'writing') {
-            setTimeout(initWritingCanvas, 100);
-        }
-
-        if (screenId === 'addition') {
-            newAddition();
-        }
-
-        if (screenId === 'subtraction') {
-            newSubtraction();
-        }
-
-        if (screenId === 'quran') {
-            loadQuranAyah();
-        }
-
-        if (screenId === 'hadith') {
-            loadHadith();
-        }
-
-        if (screenId === 'duas') {
-            loadDua();
-        }
-
-        if (screenId === 'teacher') {
-            updateTeacherStats();
-        }
-
-    } catch (error) {
-
-        console.error(
-            'خطأ في فتح القسم:',
-            error
-        );
-    }
-}
-
-
-// ==========================================
-// 🔊 نظام الصوت
-// ==========================================
-
-let quranAudio = null;
-
-function playAudioText(text) {
-
-    if (!text) return;
-
-    if (!('speechSynthesis' in window)) {
-        console.log(
-            'المتصفح لا يدعم النطق الصوتي'
-        );
-        return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const utterance =
-        new SpeechSynthesisUtterance(text);
-
-    utterance.lang = 'ar-SA';
-    utterance.rate = 0.8;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
-    const voices =
-        window.speechSynthesis.getVoices();
-
-    const arabicVoice =
-        voices.find(function (voice) {
-            return voice.lang &&
-                voice.lang.toLowerCase() === 'ar-sa';
-        }) ||
-        voices.find(function (voice) {
-            return voice.lang &&
-                voice.lang.toLowerCase().startsWith('ar');
-        });
 
     if (arabicVoice) {
         utterance.voice = arabicVoice;
     }
 
-    window.speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utterance);
 }
 
+/* =========================================================
+   ⭐ النجوم والمستوى
+   ========================================================= */
 
-// تشغيل ملف صوت خارجي
-function playNaturalAudio(url) {
+let stars = Number(localStorage.getItem("taha_app_stars") || 0);
+let level = Number(localStorage.getItem("taha_app_level") || 1);
 
-    if (!url) return;
+function getStars() {
+    return stars;
+}
 
-    stopQuranAudio();
+function addStars(amount) {
+    stars += amount;
 
-    quranAudio = new Audio(url);
+    level = Math.floor(stars / 100) + 1;
 
-    quranAudio.preload = 'auto';
+    localStorage.setItem("taha_app_stars", stars);
+    localStorage.setItem("taha_app_level", level);
 
-    quranAudio.play().catch(function (error) {
-        console.log(
-            'تعذر تشغيل الصوت:',
-            error
-        );
+    updateStats();
+}
+
+function updateStats() {
+    const starsEl = $("stars");
+    const levelEl = $("level");
+
+    if (starsEl) starsEl.textContent = arabicNumber(stars);
+    if (levelEl) levelEl.textContent = arabicNumber(level);
+}
+
+/* =========================================================
+   🧭 التنقل بين الصفحات
+   ========================================================= */
+
+function showScreen(screenId) {
+    document.querySelectorAll(".screen").forEach(screen => {
+        screen.classList.remove("active");
     });
-}
 
-function stopQuranAudio() {
+    const target = $(screenId);
 
-    if (quranAudio) {
+    if (target) {
+        target.classList.add("active");
+    }
 
-        quranAudio.pause();
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 
-        quranAudio.currentTime = 0;
+    if ("speechSynthesis" in window) {
+        speechSynthesis.cancel();
+    }
 
-        quranAudio = null;
+    if (screenId === "letters") {
+        renderLetterPage();
+    }
+
+    if (screenId === "words") {
+        renderCurrentWord();
+    }
+
+    if (screenId === "numbers") {
+        renderCurrentNumber();
+    }
+
+    if (screenId === "writing") {
+        setTimeout(initWritingCanvas, 100);
+    }
+
+    if (screenId === "addition") {
+        newAddition();
+    }
+
+    if (screenId === "subtraction") {
+        newSubtraction();
+    }
+
+    if (screenId === "quran") {
+        renderSurah();
+    }
+
+    if (screenId === "hadith") {
+        renderHadith();
+    }
+
+    if (screenId === "duas") {
+        renderDua();
     }
 }
 
+/* =========================================================
+   🔤 الحروف العربية
+   ========================================================= */
 
-// ==========================================
-// 🔤 قسم الحروف
-// ==========================================
-
-const lettersData = [
-
-    {
-        name: 'ألف',
-        letter: 'أ',
-        sound: 'أَ',
-        picture: '🦁',
-        word: 'أَسَد'
-    },
-
-    {
-        name: 'باء',
-        letter: 'ب',
-        sound: 'بَ',
-        picture: '🦆',
-        word: 'بَطَّة'
-    },
-
-    {
-        name: 'تاء',
-        letter: 'ت',
-        sound: 'تَ',
-        picture: '🍎',
-        word: 'تُفَّاحَة'
-    },
-
-    {
-        name: 'ثاء',
-        letter: 'ث',
-        sound: 'ثَ',
-        picture: '🦊',
-        word: 'ثَعْلَب'
-    },
-
-    {
-        name: 'جيم',
-        letter: 'ج',
-        sound: 'جَ',
-        picture: '🐫',
-        word: 'جَمَل'
-    },
-
-    {
-        name: 'حاء',
-        letter: 'ح',
-        sound: 'حَ',
-        picture: '🐴',
-        word: 'حِصَان'
-    },
-
-    {
-        name: 'خاء',
-        letter: 'خ',
-        sound: 'خَ',
-        picture: '🥬',
-        word: 'خَسّ'
-    },
-
-    {
-        name: 'دال',
-        letter: 'د',
-        sound: 'دَ',
-        picture: '🐓',
-        word: 'دِيك'
-    },
-
-    {
-        name: 'ذال',
-        letter: 'ذ',
-        sound: 'ذَ',
-        picture: '🐺',
-        word: 'ذِئْب'
-    },
-
-    {
-        name: 'راء',
-        letter: 'ر',
-        sound: 'رَ',
-        picture: '🍎',
-        word: 'رُمَّان'
-    },
-
-    {
-        name: 'زاي',
-        letter: 'ز',
-        sound: 'زَ',
-        picture: '🦒',
-        word: 'زَرَافَة'
-    },
-
-    {
-        name: 'سين',
-        letter: 'س',
-        sound: 'سَ',
-        picture: '🚗',
-        word: 'سَيَّارَة'
-    },
-
-    {
-        name: 'شين',
-        letter: 'ش',
-        sound: 'شَ',
-        picture: '☀️',
-        word: 'شَمْس'
-    },
-
-    {
-        name: 'صاد',
-        letter: 'ص',
-        sound: 'صَ',
-        picture: '🦅',
-        word: 'صَقْر'
-    },
-
-    {
-        name: 'ضاد',
-        letter: 'ض',
-        sound: 'ضَ',
-        picture: '🐸',
-        word: 'ضِفْدَع'
-    },
-
-    {
-        name: 'طاء',
-        letter: 'ط',
-        sound: 'طَ',
-        picture: '✈️',
-        word: 'طَائِرَة'
-    },
-
-    {
-        name: 'ظاء',
-        letter: 'ظ',
-        sound: 'ظَ',
-        picture: '🦌',
-        word: 'ظَبْي'
-    },
-
-    {
-        name: 'عين',
-        letter: 'ع',
-        sound: 'عَ',
-        picture: '🍇',
-        word: 'عِنَب'
-    },
-
-    {
-        name: 'غين',
-        letter: 'غ',
-        sound: 'غَ',
-        picture: '☁️',
-        word: 'غَيْم'
-    },
-
-    {
-        name: 'فاء',
-        letter: 'ف',
-        sound: 'فَ',
-        picture: '🐘',
-        word: 'فِيل'
-    },
-
-    {
-        name: 'قاف',
-        letter: 'ق',
-        sound: 'قَ',
-        picture: '🌙',
-        word: 'قَمَر'
-    },
-
-    {
-        name: 'كاف',
-        letter: 'ك',
-        sound: 'كَ',
-        picture: '📖',
-        word: 'كِتَاب'
-    },
-
-    {
-        name: 'لام',
-        letter: 'ل',
-        sound: 'لَ',
-        picture: '🍋',
-        word: 'لَيْمُون'
-    },
-
-    {
-        name: 'ميم',
-        letter: 'م',
-        sound: 'مَ',
-        picture: '🍌',
-        word: 'مَوْز'
-    },
-
-    {
-        name: 'نون',
-        letter: 'ن',
-        sound: 'نَ',
-        picture: '🐅',
-        word: 'نَمِر'
-    },
-
-    {
-        name: 'هاء',
-        letter: 'هـ',
-        sound: 'هَ',
-        picture: '🎁',
-        word: 'هَدِيَّة'
-    },
-
-    {
-        name: 'واو',
-        letter: 'و',
-        sound: 'وَ',
-        picture: '🌹',
-        word: 'وَرْدَة'
-    },
-
-    {
-        name: 'ياء',
-        letter: 'ي',
-        sound: 'يَ',
-        picture: '🤲',
-        word: 'يَد'
-    }
-
+const letters = [
+    { letter: "أ", word: "أسد", emoji: "🦁" },
+    { letter: "ب", word: "بقرة", emoji: "🐄" },
+    { letter: "ت", word: "تفاح", emoji: "🍎" },
+    { letter: "ث", word: "ثعلب", emoji: "🦊" },
+    { letter: "ج", word: "جمل", emoji: "🐪" },
+    { letter: "ح", word: "حصان", emoji: "🐎" },
+    { letter: "خ", word: "خبز", emoji: "🍞" },
+    { letter: "د", word: "دب", emoji: "🐻" },
+    { letter: "ذ", word: "ذرة", emoji: "🌽" },
+    { letter: "ر", word: "رمان", emoji: "🍎" },
+    { letter: "ز", word: "زرافة", emoji: "🦒" },
+    { letter: "س", word: "سمكة", emoji: "🐟" },
+    { letter: "ش", word: "شمس", emoji: "☀️" },
+    { letter: "ص", word: "صقر", emoji: "🦅" },
+    { letter: "ض", word: "ضفدع", emoji: "🐸" },
+    { letter: "ط", word: "طائرة", emoji: "✈️" },
+    { letter: "ظ", word: "ظرف", emoji: "✉️" },
+    { letter: "ع", word: "عين", emoji: "👁️" },
+    { letter: "غ", word: "غيمة", emoji: "☁️" },
+    { letter: "ف", word: "فيل", emoji: "🐘" },
+    { letter: "ق", word: "قمر", emoji: "🌙" },
+    { letter: "ك", word: "كتاب", emoji: "📘" },
+    { letter: "ل", word: "ليمون", emoji: "🍋" },
+    { letter: "م", word: "موز", emoji: "🍌" },
+    { letter: "ن", word: "نجم", emoji: "⭐" },
+    { letter: "ه", word: "هلال", emoji: "🌙" },
+    { letter: "و", word: "وردة", emoji: "🌹" },
+    { letter: "ي", word: "يد", emoji: "✋" }
 ];
 
 let currentLetterIndex = 0;
-let currentLetterObj = null;
-let letterAnswered = false;
+let currentLetterGame = 0;
+let letterGameAnswered = false;
+let letterGameStars = 0;
 
+const TOTAL_LETTER_GAMES = 20;
 
-// إنشاء سؤال حرف جديد
-function newLetter() {
+/* =========================================================
+   🎨 تنسيق ألعاب الحروف
+   ========================================================= */
 
-    const randomIndex =
-        Math.floor(
-            Math.random() * lettersData.length
-        );
+function addLetterGameStyles() {
+    if ($("letterGameStyles")) return;
 
-    currentLetterIndex = randomIndex;
+    const style = document.createElement("style");
+    style.id = "letterGameStyles";
 
-    currentLetterObj =
-        lettersData[currentLetterIndex];
-
-    letterAnswered = false;
-
-    const letterEl =
-        document.getElementById('currentLetter');
-
-    const pictureEl =
-        document.getElementById('letterPicture');
-
-    const wordEl =
-        document.getElementById('letterWord');
-
-    const messageEl =
-        document.getElementById('letterMessage');
-
-    const optionsEl =
-        document.getElementById('letterOptions');
-
-    if (letterEl) {
-        letterEl.textContent =
-            currentLetterObj.letter;
-    }
-
-    if (pictureEl) {
-        pictureEl.textContent =
-            currentLetterObj.picture;
-    }
-
-    if (wordEl) {
-        wordEl.textContent =
-            currentLetterObj.word;
-    }
-
-    if (messageEl) {
-        messageEl.textContent = '';
-        messageEl.style.color = '';
-    }
-
-    if (!optionsEl) return;
-
-    optionsEl.innerHTML = '';
-
-    let choices = [
-        currentLetterObj.letter
-    ];
-
-    while (choices.length < 3) {
-
-        const randomLetter =
-            lettersData[
-                Math.floor(
-                    Math.random() *
-                    lettersData.length
-                )
-            ].letter;
-
-        if (!choices.includes(randomLetter)) {
-            choices.push(randomLetter);
+    style.textContent = `
+        .letter-games-box {
+            margin: 20px auto;
+            max-width: 850px;
         }
+
+        .letter-game-card {
+            background: rgba(255,255,255,.95);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,.10);
+            text-align: center;
+        }
+
+        .game-number {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .game-question {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px 0;
+            line-height: 1.7;
+        }
+
+        .game-big-letter {
+            font-size: 75px;
+            font-weight: bold;
+            margin: 12px;
+        }
+
+        .game-picture {
+            font-size: 70px;
+            margin: 15px;
+        }
+
+        .letter-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(85px,1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .letter-game-option {
+            border: 0;
+            border-radius: 18px;
+            padding: 15px 8px;
+            background: #f1f5f9;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: .2s;
+            min-height: 70px;
+        }
+
+        .letter-game-option:hover {
+            transform: translateY(-3px);
+        }
+
+        .letter-game-option.correct {
+            background: #c8f7d2 !important;
+        }
+
+        .letter-game-option.wrong {
+            background: #ffd0d0 !important;
+        }
+
+        .game-word {
+            font-size: 42px;
+            font-weight: bold;
+            margin: 20px;
+        }
+
+        .game-memory-hidden {
+            font-size: 55px;
+            font-weight: bold;
+            min-height: 75px;
+        }
+
+        .game-progress {
+            height: 12px;
+            background: #e5e7eb;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .game-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #22c55e;
+            transition: width .3s;
+        }
+
+        .game-message {
+            min-height: 35px;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .game-next-btn {
+            margin-top: 18px;
+            border: 0;
+            border-radius: 15px;
+            padding: 13px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .game-category {
+            display: inline-block;
+            padding: 7px 14px;
+            border-radius: 20px;
+            background: #eef2ff;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+/* =========================================================
+   🔤 اختيارات حروف بدون تكرار
+   ========================================================= */
+
+function getUniqueLetterChoices(correctLetter, count = 3) {
+    const wrongLetters = shuffle(
+        letters
+            .map(item => item.letter)
+            .filter(letter => letter !== correctLetter)
+    ).slice(0, count - 1);
+
+    return shuffle(unique([correctLetter, ...wrongLetters]));
+}
+
+function getUniqueItems(correctItem, count = 3) {
+    const others = shuffle(
+        letters.filter(item => item.letter !== correctItem.letter)
+    ).slice(0, count - 1);
+
+    return shuffle(unique([correctItem, ...others]));
+}
+
+/* =========================================================
+   🔤 صفحة الحروف
+   ========================================================= */
+
+function renderLetterPage() {
+    addLetterGameStyles();
+
+    const item = letters[currentLetterIndex];
+
+    if ($("currentLetter")) {
+        $("currentLetter").textContent = item.letter;
     }
 
-    choices.sort(
-        () => Math.random() - 0.5
-    );
+    if ($("letterPicture")) {
+        $("letterPicture").textContent = item.emoji;
+    }
 
-    choices.forEach(function (letter) {
+    if ($("letterWord")) {
+        $("letterWord").textContent = item.word;
+    }
 
-        const button =
-            document.createElement('button');
-
-        button.className = 'option-btn';
-
-        button.textContent = letter;
-
-        button.onclick = function () {
-
-            if (letter === currentLetterObj.letter) {
-
-                messageEl.textContent =
-                    '🎉 أحسنت! إجابة صحيحة';
-
-                messageEl.style.color = 'green';
-
-                if (!letterAnswered) {
-                    letterAnswered = true;
-                    addStars(5);
-                }
-
-            } else {
-
-                messageEl.textContent =
-                    '❌ حاول مرة أخرى يا بطل';
-
-                messageEl.style.color = 'red';
-            }
-
-        };
-
-        optionsEl.appendChild(button);
-
-    });
+    renderLetterGamesBox();
 }
 
-
-// زر سماع الحرف
 function speakCurrentLetter() {
+    const item = letters[currentLetterIndex];
 
-    if (!currentLetterObj) return;
-
-    playAudioText(
-        `حرف ${currentLetterObj.name}، ${currentLetterObj.sound}، مثل ${currentLetterObj.word}`
+    speak(
+        `حرف ${item.letter}، مثل ${item.word}`,
+        { rate: 0.75 }
     );
 }
 
-
-// توافق مع الكود القديم
 function playLetterAudio() {
     speakCurrentLetter();
 }
 
+/* =========================================================
+   🎮 إنشاء صندوق الألعاب
+   ========================================================= */
 
-// الانتقال لحرف جديد
-function nextLetter() {
-    newLetter();
-}
+function getLetterGamesBox() {
+    let box = $("letterGamesBox");
 
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "letterGamesBox";
+        box.className = "letter-games-box";
 
-// ==========================================
-// 📚 الكلمات
-// ==========================================
+        const lettersScreen = $("letters");
 
-const wordsData = [
-
-    {
-        word: 'مدرسة',
-        picture: '🏫'
-    },
-
-    {
-        word: 'تفاحة',
-        picture: '🍎'
-    },
-
-    {
-        word: 'قطة',
-        picture: '🐱'
-    },
-
-    {
-        word: 'شمس',
-        picture: '☀️'
-    },
-
-    {
-        word: 'قمر',
-        picture: '🌙'
-    },
-
-    {
-        word: 'سيارة',
-        picture: '🚗'
-    },
-
-    {
-        word: 'سمكة',
-        picture: '🐟'
-    },
-
-    {
-        word: 'كتاب',
-        picture: '📖'
-    }
-
-];
-
-let currentWordObj = null;
-let wordAnswered = false;
-
-function newWord() {
-
-    currentWordObj =
-        wordsData[
-            Math.floor(
-                Math.random() *
-                wordsData.length
-            )
-        ];
-
-    wordAnswered = false;
-
-    const picture =
-        document.getElementById('wordPicture');
-
-    const word =
-        document.getElementById('currentWord');
-
-    const message =
-        document.getElementById('wordMessage');
-
-    const options =
-        document.getElementById('wordOptions');
-
-    if (picture) {
-        picture.textContent =
-            currentWordObj.picture;
-    }
-
-    if (word) {
-        word.textContent =
-            currentWordObj.word;
-    }
-
-    if (message) {
-        message.textContent = '';
-        message.style.color = '';
-    }
-
-    if (!options) return;
-
-    options.innerHTML = '';
-
-    let choices = [
-        currentWordObj.word
-    ];
-
-    while (choices.length < 3) {
-
-        const randomWord =
-            wordsData[
-                Math.floor(
-                    Math.random() *
-                    wordsData.length
-                )
-            ].word;
-
-        if (!choices.includes(randomWord)) {
-            choices.push(randomWord);
+        if (lettersScreen) {
+            lettersScreen.appendChild(box);
         }
     }
 
-    choices.sort(
-        () => Math.random() - 0.5
-    );
+    return box;
+}
 
-    choices.forEach(function (selectedWord) {
+function renderLetterGamesBox() {
+    const box = getLetterGamesBox();
 
-        const button =
-            document.createElement('button');
+    if (!box) return;
 
-        button.className =
-            'option-btn';
+    box.innerHTML = `
+        <div class="letter-game-card">
+            <div class="game-number">
+                اللعبة ${arabicNumber(currentLetterGame + 1)} من ${arabicNumber(TOTAL_LETTER_GAMES)}
+            </div>
 
-        button.textContent =
-            selectedWord;
+            <div class="game-progress">
+                <div
+                    id="letterGameProgressFill"
+                    class="game-progress-fill"
+                    style="width:${((currentLetterGame) / TOTAL_LETTER_GAMES) * 100}%"
+                ></div>
+            </div>
 
-        button.onclick = function () {
+            <div id="letterGameContent"></div>
+        </div>
+    `;
 
-            if (
-                selectedWord ===
-                currentWordObj.word
-            ) {
+    renderCurrentLetterGame();
+}
 
-                message.textContent =
-                    '🎉 إجابة صحيحة وبطل ممتاز!';
+/* =========================================================
+   🎮 محرك الألعاب العشرين
+   ========================================================= */
 
-                message.style.color = 'green';
+function renderCurrentLetterGame() {
+    const content = $("letterGameContent");
 
-                if (!wordAnswered) {
-                    wordAnswered = true;
-                    addStars(5);
-                }
+    if (!content) return;
 
-            } else {
+    letterGameAnswered = false;
 
-                message.textContent =
-                    '❌ حاول مرة أخرى';
+    const item = letters[currentLetterIndex];
 
-                message.style.color = 'red';
-            }
+    switch (currentLetterGame) {
 
-        };
+        /* 1 ------------------------------------------------ */
+        case 0:
+            gameChooseCorrectLetter(content, item);
+            break;
 
-        options.appendChild(button);
+        /* 2 ------------------------------------------------ */
+        case 1:
+            gameListenAndChoose(content, item);
+            break;
 
+        /* 3 ------------------------------------------------ */
+        case 2:
+            gameChoosePicture(content, item);
+            break;
+
+        /* 4 ------------------------------------------------ */
+        case 3:
+            gameChooseWordStartingLetter(content, item);
+            break;
+
+        /* 5 ------------------------------------------------ */
+        case 4:
+            gameFirstLetterOfWord(content);
+            break;
+
+        /* 6 ------------------------------------------------ */
+        case 5:
+            gameCompleteWord(content, item);
+            break;
+
+        /* 7 ------------------------------------------------ */
+        case 6:
+            gameFindLetter(content, item);
+            break;
+
+        /* 8 ------------------------------------------------ */
+        case 7:
+            gameMatchLetterPicture(content, item);
+            break;
+
+        /* 9 ------------------------------------------------ */
+        case 8:
+            gameMatchLetterWord(content, item);
+            break;
+
+        /* 10 ----------------------------------------------- */
+        case 9:
+            gameListenHaraka(content, item);
+            break;
+
+        /* 11 ----------------------------------------------- */
+        case 10:
+            gameListenWord(content, item);
+            break;
+
+        /* 12 ----------------------------------------------- */
+        case 11:
+            gameWhichWordDoesNotStart(content, item);
+            break;
+
+        /* 13 ----------------------------------------------- */
+        case 12:
+            gamePictureOnly(content, item);
+            break;
+
+        /* 14 ----------------------------------------------- */
+        case 13:
+            gameOddLookingLetter(content, item);
+            break;
+
+        /* 15 ----------------------------------------------- */
+        case 14:
+            gameLetterInContext(content, item);
+            break;
+
+        /* 16 ----------------------------------------------- */
+        case 15:
+            gamePictureToLetter(content, item);
+            break;
+
+        /* 17 ----------------------------------------------- */
+        case 16:
+            gameWhichWordContainsLetter(content, item);
+            break;
+
+        /* 18 ----------------------------------------------- */
+        case 17:
+            gameLetterRiddle(content, item);
+            break;
+
+        /* 19 ----------------------------------------------- */
+        case 18:
+            gameMemory(content, item);
+            break;
+
+        /* 20 ----------------------------------------------- */
+        case 19:
+            gameFinalChallenge(content, item);
+            break;
+    }
+}
+
+/* =========================================================
+   🧩 أدوات الألعاب
+   ========================================================= */
+
+function gameHeader(title, subtitle = "") {
+    return `
+        <div class="game-category">${title}</div>
+        ${subtitle ? `<div>${subtitle}</div>` : ""}
+    `;
+}
+
+function renderOptions(content, choices, correctValue, formatter, callback) {
+    const options = choices.map((choice, index) => {
+        return `
+            <button
+                class="letter-game-option"
+                data-value="${String(choice.letter || choice.word || choice).replace(/"/g, "&quot;")}"
+                data-index="${index}"
+            >
+                ${formatter(choice)}
+            </button>
+        `;
+    }).join("");
+
+    content.innerHTML += `
+        <div class="letter-options-grid">
+            ${options}
+        </div>
+        <div id="letterGameMessage" class="game-message"></div>
+        <button
+            id="letterGameNext"
+            class="game-next-btn"
+            style="display:none"
+            onclick="nextLetterGame()"
+        >
+            اللعبة التالية ➜
+        </button>
+    `;
+
+    content.querySelectorAll(".letter-game-option").forEach(button => {
+        button.addEventListener("click", () => {
+            if (letterGameAnswered) return;
+
+            const value = button.dataset.value;
+
+            callback(
+                value,
+                button,
+                correctValue
+            );
+        });
     });
 }
 
+function finishLetterGame(isCorrect, button = null) {
+    letterGameAnswered = true;
 
-function speakWord() {
+    const message = $("letterGameMessage");
 
-    if (currentWordObj) {
-        playAudioText(
-            currentWordObj.word
-        );
+    if (isCorrect) {
+        if (button) button.classList.add("correct");
+
+        letterGameStars += 5;
+        addStars(5);
+
+        if (message) {
+            message.textContent = "🎉 أحسنت! حصلت على ⭐ ٥ نجوم";
+        }
+
+        speak("أحسنت، إجابة صحيحة", {
+            rate: 0.8,
+            pitch: 1.1
+        });
+
+    } else {
+        if (button) button.classList.add("wrong");
+
+        if (message) {
+            message.textContent = "😊 حاول مرة أخرى";
+        }
+
+        speak("حاول مرة أخرى", {
+            rate: 0.8
+        });
+    }
+
+    document.querySelectorAll(".letter-game-option").forEach(btn => {
+        btn.disabled = true;
+    });
+
+    const next = $("letterGameNext");
+
+    if (next) {
+        next.style.display = "inline-block";
     }
 }
 
+/* =========================================================
+   🎮 اللعبة 1
+   اختر الحرف الصحيح
+   ========================================================= */
 
-// التوافق مع الاسم القديم
-function playCurrentWordAudio() {
-    speakWord();
+function gameChooseCorrectLetter(content, item) {
+    content.innerHTML = `
+        ${gameHeader("اختر الحرف الصحيح")}
+        <div class="game-question">
+            أين حرف <strong>${item.letter}</strong>؟
+        </div>
+    `;
+
+    const choices = getUniqueLetterChoices(item.letter, 3);
+
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
 }
 
+/* =========================================================
+   🎮 اللعبة 2
+   اسمع الحرف
+   ========================================================= */
 
-// ==========================================
-// 🔢 الأرقام
-// ==========================================
+function gameListenAndChoose(content, item) {
+    content.innerHTML = `
+        ${gameHeader("اسمع واختر")}
+        <div class="game-question">
+            🔊 اضغط على الزر ثم اختر الحرف الذي سمعته
+        </div>
 
-let currentNumVal = 1;
-let numberAnswered = false;
+        <button
+            class="game-next-btn"
+            onclick="speak('${item.letter}')"
+        >
+            🔊 اسمع الحرف
+        </button>
+    `;
 
-function newNumber() {
+    const choices = getUniqueLetterChoices(item.letter, 4);
 
-    currentNumVal =
-        Math.floor(
-            Math.random() * 10
-        ) + 1;
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
 
-    numberAnswered = false;
+/* =========================================================
+   🎮 اللعبة 3
+   اختر الصورة
+   ========================================================= */
 
-    const numberEl =
-        document.getElementById('currentNumber');
+function gameChoosePicture(content, item) {
+    const choices = getUniqueItems(item, 3);
 
-    const countEl =
-        document.getElementById('countItems');
+    content.innerHTML = `
+        ${gameHeader("اختر الصورة")}
+        <div class="game-question">
+            اختر الصورة التي تبدأ بحرف <strong>${item.letter}</strong>
+        </div>
 
-    const messageEl =
-        document.getElementById('numberMessage');
+        <div class="letter-options-grid">
+            ${choices.map((choice, index) => `
+                <button
+                    class="letter-game-option"
+                    data-index="${index}"
+                >
+                    <div class="game-picture">${choice.emoji}</div>
+                </button>
+            `).join("")}
+        </div>
 
-    const optionsEl =
-        document.getElementById('numberOptions');
+        <div id="letterGameMessage" class="game-message"></div>
 
-    if (numberEl) {
+        <button
+            id="letterGameNext"
+            class="game-next-btn"
+            style="display:none"
+            onclick="nextLetterGame()"
+        >
+            اللعبة التالية ➜
+        </button>
+    `;
 
-        numberEl.textContent =
-            convertToEasternArabicNumerals(
-                currentNumVal
+    content.querySelectorAll(".letter-game-option").forEach((button, index) => {
+        button.onclick = () => {
+            finishLetterGame(
+                choices[index].letter === item.letter,
+                button
             );
+        };
+    });
+}
+
+/* =========================================================
+   🎮 اللعبة 4
+   اختر الكلمة
+   ========================================================= */
+
+function gameChooseWordStartingLetter(content, item) {
+    const choices = getUniqueItems(item, 4);
+
+    content.innerHTML = `
+        ${gameHeader("اختر الكلمة")}
+        <div class="game-question">
+            أي كلمة تبدأ بحرف <strong>${item.letter}</strong>؟
+        </div>
+    `;
+
+    renderOptions(
+        content,
+        choices,
+        item.word,
+        choice => choice.word,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 5
+   أول حرف في الكلمة
+   ========================================================= */
+
+function gameFirstLetterOfWord(content) {
+    const target = letters[currentLetterIndex];
+
+    content.innerHTML = `
+        ${gameHeader("أول حرف")}
+        <div class="game-word">${target.word}</div>
+
+        <div class="game-question">
+            ما أول حرف في كلمة <strong>${target.word}</strong>؟
+        </div>
+    `;
+
+    const choices = getUniqueLetterChoices(target.letter, 3);
+
+    renderOptions(
+        content,
+        choices,
+        target.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 6
+   أكمل الكلمة
+   ========================================================= */
+
+function gameCompleteWord(content, item) {
+    const remaining = item.word.substring(1);
+
+    content.innerHTML = `
+        ${gameHeader("أكمل الكلمة")}
+        <div class="game-word">ـ${remaining}</div>
+
+        <div class="game-question">
+            اختر الحرف الناقص
+        </div>
+    `;
+
+    const choices = getUniqueLetterChoices(item.letter, 4);
+
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 7
+   ابحث عن الحرف
+   ========================================================= */
+
+function gameFindLetter(content, item) {
+    const allLetters = shuffle(letters)
+        .slice(0, 8)
+        .map(x => x.letter);
+
+    if (!allLetters.includes(item.letter)) {
+        allLetters[0] = item.letter;
     }
 
-    const icons = [
-        '🍎',
-        '⭐',
-        '🎈',
-        '🐟',
-        '🐱',
-        '⚽',
-        '🚗'
-    ];
+    const choices = unique(allLetters);
 
-    const chosenIcon =
-        icons[
-            Math.floor(
-                Math.random() *
-                icons.length
-            )
-        ];
+    content.innerHTML = `
+        ${gameHeader("ابحث عن الحرف")}
+        <div class="game-question">
+            ابحث عن حرف <strong>${item.letter}</strong>
+        </div>
+    `;
 
-    if (countEl) {
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
 
-        countEl.textContent =
-            chosenIcon.repeat(
-                currentNumVal
+/* =========================================================
+   🎮 اللعبة 8
+   طابق الحرف مع الصورة
+   ========================================================= */
+
+function gameMatchLetterPicture(content, item) {
+    const choices = getUniqueItems(item, 4);
+
+    content.innerHTML = `
+        ${gameHeader("طابق الحرف مع الصورة")}
+        <div class="game-big-letter">${item.letter}</div>
+
+        <div class="game-question">
+            اختر الصورة المناسبة للحرف
+        </div>
+
+        <div class="letter-options-grid">
+            ${choices.map((choice, index) => `
+                <button class="letter-game-option" data-index="${index}">
+                    <div class="game-picture">${choice.emoji}</div>
+                </button>
+            `).join("")}
+        </div>
+
+        <div id="letterGameMessage" class="game-message"></div>
+
+        <button
+            id="letterGameNext"
+            class="game-next-btn"
+            style="display:none"
+            onclick="nextLetterGame()"
+        >
+            اللعبة التالية ➜
+        </button>
+    `;
+
+    content.querySelectorAll(".letter-game-option").forEach((button, index) => {
+        button.onclick = () => {
+            finishLetterGame(
+                choices[index].letter === item.letter,
+                button
             );
-    }
+        };
+    });
+}
 
-    if (messageEl) {
+/* =========================================================
+   🎮 اللعبة 9
+   طابق الحرف مع الكلمة
+   ========================================================= */
 
-        messageEl.textContent = '';
-        messageEl.style.color = '';
-    }
+function gameMatchLetterWord(content, item) {
+    const choices = getUniqueItems(item, 4);
 
-    if (!optionsEl) return;
+    content.innerHTML = `
+        ${gameHeader("طابق الحرف مع الكلمة")}
+        <div class="game-big-letter">${item.letter}</div>
 
-    optionsEl.innerHTML = '';
+        <div class="game-question">
+            اختر الكلمة المناسبة للحرف
+        </div>
+    `;
+
+    renderOptions(
+        content,
+        choices,
+        item.word,
+        choice => choice.word,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 10
+   اسمع الفتحة
+   ========================================================= */
+
+function gameListenHaraka(content, item) {
+    content.innerHTML = `
+        ${gameHeader("اسمع صوت الحرف")}
+        <div class="game-question">
+            🔊 اسمع الصوت واختر الحرف
+        </div>
+
+        <button
+            class="game-next-btn"
+            onclick="speak('${item.letter}َ')"
+        >
+            🔊 اسمع
+        </button>
+    `;
+
+    const choices = getUniqueLetterChoices(item.letter, 4);
+
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 11
+   اسمع الكلمة
+   ========================================================= */
+
+function gameListenWord(content, item) {
+    content.innerHTML = `
+        ${gameHeader("اسمع الكلمة")}
+        <div class="game-question">
+            🔊 اسمع الكلمة ثم اختر أول حرف فيها
+        </div>
+
+        <button
+            class="game-next-btn"
+            onclick="speak('${item.word}')"
+        >
+            🔊 اسمع الكلمة
+        </button>
+    `;
+
+    const choices = getUniqueLetterChoices(item.letter, 4);
+
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 12
+   أي كلمة لا تبدأ بالحرف؟
+   ========================================================= */
+
+function gameWhichWordDoesNotStart(content, item) {
+    const correctWords = shuffle(
+        letters.filter(x => x.letter === item.letter)
+    );
+
+    const wrongWords = shuffle(
+        letters.filter(x => x.letter !== item.letter)
+    ).slice(0, 1);
 
     let choices = [
-        currentNumVal
+        item,
+        ...shuffle(
+            letters.filter(x => x.letter !== item.letter)
+        ).slice(0, 2),
+        wrongWords[0]
     ];
 
-    while (choices.length < 3) {
+    choices = unique(
+        choices.map(x => x.word)
+    ).map(word => letters.find(x => x.word === word));
 
-        const randomNumber =
-            Math.floor(
-                Math.random() * 10
-            ) + 1;
+    choices = shuffle(choices);
 
-        if (!choices.includes(randomNumber)) {
-            choices.push(randomNumber);
+    const wrongAnswer = choices.find(x => x.letter !== item.letter);
+
+    content.innerHTML = `
+        ${gameHeader("اختيار الكلمة المختلفة")}
+        <div class="game-question">
+            أي كلمة <strong>لا تبدأ</strong> بحرف ${item.letter}؟
+        </div>
+    `;
+
+    renderOptions(
+        content,
+        choices,
+        wrongAnswer.word,
+        choice => choice.word,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
         }
-    }
-
-    choices.sort(
-        () => Math.random() - 0.5
-    );
-
-    choices.forEach(function (number) {
-
-        const button =
-            document.createElement('button');
-
-        button.className =
-            'option-btn';
-
-        button.textContent =
-            convertToEasternArabicNumerals(
-                number
-            );
-
-        button.onclick = function () {
-
-            if (number === currentNumVal) {
-
-                messageEl.textContent =
-                    '🎉 صحيح يا بطل الأرقام!';
-
-                messageEl.style.color =
-                    'green';
-
-                if (!numberAnswered) {
-                    numberAnswered = true;
-                    addStars(5);
-                }
-
-            } else {
-
-                messageEl.textContent =
-                    '❌ حاول العد مرة أخرى';
-
-                messageEl.style.color =
-                    'red';
-            }
-
-        };
-
-        optionsEl.appendChild(button);
-
-    });
-}
-
-
-function speakNumber() {
-
-    playAudioText(
-        `الرقم ${currentNumVal}`
     );
 }
 
+/* =========================================================
+   🎮 اللعبة 13
+   صورة فقط
+   ========================================================= */
 
-// التوافق مع الاسم القديم
-function playCurrentNumberAudio() {
-    speakNumber();
+function gamePictureOnly(content, item) {
+    content.innerHTML = `
+        ${gameHeader("صورة فقط")}
+        <div class="game-picture">${item.emoji}</div>
+
+        <div class="game-question">
+            ما الحرف الذي تبدأ به هذه الصورة؟
+        </div>
+    `;
+
+    const choices = getUniqueLetterChoices(item.letter, 4);
+
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
 }
 
+/* =========================================================
+   🎮 اللعبة 14
+   الحروف المتشابهة
+   ========================================================= */
 
-// ==========================================
-// ✏️ الكتابة
-// ==========================================
-
-let canvas = null;
-let ctx = null;
-let isDrawing = false;
-
-const writingLetters = [
-    'أ', 'ب', 'ت', 'ث',
-    'ج', 'ح', 'خ',
-    'د', 'ذ', 'ر', 'ز',
-    'س', 'ش', 'ص', 'ض',
-    'ط', 'ظ',
-    'ع', 'غ',
-    'ف', 'ق', 'ك',
-    'ل', 'م', 'ن',
-    'هـ', 'و', 'ي'
-];
-
-let currentWritingIndex = 0;
-let writingCompleted = false;
-
-
-function initWritingCanvas() {
-
-    canvas =
-        document.getElementById('writingCanvas');
-
-    if (!canvas) return;
-
-    ctx =
-        canvas.getContext('2d');
-
-    const parentWidth =
-        canvas.parentElement
-            ? canvas.parentElement.clientWidth
-            : 350;
-
-    canvas.width =
-        Math.max(
-            280,
-            Math.min(
-                500,
-                parentWidth - 30
-            )
-        );
-
-    canvas.height = 250;
-
-    ctx.lineWidth = 8;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#4a90e2';
-
-    canvas.onmousedown = startDraw;
-    canvas.onmousemove = drawing;
-    canvas.onmouseup = stopDraw;
-    canvas.onmouseleave = stopDraw;
-
-    canvas.ontouchstart =
-        function (event) {
-
-            event.preventDefault();
-
-            startDraw(
-                event.touches[0]
-            );
-        };
-
-    canvas.ontouchmove =
-        function (event) {
-
-            event.preventDefault();
-
-            drawing(
-                event.touches[0]
-            );
-        };
-
-    canvas.ontouchend =
-        function () {
-            stopDraw();
-        };
-
-    newWritingLetter();
-}
-
-
-function getCanvasPoint(event) {
-
-    const rect =
-        canvas.getBoundingClientRect();
-
-    return {
-        x:
-            event.clientX -
-            rect.left,
-
-        y:
-            event.clientY -
-            rect.top
+function gameOddLookingLetter(content, item) {
+    const similarGroups = {
+        "ب": ["ت", "ث", "ن"],
+        "ت": ["ب", "ث", "ن"],
+        "ث": ["ب", "ت", "ن"],
+        "ج": ["ح", "خ"],
+        "ح": ["ج", "خ"],
+        "خ": ["ج", "ح"],
+        "د": ["ذ"],
+        "ذ": ["د"],
+        "ر": ["ز"],
+        "ز": ["ر"],
+        "س": ["ش"],
+        "ش": ["س"],
+        "ص": ["ض"],
+        "ض": ["ص"],
+        "ط": ["ظ"],
+        "ظ": ["ط"],
+        "ع": ["غ"],
+        "غ": ["ع"],
+        "ف": ["ق"],
+        "ق": ["ف"],
+        "ه": ["و"],
+        "و": ["ه"]
     };
-}
 
+    let choices = similarGroups[item.letter] || [];
 
-function startDraw(event) {
+    choices = unique(
+        [item.letter, ...choices]
+    ).slice(0, 4);
 
-    if (!ctx) return;
+    while (choices.length < 4) {
+        const extra = shuffle(
+            letters.map(x => x.letter)
+                .filter(x => !choices.includes(x))
+        )[0];
 
-    isDrawing = true;
-
-    const point =
-        getCanvasPoint(event);
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        point.x,
-        point.y
-    );
-}
-
-
-function drawing(event) {
-
-    if (!isDrawing || !ctx) return;
-
-    const point =
-        getCanvasPoint(event);
-
-    ctx.lineTo(
-        point.x,
-        point.y
-    );
-
-    ctx.stroke();
-}
-
-
-function stopDraw() {
-
-    isDrawing = false;
-}
-
-
-function clearCanvas() {
-
-    if (!ctx || !canvas) return;
-
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    const message =
-        document.getElementById(
-            'writingMessage'
-        );
-
-    if (message) {
-        message.textContent = '';
-    }
-}
-
-
-function newWritingLetter() {
-
-    if (!canvas || !ctx) return;
-
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    const letter =
-        writingLetters[
-            currentWritingIndex
-        ];
-
-    const guide =
-        document.getElementById(
-            'writingGuide'
-        );
-
-    const message =
-        document.getElementById(
-            'writingMessage'
-        );
-
-    if (guide) {
-        guide.textContent = letter;
+        if (extra) choices.push(extra);
     }
 
-    if (message) {
-        message.textContent = '';
-        message.style.color = '';
-    }
+    choices = shuffle(choices);
 
-    writingCompleted = false;
+    content.innerHTML = `
+        ${gameHeader("انتبه للحروف المتشابهة")}
+        <div class="game-question">
+            أين حرف <strong>${item.letter}</strong>؟
+        </div>
+        <div style="font-size:16px">
+            ركّز جيدًا 👀
+        </div>
+    `;
 
-    currentWritingIndex =
-        (currentWritingIndex + 1) %
-        writingLetters.length;
-}
-
-
-function finishWriting() {
-
-    const message =
-        document.getElementById(
-            'writingMessage'
-        );
-
-    if (message) {
-
-        message.textContent =
-            '🌟 خط جميل جداً! أحسنت الكتابة';
-
-        message.style.color =
-            'green';
-    }
-
-    if (!writingCompleted) {
-
-        writingCompleted = true;
-
-        addStars(10);
-    }
-}
-
-
-// ==========================================
-// ➕ الجمع
-// ==========================================
-
-let addLevel = 1;
-
-let currentAddA = 1;
-let currentAddB = 1;
-
-let additionAnswered = false;
-
-
-function setAdditionLevel(lvl) {
-
-    addLevel = lvl;
-
-    const btn1 =
-        document.getElementById('addBtn1');
-
-    const btn2 =
-        document.getElementById('addBtn2');
-
-    const btn3 =
-        document.getElementById('addBtn3');
-
-    if (btn1) {
-        btn1.className =
-            lvl === 1
-                ? 'primary'
-                : 'secondary';
-    }
-
-    if (btn2) {
-        btn2.className =
-            lvl === 2
-                ? 'primary'
-                : 'secondary';
-    }
-
-    if (btn3) {
-        btn3.className =
-            lvl === 3
-                ? 'primary'
-                : 'secondary';
-    }
-
-    newAddition();
-}
-
-
-function newAddition() {
-
-    additionAnswered = false;
-
-    const maxLimit =
-        addLevel === 1
-            ? 5
-            : addLevel === 2
-                ? 10
-                : 20;
-
-    currentAddA =
-        Math.floor(
-            Math.random() *
-            maxLimit
-        ) + 1;
-
-    currentAddB =
-        Math.floor(
-            Math.random() *
-            maxLimit
-        ) + 1;
-
-    if (
-        addLevel === 1 &&
-        currentAddA + currentAddB > 10
-    ) {
-
-        currentAddA = 3;
-        currentAddB = 2;
-    }
-
-    const question =
-        document.getElementById(
-            'addQuestion'
-        );
-
-    const pictures =
-        document.getElementById(
-            'addPictures'
-        );
-
-    const answer =
-        document.getElementById(
-            'addAnswer'
-        );
-
-    const message =
-        document.getElementById(
-            'addMessage'
-        );
-
-    if (question) {
-
-        question.textContent =
-            `${convertToEasternArabicNumerals(currentAddA)} + ${convertToEasternArabicNumerals(currentAddB)} = ؟`;
-    }
-
-    if (pictures) {
-
-        if (addLevel === 1) {
-
-            pictures.textContent =
-                '🍎'.repeat(currentAddA) +
-                '  +  ' +
-                '🍎'.repeat(currentAddB);
-
-        } else {
-
-            pictures.textContent = '➕';
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
         }
-    }
-
-    if (answer) {
-        answer.value = '';
-    }
-
-    if (message) {
-        message.textContent = '';
-        message.style.color = '';
-    }
+    );
 }
 
+/* =========================================================
+   🎮 اللعبة 15
+   الحرف داخل الكلمة
+   ========================================================= */
 
-function checkAddition() {
-
-    const answer =
-        document.getElementById(
-            'addAnswer'
+function gameLetterInContext(content, item) {
+    const highlighted = item.word
+        .replace(
+            item.letter,
+            `<span style="text-decoration:underline;font-size:1.25em">${item.letter}</span>`
         );
 
-    const message =
-        document.getElementById(
-            'addMessage'
-        );
+    content.innerHTML = `
+        ${gameHeader("الحرف داخل الكلمة")}
+        <div class="game-word">${highlighted}</div>
 
-    if (!answer || !message) return;
+        <div class="game-question">
+            ما الحرف الملوّن في بداية الكلمة؟
+        </div>
+    `;
 
-    const normalized =
-        normalizeArabicNumber(
-            answer.value
-        );
+    const choices = getUniqueLetterChoices(item.letter, 3);
 
-    const userAnswer =
-        parseInt(normalized, 10);
-
-    const correctAnswer =
-        currentAddA +
-        currentAddB;
-
-    if (
-        userAnswer ===
-        correctAnswer
-    ) {
-
-        message.textContent =
-            '🎉 إجابة صحيحة وموفقة!';
-
-        message.style.color =
-            'green';
-
-        if (!additionAnswered) {
-
-            additionAnswered = true;
-
-            addStars(5);
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
         }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 16
+   الصورة ← الحرف
+   ========================================================= */
+
+function gamePictureToLetter(content, item) {
+    content.innerHTML = `
+        ${gameHeader("الصورة ← الحرف")}
+        <div class="game-picture">${item.emoji}</div>
+
+        <div class="game-question">
+            اختر الحرف الذي يناسب الصورة
+        </div>
+    `;
+
+    const choices = getUniqueLetterChoices(item.letter, 4);
+
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 17
+   أي كلمة تحتوي على الحرف؟
+   ========================================================= */
+
+function gameWhichWordContainsLetter(content, item) {
+    let candidates = [
+        item,
+        ...shuffle(
+            letters.filter(x => !x.word.includes(item.letter))
+        ).slice(0, 2)
+    ];
+
+    candidates = shuffle(candidates);
+
+    content.innerHTML = `
+        ${gameHeader("ابحث داخل الكلمات")}
+        <div class="game-question">
+            أي كلمة تحتوي على حرف <strong>${item.letter}</strong>؟
+        </div>
+    `;
+
+    renderOptions(
+        content,
+        candidates,
+        item.word,
+        choice => choice.word,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 18
+   لغز الحرف
+   ========================================================= */
+
+function gameLetterRiddle(content, item) {
+    content.innerHTML = `
+        ${gameHeader("لغز الحرف 🧠")}
+
+        <div class="game-question">
+            أنا حرف تبدأ به كلمة
+            <strong>${item.word}</strong>
+            ${item.emoji}
+            <br>
+            فمن أنا؟
+        </div>
+    `;
+
+    const choices = getUniqueLetterChoices(item.letter, 4);
+
+    renderOptions(
+        content,
+        choices,
+        item.letter,
+        choice => choice,
+        (value, button, correct) => {
+            finishLetterGame(value === correct, button);
+        }
+    );
+}
+
+/* =========================================================
+   🎮 اللعبة 19
+   الذاكرة
+   ========================================================= */
+
+function gameMemory(content, item) {
+    content.innerHTML = `
+        ${gameHeader("لعبة الذاكرة 🧠")}
+        <div class="game-question">
+            احفظ الحرف جيدًا...
+        </div>
+
+        <div id="memoryLetter" class="game-memory-hidden">
+            ${item.letter}
+        </div>
+
+        <div id="memoryInstruction">
+            👀 لديك ثانيتان للحفظ
+        </div>
+    `;
+
+    setTimeout(() => {
+        const memoryLetter = $("memoryLetter");
+
+        if (memoryLetter) {
+            memoryLetter.textContent = "❓";
+        }
+
+        const instruction = $("memoryInstruction");
+
+        if (instruction) {
+            instruction.textContent = "ما الحرف الذي رأيته؟";
+        }
+
+        const choices = getUniqueLetterChoices(item.letter, 4);
+
+        const optionsHTML = `
+            <div class="letter-options-grid">
+                ${choices.map((choice, index) => `
+                    <button
+                        class="letter-game-option"
+                        data-index="${index}"
+                    >
+                        ${choice}
+                    </button>
+                `).join("")}
+            </div>
+
+            <div id="letterGameMessage" class="game-message"></div>
+
+            <button
+                id="letterGameNext"
+                class="game-next-btn"
+                style="display:none"
+                onclick="nextLetterGame()"
+            >
+                اللعبة التالية ➜
+            </button>
+        `;
+
+        content.insertAdjacentHTML("beforeend", optionsHTML);
+
+        content.querySelectorAll(".letter-game-option")
+            .forEach((button, index) => {
+
+                button.onclick = () => {
+                    finishLetterGame(
+                        choices[index] === item.letter,
+                        button
+                    );
+                };
+            });
+
+    }, 2000);
+}
+
+/* =========================================================
+   🎮 اللعبة 20
+   التحدي الكبير
+   ========================================================= */
+
+function gameFinalChallenge(content, item) {
+    const challengeType = Math.floor(Math.random() * 4);
+
+    if (challengeType === 0) {
+        content.innerHTML = `
+            ${gameHeader("🏆 التحدي الكبير")}
+            <div class="game-picture">${item.emoji}</div>
+            <div class="game-question">
+                اختر الحرف الصحيح للصورة
+            </div>
+        `;
+
+        const choices = getUniqueLetterChoices(item.letter, 5);
+
+        renderOptions(
+            content,
+            choices,
+            item.letter,
+            choice => choice,
+            (value, button, correct) => {
+                finishLetterGame(value === correct, button);
+            }
+        );
+
+    } else if (challengeType === 1) {
+
+        content.innerHTML = `
+            ${gameHeader("🏆 التحدي الكبير")}
+            <div class="game-word">${item.word}</div>
+            <div class="game-question">
+                ما أول حرف؟
+            </div>
+        `;
+
+        const choices = getUniqueLetterChoices(item.letter, 5);
+
+        renderOptions(
+            content,
+            choices,
+            item.letter,
+            choice => choice,
+            (value, button, correct) => {
+                finishLetterGame(value === correct, button);
+            }
+        );
+
+    } else if (challengeType === 2) {
+
+        content.innerHTML = `
+            ${gameHeader("🏆 التحدي الكبير")}
+            <div class="game-big-letter">${item.letter}</div>
+            <div class="game-question">
+                اختر الكلمة الصحيحة
+            </div>
+        `;
+
+        const choices = getUniqueItems(item, 5);
+
+        renderOptions(
+            content,
+            choices,
+            item.word,
+            choice => choice.word,
+            (value, button, correct) => {
+                finishLetterGame(value === correct, button);
+            }
+        );
 
     } else {
 
-        message.textContent =
-            `❌ خطأ، الناتج الصحيح هو ${convertToEasternArabicNumerals(correctAnswer)}`;
+        content.innerHTML = `
+            ${gameHeader("🏆 التحدي الكبير")}
+            <div class="game-question">
+                🔊 اسمع الحرف ثم اختره
+            </div>
 
-        message.style.color =
-            'red';
+            <button
+                class="game-next-btn"
+                onclick="speak('${item.letter}')"
+            >
+                🔊 اسمع
+            </button>
+        `;
+
+        const choices = getUniqueLetterChoices(item.letter, 5);
+
+        renderOptions(
+            content,
+            choices,
+            item.letter,
+            choice => choice,
+            (value, button, correct) => {
+                finishLetterGame(value === correct, button);
+            }
+        );
     }
 }
 
+/* =========================================================
+   ➡️ اللعبة التالية
+   ========================================================= */
 
-// ==========================================
-// ➖ الطرح
-// ==========================================
+function nextLetterGame() {
+    if (!letterGameAnswered) return;
 
-let subLevel = 1;
+    currentLetterGame++;
 
-let currentSubA = 1;
-let currentSubB = 1;
+    if (currentLetterGame >= TOTAL_LETTER_GAMES) {
 
-let subtractionAnswered = false;
+        addStars(20);
 
+        const content = $("letterGameContent");
 
-function setSubtractionLevel(lvl) {
+        if (content) {
+            content.innerHTML = `
+                <div class="game-category">🏆 أحسنت جدًا!</div>
 
-    subLevel = lvl;
+                <div class="game-big-letter">
+                    ${letters[currentLetterIndex].letter}
+                </div>
 
-    const btn1 =
-        document.getElementById(
-            'subBtn1'
-        );
+                <div class="game-question">
+                    أكملت الألعاب العشرين بنجاح 🎉
+                </div>
 
-    const btn2 =
-        document.getElementById(
-            'subBtn2'
-        );
+                <div style="font-size:22px">
+                    ⭐ مكافأة إضافية: ٢٠ نجمة
+                </div>
 
-    const btn3 =
-        document.getElementById(
-            'subBtn3'
-        );
-
-    if (btn1) {
-        btn1.className =
-            lvl === 1
-                ? 'primary'
-                : 'secondary';
-    }
-
-    if (btn2) {
-        btn2.className =
-            lvl === 2
-                ? 'primary'
-                : 'secondary';
-    }
-
-    if (btn3) {
-        btn3.className =
-            lvl === 3
-                ? 'primary'
-                : 'secondary';
-    }
-
-    newSubtraction();
-}
-
-
-function newSubtraction() {
-
-    subtractionAnswered = false;
-
-    const maxLimit =
-        subLevel === 1
-            ? 5
-            : subLevel === 2
-                ? 10
-                : 20;
-
-    currentSubA =
-        Math.floor(
-            Math.random() *
-            maxLimit
-        ) + 1;
-
-    currentSubB =
-        Math.floor(
-            Math.random() *
-            currentSubA
-        );
-
-    const question =
-        document.getElementById(
-            'subQuestion'
-        );
-
-    const pictures =
-        document.getElementById(
-            'subPictures'
-        );
-
-    const answer =
-        document.getElementById(
-            'subAnswer'
-        );
-
-    const message =
-        document.getElementById(
-            'subMessage'
-        );
-
-    if (question) {
-
-        question.textContent =
-            `${convertToEasternArabicNumerals(currentSubA)} - ${convertToEasternArabicNumerals(currentSubB)} = ؟`;
-    }
-
-    if (pictures) {
-
-        if (subLevel === 1) {
-
-            pictures.textContent =
-                '🍎'.repeat(currentSubA);
-
-        } else {
-
-            pictures.textContent =
-                '➖';
-        }
-    }
-
-    if (answer) {
-        answer.value = '';
-    }
-
-    if (message) {
-        message.textContent = '';
-        message.style.color = '';
-    }
-}
-
-
-function checkSubtraction() {
-
-    const answer =
-        document.getElementById(
-            'subAnswer'
-        );
-
-    const message =
-        document.getElementById(
-            'subMessage'
-        );
-
-    if (!answer || !message) return;
-
-    const normalized =
-        normalizeArabicNumber(
-            answer.value
-        );
-
-    const userAnswer =
-        parseInt(normalized, 10);
-
-    const correctAnswer =
-        currentSubA -
-        currentSubB;
-
-    if (
-        userAnswer ===
-        correctAnswer
-    ) {
-
-        message.textContent =
-            '🎉 بطل الطرح الذكي!';
-
-        message.style.color =
-            'green';
-
-        if (!subtractionAnswered) {
-
-            subtractionAnswered = true;
-
-            addStars(5);
+                <button
+                    class="game-next-btn"
+                    onclick="nextLetter()"
+                >
+                    الحرف التالي ➜
+                </button>
+            `;
         }
 
-    } else {
-
-        message.textContent =
-            `❌ خطأ، الناتج الصحيح هو ${convertToEasternArabicNumerals(correctAnswer)}`;
-
-        message.style.color =
-            'red';
-    }
-}
-
-
-// ==========================================
-// 📖 القرآن الكريم
-// ==========================================
-
-const quranSurahs = [
-
-    {
-        name: 'سورة الإخلاص',
-
-        ayahs: [
-
-            {
-                text:
-                    'قُلْ هُوَ اللَّهُ أَحَدٌ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/112001.mp3'
-            },
-
-            {
-                text:
-                    'اللَّهُ الصَّمَدُ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/112002.mp3'
-            },
-
-            {
-                text:
-                    'لَمْ يَلِدْ وَلَمْ يُولَدْ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/112003.mp3'
-            },
-
-            {
-                text:
-                    'وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/112004.mp3'
-            }
-
-        ]
-    },
-
-
-    {
-        name: 'سورة الفاتحة',
-
-        ayahs: [
-
-            {
-                text:
-                    'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/001001.mp3'
-            },
-
-            {
-                text:
-                    'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/001002.mp3'
-            },
-
-            {
-                text:
-                    'الرَّحْمَٰنِ الرَّحِيمِ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/001003.mp3'
-            },
-
-            {
-                text:
-                    'مَالِكِ يَوْمِ الدِّينِ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/001004.mp3'
-            },
-
-            {
-                text:
-                    'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/001005.mp3'
-            },
-
-            {
-                text:
-                    'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/001006.mp3'
-            },
-
-            {
-                text:
-                    'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/001007.mp3'
-            }
-
-        ]
-    },
-
-
-    {
-        name: 'سورة الكوثر',
-
-        ayahs: [
-
-            {
-                text:
-                    'إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/108001.mp3'
-            },
-
-            {
-                text:
-                    'فَصَلِّ لِرَبِّكَ وَانْحَرْ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/108002.mp3'
-            },
-
-            {
-                text:
-                    'إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ',
-
-                audio:
-                    'https://everyayah.com/data/Husary_128kbps/108003.mp3'
-            }
-
-        ]
-    }
-
-];
-
-let currentQuranIndex = 0;
-let currentQuranAyahIndex = 0;
-
-
-function loadQuranAyah() {
-
-    const surah =
-        quranSurahs[currentQuranIndex];
-
-    if (!surah) return;
-
-    currentQuranAyahIndex = 0;
-
-    const name =
-        document.getElementById(
-            'surahName'
-        );
-
-    const text =
-        document.getElementById(
-            'surahText'
-        );
-
-    if (name) {
-        name.textContent =
-            surah.name;
-    }
-
-    if (text) {
-
-        text.innerHTML =
-            surah.ayahs
-                .map(function (ayah, index) {
-
-                    return `
-                        <div class="quran-ayah-row">
-                            <div class="quran-ayah-text">
-                                ﴿${convertToEasternArabicNumerals(index + 1)}﴾
-                                ${ayah.text}
-                            </div>
-                        </div>
-                    `;
-
-                })
-                .join('');
-    }
-}
-
-
-function speakSurah() {
-
-    const surah =
-        quranSurahs[currentQuranIndex];
-
-    if (!surah) return;
-
-    stopQuranAudio();
-
-    currentQuranAyahIndex = 0;
-
-    playNextQuranAyah();
-}
-
-
-function playNextQuranAyah() {
-
-    const surah =
-        quranSurahs[currentQuranIndex];
-
-    if (!surah) return;
-
-    if (
-        currentQuranAyahIndex >=
-        surah.ayahs.length
-    ) {
-
-        currentQuranAyahIndex = 0;
+        speak("ممتاز! أكملت جميع ألعاب الحرف");
 
         return;
     }
 
-    const ayah =
-        surah.ayahs[
-            currentQuranAyahIndex
-        ];
-
-    quranAudio =
-        new Audio(ayah.audio);
-
-    quranAudio.onended =
-        function () {
-
-            currentQuranAyahIndex++;
-
-            playNextQuranAyah();
-        };
-
-    quranAudio.play().catch(
-        function (error) {
-
-            console.log(
-                'تعذر تشغيل التلاوة:',
-                error
-            );
-
-        }
-    );
+    renderLetterGamesBox();
 }
 
+function nextLetter() {
+    currentLetterIndex++;
 
-function nextSurah() {
+    if (currentLetterIndex >= letters.length) {
+        currentLetterIndex = 0;
 
-    stopQuranAudio();
-
-    currentQuranIndex =
-        (currentQuranIndex + 1) %
-        quranSurahs.length;
-
-    loadQuranAyah();
-}
-
-
-// ==========================================
-// 🕌 الأحاديث
-// ==========================================
-
-const hadithsData = [
-
-    {
-        text:
-            'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ',
-
-        source:
-            'رواه البخاري ومسلم'
-    },
-
-    {
-        text:
-            'الدِّينُ النَّصِيحَةُ',
-
-        source:
-            'رواه مسلم'
-    },
-
-    {
-        text:
-            'مَا زَالَ جِبْرِيلُ يُوصِينِي بِالْجَارِ حَتَّى ظَنَنْتُ أَنَّهُ سَيُوَرِّثُهُ',
-
-        source:
-            'متفق عليه'
+        speak("مبروك! أكملت جميع الحروف");
     }
 
+    currentLetterGame = 0;
+    letterGameAnswered = false;
+    letterGameStars = 0;
+
+    renderLetterPage();
+}
+
+function resetLetterGames() {
+    currentLetterGame = 0;
+    letterGameAnswered = false;
+    renderLetterPage();
+}
+
+/* =========================================================
+   🔗 توافق مع أزرار HTML القديمة
+   ========================================================= */
+
+window.speakCurrentLetter = speakCurrentLetter;
+window.playLetterAudio = playLetterAudio;
+window.nextLetter = nextLetter;
+window.nextLetterGame = nextLetterGame;
+window.resetLetterGames = resetLetterGames;
+
+/* =========================================================
+   📝 الكلمات
+   ========================================================= */
+
+const words = [
+    { word: "أسد", emoji: "🦁" },
+    { word: "بقرة", emoji: "🐄" },
+    { word: "تفاح", emoji: "🍎" },
+    { word: "ثعلب", emoji: "🦊" },
+    { word: "جمل", emoji: "🐪" },
+    { word: "حصان", emoji: "🐎" },
+    { word: "خبز", emoji: "🍞" },
+    { word: "دب", emoji: "🐻" },
+    { word: "رمان", emoji: "🍎" },
+    { word: "زرافة", emoji: "🦒" },
+    { word: "سمكة", emoji: "🐟" },
+    { word: "شمس", emoji: "☀️" },
+    { word: "صقر", emoji: "🦅" },
+    { word: "ضفدع", emoji: "🐸" },
+    { word: "طائرة", emoji: "✈️" },
+    { word: "فيل", emoji: "🐘" },
+    { word: "قمر", emoji: "🌙" },
+    { word: "كتاب", emoji: "📘" },
+    { word: "ليمون", emoji: "🍋" },
+    { word: "موز", emoji: "🍌" }
 ];
 
-let currentHadithIdx = 0;
+let currentWordIndex = 0;
 
+function renderCurrentWord() {
+    const item = words[currentWordIndex];
 
-function loadHadith() {
-
-    const hadith =
-        hadithsData[
-            currentHadithIdx
-        ];
-
-    const text =
-        document.getElementById(
-            'hadithText'
-        );
-
-    const source =
-        document.getElementById(
-            'hadithSource'
-        );
-
-    if (text) {
-        text.textContent =
-            hadith.text;
+    if ($("currentWord")) {
+        $("currentWord").textContent = item.word;
     }
 
-    if (source) {
-        source.textContent =
-            hadith.source;
+    if ($("wordPicture")) {
+        $("wordPicture").textContent = item.emoji;
+    }
+
+    const wordLetter = $("wordLetter");
+
+    if (wordLetter) {
+        wordLetter.textContent = item.word.charAt(0);
     }
 }
 
-
-function nextHadith() {
-
-    currentHadithIdx =
-        (currentHadithIdx + 1) %
-        hadithsData.length;
-
-    loadHadith();
+function speakWord() {
+    const item = words[currentWordIndex];
+    speak(item.word);
 }
 
+function playCurrentWordAudio() {
+    speakWord();
+}
 
-function speakHadith() {
+function nextWord() {
+    currentWordIndex++;
 
-    playAudioText(
-        hadithsData[
-            currentHadithIdx
-        ].text
+    if (currentWordIndex >= words.length) {
+        currentWordIndex = 0;
+    }
+
+    renderCurrentWord();
+}
+
+window.speakWord = speakWord;
+window.playCurrentWordAudio = playCurrentWordAudio;
+window.nextWord = nextWord;
+
+/* =========================================================
+   🔢 الأرقام
+   ========================================================= */
+
+let currentNumber = 1;
+
+const numberWords = {
+    1: "واحد",
+    2: "اثنان",
+    3: "ثلاثة",
+    4: "أربعة",
+    5: "خمسة",
+    6: "ستة",
+    7: "سبعة",
+    8: "ثمانية",
+    9: "تسعة",
+    10: "عشرة",
+    11: "أحد عشر",
+    12: "اثنا عشر",
+    13: "ثلاثة عشر",
+    14: "أربعة عشر",
+    15: "خمسة عشر",
+    16: "ستة عشر",
+    17: "سبعة عشر",
+    18: "ثمانية عشر",
+    19: "تسعة عشر",
+    20: "عشرون",
+    21: "واحد وعشرون",
+    22: "اثنان وعشرون",
+    23: "ثلاثة وعشرون",
+    24: "أربعة وعشرون",
+    25: "خمسة وعشرون",
+    26: "ستة وعشرون",
+    27: "سبعة وعشرون",
+    28: "ثمانية وعشرون",
+    29: "تسعة وعشرون",
+    30: "ثلاثون",
+    31: "واحد وثلاثون",
+    32: "اثنان وثلاثون",
+    33: "ثلاثة وثلاثون",
+    34: "أربعة وثلاثون",
+    35: "خمسة وثلاثون",
+    36: "ستة وثلاثون",
+    37: "سبعة وثلاثون",
+    38: "ثمانية وثلاثون",
+    39: "تسعة وثلاثون",
+    40: "أربعون"
+};
+
+function renderCurrentNumber() {
+    if ($("currentNumber")) {
+        $("currentNumber").textContent = arabicNumber(currentNumber);
+    }
+
+    if ($("numberWord")) {
+        $("numberWord").textContent =
+            numberWords[currentNumber] || arabicNumber(currentNumber);
+    }
+
+    const items = $("numberItems");
+
+    if (items) {
+        const count = Math.min(currentNumber, 20);
+
+        items.textContent = "🍎".repeat(count);
+    }
+}
+
+function speakNumber() {
+    speak(
+        numberWords[currentNumber] ||
+        arabicNumber(currentNumber)
     );
 }
 
+function nextNumber() {
+    currentNumber++;
 
-function playHadithAudio() {
-    speakHadith();
-}
-
-
-// ==========================================
-// 🤲 الأدعية
-// ==========================================
-
-const duasData = [
-
-    {
-        title:
-            'دعاء قبل الطعام',
-
-        text:
-            'بِسْمِ اللَّهِ'
-    },
-
-    {
-        title:
-            'دعاء الاستيقاظ من النوم',
-
-        text:
-            'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ'
-    },
-
-    {
-        title:
-            'دعاء ركوب الدابة',
-
-        text:
-            'سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ'
+    if (currentNumber > 40) {
+        currentNumber = 1;
     }
 
+    renderCurrentNumber();
+}
+
+window.speakNumber = speakNumber;
+window.nextNumber = nextNumber;
+
+/* =========================================================
+   ✍️ الكتابة
+   ========================================================= */
+
+let writingCanvas;
+let writingCtx;
+let writingDrawing = false;
+
+let writingLetters = [
+    "أ","ب","ت","ث","ج","ح","خ",
+    "د","ذ","ر","ز","س","ش","ص",
+    "ض","ط","ظ","ع","غ","ف","ق",
+    "ك","ل","م","ن","ه","و","ي"
 ];
 
-let currentDuaIdx = 0;
+let writingIndex = 0;
 
+function initWritingCanvas() {
+    writingCanvas = $("writingCanvas");
 
-function loadDua() {
+    if (!writingCanvas) return;
 
-    const dua =
-        duasData[
-            currentDuaIdx
-        ];
+    writingCtx = writingCanvas.getContext("2d");
 
-    const title =
-        document.getElementById(
-            'duaTitle'
+    writingCtx.lineWidth = 6;
+    writingCtx.lineCap = "round";
+
+    const drawStart = (e) => {
+        writingDrawing = true;
+
+        const rect = writingCanvas.getBoundingClientRect();
+
+        writingCtx.beginPath();
+        writingCtx.moveTo(
+            e.clientX - rect.left,
+            e.clientY - rect.top
         );
-
-    const text =
-        document.getElementById(
-            'duaText'
-        );
-
-    if (title) {
-        title.textContent =
-            dua.title;
-    }
-
-    if (text) {
-        text.textContent =
-            dua.text;
-    }
-}
-
-
-function nextDua() {
-
-    currentDuaIdx =
-        (currentDuaIdx + 1) %
-        duasData.length;
-
-    loadDua();
-}
-
-
-function speakDua() {
-
-    playAudioText(
-        duasData[
-            currentDuaIdx
-        ].text
-    );
-}
-
-
-function playDuaAudio() {
-    speakDua();
-}
-
-
-// ==========================================
-// 👨‍🏫 لوحة المعلم
-// ==========================================
-
-function updateTeacherStats() {
-
-    const stats = {
-
-        teacherStars:
-            starsCount,
-
-        teacherLevel:
-            level,
-
-        teacherLetters:
-            Math.floor(starsCount / 10),
-
-        teacherWords:
-            Math.floor(starsCount / 5),
-
-        teacherNumbers:
-            Math.floor(starsCount / 5),
-
-        teacherAddition:
-            Math.floor(starsCount / 8),
-
-        teacherSubtraction:
-            Math.floor(starsCount / 8)
-
     };
 
+    const drawMove = (e) => {
+        if (!writingDrawing) return;
 
-    Object.keys(stats).forEach(
-        function (id) {
+        const rect = writingCanvas.getBoundingClientRect();
 
-            const element =
-                document.getElementById(id);
-
-            if (element) {
-
-                element.textContent =
-                    convertToEasternArabicNumerals(
-                        stats[id]
-                    );
-            }
-
-        }
-    );
-}
-
-
-// ==========================================
-// 🔄 تصفير النتائج
-// ==========================================
-
-function resetProgress() {
-
-    const confirmed =
-        window.confirm(
-            'هل أنت متأكد من تصفير النتائج والنقاط؟'
+        writingCtx.lineTo(
+            e.clientX - rect.left,
+            e.clientY - rect.top
         );
 
-    if (!confirmed) return;
+        writingCtx.stroke();
+    };
 
-    starsCount = 0;
-    level = 1;
+    const drawEnd = () => {
+        writingDrawing = false;
+    };
 
-    saveProgress();
+    writingCanvas.onpointerdown = drawStart;
+    writingCanvas.onpointermove = drawMove;
+    writingCanvas.onpointerup = drawEnd;
+    writingCanvas.onpointerleave = drawEnd;
 
-    updateDisplay();
-    updateTeacherStats();
+    renderWritingLetter();
+}
 
-    window.alert(
-        'تم تصفير النتائج بنجاح.'
+function renderWritingLetter() {
+    const letter = writingLetters[writingIndex];
+
+    if ($("writingLetter")) {
+        $("writingLetter").textContent = letter;
+    }
+
+    if ($("writingMessage")) {
+        $("writingMessage").textContent =
+            `اكتب حرف ${letter}`;
+    }
+}
+
+function clearWriting() {
+    if (!writingCanvas || !writingCtx) return;
+
+    writingCtx.clearRect(
+        0,
+        0,
+        writingCanvas.width,
+        writingCanvas.height
     );
 }
 
+function nextWritingLetter() {
+    writingIndex++;
 
-// ==========================================
-// 🚀 تشغيل التطبيق
-// ==========================================
+    if (writingIndex >= writingLetters.length) {
+        writingIndex = 0;
+    }
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
+    clearWriting();
+    renderWritingLetter();
+}
 
-        loadProgress();
+window.initWritingCanvas = initWritingCanvas;
+window.clearWriting = clearWriting;
+window.nextWritingLetter = nextWritingLetter;
 
-        // تحميل القسم الأول بدون فتحه
-        // حتى تكون البيانات جاهزة
+/* =========================================================
+   ➕ الجمع
+   ========================================================= */
 
-        try {
-            loadHadith();
-            loadDua();
-        } catch (error) {
-            console.log(
-                'خطأ في التهيئة:',
-                error
-            );
+let currentAddA = 1;
+let currentAddB = 1;
+
+function newAddition() {
+    currentAddA = Math.floor(Math.random() * 9) + 1;
+    currentAddB = Math.floor(Math.random() * 9) + 1;
+
+    if ($("addA")) {
+        $("addA").textContent = arabicNumber(currentAddA);
+    }
+
+    if ($("addB")) {
+        $("addB").textContent = arabicNumber(currentAddB);
+    }
+
+    const answer = $("additionAnswer");
+
+    if (answer) {
+        answer.value = "";
+    }
+
+    if ($("additionMessage")) {
+        $("additionMessage").textContent = "";
+    }
+}
+
+function checkAddition() {
+    const answer = $("additionAnswer");
+
+    if (!answer) return;
+
+    const userAnswer = Number(
+        answer.value.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+    );
+
+    const correct = currentAddA + currentAddB;
+
+    if (userAnswer === correct) {
+        if ($("additionMessage")) {
+            $("additionMessage").textContent =
+                "🎉 أحسنت! إجابة صحيحة ⭐";
         }
 
+        addStars(5);
+        speak("أحسنت، إجابة صحيحة");
+    } else {
+        if ($("additionMessage")) {
+            $("additionMessage").textContent =
+                "😊 حاول مرة أخرى";
+        }
+
+        speak("حاول مرة أخرى");
     }
-);
-
-
-// تحميل الأصوات عند توفرها
-if ('speechSynthesis' in window) {
-
-    window.speechSynthesis.onvoiceschanged =
-        function () {
-            window.speechSynthesis.getVoices();
-        };
 }
+
+window.newAddition = newAddition;
+window.checkAddition = checkAddition;
+
+/* =========================================================
+   ➖ الطرح
+   ========================================================= */
+
+let currentSubA = 5;
+let currentSubB = 1;
+
+function newSubtraction() {
+    currentSubA = Math.floor(Math.random() * 10) + 2;
+    currentSubB = Math.floor(Math.random() * currentSubA) + 1;
+
+    if ($("subA")) {
+        $("subA").textContent = arabicNumber(currentSubA);
+    }
+
+    if ($("subB")) {
+        $("subB").textContent = arabicNumber(currentSubB);
+    }
+
+    const answer = $("subtractionAnswer");
+
+    if (answer) {
+        answer.value = "";
+    }
+
+    if ($("subtractionMessage")) {
+        $("subtractionMessage").textContent = "";
+    }
+}
+
+function checkSubtraction() {
+    const answer = $("subtractionAnswer");
+
+    if (!answer) return;
+
+    const userAnswer = Number(
+        answer.value.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+    );
+
+    const correct = currentSubA - currentSubB;
+
+    if (userAnswer === correct) {
+        if ($("subtractionMessage")) {
+            $("subtractionMessage").textContent =
+                "🎉 أحسنت! إجابة صحيحة ⭐";
+        }
+
+        addStars(5);
+        speak("أحسنت، إجابة صحيحة");
+    } else {
+        if ($("subtractionMessage")) {
+            $("subtractionMessage").textContent =
+                "😊 حاول مرة أخرى";
+        }
+
+        speak("حاول مرة أخرى");
+    }
+}
+
+window.newSubtraction = newSubtraction;
+window.checkSubtraction = checkSubtraction;
+
+/* =========================================================
+   📖 القرآن الكريم
+   ========================================================= */
+
+const quranSurahs = [
+    {
+        name: "سورة الفاتحة",
+        file: "001"
+    },
+    {
+        name: "سورة الإخلاص",
+        file: "112"
+    },
+    {
+        name: "سورة الفلق",
+        file: "113"
+    },
+    {
+        name: "سورة الناس",
+        file: "114"
+    }
+];
+
+let currentSurahIndex = 0;
+let currentQuranAudio = null;
+
+function renderSurah() {
+    const surah = quranSurahs[currentSurahIndex];
+
+    if ($("surahTitle")) {
+        $("surahTitle").textContent = surah.name;
+    }
+
+    if ($("surahText")) {
+        $("surahText").textContent = getSurahText(surah.file);
+    }
+}
+
+function getSurahText(file) {
+    const texts = {
+        "001":
+            "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\nالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ\nالرَّحْمَٰنِ الرَّحِيمِ\nمَالِكِ يَوْمِ الدِّينِ\nإِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ\nاهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ\nصِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
+
+        "112":
+            "قُلْ هُوَ اللَّهُ أَحَدٌ\nاللَّهُ الصَّمَدُ\nلَمْ يَلِدْ وَلَمْ يُولَدْ\nوَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ",
+
+        "113":
+            "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ\nمِنْ شَرِّ مَا خَلَقَ\nوَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ\nوَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ\nوَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+
+        "114":
+            "قُلْ أَعُوذُ بِرَبِّ النَّاسِ\nمَلِكِ النَّاسِ\nإِلَٰهِ النَّاسِ\nمِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ\nالَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ\nمِنَ الْجِنَّةِ وَالنَّاسِ"
+    };
+
+    return texts[file] || "";
+}
+
+function speakSurah() {
+    const surah = quranSur
