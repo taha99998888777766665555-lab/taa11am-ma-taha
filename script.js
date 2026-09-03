@@ -3196,21 +3196,54 @@ const quranAyahs = {
     ]
 };
 
+
 /* =========================================================
-📖 عرض السورة
+📖 متغيرات القرآن
 ========================================================= */
 
 let currentSurahIndex = 0;
+let currentQuranAyah = 0;
+let quranPlayingAll = false;
+
+
+/* =========================================================
+🔗 رابط صوت الآية
+========================================================= */
+
+function getQuranAyahUrl(surahFile, ayahNumber) {
+
+    const surah =
+        String(surahFile).padStart(3, "0");
+
+    const ayah =
+        String(ayahNumber).padStart(3, "0");
+
+    return (
+        "https://everyayah.com/data/" +
+        "Husary_128kbps/" +
+        surah +
+        ayah +
+        ".mp3"
+    );
+}
+
+
+/* =========================================================
+📖 عرض السورة
+========================================================= */
 
 function renderSurah() {
 
     const surah =
         quranSurahs[currentSurahIndex];
 
+    if (!surah) return;
+
     const ayahs =
         quranAyahs[surah.file] || [];
 
     if ($("surahName")) {
+
         $("surahName").textContent =
             surah.name;
     }
@@ -3234,6 +3267,9 @@ function renderSurah() {
             ayahBox.className =
                 "quran-ayah";
 
+
+            /* نص الآية */
+
             const text =
                 document.createElement("div");
 
@@ -3243,25 +3279,32 @@ function renderSurah() {
             text.textContent =
                 ayah;
 
+
+            /* زر تشغيل الآية */
+
             const button =
                 document.createElement("button");
 
             button.className =
                 "primary quran-ayah-button";
 
-            button.type = "button";
+            button.type =
+                "button";
 
             button.textContent =
                 `🔊 الآية ${arabicNumber(ayahNumber)}`;
 
+
             button.addEventListener(
                 "click",
-                () => {
+                function () {
+
                     speakQuranAyah(
                         ayahNumber
                     );
                 }
             );
+
 
             ayahBox.appendChild(text);
             ayahBox.appendChild(button);
@@ -3273,36 +3316,103 @@ function renderSurah() {
     );
 }
 
-function getQuranAyahUrl(
-    surahFile,
-    ayahNumber
-) {
 
-    return (
-        "https://everyayah.com/data/" +
-        "Husary_128kbps/" +
-        String(surahFile).padStart(3, "0") +
-        String(ayahNumber).padStart(3, "0") +
-        ".mp3"
-    );
-}
 /* =========================================================
-🔊 آية واحدة
+🔊 إظهار رسالة خطأ للقرآن
+========================================================= */
+
+function showQuranError(message) {
+
+    let errorBox =
+        $("quranAudioMessage");
+
+    if (!errorBox) {
+
+        errorBox =
+            document.createElement("div");
+
+        errorBox.id =
+            "quranAudioMessage";
+
+        errorBox.style.cssText = `
+            margin:15px auto;
+            padding:12px 15px;
+            border-radius:14px;
+            background:#fff3cd;
+            color:#664d03;
+            font-weight:bold;
+            text-align:center;
+            max-width:700px;
+        `;
+
+        const container =
+            $("surahAyahs");
+
+        if (container && container.parentNode) {
+
+            container.parentNode.insertBefore(
+                errorBox,
+                container
+            );
+        }
+    }
+
+    errorBox.textContent =
+        message;
+
+    clearTimeout(
+        showQuranError.timer
+    );
+
+    showQuranError.timer =
+        setTimeout(
+            () => {
+
+                if (errorBox) {
+                    errorBox.textContent = "";
+                }
+
+            },
+            5000
+        );
+}
+
+
+/* =========================================================
+🧹 إزالة رسالة الخطأ
+========================================================= */
+
+function clearQuranError() {
+
+    const errorBox =
+        $("quranAudioMessage");
+
+    if (errorBox) {
+        errorBox.textContent = "";
+    }
+}
+
+
+/* =========================================================
+🔊 تشغيل آية واحدة
 ========================================================= */
 
 function speakQuranAyah(ayahNumber) {
 
+    /*
+     * أوقف أي صوت سابق
+     */
     stopAllAudio();
 
-    /*
-     * stopAllAudio زاد الرقم مرة واحدة.
-     * لذلك لا نزيده مرة أخرى.
-     */
+    quranPlayingAll = false;
+
     const session =
         quranSessionToken;
 
     const surah =
         quranSurahs[currentSurahIndex];
+
+    if (!surah) return;
 
     const ayahs =
         quranAyahs[surah.file] || [];
@@ -3314,58 +3424,146 @@ function speakQuranAyah(ayahNumber) {
         return;
     }
 
+    currentQuranAyah =
+        ayahNumber;
+
+    clearQuranError();
+
     const url =
         getQuranAyahUrl(
             surah.file,
             ayahNumber
         );
 
+
+    console.log(
+        "Quran audio URL:",
+        url
+    );
+
+
     const audio =
-        new Audio(url);
+        new Audio();
 
     currentQuranAudio =
         audio;
 
-    audio.preload = "auto";
+    audio.preload =
+        "auto";
 
-    audio.onended = () => {
+    audio.src =
+        url;
 
-        if (
-            session !==
-            quranSessionToken
-        ) {
-            return;
+
+    audio.addEventListener(
+        "loadeddata",
+        () => {
+
+            console.log(
+                "Quran audio loaded:",
+                url
+            );
+
+        },
+        {
+            once: true
         }
+    );
 
-        currentQuranAudio =
-            null;
-    };
 
-    audio.onerror = () => {
+    audio.addEventListener(
+        "ended",
+        () => {
 
-        if (
-            session ===
-            quranSessionToken
-        ) {
+            if (
+                session !==
+                quranSessionToken
+            ) {
+                return;
+            }
+
             currentQuranAudio =
                 null;
+
+        },
+        {
+            once: true
         }
-    };
+    );
 
-    audio.play().catch(() => {
 
-        if (
-            session ===
-            quranSessionToken
-        ) {
+    audio.addEventListener(
+        "error",
+        () => {
+
+            if (
+                session !==
+                quranSessionToken
+            ) {
+                return;
+            }
+
             currentQuranAudio =
                 null;
+
+            console.error(
+                "Quran audio error:",
+                url,
+                audio.error
+            );
+
+            showQuranError(
+                "⚠️ تعذر تشغيل صوت الآية. تأكد من اتصال الإنترنت ثم حاول مرة أخرى."
+            );
+
+        },
+        {
+            once: true
         }
-    });
+    );
+
+
+    /*
+     * التشغيل يبدأ مباشرة بعد ضغط المستخدم
+     */
+    const playPromise =
+        audio.play();
+
+
+    if (
+        playPromise &&
+        typeof playPromise.catch === "function"
+    ) {
+
+        playPromise.catch(
+            error => {
+
+                if (
+                    session !==
+                    quranSessionToken
+                ) {
+                    return;
+                }
+
+                currentQuranAudio =
+                    null;
+
+                console.error(
+                    "Quran play() failed:",
+                    error
+                );
+
+                showQuranError(
+                    "⚠️ المتصفح منع تشغيل الصوت أو تعذر تحميله. اضغط زر الآية مرة أخرى."
+                );
+            }
+        );
+    }
 }
 
+
 /* =========================================================
-🔊 السورة كاملة
+🔊 تشغيل السورة كاملة
 ========================================================= */
 
 function speakSurah() {
@@ -3378,14 +3576,23 @@ function speakSurah() {
     const surah =
         quranSurahs[currentSurahIndex];
 
+    if (!surah) return;
+
     const ayahs =
         quranAyahs[surah.file] || [];
 
     if (!ayahs.length) return;
 
-    let currentAyah = 1;
+    clearQuranError();
 
-    function playNextAyah() {
+    quranPlayingAll =
+        true;
+
+    currentQuranAyah =
+        1;
+
+
+    function playNextQuranAyah() {
 
         if (
             session !==
@@ -3394,10 +3601,17 @@ function speakSurah() {
             return;
         }
 
+        if (!quranPlayingAll) {
+            return;
+        }
+
         if (
-            currentAyah >
+            currentQuranAyah >
             ayahs.length
         ) {
+
+            quranPlayingAll =
+                false;
 
             currentQuranAudio =
                 null;
@@ -3405,14 +3619,22 @@ function speakSurah() {
             return;
         }
 
+
         const url =
             getQuranAyahUrl(
                 surah.file,
-                currentAyah
+                currentQuranAyah
             );
 
+
+        console.log(
+            "Playing Quran:",
+            url
+        );
+
+
         const audio =
-            new Audio(url);
+            new Audio();
 
         currentQuranAudio =
             audio;
@@ -3420,49 +3642,126 @@ function speakSurah() {
         audio.preload =
             "auto";
 
-        audio.onended = () => {
+        audio.src =
+            url;
 
-            if (
-                session !==
-                quranSessionToken
-            ) {
-                return;
+
+        audio.addEventListener(
+            "ended",
+            () => {
+
+                if (
+                    session !==
+                    quranSessionToken
+                ) {
+                    return;
+                }
+
+                if (!quranPlayingAll) {
+                    return;
+                }
+
+                currentQuranAyah++;
+
+                playNextQuranAyah();
+
+            },
+            {
+                once: true
             }
+        );
 
-            currentAyah++;
 
-            playNextAyah();
-        };
+        audio.addEventListener(
+            "error",
+            () => {
 
-        audio.onerror = () => {
+                if (
+                    session !==
+                    quranSessionToken
+                ) {
+                    return;
+                }
 
-            if (
-                session ===
-                quranSessionToken
-            ) {
+                quranPlayingAll =
+                    false;
+
                 currentQuranAudio =
                     null;
-            }
-        };
 
-        audio.play().catch(() => {
+                console.error(
+                    "Quran full-surah error:",
+                    url,
+                    audio.error
+                );
 
-            if (
-                session ===
-                quranSessionToken
-            ) {
-                currentQuranAudio =
-                    null;
+                showQuranError(
+                    "⚠️ حدث خطأ أثناء تحميل تلاوة السورة."
+                );
+
+            },
+            {
+                once: true
             }
-        });
+        );
+
+
+        const playPromise =
+            audio.play();
+
+
+        if (
+            playPromise &&
+            typeof playPromise.catch === "function"
+        ) {
+
+            playPromise.catch(
+                error => {
+
+                    if (
+                        session !==
+                        quranSessionToken
+                    ) {
+                        return;
+                    }
+
+                    quranPlayingAll =
+                        false;
+
+                    currentQuranAudio =
+                        null;
+
+                    console.error(
+                        "Quran full play failed:",
+                        error
+                    );
+
+                    showQuranError(
+                        "⚠️ تعذر تشغيل السورة. اضغط زر الاستماع مرة أخرى."
+                    );
+                }
+            );
+        }
     }
 
-    playNextAyah();
+
+    playNextQuranAyah();
 }
+
+
+/* =========================================================
+⏭️ السورة التالية
+========================================================= */
 
 function nextSurah() {
 
     stopAllAudio();
+
+    quranPlayingAll =
+        false;
+
+    currentQuranAyah =
+        0;
 
     currentSurahIndex++;
 
@@ -3470,12 +3769,13 @@ function nextSurah() {
         currentSurahIndex >=
         quranSurahs.length
     ) {
-        currentSurahIndex = 0;
+
+        currentSurahIndex =
+            0;
     }
 
     renderSurah();
 }
-
 /* =========================================================
 📜 الحديث الشريف
 ========================================================= */
