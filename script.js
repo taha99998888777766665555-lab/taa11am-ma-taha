@@ -3879,6 +3879,87 @@ function nextHadith() {
 
 /* =========================================================
 🤲 الأدعية والأذكار
+🎙️ تسجيلات صوتية حقيقية من الدرر السنية
+========================================================= */
+
+const duaCategories = [
+
+    {
+        id: "prophetic",
+        title: "أدعية النبي الجامعة",
+        icon: "🤲",
+        audio: "https://media.dorar.net/1776313661.mp3"
+    },
+
+    {
+        id: "quran",
+        title: "أدعية القرآن",
+        icon: "📖",
+        audio: "https://media.dorar.net/1777706926.mp3"
+    },
+
+    {
+        id: "sunnah",
+        title: "من هدي النبي",
+        icon: "🌿",
+        audio: "https://media.dorar.net/1776314152.mp3"
+    },
+
+    {
+        id: "protection",
+        title: "أمور كان يتعوذ منها النبي",
+        icon: "🛡️",
+        audio: "https://media.dorar.net/1776314096.mp3"
+    },
+
+    {
+        id: "morning-evening",
+        title: "أذكار الصباح والمساء",
+        icon: "🌅",
+        audio: "https://media.dorar.net/1776314209.mp3"
+    },
+
+    {
+        id: "prayer",
+        title: "أدعية الصلاة",
+        icon: "🕌",
+        audio: "https://media.dorar.net/1776314182.mp3"
+    },
+
+    {
+        id: "dreams-wakeup",
+        title: "أدعية الأحلام والاستيقاظ من النوم",
+        icon: "🌙",
+        audio: "https://media.dorar.net/1776314265.mp3"
+    },
+
+    {
+        id: "sleep",
+        title: "أذكار النوم",
+        icon: "😴",
+        audio: "https://media.dorar.net/1776314241.mp3"
+    },
+
+    {
+        id: "sick",
+        title: "أدعية المريض",
+        icon: "🤲",
+        audio: "https://media.dorar.net/1776314313.mp3"
+    },
+
+    {
+        id: "travel",
+        title: "أدعية السفر",
+        icon: "✈️",
+        audio: "https://media.dorar.net/1776314288.mp3"
+    }
+
+];
+
+
+/* =========================================================
+📜 الأدعية الموجودة في التطبيق
+📌 محفوظة كما هي حتى لا نفقد أي محتوى سابق
 ========================================================= */
 
 const generalDuas = [
@@ -3975,6 +4056,7 @@ const generalDuas = [
 
 ];
 
+
 const morningAdhkar = [
 
     {
@@ -4015,6 +4097,7 @@ const morningAdhkar = [
 
 ];
 
+
 const eveningAdhkar = [
 
     {
@@ -4043,49 +4126,245 @@ const eveningAdhkar = [
 
 ];
 
-let duaCategory = "general";
+
+/* =========================================================
+🔧 متغيرات الأدعية
+========================================================= */
+
+let duaCategory = "prophetic";
 let currentDuaIndex = 0;
+let currentDuaAudio = null;
 
-function getCurrentDuaList() {
 
-    if (duaCategory === "morning") {
-        return morningAdhkar;
-    }
+/* =========================================================
+📚 الحصول على القسم الحالي
+========================================================= */
 
-    if (duaCategory === "evening") {
-        return eveningAdhkar;
-    }
+function getCurrentDuaCategory() {
 
-    return generalDuas;
+    return (
+        duaCategories.find(
+            category =>
+                category.id === duaCategory
+        ) ||
+        duaCategories[0]
+    );
 }
+
+
+/* =========================================================
+🛑 إيقاف تسجيل الدعاء الحالي
+========================================================= */
+
+function stopDuaAudio() {
+
+    if (currentDuaAudio) {
+
+        try {
+            currentDuaAudio.pause();
+            currentDuaAudio.currentTime = 0;
+            currentDuaAudio.src = "";
+        } catch (error) {}
+
+        currentDuaAudio = null;
+    }
+
+    /*
+     * إيقاف أي صوت آخر يديره AudioManager
+     */
+    if (
+        typeof AudioManager !== "undefined" &&
+        AudioManager &&
+        typeof AudioManager.stop === "function"
+    ) {
+        try {
+            AudioManager.stop();
+        } catch (error) {}
+    }
+}
+
+
+/* =========================================================
+🎨 تنسيق قسم الأدعية
+========================================================= */
+
+function addDuaStyles() {
+
+    if ($("duaStyles")) return;
+
+    const style =
+        document.createElement("style");
+
+    style.id =
+        "duaStyles";
+
+    style.textContent = `
+
+        .dua-categories {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 20px auto;
+            max-width: 900px;
+        }
+
+        .dua-category-button {
+            border: 0;
+            border-radius: 18px;
+            padding: 15px 10px;
+            background: #f1f5f9;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: .2s;
+            min-height: 75px;
+            font-family: inherit;
+        }
+
+        .dua-category-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .dua-category-button:active {
+            transform: scale(.97);
+        }
+
+        .dua-category-button.active {
+            background: #dbeafe;
+            box-shadow:
+                0 4px 12px rgba(0,0,0,.12);
+        }
+
+        .dua-audio-card {
+            margin: 20px auto;
+            padding: 22px;
+            max-width: 700px;
+            border-radius: 22px;
+            background: rgba(255,255,255,.95);
+            box-shadow:
+                0 8px 25px rgba(0,0,0,.10);
+            text-align: center;
+        }
+
+        .dua-audio-icon {
+            font-size: 55px;
+            margin-bottom: 10px;
+        }
+
+        .dua-audio-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .dua-audio-description {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 18px;
+            opacity: .85;
+        }
+
+        .dua-audio-button {
+            border: 0;
+            border-radius: 18px;
+            padding: 14px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            min-width: 220px;
+        }
+
+        .dua-audio-button:disabled {
+            opacity: .75;
+            cursor: wait;
+        }
+
+        .dua-audio-message {
+            min-height: 25px;
+            margin-top: 12px;
+            font-weight: bold;
+            line-height: 1.6;
+        }
+
+        .dua-next-button {
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+
+            .dua-categories {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .dua-category-button {
+                font-size: 14px;
+                min-height: 70px;
+                padding: 12px 6px;
+            }
+
+            .dua-audio-card {
+                padding: 18px 12px;
+            }
+
+            .dua-audio-title {
+                font-size: 20px;
+            }
+
+            .dua-audio-button {
+                width: 100%;
+            }
+        }
+
+    `;
+
+    document.head.appendChild(style);
+}
+
+
+/* =========================================================
+📖 عرض قسم الأدعية
+========================================================= */
 
 function renderDua() {
 
-    const list =
-        getCurrentDuaList();
+    addDuaStyles();
 
-    if (
-        currentDuaIndex >=
-        list.length
-    ) {
-        currentDuaIndex = 0;
+    const category =
+        getCurrentDuaCategory();
+
+    if (!category) return;
+
+    currentDuaIndex = 0;
+
+    const title =
+        $("duaTitle");
+
+    const text =
+        $("duaText");
+
+    if (title) {
+
+        title.textContent =
+            category.title;
     }
 
-    const dua =
-        list[currentDuaIndex];
+    if (text) {
 
-    if ($("duaTitle")) {
-        $("duaTitle").textContent =
-            dua.title;
-    }
-
-    if ($("duaText")) {
-        $("duaText").textContent =
-            dua.text;
+        text.textContent =
+            "اضغط على زر الاستماع لسماع التسجيل الصوتي الكامل لهذا القسم.";
     }
 
     createDuaControls();
 }
+
+
+/* =========================================================
+🎛️ إنشاء أزرار أقسام الأدعية
+========================================================= */
 
 function createDuaControls() {
 
@@ -4097,6 +4376,11 @@ function createDuaControls() {
     let controls =
         $("duaControls");
 
+
+    /* -----------------------------------------------------
+       إنشاء حاوية الأقسام إذا لم تكن موجودة
+    ----------------------------------------------------- */
+
     if (!controls) {
 
         controls =
@@ -4104,14 +4388,6 @@ function createDuaControls() {
 
         controls.id =
             "duaControls";
-
-        controls.style.cssText = `
-            display:flex;
-            gap:8px;
-            justify-content:center;
-            flex-wrap:wrap;
-            margin:15px 0;
-        `;
 
         const title =
             screen.querySelector("h1, h2");
@@ -4132,47 +4408,113 @@ function createDuaControls() {
         }
     }
 
-    controls.innerHTML = `
+
+    controls.className =
+        "dua-categories";
+
+
+    /* -----------------------------------------------------
+       أزرار الأقسام
+    ----------------------------------------------------- */
+
+    controls.innerHTML =
+        duaCategories
+            .map(
+                category => `
+
+                    <button
+                        type="button"
+                        class="dua-category-button ${
+                            category.id === duaCategory
+                                ? "active"
+                                : ""
+                        }"
+                        onclick="changeDuaCategory('${category.id}')"
+                    >
+                        ${category.icon}
+                        <br>
+                        ${category.title}
+                    </button>
+
+                `
+            )
+            .join("");
+
+
+    /* -----------------------------------------------------
+       بطاقة التسجيل
+    ----------------------------------------------------- */
+
+    let audioCard =
+        $("duaAudioCard");
+
+
+    if (!audioCard) {
+
+        audioCard =
+            document.createElement("div");
+
+        audioCard.id =
+            "duaAudioCard";
+
+        audioCard.className =
+            "dua-audio-card";
+
+        screen.appendChild(audioCard);
+    }
+
+
+    const category =
+        getCurrentDuaCategory();
+
+
+    audioCard.innerHTML = `
+
+        <div class="dua-audio-icon">
+            ${category.icon}
+        </div>
+
+        <div class="dua-audio-title">
+            ${category.title}
+        </div>
+
+        <div class="dua-audio-description">
+            🎙️ تسجيل صوتي حقيقي من الدرر السنية
+        </div>
 
         <button
-            onclick="changeDuaCategory('general')"
-            class="${
-                duaCategory === "general"
-                    ? "active"
-                    : ""
-            }"
+            id="duaRealAudioButton"
+            class="primary dua-audio-button"
             type="button"
+            onclick="playDuaAudio()"
         >
-            🤲 الأدعية
+            🔊 استمع للتسجيل
         </button>
 
-        <button
-            onclick="changeDuaCategory('morning')"
-            class="${
-                duaCategory === "morning"
-                    ? "active"
-                    : ""
-            }"
-            type="button"
-        >
-            🌅 أذكار الصباح
-        </button>
+        <div
+            id="duaAudioMessage"
+            class="dua-audio-message"
+            aria-live="polite"
+        ></div>
 
         <button
-            onclick="changeDuaCategory('evening')"
-            class="${
-                duaCategory === "evening"
-                    ? "active"
-                    : ""
-            }"
+            class="secondary dua-audio-button dua-next-button"
             type="button"
+            onclick="nextDua()"
         >
-            🌙 أذكار المساء
+            ➡️ القسم التالي
         </button>
+
     `;
+
+
+    /* -----------------------------------------------------
+       عداد / اسم القسم
+    ----------------------------------------------------- */
 
     let counter =
         $("duaCounter");
+
 
     if (!counter) {
 
@@ -4188,58 +4530,565 @@ function createDuaControls() {
         screen.appendChild(counter);
     }
 
+
+    const categoryIndex =
+        duaCategories.findIndex(
+            item =>
+                item.id === duaCategory
+        );
+
+
     counter.textContent =
-        `${arabicNumber(currentDuaIndex + 1)} من ${arabicNumber(list.length)}`;
+        `📚 القسم ${arabicNumber(categoryIndex + 1)} من ${arabicNumber(duaCategories.length)}`;
 }
+
+
+/* =========================================================
+🔄 تغيير قسم الأدعية
+========================================================= */
 
 function changeDuaCategory(category) {
 
-    stopAllAudio();
+    /*
+     * إيقاف أي صوت يعمل قبل الانتقال
+     */
+    if (
+        typeof stopAllAudio === "function"
+    ) {
+        try {
+            stopAllAudio();
+        } catch (error) {}
+    }
+
+    stopDuaAudio();
+
+
+    /*
+     * التأكد أن القسم موجود
+     */
+    const exists =
+        duaCategories.some(
+            item =>
+                item.id === category
+        );
+
+
+    if (!exists) {
+        return;
+    }
+
 
     duaCategory =
         category;
 
-    currentDuaIndex = 0;
+    currentDuaIndex =
+        0;
+
 
     renderDua();
 }
+
+
+/* =========================================================
+🔊 تشغيل التسجيل الحقيقي من الدرر السنية
+========================================================= */
+
+function playDuaAudio() {
+
+    /*
+     * إيقاف أي تسجيل سابق
+     */
+    if (
+        typeof stopAllAudio === "function"
+    ) {
+        try {
+            stopAllAudio();
+        } catch (error) {}
+    }
+
+    stopDuaAudio();
+
+
+    const category =
+        getCurrentDuaCategory();
+
+
+    if (
+        !category ||
+        !category.audio
+    ) {
+
+        const message =
+            $("duaAudioMessage");
+
+        if (message) {
+
+            message.textContent =
+                "⚠️ لا يوجد تسجيل صوتي لهذا القسم.";
+        }
+
+        return;
+    }
+
+
+    const message =
+        $("duaAudioMessage");
+
+    const button =
+        $("duaRealAudioButton");
+
+
+    if (message) {
+
+        message.textContent =
+            "🔊 جاري تشغيل التسجيل...";
+    }
+
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "⏸️ جاري التشغيل...";
+    }
+
+
+    /*
+     * إنشاء مشغل الصوت
+     */
+    const audio =
+        new Audio();
+
+
+    currentDuaAudio =
+        audio;
+
+
+    audio.preload =
+        "auto";
+
+
+    audio.src =
+        category.audio;
+
+
+    /* -----------------------------------------------------
+       عند بدء التشغيل فعليًا
+    ----------------------------------------------------- */
+
+    audio.addEventListener(
+        "playing",
+        () => {
+
+            if (
+                currentDuaAudio !== audio
+            ) {
+                return;
+            }
+
+            if (button) {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    "⏸️ إيقاف التسجيل";
+            }
+
+            if (message) {
+
+                message.textContent =
+                    "🎙️ يتم تشغيل التسجيل الحقيقي...";
+            }
+        }
+    );
+
+
+    /* -----------------------------------------------------
+       الضغط مرة أخرى = إيقاف
+    ----------------------------------------------------- */
+
+    audio.addEventListener(
+        "pause",
+        () => {
+
+            if (
+                currentDuaAudio !== audio
+            ) {
+                return;
+            }
+
+            if (
+                audio.currentTime <
+                audio.duration
+            ) {
+
+                if (button) {
+
+                    button.disabled =
+                        false;
+
+                    button.textContent =
+                        "▶️ متابعة التسجيل";
+                }
+            }
+        }
+    );
+
+
+    /* -----------------------------------------------------
+       انتهاء التسجيل
+    ----------------------------------------------------- */
+
+    audio.addEventListener(
+        "ended",
+        () => {
+
+            if (
+                currentDuaAudio !== audio
+            ) {
+                return;
+            }
+
+            currentDuaAudio =
+                null;
+
+
+            if (button) {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    "🔊 استمع للتسجيل مرة أخرى";
+            }
+
+
+            if (message) {
+
+                message.textContent =
+                    "✅ انتهى التسجيل";
+            }
+        },
+        {
+            once: true
+        }
+    );
+
+
+    /* -----------------------------------------------------
+       حدوث خطأ في الملف الصوتي
+    ----------------------------------------------------- */
+
+    audio.addEventListener(
+        "error",
+        () => {
+
+            if (
+                currentDuaAudio !== audio
+            ) {
+                return;
+            }
+
+            currentDuaAudio =
+                null;
+
+
+            if (button) {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    "🔊 حاول مرة أخرى";
+            }
+
+
+            if (message) {
+
+                message.textContent =
+                    "⚠️ تعذر تشغيل التسجيل. تأكد من اتصال الإنترنت ثم حاول مرة أخرى.";
+            }
+
+
+            console.error(
+                "Dua audio error:",
+                category.audio,
+                audio.error
+            );
+        },
+        {
+            once: true
+        }
+    );
+
+
+    /* -----------------------------------------------------
+       تشغيل التسجيل
+    ----------------------------------------------------- */
+
+    const playPromise =
+        audio.play();
+
+
+    if (
+        playPromise &&
+        typeof playPromise.catch === "function"
+    ) {
+
+        playPromise.catch(
+            error => {
+
+                if (
+                    currentDuaAudio !== audio
+                ) {
+                    return;
+                }
+
+                currentDuaAudio =
+                    null;
+
+
+                if (button) {
+
+                    button.disabled =
+                        false;
+
+                    button.textContent =
+                        "🔊 حاول مرة أخرى";
+                }
+
+
+                if (message) {
+
+                    message.textContent =
+                        "⚠️ اضغط على زر الاستماع مرة أخرى لتشغيل التسجيل.";
+                }
+
+
+                console.error(
+                    "Dua audio play failed:",
+                    error
+                );
+            }
+        );
+    }
+
+
+    /*
+     * تغيير وظيفة الزر أثناء التشغيل
+     */
+    if (button) {
+
+        button.onclick =
+            function () {
+
+                if (
+                    currentDuaAudio === audio &&
+                    !audio.paused
+                ) {
+
+                    audio.pause();
+
+                    return;
+                }
+
+
+                if (
+                    currentDuaAudio === audio &&
+                    audio.paused
+                ) {
+
+                    audio.play().catch(
+                        error => {
+
+                            console.error(
+                                "Dua audio resume failed:",
+                                error
+                            );
+                        }
+                    );
+
+                    return;
+                }
+
+
+                playDuaAudio();
+            };
+    }
+}
+
+
+/* =========================================================
+🗣️ تشغيل الدعاء القديم
+📌 احتياطي للأزرار القديمة في HTML
+========================================================= */
 
 function speakDua() {
 
+    const category =
+        getCurrentDuaCategory();
+
+
+    /*
+     * إذا كان القسم يحتوي على
+     * تسجيل حقيقي من الدرر السنية
+     * نستخدم التسجيل الحقيقي.
+     */
+    if (
+        category &&
+        category.audio
+    ) {
+
+        playDuaAudio();
+
+        return;
+    }
+
+
+    /*
+     * الاحتياط القديم
+     */
     const list =
-        getCurrentDuaList();
+        generalDuas;
 
-    speak(
-        list[currentDuaIndex].text,
-        {
-            rate: 0.7
-        }
-    );
+
+    if (
+        !list.length ||
+        !list[currentDuaIndex]
+    ) {
+
+        return;
+    }
+
+
+    if (
+        typeof speak === "function"
+    ) {
+
+        speak(
+            list[currentDuaIndex].text,
+            {
+                rate: 0.7
+            }
+        );
+    }
 }
 
-function playDuaAudio() {
-    speakDua();
+
+/* =========================================================
+▶️ توافق مع زر HTML القديم
+========================================================= */
+
+function playCurrentDuaAudio() {
+
+    playDuaAudio();
 }
+
+
+/* =========================================================
+➡️ الانتقال إلى القسم التالي
+========================================================= */
 
 function nextDua() {
 
-    stopAllAudio();
-
-    const list =
-        getCurrentDuaList();
-
-    currentDuaIndex++;
-
+    /*
+     * إيقاف الصوت الحالي
+     */
     if (
-        currentDuaIndex >=
-        list.length
+        typeof stopAllAudio === "function"
     ) {
-        currentDuaIndex = 0;
+
+        try {
+            stopAllAudio();
+        } catch (error) {}
     }
+
+    stopDuaAudio();
+
+
+    /*
+     * معرفة القسم الحالي
+     */
+    const currentIndex =
+        duaCategories.findIndex(
+            category =>
+                category.id === duaCategory
+        );
+
+
+    let nextIndex =
+        currentIndex + 1;
+
+
+    /*
+     * الرجوع لأول قسم بعد آخر قسم
+     */
+    if (
+        nextIndex >=
+        duaCategories.length
+    ) {
+
+        nextIndex = 0;
+    }
+
+
+    duaCategory =
+        duaCategories[nextIndex].id;
+
+
+    currentDuaIndex =
+        0;
+
 
     renderDua();
 }
 
+
+/* =========================================================
+🏠 إيقاف صوت الأدعية عند مغادرة الصفحة
+========================================================= */
+
+function stopDuaWhenLeavingScreen() {
+
+    stopDuaAudio();
+}
+
+
+/* =========================================================
+🌐 إتاحة الدوال لـ HTML
+========================================================= */
+
+window.changeDuaCategory =
+    changeDuaCategory;
+
+window.speakDua =
+    speakDua;
+
+window.playDuaAudio =
+    playDuaAudio;
+
+window.playCurrentDuaAudio =
+    playCurrentDuaAudio;
+
+window.nextDua =
+    nextDua;
+
+window.stopDuaAudio =
+    stopDuaAudio;
+
+
+/* =========================================================
+🚀 تشغيل قسم الأدعية أول مرة
+========================================================= */
+
+if (
+    typeof renderDua === "function"
+) {
+    renderDua();
+}
 /* =========================================================
 🏆 تصفير التقدم
 ========================================================= */
