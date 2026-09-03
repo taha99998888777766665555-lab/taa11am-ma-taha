@@ -3479,83 +3479,154 @@ document.addEventListener("keydown", function(e) {
 /* =========================================================
 📖 القرآن الكريم
 🎙️ تلاوة الشيخ الحصري - EveryAyah
+🔊 زر مستقل لكل آية
 ========================================================= */
 
 const quranSurahs = [
-
-    {
-        name: "سورة الفاتحة",
-        file: "001"
-    },
-
-    {
-        name: "سورة الإخلاص",
-        file: "112"
-    },
-
-    {
-        name: "سورة الفلق",
-        file: "113"
-    },
-
-    {
-        name: "سورة الناس",
-        file: "114"
-    }
-
+    { name: "سورة الفاتحة", file: "001" },
+    { name: "سورة الإخلاص", file: "112" },
+    { name: "سورة الفلق", file: "113" },
+    { name: "سورة الناس", file: "114" }
 ];
 
-const quranAyahCounts = {
+const quranAyahs = {
 
-    "001": 7,
-    "112": 4,
-    "113": 5,
-    "114": 6
+    "001": [
+        "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+        "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+        "الرَّحْمَٰنِ الرَّحِيمِ",
+        "مَالِكِ يَوْمِ الدِّينِ",
+        "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+        "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+        "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ"
+    ],
 
+    "112": [
+        "قُلْ هُوَ اللَّهُ أَحَدٌ",
+        "اللَّهُ الصَّمَدُ",
+        "لَمْ يَلِدْ وَلَمْ يُولَدْ",
+        "وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ"
+    ],
+
+    "113": [
+        "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",
+        "مِنْ شَرِّ مَا خَلَقَ",
+        "وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ",
+        "وَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",
+        "وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ"
+    ],
+
+    "114": [
+        "قُلْ أَعُوذُ بِرَبِّ النَّاسِ",
+        "مَلِكِ النَّاسِ",
+        "إِلَٰهِ النَّاسِ",
+        "مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ",
+        "الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ",
+        "مِنَ الْجِنَّةِ وَالنَّاسِ"
+    ]
 };
+
+
+/* =========================================================
+🔧 المتغيرات
+========================================================= */
 
 let currentSurahIndex = 0;
 let currentQuranAudio = null;
-let currentQuranAyah = 1;
+let quranSessionToken = 0;
+
+
+/* =========================================================
+📖 عرض السورة والآيات
+========================================================= */
 
 function renderSurah() {
 
     const surah =
         quranSurahs[currentSurahIndex];
 
-    if ($("surahTitle")) {
-        $("surahTitle").textContent =
+    const ayahs =
+        quranAyahs[surah.file] || [];
+
+
+    /* اسم السورة */
+
+    if ($("surahName")) {
+        $("surahName").textContent =
             surah.name;
     }
 
-    if ($("surahText")) {
-        $("surahText").textContent =
-            getSurahText(
-                surah.file
-            );
-    }
+
+    /* حاوية الآيات */
+
+    const container =
+        $("surahAyahs");
+
+    if (!container) return;
+
+
+    container.innerHTML = "";
+
+
+    ayahs.forEach((ayah, index) => {
+
+        const ayahNumber =
+            index + 1;
+
+
+        const ayahBox =
+            document.createElement("div");
+
+        ayahBox.className =
+            "quran-ayah";
+
+
+        const text =
+            document.createElement("div");
+
+        text.className =
+            "quran-ayah-text";
+
+        text.textContent =
+            ayah;
+
+
+        const button =
+            document.createElement("button");
+
+        button.className =
+            "primary quran-ayah-button";
+
+        button.type =
+            "button";
+
+        button.textContent =
+            `🔊 الآية ${arabicNumber(ayahNumber)}`;
+
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                speakQuranAyah(
+                    ayahNumber
+                );
+
+            }
+        );
+
+
+        ayahBox.appendChild(text);
+        ayahBox.appendChild(button);
+
+        container.appendChild(ayahBox);
+    });
 }
 
-function getSurahText(file) {
 
-    const texts = {
-
-        "001":
-            "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\nالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ\nالرَّحْمَٰنِ الرَّحِيمِ\nمَالِكِ يَوْمِ الدِّينِ\nإِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ\nاهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ\nصِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
-
-        "112":
-            "قُلْ هُوَ اللَّهُ أَحَدٌ\nاللَّهُ الصَّمَدُ\nلَمْ يَلِدْ وَلَمْ يُولَدْ\nوَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ",
-
-        "113":
-            "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ\nمِنْ شَرِّ مَا خَلَقَ\nوَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ\nوَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ\nوَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ",
-
-        "114":
-            "قُلْ أَعُوذُ بِرَبِّ النَّاسِ\nمَلِكِ النَّاسِ\nإِلَٰهِ النَّاسِ\nمِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ\nالَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ\nمِنَ الْجِنَّةِ وَالنَّاسِ"
-
-    };
-
-    return texts[file] || "";
-}
+/* =========================================================
+🎙️ رابط صوت الحصري
+========================================================= */
 
 function getQuranAyahUrl(
     surahFile,
@@ -3571,69 +3642,169 @@ function getQuranAyahUrl(
     );
 }
 
-function speakSurah() {
+
+/* =========================================================
+🔊 تشغيل آية واحدة
+========================================================= */
+
+function speakQuranAyah(
+    ayahNumber
+) {
 
     stopAllAudio();
 
-    /*
-     * stopAllAudio أبطلت الجلسة القديمة.
-     * نأخذ الرقم الجديد للجلسة الحالية.
-     */
+
     const session =
-        quranSessionToken;
+        ++quranSessionToken;
 
-    currentQuranAyah = 1;
-
-    playCurrentQuranAyah(
-        session
-    );
-}
-
-function playCurrentQuranAyah(
-    session
-) {
-
-    if (
-        session !==
-        quranSessionToken
-    ) {
-        return;
-    }
 
     const surah =
         quranSurahs[currentSurahIndex];
 
-    const totalAyahs =
-        quranAyahCounts[
-            surah.file
-        ] || 0;
+
+    const ayahs =
+        quranAyahs[surah.file] || [];
+
 
     if (
-        currentQuranAyah >
-        totalAyahs
+        ayahNumber < 1 ||
+        ayahNumber > ayahs.length
     ) {
-
-        currentQuranAudio = null;
         return;
     }
+
 
     const url =
         getQuranAyahUrl(
             surah.file,
-            currentQuranAyah
+            ayahNumber
         );
 
-    const audioId =
-        `quran-${surah.file}-${currentQuranAyah}`;
+
+    const audio =
+        new Audio(url);
+
 
     currentQuranAudio =
-        AudioManager.play({
+        audio;
 
-            id: audioId,
 
-            src: url,
+    audio.preload =
+        "auto";
 
-            onended: () => {
+
+    audio.onended =
+        function () {
+
+            if (
+                session !==
+                quranSessionToken
+            ) {
+                return;
+            }
+
+            currentQuranAudio =
+                null;
+        };
+
+
+    audio.onerror =
+        function () {
+
+            if (
+                session ===
+                quranSessionToken
+            ) {
+                currentQuranAudio =
+                    null;
+            }
+        };
+
+
+    audio.play().catch(
+        function () {
+
+            currentQuranAudio =
+                null;
+
+        }
+    );
+}
+
+
+/* =========================================================
+🔊 تشغيل السورة كاملة
+========================================================= */
+
+function speakSurah() {
+
+    stopAllAudio();
+
+
+    const session =
+        ++quranSessionToken;
+
+
+    const surah =
+        quranSurahs[currentSurahIndex];
+
+
+    const ayahs =
+        quranAyahs[surah.file] || [];
+
+
+    if (!ayahs.length) {
+        return;
+    }
+
+
+    let currentAyah =
+        1;
+
+
+    function playNextAyah() {
+
+        if (
+            session !==
+            quranSessionToken
+        ) {
+            return;
+        }
+
+
+        if (
+            currentAyah >
+            ayahs.length
+        ) {
+
+            currentQuranAudio =
+                null;
+
+            return;
+        }
+
+
+        const url =
+            getQuranAyahUrl(
+                surah.file,
+                currentAyah
+            );
+
+
+        const audio =
+            new Audio(url);
+
+
+        currentQuranAudio =
+            audio;
+
+
+        audio.preload =
+            "auto";
+
+
+        audio.onended =
+            function () {
 
                 if (
                     session !==
@@ -3642,44 +3813,45 @@ function playCurrentQuranAyah(
                     return;
                 }
 
+
+                currentAyah++;
+
+                playNextAyah();
+            };
+
+
+        audio.onerror =
+            function () {
+
                 if (
-                    currentQuranAyah <
-                    totalAyahs
+                    session ===
+                    quranSessionToken
                 ) {
-
-                    currentQuranAyah++;
-
-                    playCurrentQuranAyah(
-                        session
-                    );
-
-                } else {
 
                     currentQuranAudio =
                         null;
                 }
-            },
+            };
 
-            onerror: () => {
 
-                if (
-                    session !==
-                    quranSessionToken
-                ) {
-                    return;
-                }
+        audio.play().catch(
+            function () {
 
                 currentQuranAudio =
                     null;
 
-                /*
-                 * مهم:
-                 * لا نستخدم speechSynthesis
-                 * كبديل للقرآن.
-                 */
             }
-        });
+        );
+    }
+
+
+    playNextAyah();
 }
+
+
+/* =========================================================
+📖 السورة التالية
+========================================================= */
 
 function nextSurah() {
 
@@ -3687,23 +3859,39 @@ function nextSurah() {
 
     currentSurahIndex++;
 
+
     if (
         currentSurahIndex >=
         quranSurahs.length
     ) {
+
         currentSurahIndex = 0;
     }
 
-    currentQuranAyah = 1;
 
     renderSurah();
 }
 
+
+/* =========================================================
+🌍 إتاحة الدوال
+========================================================= */
+
 window.speakSurah =
     speakSurah;
 
+window.speakQuranAyah =
+    speakQuranAyah;
+
 window.nextSurah =
     nextSurah;
+
+
+/* =========================================================
+🚀 تشغيل أول سورة
+========================================================= */
+
+renderSurah();
 
 /* =========================================================
 📜 الحديث الشريف
