@@ -3327,224 +3327,155 @@ window.clearWriting =
 window.nextWritingLetter =
     nextWritingLetter;
 
-/* =========================================================
-➕ الجمع
-========================================================= */
+/* =========================
+   🔢 الجمع والطرح
+========================= */
+
+function toWesternDigits(v) {
+    return String(v ?? "")
+        .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+        .replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+}
+
+function toArabicDigits(v) {
+    return String(v ?? "").replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+}
+
+function parseNumber(v) {
+    const n = Number(toWesternDigits(v).replace(/[^\d-]/g, ""));
+    return Number.isInteger(n) ? n : NaN;
+}
+
+
+/* ➕ الجمع */
 
 let currentAddA = 1;
 let currentAddB = 1;
 
 function newAddition() {
+    currentAddA = Math.floor(Math.random() * 9) + 1;
+    currentAddB = Math.floor(Math.random() * 9) + 1;
 
-    currentAddA =
-        Math.floor(
-            Math.random() * 9
-        ) + 1;
+    $("addQuestion").textContent =
+        `${arabicNumber(currentAddA)} + ${arabicNumber(currentAddB)} = ؟`;
 
-    currentAddB =
-        Math.floor(
-            Math.random() * 9
-        ) + 1;
+    $("addPictures").textContent =
+        "🍎".repeat(currentAddA) + "  +  " + "🍎".repeat(currentAddB);
 
-    if ($("addA")) {
-        $("addA").textContent =
-            arabicNumber(
-                currentAddA
-            );
-    }
+    $("addAnswer").value = "";
+    $("addMessage").textContent = "";
 
-    if ($("addB")) {
-        $("addB").textContent =
-            arabicNumber(
-                currentAddB
-            );
-    }
-
-    const answer =
-        $("additionAnswer");
-
-    if (answer) {
-        answer.value = "";
-    }
-
-    if ($("additionMessage")) {
-        $("additionMessage").textContent =
-            "";
-    }
+    speak(`${currentAddA} زائد ${currentAddB} يساوي كم؟`, { rate: 0.8 });
 }
 
 function checkAddition() {
+    const answer = parseNumber($("addAnswer").value);
+    const correct = currentAddA + currentAddB;
 
-    const answer =
-        $("additionAnswer");
-
-    if (!answer) {
+    if (!Number.isFinite(answer)) {
+        $("addMessage").textContent = "✏️ اكتب الإجابة أولًا";
+        $("addMessage").className = "message wrong";
         return;
     }
 
-    const rawVal =
-        answer.value.trim();
-
-    const normalizedVal =
-        rawVal.replace(
-            /[٠-٩]/g,
-            d =>
-                "٠١٢٣٤٥٦٧٨٩".indexOf(d)
-        );
-
-    const userAnswer =
-        Number(normalizedVal);
-
-    const correct =
-        currentAddA +
-        currentAddB;
-
-    if (
-        !isNaN(userAnswer) &&
-        userAnswer === correct
-    ) {
-
-        if ($("additionMessage")) {
-            $("additionMessage")
-                .textContent =
-                "🎉 أحسنت! إجابة صحيحة ⭐";
-        }
+    if (answer === correct) {
+        $("addMessage").textContent = "🎉 أحسنت! إجابة صحيحة ⭐";
+        $("addMessage").className = "message correct";
 
         addStars(5);
 
-        speak(
-            "أحسنت، إجابة صحيحة"
-        );
-
-    } else {
-
-        if ($("additionMessage")) {
-            $("additionMessage")
-                .textContent =
-                "😊 حاول مرة أخرى";
+        if (typeof correctAddition !== "undefined") {
+            correctAddition++;
         }
 
-        speak(
-            "حاول مرة أخرى"
-        );
+        if (typeof updateStats === "function") {
+            updateStats();
+        }
+
+        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+
+        setTimeout(newAddition, 1000);
+    } else {
+        $("addMessage").textContent = "😊 حاول مرة أخرى";
+        $("addMessage").className = "message wrong";
+        speak("حاول مرة أخرى", { rate: 0.8 });
     }
 }
 
-window.newAddition =
-    newAddition;
 
-window.checkAddition =
-    checkAddition;
+/* ➖ الطرح */
 
-/* =========================================================
-➖ الطرح
-========================================================= */
-
-let currentSubA = 5;
+let currentSubA = 3;
 let currentSubB = 1;
 
 function newSubtraction() {
+    currentSubA = Math.floor(Math.random() * 9) + 2;
+    currentSubB = Math.floor(Math.random() * currentSubA) + 1;
 
-    currentSubA =
-        Math.floor(
-            Math.random() * 10
-        ) + 2;
+    $("subQuestion").textContent =
+        `${arabicNumber(currentSubA)} - ${arabicNumber(currentSubB)} = ؟`;
 
-    currentSubB =
-        Math.floor(
-            Math.random() * currentSubA
-        ) + 1;
+    $("subPictures").textContent =
+        "🍎".repeat(currentSubA) +
+        "  −  " +
+        "🍎".repeat(currentSubB);
 
-    if ($("subA")) {
-        $("subA").textContent =
-            arabicNumber(
-                currentSubA
-            );
-    }
+    $("subAnswer").value = "";
+    $("subMessage").textContent = "";
 
-    if ($("subB")) {
-        $("subB").textContent =
-            arabicNumber(
-                currentSubB
-            );
-    }
-
-    const answer =
-        $("subtractionAnswer");
-
-    if (answer) {
-        answer.value = "";
-    }
-
-    if ($("subtractionMessage")) {
-        $("subtractionMessage")
-            .textContent = "";
-    }
+    speak(`${currentSubA} ناقص ${currentSubB} يساوي كم؟`, { rate: 0.8 });
 }
 
 function checkSubtraction() {
+    const answer = parseNumber($("subAnswer").value);
+    const correct = currentSubA - currentSubB;
 
-    const answer =
-        $("subtractionAnswer");
-
-    if (!answer) {
+    if (!Number.isFinite(answer)) {
+        $("subMessage").textContent = "✏️ اكتب الإجابة أولًا";
+        $("subMessage").className = "message wrong";
         return;
     }
 
-    const rawVal =
-        answer.value.trim();
-
-    const normalizedVal =
-        rawVal.replace(
-            /[٠-٩]/g,
-            d =>
-                "٠١٢٣٤٥٦٧٨٩".indexOf(d)
-        );
-
-    const userAnswer =
-        Number(normalizedVal);
-
-    const correct =
-        currentSubA -
-        currentSubB;
-
-    if (
-        !isNaN(userAnswer) &&
-        userAnswer === correct
-    ) {
-
-        if ($("subtractionMessage")) {
-            $("subtractionMessage")
-                .textContent =
-                "🎉 أحسنت! إجابة صحيحة ⭐";
-        }
+    if (answer === correct) {
+        $("subMessage").textContent = "🎉 أحسنت! إجابة صحيحة ⭐";
+        $("subMessage").className = "message correct";
 
         addStars(5);
 
-        speak(
-            "أحسنت، إجابة صحيحة"
-        );
-
-    } else {
-
-        if ($("subtractionMessage")) {
-            $("subtractionMessage")
-                .textContent =
-                "😊 حاول مرة أخرى";
+        if (typeof correctSubtraction !== "undefined") {
+            correctSubtraction++;
         }
 
-        speak(
-            "حاول مرة أخرى"
-        );
+        if (typeof updateStats === "function") {
+            updateStats();
+        }
+
+        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+
+        setTimeout(newSubtraction, 1000);
+    } else {
+        $("subMessage").textContent = "😊 حاول مرة أخرى";
+        $("subMessage").className = "message wrong";
+        speak("حاول مرة أخرى", { rate: 0.8 });
     }
 }
 
-window.newSubtraction =
-    newSubtraction;
 
-window.checkSubtraction =
-    checkSubtraction;
+/* ⌨️ Enter */
 
+document.addEventListener("keydown", function(e) {
+    if (e.key !== "Enter") return;
+
+    if (document.activeElement?.id === "addAnswer") {
+        e.preventDefault();
+        checkAddition();
+    }
+
+    if (document.activeElement?.id === "subAnswer") {
+        e.preventDefault();
+        checkSubtraction();
+    }
+});
 /* =========================================================
 📖 القرآن الكريم
 🎙️ تلاوة الشيخ الحصري - EveryAyah
