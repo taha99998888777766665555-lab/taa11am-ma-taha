@@ -3280,13 +3280,12 @@ function getQuranAyahUrl(
 
     return (
         "https://everyayah.com/data/" +
-        "Husary_128kbit/" +
+        "Husary_128kbps/" +
         String(surahFile).padStart(3, "0") +
         String(ayahNumber).padStart(3, "0") +
         ".mp3"
     );
 }
-
 /* =========================================================
 🔊 آية واحدة
 ========================================================= */
