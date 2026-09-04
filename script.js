@@ -2627,6 +2627,26 @@ function initWritingCanvas() {
 
     if (!writingCanvas) return;
 
+    /*
+       مهم:
+       عنصر <canvas> بدون width/height
+       يستخدم حجمًا افتراضيًا (300×150)
+       يختلف عن حجمه الظاهر عبر CSS
+       (100% × 300px)، مما كان يجعل نقطة
+       اللمس/الرسم لا تطابق مكان الإصبع
+       الفعلي، خصوصًا على الهاتف.
+       نُطابق حجم لوحة الرسم الداخلي مع
+       حجمها الحقيقي على الشاشة.
+    */
+    const rect =
+        writingCanvas.getBoundingClientRect();
+
+    writingCanvas.width =
+        rect.width || 300;
+
+    writingCanvas.height =
+        rect.height || 300;
+
     writingCtx =
         writingCanvas.getContext("2d");
 
@@ -2883,6 +2903,13 @@ function newAddition() {
 
 function checkAddition() {
 
+    /*
+       منع الضغط المتكرر بسرعة على "تحقق"
+       بعد إجابة صحيحة (كان يسبب مضاعفة
+       النجوم وتراكم المؤقتات).
+    */
+    if (additionTimer) return;
+
     const answerEl =
         $("addAnswer");
 
@@ -3027,6 +3054,12 @@ function newSubtraction() {
 }
 
 function checkSubtraction() {
+
+    /*
+       منع الضغط المتكرر بسرعة على "تحقق"
+       بعد إجابة صحيحة (نفس إصلاح الجمع).
+    */
+    if (subtractionTimer) return;
 
     const answerEl =
         $("subAnswer");
@@ -5570,7 +5603,7 @@ function createBalloonControls() {
         <div class="balloon-best-score">
             🏆 أفضل نتيجة:
             <strong id="balloonBestScore">
-                ${balloonGame.bestScore}
+                ${arabicNumber(balloonGame.bestScore)}
             </strong>
         </div>
 
@@ -6587,6 +6620,16 @@ function getRandomSuccessSpeech() {
     ];
 }
 
+/*
+   دالة بنفس الاسم القديم المستخدم في
+   handleBalloonCorrect لعرض رسالة النجاح
+   على الشاشة (لم تكن معرّفة من قبل، وهذا
+   كان يوقف تشغيل الجولة التالية بالكامل).
+*/
+function getRandomSuccessMessage() {
+    return getRandomSuccessSpeech();
+}
+
 
 /* =========================================================
    💬 عرض الرسالة
@@ -6671,14 +6714,14 @@ function updateBalloonHUD() {
     if (score) {
 
         score.textContent =
-            balloonGame.score;
+            arabicNumber(balloonGame.score);
 
     }
 
     if (level) {
 
         level.textContent =
-            balloonGame.level;
+            arabicNumber(balloonGame.level);
 
     }
 
@@ -6698,7 +6741,7 @@ function updateBalloonHUD() {
     if (streak) {
 
         streak.textContent =
-            balloonGame.streak;
+            arabicNumber(balloonGame.streak);
 
     }
 
@@ -6787,7 +6830,9 @@ function updateBalloonExtraHUD() {
 
     timer.textContent =
         "⏱️ " +
-        balloonGame.timeLeft;
+        arabicNumber(
+            Math.max(0, balloonGame.timeLeft)
+        );
 
     if (
         balloonGame.timeLeft <= 5
@@ -6813,7 +6858,7 @@ function updateBalloonExtraHUD() {
     if (best) {
 
         best.textContent =
-            balloonGame.bestScore;
+            arabicNumber(balloonGame.bestScore);
 
     }
 
