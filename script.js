@@ -6188,29 +6188,29 @@ function handleBalloonCorrect(
         true
     );
 
-    /*
-       🔊 صوت النجاح
-    */
+ /*
+   🔊 صوت النجاح
+*/
 
-    const speech =
-        getRandomSuccessSpeech();
+const speech =
+    getRandomSuccessSpeech();
 
-    if (
-        typeof speak === "function"
-    ) {
+if (
+    typeof speak === "function"
+) {
+    speak(speech, {
+        rate: 0.65,
+        pitch: 1.05,
+        volume: 1
+    });
+}
 
-     speak(speech, {
-    rate: 0.65,
-    pitch: 1.05,
-    volume: 1
-});
-       نترك الفرقعة تظهر كاملة.
-    */
+/*
+   نترك الفرقعة تظهر كاملة.
+*/
 
-    balloon.style.pointerEvents =
-        "none";
-
-    /*
+balloon.style.pointerEvents =
+    "none";
        بعد انتهاء الفرقعة:
        ننظف الساحة ونبدأ الجولة التالية.
     */
