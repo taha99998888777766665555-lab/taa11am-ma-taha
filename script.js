@@ -6204,23 +6204,16 @@ function handleBalloonCorrect(
 
     }
 
-    /*
-       💥 تشغيل الفرقعة
-    */
+   /*
+   💥 تشغيل الفرقعة
+*/
 
-    balloon.classList.add(
-        "balloon-pop"
-    );
+balloon.style.transition = "none";
+balloon.style.transform = "scale(1)";
 
-    createPopEffect(
-        balloon
-    );
+balloon.classList.add("balloon-pop");
 
-    showBalloonMessage(
-        getRandomSuccessMessage(),
-        true
-    );
-
+createNumberPopEffect(balloon);
  /*
    🔊 صوت النجاح
 */
