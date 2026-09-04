@@ -5307,6 +5307,7 @@ document.addEventListener(
 );
 /* =========================================================
    🎈 لعبة فرقع الحروف - Balloon Pop V2
+   النسخة المعدلة: صوت الحرف + فرقعة حقيقية
    ========================================================= */
 
 const balloonGame = {
@@ -5340,7 +5341,9 @@ const balloonGame = {
 
     earnedStars: 0,
 
-    bestScore: Number(localStorage.getItem("balloonBestScore") || 0)
+    bestScore: Number(
+        localStorage.getItem("balloonBestScore") || 0
+    )
 };
 
 
@@ -5385,6 +5388,47 @@ const balloonLevels = {
 
 
 /* =========================================================
+   🔊 أصوات الحروف
+   =========================================================
+   مهم:
+   نحن لا ننطق اسم الحرف.
+   ننطق الصوت التعليمي بالحركة القصيرة.
+   ========================================================= */
+
+const balloonLetterSounds = {
+
+    "ا": "أَ",
+    "ب": "بَ",
+    "ت": "تَ",
+    "ث": "ثَ",
+    "ج": "جَ",
+    "ح": "حَ",
+    "خ": "خَ",
+    "د": "دَ",
+    "ذ": "ذَ",
+    "ر": "رَ",
+    "ز": "زَ",
+    "س": "سَ",
+    "ش": "شَ",
+    "ص": "صَ",
+    "ض": "ضَ",
+    "ط": "طَ",
+    "ظ": "ظَ",
+    "ع": "عَ",
+    "غ": "غَ",
+    "ف": "فَ",
+    "ق": "قَ",
+    "ك": "كَ",
+    "ل": "لَ",
+    "م": "مَ",
+    "ن": "نَ",
+    "ه": "هَ",
+    "و": "وَ",
+    "ي": "يَ"
+};
+
+
+/* =========================================================
    ▶️ بدء لعبة فرقع الحروف
    ========================================================= */
 
@@ -5395,21 +5439,27 @@ function startBalloonGame(mode = "letters") {
     balloonGame.mode = mode;
 
     balloonGame.score = 0;
+
     balloonGame.streak = 0;
+
     balloonGame.bestStreak = 0;
 
     balloonGame.round = 0;
+
     balloonGame.level = 1;
 
     balloonGame.target = null;
 
     balloonGame.active = true;
+
     balloonGame.paused = false;
 
     balloonGame.lives = 3;
+
     balloonGame.timeLeft = 15;
 
     balloonGame.answered = false;
+
     balloonGame.earnedStars = 0;
 
     balloonGame.session++;
@@ -5438,7 +5488,8 @@ function startBalloonGame(mode = "letters") {
 
 function prepareBalloonArena() {
 
-    const arena = document.getElementById("balloonArena");
+    const arena =
+        document.getElementById("balloonArena");
 
     if (!arena) return;
 
@@ -5451,7 +5502,10 @@ function prepareBalloonArena() {
     setTimeout(() => {
 
         if (balloonGame.active) {
-            arena.classList.add("game-started");
+
+            arena.classList.add(
+                "game-started"
+            );
         }
 
     }, 50);
@@ -5465,22 +5519,30 @@ function prepareBalloonArena() {
 function createBalloonControls() {
 
     const arenaWrapper =
-        document.querySelector(".balloon-game-wrapper");
+        document.querySelector(
+            ".balloon-game-wrapper"
+        );
 
     if (!arenaWrapper) return;
 
     let controls =
-        document.getElementById("balloonControls");
+        document.getElementById(
+            "balloonControls"
+        );
 
     if (controls) {
+
         controls.remove();
     }
 
-    controls = document.createElement("div");
+    controls =
+        document.createElement("div");
 
-    controls.id = "balloonControls";
+    controls.id =
+        "balloonControls";
 
-    controls.className = "balloon-controls";
+    controls.className =
+        "balloon-controls";
 
     controls.innerHTML = `
         <button
@@ -5505,12 +5567,23 @@ function createBalloonControls() {
         </div>
     `;
 
-    const hud = arenaWrapper.querySelector(".game-hud");
+    const hud =
+        arenaWrapper.querySelector(
+            ".game-hud"
+        );
 
     if (hud) {
-        hud.insertAdjacentElement("afterend", controls);
+
+        hud.insertAdjacentElement(
+            "afterend",
+            controls
+        );
+
     } else {
-        arenaWrapper.prepend(controls);
+
+        arenaWrapper.prepend(
+            controls
+        );
     }
 
     updateBalloonExtraHUD();
@@ -5531,7 +5604,10 @@ function nextBalloonRound() {
 
     balloonGame.answered = false;
 
-    if (balloonGame.round > balloonGame.totalRounds) {
+    if (
+        balloonGame.round >
+        balloonGame.totalRounds
+    ) {
 
         finishBalloonGame();
 
@@ -5540,11 +5616,18 @@ function nextBalloonRound() {
 
     updateBalloonDifficulty();
 
-    const letter = getSmartBalloonLetter();
+    const letter =
+        getSmartBalloonLetter();
 
-    balloonGame.target = letter;
+    balloonGame.target =
+        letter;
 
     updateBalloonHUD();
+
+    /*
+       🔊 هنا يتم نطق صوت الحرف فقط
+       وليس اسم الحرف.
+    */
 
     speakBalloonTarget(letter);
 
@@ -5576,19 +5659,24 @@ function updateBalloonDifficulty() {
     }
 
     const levelText =
-        document.getElementById("balloonLevelText");
+        document.getElementById(
+            "balloonLevelText"
+        );
 
     if (levelText) {
 
         levelText.textContent =
-            balloonGame.level === 1 ? "١" :
-            balloonGame.level === 2 ? "٢" : "٣";
+            balloonGame.level === 1
+                ? "١"
+                : balloonGame.level === 2
+                    ? "٢"
+                    : "٣";
     }
 }
 
 
 /* =========================================================
-   🧠 اختيار حرف ذكي
+   🧠 اختيار حرف
    ========================================================= */
 
 function getSmartBalloonLetter() {
@@ -5600,12 +5688,16 @@ function getSmartBalloonLetter() {
     ) {
 
         const index =
-            Math.floor(Math.random() * letters.length);
+            Math.floor(
+                Math.random() *
+                letters.length
+            );
 
         return letters[index];
     }
 
     const fallbackLetters = [
+
         { letter: "ا", word: "أسد" },
         { letter: "ب", word: "باب" },
         { letter: "ت", word: "تفاح" },
@@ -5637,7 +5729,10 @@ function getSmartBalloonLetter() {
     ];
 
     return fallbackLetters[
-        Math.floor(Math.random() * fallbackLetters.length)
+        Math.floor(
+            Math.random() *
+            fallbackLetters.length
+        )
     ];
 }
 
@@ -5649,35 +5744,51 @@ function getSmartBalloonLetter() {
 function createBalloonWave(target) {
 
     const arena =
-        document.getElementById("balloonArena");
+        document.getElementById(
+            "balloonArena"
+        );
 
     if (!arena) return;
 
     const level =
-        balloonLevels[balloonGame.level];
+        balloonLevels[
+            balloonGame.level
+        ];
 
     const choices =
-        getBalloonChoices(target, level.count);
+        getBalloonChoices(
+            target,
+            level.count
+        );
 
-    choices.forEach((choice, index) => {
+    choices.forEach(
+        (choice, index) => {
 
-        const timer = setTimeout(() => {
+            const timer =
+                setTimeout(() => {
 
-            if (!balloonGame.active) return;
+                    if (
+                        !balloonGame.active
+                    ) return;
 
-            if (balloonGame.paused) return;
+                    if (
+                        balloonGame.paused
+                    ) return;
 
-            createGameBalloon(
-                choice,
-                target,
-                index,
-                level.duration
+                    createGameBalloon(
+                        choice,
+                        target,
+                        index,
+                        level.duration
+                    );
+
+                }, index * 450);
+
+            balloonGame.spawnTimers.push(
+                timer
             );
-
-        }, index * 450);
-
-        balloonGame.spawnTimers.push(timer);
-    });
+        }
+    );
 }
 
 
@@ -5685,7 +5796,10 @@ function createBalloonWave(target) {
    🔤 اختيارات الحروف
    ========================================================= */
 
-function getBalloonChoices(target, count) {
+function getBalloonChoices(
+    target,
+    count
+) {
 
     const choices = [];
 
@@ -5698,26 +5812,37 @@ function getBalloonChoices(target, count) {
         Array.isArray(letters)
     ) {
 
-        allLetters = [...letters];
+        allLetters =
+            [...letters];
     }
 
     const fallback = [
-        "ا", "ب", "ت", "ث", "ج", "ح", "خ",
-        "د", "ذ", "ر", "ز", "س", "ش", "ص",
-        "ض", "ط", "ظ", "ع", "غ", "ف", "ق",
-        "ك", "ل", "م", "ن", "ه", "و", "ي"
+
+        "ا", "ب", "ت", "ث",
+        "ج", "ح", "خ",
+        "د", "ذ", "ر", "ز",
+        "س", "ش", "ص",
+        "ض", "ط", "ظ",
+        "ع", "غ", "ف", "ق",
+        "ك", "ل", "م", "ن",
+        "ه", "و", "ي"
     ];
 
-    while (choices.length < count) {
+    while (
+        choices.length < count
+    ) {
 
         let candidate;
 
-        if (allLetters.length > 0) {
+        if (
+            allLetters.length > 0
+        ) {
 
             candidate =
                 allLetters[
                     Math.floor(
-                        Math.random() * allLetters.length
+                        Math.random() *
+                        allLetters.length
                     )
                 ];
 
@@ -5726,7 +5851,8 @@ function getBalloonChoices(target, count) {
             candidate =
                 fallback[
                     Math.floor(
-                        Math.random() * fallback.length
+                        Math.random() *
+                        fallback.length
                     )
                 ];
         }
@@ -5744,7 +5870,10 @@ function getBalloonChoices(target, count) {
                         ? item.letter
                         : item;
 
-                return itemLetter === candidateLetter;
+                return (
+                    itemLetter ===
+                    candidateLetter
+                );
             });
 
         if (!alreadyExists) {
@@ -5753,12 +5882,14 @@ function getBalloonChoices(target, count) {
         }
     }
 
-    return choices.sort(() => Math.random() - 0.5);
+    return choices.sort(
+        () => Math.random() - 0.5
+    );
 }
 
 
 /* =========================================================
-   🎈 إنشاء بالون
+   🎈 إنشاء البالون
    ========================================================= */
 
 function createGameBalloon(
@@ -5769,14 +5900,18 @@ function createGameBalloon(
 ) {
 
     const arena =
-        document.getElementById("balloonArena");
+        document.getElementById(
+            "balloonArena"
+        );
 
     if (!arena) return;
 
     if (!balloonGame.active) return;
 
     const balloon =
-        document.createElement("button");
+        document.createElement(
+            "button"
+        );
 
     balloon.type = "button";
 
@@ -5794,13 +5929,15 @@ function createGameBalloon(
             ? choice.letter
             : choice;
 
-    balloon.textContent = letter;
+    balloon.textContent =
+        letter;
 
-    balloon.dataset.letter = letter;
+    balloon.dataset.letter =
+        letter;
 
     balloon.setAttribute(
         "aria-label",
-        "حرف " + letter
+        "بالون حرف " + letter
     );
 
     const arenaWidth =
@@ -5809,11 +5946,17 @@ function createGameBalloon(
     const balloonSize = 75;
 
     const maxLeft =
-        Math.max(10, arenaWidth - balloonSize - 10);
+        Math.max(
+            10,
+            arenaWidth -
+            balloonSize -
+            10
+        );
 
     const left =
         Math.floor(
-            Math.random() * maxLeft
+            Math.random() *
+            maxLeft
         );
 
     balloon.style.left =
@@ -5825,7 +5968,8 @@ function createGameBalloon(
     balloon.style.position =
         "absolute";
 
-    balloon.style.zIndex = "10";
+    balloon.style.zIndex =
+        "10";
 
     balloon.addEventListener(
         "click",
@@ -5853,36 +5997,43 @@ function createGameBalloon(
         { passive: true }
     );
 
-    arena.appendChild(balloon);
-
-    /*
-       الحركة باستخدام bottom بدلاً من transform
-       حتى لا تتعارض مع CSS القديم.
-    */
+    arena.appendChild(
+        balloon
+    );
 
     requestAnimationFrame(() => {
 
-        if (!balloonGame.active) return;
+        if (!balloonGame.active)
+            return;
 
-        if (balloonGame.paused) return;
+        if (balloonGame.paused)
+            return;
 
         balloon.style.transition =
             `bottom ${duration}ms linear`;
 
         balloon.style.bottom =
-            (arena.clientHeight + 120) + "px";
+            (
+                arena.clientHeight +
+                120
+            ) + "px";
     });
 
-    const removeTimer = setTimeout(() => {
+    const removeTimer =
+        setTimeout(() => {
 
-        if (balloon.parentNode) {
+            if (
+                balloon.parentNode
+            ) {
 
-            balloon.remove();
-        }
+                balloon.remove();
+            }
 
-    }, duration + 300);
+        }, duration + 300);
 
-    balloonGame.spawnTimers.push(removeTimer);
+    balloonGame.spawnTimers.push(
+        removeTimer
+    );
 }
 
 
@@ -5896,21 +6047,32 @@ function handleBalloonClick(
     target
 ) {
 
-    if (!balloonGame.active) return;
+    if (!balloonGame.active)
+        return;
 
-    if (balloonGame.paused) return;
+    if (balloonGame.paused)
+        return;
 
-    if (balloonGame.answered) return;
+    if (balloonGame.answered)
+        return;
 
-    if (clickedLetter === target.letter) {
+    if (
+        clickedLetter ===
+        target.letter
+    ) {
 
-        balloonGame.answered = true;
+        balloonGame.answered =
+            true;
 
-        handleBalloonCorrect(balloon);
+        handleBalloonCorrect(
+            balloon
+        );
 
     } else {
 
-        handleBalloonMistake(balloon);
+        handleBalloonMistake(
+            balloon
+        );
     }
 }
 
@@ -5919,7 +6081,9 @@ function handleBalloonClick(
    ✅ الإجابة الصحيحة
    ========================================================= */
 
-function handleBalloonCorrect(balloon) {
+function handleBalloonCorrect(
+    balloon
+) {
 
     balloonGame.streak++;
 
@@ -5935,15 +6099,26 @@ function handleBalloonCorrect(balloon) {
     const points =
         calculateBalloonPoints();
 
-    balloonGame.score += points;
+    balloonGame.score +=
+        points;
 
     balloonGame.earnedStars++;
 
     addStar();
 
-    balloon.classList.add("balloon-pop");
+    /*
+       💥 الفرقعة
+       لا نحذف البالونة فورًا.
+       نتركها تظهر أثناء الانفجار.
+    */
 
-    createPopEffect(balloon);
+    balloon.classList.add(
+        "balloon-pop"
+    );
+
+    createPopEffect(
+        balloon
+    );
 
     showBalloonMessage(
         getRandomSuccessMessage(),
@@ -5953,7 +6128,9 @@ function handleBalloonCorrect(balloon) {
     const speech =
         getRandomSuccessSpeech();
 
-    if (typeof speak === "function") {
+    if (
+        typeof speak === "function"
+    ) {
 
         speak(speech);
     }
@@ -5962,16 +6139,35 @@ function handleBalloonCorrect(balloon) {
 
     stopRoundTimer();
 
-    clearBalloonArena();
+    /*
+       ننتظر انتهاء تأثير الفرقعة
+       قبل حذف البالونات والانتقال
+       للجولة التالية.
+    */
+
+    setTimeout(() => {
+
+        if (
+            balloon.parentNode
+        ) {
+
+            balloon.remove();
+        }
+
+        clearBalloonSpawnTimers();
+
+    }, 450);
 
     balloonGame.nextRoundTimer =
         setTimeout(() => {
 
-            if (!balloonGame.active) return;
+            if (
+                !balloonGame.active
+            ) return;
 
             nextBalloonRound();
 
-        }, 900);
+        }, 1000);
 }
 
 
@@ -5979,20 +6175,26 @@ function handleBalloonCorrect(balloon) {
    ❌ الإجابة الخاطئة
    ========================================================= */
 
-function handleBalloonMistake(balloon) {
+function handleBalloonMistake(
+    balloon
+) {
 
     balloonGame.streak = 0;
 
     balloonGame.lives--;
 
-    balloon.classList.add("balloon-wrong");
+    balloon.classList.add(
+        "balloon-wrong"
+    );
 
     showBalloonMessage(
         "😊 حاول مرة أخرى",
         false
     );
 
-    if (typeof speak === "function") {
+    if (
+        typeof speak === "function"
+    ) {
 
         speak("حاول مرة أخرى");
     }
@@ -6001,7 +6203,9 @@ function handleBalloonMistake(balloon) {
 
     setTimeout(() => {
 
-        if (balloon.parentNode) {
+        if (
+            balloon.parentNode
+        ) {
 
             balloon.classList.remove(
                 "balloon-wrong"
@@ -6021,14 +6225,19 @@ function calculateBalloonPoints() {
     let points = 10;
 
     points +=
-        (balloonGame.level - 1) * 5;
+        (balloonGame.level - 1) *
+        5;
 
-    if (balloonGame.streak >= 3) {
+    if (
+        balloonGame.streak >= 3
+    ) {
 
         points += 5;
     }
 
-    if (balloonGame.streak >= 5) {
+    if (
+        balloonGame.streak >= 5
+    ) {
 
         points += 10;
     }
@@ -6046,7 +6255,9 @@ function startRoundTimer() {
     stopRoundTimer();
 
     const level =
-        balloonLevels[balloonGame.level];
+        balloonLevels[
+            balloonGame.level
+        ];
 
     balloonGame.timeLeft =
         level.time;
@@ -6056,15 +6267,21 @@ function startRoundTimer() {
     balloonGame.roundTimer =
         setInterval(() => {
 
-            if (!balloonGame.active) return;
+            if (
+                !balloonGame.active
+            ) return;
 
-            if (balloonGame.paused) return;
+            if (
+                balloonGame.paused
+            ) return;
 
             balloonGame.timeLeft--;
 
             updateBalloonExtraHUD();
 
-            if (balloonGame.timeLeft <= 0) {
+            if (
+                balloonGame.timeLeft <= 0
+            ) {
 
                 handleBalloonTimeout();
             }
@@ -6079,9 +6296,12 @@ function startRoundTimer() {
 
 function handleBalloonTimeout() {
 
-    if (balloonGame.answered) return;
+    if (
+        balloonGame.answered
+    ) return;
 
-    balloonGame.answered = true;
+    balloonGame.answered =
+        true;
 
     stopRoundTimer();
 
@@ -6094,7 +6314,9 @@ function handleBalloonTimeout() {
         false
     );
 
-    if (typeof speak === "function") {
+    if (
+        typeof speak === "function"
+    ) {
 
         speak("انتهى الوقت");
     }
@@ -6106,7 +6328,9 @@ function handleBalloonTimeout() {
     balloonGame.nextRoundTimer =
         setTimeout(() => {
 
-            if (!balloonGame.active) return;
+            if (
+                !balloonGame.active
+            ) return;
 
             nextBalloonRound();
 
@@ -6120,13 +6344,16 @@ function handleBalloonTimeout() {
 
 function stopRoundTimer() {
 
-    if (balloonGame.roundTimer) {
+    if (
+        balloonGame.roundTimer
+    ) {
 
         clearInterval(
             balloonGame.roundTimer
         );
 
-        balloonGame.roundTimer = null;
+        balloonGame.roundTimer =
+            null;
     }
 }
 
@@ -6138,7 +6365,10 @@ function stopRoundTimer() {
 function clearBalloonSpawnTimers() {
 
     balloonGame.spawnTimers.forEach(
-        timer => clearTimeout(timer)
+        timer => {
+
+            clearTimeout(timer);
+        }
     );
 
     balloonGame.spawnTimers = [];
@@ -6155,13 +6385,16 @@ function stopBalloonGameTimers() {
 
     clearBalloonSpawnTimers();
 
-    if (balloonGame.nextRoundTimer) {
+    if (
+        balloonGame.nextRoundTimer
+    ) {
 
         clearTimeout(
             balloonGame.nextRoundTimer
         );
 
-        balloonGame.nextRoundTimer = null;
+        balloonGame.nextRoundTimer =
+            null;
     }
 }
 
@@ -6173,7 +6406,9 @@ function stopBalloonGameTimers() {
 function removeRemainingBalloons() {
 
     const arena =
-        document.getElementById("balloonArena");
+        document.getElementById(
+            "balloonArena"
+        );
 
     if (!arena) return;
 
@@ -6182,10 +6417,12 @@ function removeRemainingBalloons() {
             ".game-balloon"
         );
 
-    balloons.forEach(balloon => {
+    balloons.forEach(
+        balloon => {
 
-        balloon.remove();
-    });
+            balloon.remove();
+        }
+    );
 }
 
 
@@ -6210,6 +6447,7 @@ function clearBalloonArena() {
 function getRandomSuccessMessage() {
 
     const messages = [
+
         "🎉 أحسنت!",
         "👏 ممتاز!",
         "🌟 رائع!",
@@ -6217,11 +6455,13 @@ function getRandomSuccessMessage() {
         "💪 شاطر!",
         "🏆 إجابة صحيحة!",
         "✨ ممتاز يا بطل!"
+
     ];
 
     return messages[
         Math.floor(
-            Math.random() * messages.length
+            Math.random() *
+            messages.length
         )
     ];
 }
@@ -6234,16 +6474,19 @@ function getRandomSuccessMessage() {
 function getRandomSuccessSpeech() {
 
     const messages = [
+
         "أحسنت",
         "ممتاز",
         "رائع",
         "برافو",
         "شاطر"
+
     ];
 
     return messages[
         Math.floor(
-            Math.random() * messages.length
+            Math.random() *
+            messages.length
         )
     ];
 }
@@ -6265,7 +6508,8 @@ function showBalloonMessage(
 
     if (!box) return;
 
-    box.textContent = message;
+    box.textContent =
+        message;
 
     box.classList.remove(
         "success",
@@ -6273,10 +6517,13 @@ function showBalloonMessage(
     );
 
     box.classList.add(
-        success ? "success" : "error"
+        success
+            ? "success"
+            : "error"
     );
 
-    box.style.opacity = "1";
+    box.style.opacity =
+        "1";
 
     clearTimeout(
         box._messageTimer
@@ -6285,7 +6532,8 @@ function showBalloonMessage(
     box._messageTimer =
         setTimeout(() => {
 
-            box.style.opacity = "0";
+            box.style.opacity =
+                "0";
 
         }, 1200);
 }
@@ -6390,7 +6638,9 @@ function updateBalloonExtraHUD() {
     if (!lives) {
 
         lives =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         lives.id =
             "balloonLives";
@@ -6398,13 +6648,17 @@ function updateBalloonExtraHUD() {
         lives.className =
             "balloon-lives";
 
-        controls.appendChild(lives);
+        controls.appendChild(
+            lives
+        );
     }
 
     if (!timer) {
 
         timer =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         timer.id =
             "balloonTimer";
@@ -6412,25 +6666,36 @@ function updateBalloonExtraHUD() {
         timer.className =
             "balloon-timer";
 
-        controls.appendChild(timer);
+        controls.appendChild(
+            timer
+        );
     }
 
     lives.textContent =
         "❤️".repeat(
-            Math.max(0, balloonGame.lives)
+            Math.max(
+                0,
+                balloonGame.lives
+            )
         );
 
     timer.textContent =
         "⏱️ " +
         balloonGame.timeLeft;
 
-    if (balloonGame.timeLeft <= 5) {
+    if (
+        balloonGame.timeLeft <= 5
+    ) {
 
-        timer.classList.add("danger");
+        timer.classList.add(
+            "danger"
+        );
 
     } else {
 
-        timer.classList.remove("danger");
+        timer.classList.remove(
+            "danger"
+        );
     }
 
     const best =
@@ -6452,7 +6717,8 @@ function updateBalloonExtraHUD() {
 
 function toggleBalloonPause() {
 
-    if (!balloonGame.active) return;
+    if (!balloonGame.active)
+        return;
 
     balloonGame.paused =
         !balloonGame.paused;
@@ -6462,7 +6728,9 @@ function toggleBalloonPause() {
             "balloonPauseBtn"
         );
 
-    if (balloonGame.paused) {
+    if (
+        balloonGame.paused
+    ) {
 
         stopRoundTimer();
 
@@ -6507,20 +6775,27 @@ function pauseBalloonAnimations() {
     if (!arena) return;
 
     arena
-        .querySelectorAll(".game-balloon")
-        .forEach(balloon => {
+        .querySelectorAll(
+            ".game-balloon"
+        )
+        .forEach(
+            balloon => {
 
-            const computed =
-                getComputedStyle(balloon);
+                const computed =
+                    getComputedStyle(
+                        balloon
+                    );
 
-            const bottom =
-                computed.bottom;
+                const bottom =
+                    computed.bottom;
 
-            balloon.style.transition = "none";
+                balloon.style.transition =
+                    "none";
 
-            balloon.style.bottom =
-                bottom;
-        });
+                balloon.style.bottom =
+                    bottom;
+            }
+        );
 }
 
 
@@ -6538,17 +6813,22 @@ function resumeBalloonAnimations() {
     if (!arena) return;
 
     arena
-        .querySelectorAll(".game-balloon")
-        .forEach(balloon => {
+        .querySelectorAll(
+            ".game-balloon"
+        )
+        .forEach(
+            balloon => {
 
-            balloon.style.transition =
-                "bottom 7000ms linear";
+                balloon.style.transition =
+                    "bottom 7000ms linear";
 
-            balloon.style.bottom =
-                (
-                    arena.clientHeight + 120
-                ) + "px";
-        });
+                balloon.style.bottom =
+                    (
+                        arena.clientHeight +
+                        120
+                    ) + "px";
+            }
+        );
 }
 
 
@@ -6565,13 +6845,16 @@ function showBalloonPauseOverlay() {
 
     if (overlay) {
 
-        overlay.style.display = "flex";
+        overlay.style.display =
+            "flex";
 
         return;
     }
 
     overlay =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     overlay.id =
         "balloonPauseOverlay";
@@ -6580,6 +6863,7 @@ function showBalloonPauseOverlay() {
         "balloon-pause-overlay";
 
     overlay.innerHTML = `
+
         <div class="pause-card">
 
             <div class="pause-icon">
@@ -6597,7 +6881,9 @@ function showBalloonPauseOverlay() {
             <button
                 class="balloon-control-btn"
                 onclick="toggleBalloonPause()">
+
                 ▶️ متابعة
+
             </button>
 
         </div>
@@ -6610,7 +6896,9 @@ function showBalloonPauseOverlay() {
 
     if (wrapper) {
 
-        wrapper.appendChild(overlay);
+        wrapper.appendChild(
+            overlay
+        );
     }
 }
 
@@ -6628,20 +6916,23 @@ function hideBalloonPauseOverlay() {
 
     if (overlay) {
 
-        overlay.style.display = "none";
+        overlay.style.display =
+            "none";
     }
 }
 
 
 /* =========================================================
-   🔊 إعادة نطق الحرف
+   🔊 إعادة نطق صوت الحرف
    ========================================================= */
 
 function repeatBalloonTarget() {
 
-    if (!balloonGame.active) return;
+    if (!balloonGame.active)
+        return;
 
-    if (!balloonGame.target) return;
+    if (!balloonGame.target)
+        return;
 
     speakBalloonTarget(
         balloonGame.target
@@ -6650,31 +6941,84 @@ function repeatBalloonTarget() {
 
 
 /* =========================================================
-   🔊 نطق الحرف المطلوب
+   🔊 نطق صوت الحرف فقط
    ========================================================= */
 
-function speakBalloonTarget(letterData) {
+function speakBalloonTarget(
+    letterData
+) {
 
     if (!letterData) return;
 
     const letter =
-        letterData.letter || letterData;
+        letterData.letter ||
+        letterData;
 
-    const text =
-        "اضغط على حرف " + letter;
+    /*
+       نحصل على صوت الحرف.
+       مثال:
+       ا ← أَ
+       ب ← بَ
+       م ← مَ
+    */
 
-    if (typeof speak === "function") {
+    const sound =
+        balloonLetterSounds[
+            letter
+        ] || letter;
 
-        speak(text);
+    /*
+       استخدام دالة speak الموجودة
+       في التطبيق.
+    */
+
+    if (
+        typeof speak === "function"
+    ) {
+
+        speak(sound);
+
+        return;
+    }
+
+    /*
+       احتياطي إذا لم تكن speak موجودة.
+    */
+
+    if (
+        "speechSynthesis" in window
+    ) {
+
+        window.speechSynthesis.cancel();
+
+        const utterance =
+            new SpeechSynthesisUtterance(
+                sound
+            );
+
+        utterance.lang =
+            "ar-SA";
+
+        utterance.rate =
+            0.75;
+
+        utterance.pitch =
+            1;
+
+        window.speechSynthesis.speak(
+            utterance
+        );
     }
 }
 
 
 /* =========================================================
-   💥 تأثير فرقعة
+   💥 تأثير الفرقعة
    ========================================================= */
 
-function createPopEffect(balloon) {
+function createPopEffect(
+    balloon
+) {
 
     const rect =
         balloon.getBoundingClientRect();
@@ -6700,52 +7044,65 @@ function createPopEffect(balloon) {
         rect.height / 2;
 
     const particles = [
+
         "✨",
         "⭐",
         "💥",
         "🌟",
-        "🎉"
+        "🎉",
+        "💫"
+
     ];
 
-    particles.forEach((emoji, index) => {
+    particles.forEach(
+        (emoji, index) => {
 
-        const particle =
-            document.createElement("span");
+            const particle =
+                document.createElement(
+                    "span"
+                );
 
-        particle.className =
-            "pop-particle";
+            particle.className =
+                "pop-particle";
 
-        particle.textContent =
-            emoji;
+            particle.textContent =
+                emoji;
 
-        particle.style.left =
-            x + "px";
+            particle.style.left =
+                x + "px";
 
-        particle.style.top =
-            y + "px";
+            particle.style.top =
+                y + "px";
 
-        particle.style.setProperty(
-            "--particle-x",
-            (
-                Math.random() * 120 - 60
-            ) + "px"
-        );
+            particle.style.setProperty(
+                "--particle-x",
+                (
+                    Math.random() *
+                    120 -
+                    60
+                ) + "px"
+            );
 
-        particle.style.setProperty(
-            "--particle-y",
-            (
-                Math.random() * 120 - 60
-            ) + "px"
-        );
+            particle.style.setProperty(
+                "--particle-y",
+                (
+                    Math.random() *
+                    120 -
+                    60
+                ) + "px"
+            );
 
-        arena.appendChild(particle);
+            arena.appendChild(
+                particle
+            );
 
-        setTimeout(() => {
+            setTimeout(() => {
 
-            particle.remove();
+                particle.remove();
 
-        }, 800);
-    });
+            }, 800);
+        }
+    );
 }
 
 
@@ -6755,15 +7112,18 @@ function createPopEffect(balloon) {
 
 function finishBalloonGame() {
 
-    if (!balloonGame.active) return;
+    if (!balloonGame.active)
+        return;
 
     stopBalloonGameTimers();
 
     clearBalloonArena();
 
-    balloonGame.active = false;
+    balloonGame.active =
+        false;
 
-    balloonGame.paused = false;
+    balloonGame.paused =
+        false;
 
     if (
         balloonGame.score >
@@ -6802,13 +7162,16 @@ function finishBalloonGame() {
             Math.max(
                 1,
                 Math.ceil(
-                    balloonGame.score / 100
+                    balloonGame.score /
+                    100
                 )
             )
         );
 
     const finish =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     finish.id =
         "balloonFinishScreen";
@@ -6875,19 +7238,27 @@ function finishBalloonGame() {
         <button
             class="balloon-control-btn"
             onclick="startBalloonGame('letters')">
+
             🔄 العب مرة أخرى
+
         </button>
 
         <button
             class="balloon-control-btn"
             onclick="exitBalloonGame()">
+
             🏠 العودة للألعاب
+
         </button>
     `;
 
-    arena.appendChild(finish);
+    arena.appendChild(
+        finish
+    );
 
-    if (typeof speak === "function") {
+    if (
+        typeof speak === "function"
+    ) {
 
         speak("أحسنت يا بطل");
     }
@@ -6902,11 +7273,14 @@ function exitBalloonGame() {
 
     stopBalloonGameTimers();
 
-    balloonGame.active = false;
+    balloonGame.active =
+        false;
 
-    balloonGame.paused = false;
+    balloonGame.paused =
+        false;
 
-    balloonGame.target = null;
+    balloonGame.target =
+        null;
 
     clearBalloonArena();
 
