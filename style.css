@@ -901,6 +901,8 @@ input[type="number"]:focus {
 
     cursor: pointer;
     user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
 
     box-shadow:
         inset -8px -10px 15px rgba(0,0,0,.12),
@@ -908,14 +910,22 @@ input[type="number"]:focus {
         0 8px 15px rgba(0,0,0,.12);
 
     transition:
-        transform .15s ease;
+        transform .15s ease,
+        opacity .15s ease;
 
-    animation:
-        balloonFloat 2s ease-in-out infinite;
+    /* مهم:
+       حركة البالونة يتم التحكم فيها من JavaScript */
+    animation: none;
+
+    will-change: transform, opacity;
 }
 
 .game-balloon:hover {
     transform: scale(1.08);
+}
+
+.game-balloon:active {
+    transform: scale(.94);
 }
 
 .game-balloon::after {
@@ -933,6 +943,9 @@ input[type="number"]:focus {
         rgba(80,80,80,.55);
 
 }
+
+
+/* ألوان البالونات */
 
 .balloon-red {
     background:
@@ -987,12 +1000,16 @@ input[type="number"]:focus {
 
 .balloon-pop {
     animation:
-        balloonPop .35s forwards !important;
+        balloonPop .45s ease-out forwards !important;
+
+    pointer-events: none !important;
+
+    z-index: 50 !important;
 }
 
 .balloon-wrong {
     animation:
-        balloonWrong .45s !important;
+        balloonWrong .45s ease !important;
 }
 
 .balloon-message {
@@ -1023,8 +1040,11 @@ input[type="number"]:focus {
     position: absolute;
     pointer-events: none;
     font-size: 22px;
+
     animation:
-        particleBurst .7s forwards;
+        particleBurst .7s ease-out forwards;
+
+    z-index: 100;
 }
 
 
@@ -1045,23 +1065,53 @@ input[type="number"]:focus {
 
 }
 
+
 @keyframes balloonPop {
 
     0% {
-        transform: scale(1);
+        transform:
+            scale(1)
+            rotate(0deg);
+        opacity: 1;
+    }
+
+    20% {
+        transform:
+            scale(1.12)
+            rotate(-4deg);
+        opacity: 1;
+    }
+
+    40% {
+        transform:
+            scale(1.35)
+            rotate(4deg);
         opacity: 1;
     }
 
     60% {
-        transform: scale(1.5);
+        transform:
+            scale(1.5)
+            rotate(-3deg);
+        opacity: .9;
+    }
+
+    80% {
+        transform:
+            scale(.75)
+            rotate(5deg);
+        opacity: .5;
     }
 
     100% {
-        transform: scale(0);
+        transform:
+            scale(0)
+            rotate(0deg);
         opacity: 0;
     }
 
 }
+
 
 @keyframes balloonWrong {
 
@@ -1074,18 +1124,25 @@ input[type="number"]:focus {
         transform: translateX(-12px);
     }
 
+    50% {
+        transform: translateX(0);
+    }
+
     75% {
         transform: translateX(12px);
     }
 
 }
 
+
 @keyframes particleBurst {
 
     from {
         transform:
             translate(0, 0)
-            scale(1);
+            scale(1)
+            rotate(0deg);
+
         opacity: 1;
     }
 
@@ -1095,11 +1152,14 @@ input[type="number"]:focus {
                 var(--x),
                 var(--y)
             )
-            scale(0);
+            scale(0)
+            rotate(180deg);
+
         opacity: 0;
     }
 
 }
+
 
 @keyframes cloudMove {
 
@@ -1117,6 +1177,7 @@ input[type="number"]:focus {
 
 }
 
+
 @keyframes gameFloat {
 
     0%,
@@ -1129,6 +1190,7 @@ input[type="number"]:focus {
     }
 
 }
+
 
 @keyframes streakPulse {
 
@@ -1151,6 +1213,7 @@ input[type="number"]:focus {
     .game-hud {
         grid-template-columns:
             80px 1fr 80px;
+
         gap: 8px;
     }
 
@@ -1174,6 +1237,8 @@ input[type="number"]:focus {
     }
 
 }
+
+
 .balloon-finish-screen {
     position: absolute;
     inset: 0;
@@ -1199,11 +1264,14 @@ input[type="number"]:focus {
         finishAppear .5s ease;
 }
 
+
 .finish-trophy {
     font-size: 90px;
+
     animation:
         trophyBounce 1s infinite alternate;
 }
+
 
 .finish-score {
     font-size: 22px;
@@ -1211,14 +1279,17 @@ input[type="number"]:focus {
     font-weight: bold;
 }
 
+
 .finish-stars {
     font-size: 20px;
     margin-bottom: 20px;
 }
 
+
 .balloon-finish-screen button {
     margin: 5px;
 }
+
 
 @keyframes finishAppear {
 
@@ -1233,6 +1304,7 @@ input[type="number"]:focus {
     }
 
 }
+
 
 @keyframes trophyBounce {
 
