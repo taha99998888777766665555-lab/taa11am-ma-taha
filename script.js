@@ -6164,10 +6164,10 @@ function handleBalloonCorrect(
     balloonGame.earnedStars++;
 
     if (
-        typeof addStar === "function"
+        typeof addStars === "function"
     ) {
 
-        addStar();
+        addStars(1);
 
     }
 
@@ -6211,6 +6211,8 @@ if (
 
 balloon.style.pointerEvents =
     "none";
+
+    /*
        بعد انتهاء الفرقعة:
        ننظف الساحة ونبدأ الجولة التالية.
     */
