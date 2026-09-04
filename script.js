@@ -6199,15 +6199,11 @@ function handleBalloonCorrect(
         typeof speak === "function"
     ) {
 
-        speak(speech);
-
-    }
-
-    updateBalloonHUD();
-
-    stopRoundTimer();
-
-    /*
+     speak(speech, {
+    rate: 0.65,
+    pitch: 1.05,
+    volume: 1
+});
        نترك الفرقعة تظهر كاملة.
     */
 
@@ -6587,30 +6583,6 @@ function getRandomSuccessSpeech() {
             messages.length
         )
     ];
-}
-/* =========================================================
-   🔊 أصوات النجاح
-   ========================================================= */
-
-function getRandomSuccessSpeech() {
-
-    const messages = [
-
-        "أحسنت",
-        "ممتاز",
-        "رائع",
-        "برافو",
-        "شاطر"
-
-    ];
-
-    return messages[
-        Math.floor(
-            Math.random() *
-            messages.length
-        )
-    ];
-
 }
 
 
