@@ -5305,23 +5305,18 @@ document.addEventListener(
         );
     }
 );
-/* ==========================================
-   🎮 BALLOON GAME V2
-   🎈 فرقع الحروف - النسخة الاحترافية
-========================================== */
+/* =========================================================
+   🎈 لعبة فرقع الحروف - Balloon Pop V2
+   ========================================================= */
 
 const balloonGame = {
-
     mode: "letters",
 
     score: 0,
-
     streak: 0,
-
     bestStreak: 0,
 
     round: 0,
-
     totalRounds: 10,
 
     level: 1,
@@ -5329,15 +5324,12 @@ const balloonGame = {
     target: null,
 
     active: false,
-
     paused: false,
 
     lives: 3,
-
     timeLeft: 15,
 
     roundTimer: null,
-
     nextRoundTimer: null,
 
     spawnTimers: [],
@@ -5348,60 +5340,53 @@ const balloonGame = {
 
     earnedStars: 0,
 
-    bestScore:
-        Number(
-            localStorage.getItem(
-                "taha_balloon_best_score"
-            ) || 0
-        )
-
+    bestScore: Number(localStorage.getItem("balloonBestScore") || 0)
 };
 
 
+/* =========================================================
+   🎨 ألوان البالونات
+   ========================================================= */
+
 const balloonColors = [
-
-    "balloon-red",
-    "balloon-blue",
-    "balloon-yellow",
-    "balloon-purple",
-    "balloon-green"
-
+    "red",
+    "blue",
+    "green",
+    "yellow",
+    "purple",
+    "orange",
+    "pink"
 ];
 
 
-/* ==========================================
-   إعدادات المستويات
-========================================== */
+/* =========================================================
+   🏆 مستويات اللعبة
+   ========================================================= */
 
 const balloonLevels = {
-
     1: {
         count: 5,
         duration: 11500,
-        time: 15,
-        label: "سهل 🌱"
+        time: 15
     },
 
     2: {
         count: 7,
         duration: 9000,
-        time: 13,
-        label: "متوسط 🚀"
+        time: 13
     },
 
     3: {
         count: 9,
         duration: 7000,
-        time: 11,
-        label: "متقدم 🔥"
+        time: 11
     }
-
 };
 
 
-/* ==========================================
-   بدء اللعبة
-========================================== */
+/* =========================================================
+   ▶️ بدء لعبة فرقع الحروف
+   ========================================================= */
 
 function startBalloonGame(mode = "letters") {
 
@@ -5410,34 +5395,26 @@ function startBalloonGame(mode = "letters") {
     balloonGame.mode = mode;
 
     balloonGame.score = 0;
-
     balloonGame.streak = 0;
-
     balloonGame.bestStreak = 0;
 
     balloonGame.round = 0;
-
     balloonGame.level = 1;
 
     balloonGame.target = null;
 
     balloonGame.active = true;
-
     balloonGame.paused = false;
 
     balloonGame.lives = 3;
-
     balloonGame.timeLeft = 15;
 
     balloonGame.answered = false;
-
     balloonGame.earnedStars = 0;
 
     balloonGame.session++;
 
-
     showScreen("balloonGame");
-
 
     prepareBalloonArena();
 
@@ -5445,142 +5422,104 @@ function startBalloonGame(mode = "letters") {
 
     updateBalloonHUD();
 
-    updateBalloonControls();
-
-
     setTimeout(() => {
+
+        if (!balloonGame.active) return;
 
         nextBalloonRound();
 
     }, 150);
-
 }
 
 
-/* ==========================================
-   تجهيز ساحة اللعبة
-========================================== */
+/* =========================================================
+   🎪 تجهيز ساحة اللعبة
+   ========================================================= */
 
 function prepareBalloonArena() {
 
-    const arena =
-        document.getElementById(
-            "balloonArena"
-        );
+    const arena = document.getElementById("balloonArena");
 
     if (!arena) return;
 
+    clearBalloonArena();
 
-    arena
-        .querySelectorAll(
-            ".game-balloon, .pop-particle, .balloon-finish-screen, .balloon-pause-overlay"
-        )
-        .forEach(
-            element => element.remove()
-        );
+    arena.style.display = "block";
 
+    arena.classList.remove("game-started");
 
-    arena
-        .querySelectorAll(
-            ".balloon-level-badge"
-        )
-        .forEach(
-            element => element.remove()
-        );
+    setTimeout(() => {
 
+        if (balloonGame.active) {
+            arena.classList.add("game-started");
+        }
+
+    }, 50);
 }
 
 
-/* ==========================================
-   أزرار التحكم
-========================================== */
+/* =========================================================
+   🎮 أزرار التحكم
+   ========================================================= */
 
 function createBalloonControls() {
 
-    const wrapper =
-        document.querySelector(
-            "#balloonGame .balloon-game-wrapper"
-        ) ||
-        document.getElementById(
-            "balloonGame"
-        );
+    const arenaWrapper =
+        document.querySelector(".balloon-game-wrapper");
 
-    if (!wrapper) return;
-
+    if (!arenaWrapper) return;
 
     let controls =
-        document.getElementById(
-            "balloonControls"
-        );
+        document.getElementById("balloonControls");
 
-
-    if (!controls) {
-
-        controls =
-            document.createElement("div");
-
-        controls.id =
-            "balloonControls";
-
-        controls.className =
-            "balloon-controls";
-
-
-        const arena =
-            document.getElementById(
-                "balloonArena"
-            );
-
-
-        if (arena) {
-
-            arena.parentNode.insertBefore(
-                controls,
-                arena
-            );
-
-        } else {
-
-            wrapper.appendChild(
-                controls
-            );
-
-        }
-
+    if (controls) {
+        controls.remove();
     }
 
+    controls = document.createElement("div");
+
+    controls.id = "balloonControls";
+
+    controls.className = "balloon-controls";
 
     controls.innerHTML = `
-
         <button
-            type="button"
             class="balloon-control-btn"
             onclick="toggleBalloonPause()"
-            id="balloonPauseBtn"
-        >
+            id="balloonPauseBtn">
             ⏸️ إيقاف
         </button>
 
         <div class="balloon-best-score">
-            🏆 الأفضل:
+            🏆 أفضل نتيجة:
             <strong id="balloonBestScore">
-                ${arabicNumber(balloonGame.bestScore)}
+                ${balloonGame.bestScore}
             </strong>
         </div>
 
-        <div class="balloon-level-label"
-             id="balloonLevelLabel">
-            🌱 سهل
+        <div class="balloon-level-label">
+            المستوى:
+            <strong id="balloonLevelText">
+                ١
+            </strong>
         </div>
-
     `;
 
+    const hud = arenaWrapper.querySelector(".game-hud");
+
+    if (hud) {
+        hud.insertAdjacentElement("afterend", controls);
+    } else {
+        arenaWrapper.prepend(controls);
+    }
+
+    updateBalloonExtraHUD();
 }
 
 
-/* ==========================================
-   الجولة التالية
-========================================== */
+/* =========================================================
+   🔄 الجولة التالية
+   ========================================================= */
 
 function nextBalloonRound() {
 
@@ -5588,327 +5527,258 @@ function nextBalloonRound() {
 
     if (balloonGame.paused) return;
 
-
-    stopRoundTimer();
-
-    clearBalloonSpawnTimers();
-
-
-    if (
-        balloonGame.round >=
-        balloonGame.totalRounds
-    ) {
-
-        finishBalloonGame();
-
-        return;
-
-    }
-
-
     balloonGame.round++;
 
     balloonGame.answered = false;
 
+    if (balloonGame.round > balloonGame.totalRounds) {
+
+        finishBalloonGame();
+
+        return;
+    }
 
     updateBalloonDifficulty();
 
+    const letter = getSmartBalloonLetter();
 
-    balloonGame.target =
-        getSmartBalloonLetter();
-
-
-    const targetElement =
-        document.getElementById(
-            "balloonTarget"
-        );
-
-
-    if (targetElement) {
-
-        targetElement.textContent =
-            letterWithFatha(
-                balloonGame.target.letter
-            );
-
-    }
-
-
-    const message =
-        document.getElementById(
-            "balloonMessage"
-        );
-
-
-    if (message) {
-
-        message.textContent =
-            `🎯 فرقع حرف ${letterWithFatha(
-                balloonGame.target.letter
-            )}`;
-
-        message.className =
-            "balloon-message";
-
-    }
-
+    balloonGame.target = letter;
 
     updateBalloonHUD();
 
+    speakBalloonTarget(letter);
 
-    const session =
-        balloonGame.session;
+    clearBalloonArena();
 
-
-    setTimeout(() => {
-
-        if (
-            !balloonGame.active ||
-            balloonGame.paused ||
-            session !== balloonGame.session
-        ) return;
-
-
-        speakBalloonTarget();
-
-    }, 350);
-
+    createBalloonWave(letter);
 
     startRoundTimer();
-
-    createBalloonWave();
-
 }
 
 
-/* ==========================================
-   رفع مستوى الصعوبة
-========================================== */
+/* =========================================================
+   📈 تحديد مستوى الصعوبة
+   ========================================================= */
 
 function updateBalloonDifficulty() {
 
-    if (balloonGame.round >= 8) {
+    if (balloonGame.round <= 3) {
 
-        balloonGame.level = 3;
+        balloonGame.level = 1;
 
-    } else if (balloonGame.round >= 4) {
+    } else if (balloonGame.round <= 7) {
 
         balloonGame.level = 2;
 
     } else {
 
-        balloonGame.level = 1;
-
+        balloonGame.level = 3;
     }
 
+    const levelText =
+        document.getElementById("balloonLevelText");
 
-    const settings =
-        balloonLevels[
-            balloonGame.level
-        ];
+    if (levelText) {
 
-
-    balloonGame.timeLeft =
-        settings.time;
-
-
-    const label =
-        document.getElementById(
-            "balloonLevelLabel"
-        );
-
-
-    if (label) {
-
-        label.textContent =
-            settings.label;
-
+        levelText.textContent =
+            balloonGame.level === 1 ? "١" :
+            balloonGame.level === 2 ? "٢" : "٣";
     }
-
 }
 
 
-/* ==========================================
-   اختيار حرف ذكي
-========================================== */
+/* =========================================================
+   🧠 اختيار حرف ذكي
+   ========================================================= */
 
 function getSmartBalloonLetter() {
 
-    let pool = letters;
-
-
-    /*
-     * نحاول ألا يظهر نفس الحرف
-     * في جولتين متتاليتين.
-     */
-
     if (
-        balloonGame.target &&
-        letters.length > 1
+        typeof letters !== "undefined" &&
+        Array.isArray(letters) &&
+        letters.length > 0
     ) {
 
-        pool =
-            letters.filter(
-                item =>
-                    item.letter !==
-                    balloonGame.target.letter
-            );
+        const index =
+            Math.floor(Math.random() * letters.length);
 
+        return letters[index];
     }
 
+    const fallbackLetters = [
+        { letter: "ا", word: "أسد" },
+        { letter: "ب", word: "باب" },
+        { letter: "ت", word: "تفاح" },
+        { letter: "ث", word: "ثعلب" },
+        { letter: "ج", word: "جمل" },
+        { letter: "ح", word: "حوت" },
+        { letter: "خ", word: "خبز" },
+        { letter: "د", word: "دب" },
+        { letter: "ذ", word: "ذهب" },
+        { letter: "ر", word: "رمان" },
+        { letter: "ز", word: "زرافة" },
+        { letter: "س", word: "سمكة" },
+        { letter: "ش", word: "شمس" },
+        { letter: "ص", word: "صقر" },
+        { letter: "ض", word: "ضفدع" },
+        { letter: "ط", word: "طائرة" },
+        { letter: "ظ", word: "ظرف" },
+        { letter: "ع", word: "عصفور" },
+        { letter: "غ", word: "غزال" },
+        { letter: "ف", word: "فيل" },
+        { letter: "ق", word: "قلم" },
+        { letter: "ك", word: "كتاب" },
+        { letter: "ل", word: "ليمون" },
+        { letter: "م", word: "موز" },
+        { letter: "ن", word: "نمر" },
+        { letter: "ه", word: "هلال" },
+        { letter: "و", word: "وردة" },
+        { letter: "ي", word: "يد" }
+    ];
 
-    /*
-     * في المستويات المتقدمة
-     * نعطي أولوية لبعض الحروف
-     * التي تشبه بعضها في النطق.
-     */
-
-    const item =
-        pool[
-            Math.floor(
-                Math.random() *
-                pool.length
-            )
-        ];
-
-
-    return item;
-
+    return fallbackLetters[
+        Math.floor(Math.random() * fallbackLetters.length)
+    ];
 }
 
 
-/* ==========================================
-   إنشاء موجة البالونات
-========================================== */
+/* =========================================================
+   🎈 إنشاء مجموعة البالونات
+   ========================================================= */
 
-function createBalloonWave() {
+function createBalloonWave(target) {
 
     const arena =
-        document.getElementById(
-            "balloonArena"
-        );
+        document.getElementById("balloonArena");
 
     if (!arena) return;
 
-
-    const settings =
-        balloonLevels[
-            balloonGame.level
-        ];
-
+    const level =
+        balloonLevels[balloonGame.level];
 
     const choices =
-        getBalloonChoices(
-            balloonGame.target,
-            settings.count
-        );
+        getBalloonChoices(target, level.count);
 
+    choices.forEach((choice, index) => {
 
-    clearBalloonSpawnTimers();
+        const timer = setTimeout(() => {
 
+            if (!balloonGame.active) return;
 
-    choices.forEach(
-        (item, index) => {
+            if (balloonGame.paused) return;
 
-            const timer =
-                setTimeout(() => {
-
-                    if (
-                        !balloonGame.active ||
-                        balloonGame.paused
-                    ) return;
-
-
-                    createGameBalloon(
-                        item,
-                        index,
-                        settings.duration
-                    );
-
-                }, index * 220);
-
-
-            balloonGame.spawnTimers.push(
-                timer
+            createGameBalloon(
+                choice,
+                target,
+                index,
+                level.duration
             );
 
+        }, index * 450);
+
+        balloonGame.spawnTimers.push(timer);
+    });
+}
+
+
+/* =========================================================
+   🔤 اختيارات الحروف
+   ========================================================= */
+
+function getBalloonChoices(target, count) {
+
+    const choices = [];
+
+    choices.push(target);
+
+    let allLetters = [];
+
+    if (
+        typeof letters !== "undefined" &&
+        Array.isArray(letters)
+    ) {
+
+        allLetters = [...letters];
+    }
+
+    const fallback = [
+        "ا", "ب", "ت", "ث", "ج", "ح", "خ",
+        "د", "ذ", "ر", "ز", "س", "ش", "ص",
+        "ض", "ط", "ظ", "ع", "غ", "ف", "ق",
+        "ك", "ل", "م", "ن", "ه", "و", "ي"
+    ];
+
+    while (choices.length < count) {
+
+        let candidate;
+
+        if (allLetters.length > 0) {
+
+            candidate =
+                allLetters[
+                    Math.floor(
+                        Math.random() * allLetters.length
+                    )
+                ];
+
+        } else {
+
+            candidate =
+                fallback[
+                    Math.floor(
+                        Math.random() * fallback.length
+                    )
+                ];
         }
-    );
 
+        const candidateLetter =
+            typeof candidate === "object"
+                ? candidate.letter
+                : candidate;
+
+        const alreadyExists =
+            choices.some(item => {
+
+                const itemLetter =
+                    typeof item === "object"
+                        ? item.letter
+                        : item;
+
+                return itemLetter === candidateLetter;
+            });
+
+        if (!alreadyExists) {
+
+            choices.push(candidate);
+        }
+    }
+
+    return choices.sort(() => Math.random() - 0.5);
 }
 
 
-/* ==========================================
-   تجهيز الاختيارات
-========================================== */
-
-function getBalloonChoices(
-    correctItem,
-    count
-) {
-
-    const wrongLetters =
-        letters.filter(
-            item =>
-                item.letter !==
-                correctItem.letter
-        );
-
-
-    /*
-     * في المستوى الثالث
-     * نحاول اختيار حروف متنوعة.
-     */
-
-    const others =
-        shuffle(
-            wrongLetters
-        )
-        .slice(
-            0,
-            count - 1
-        );
-
-
-    return shuffle([
-        correctItem,
-        ...others
-    ]);
-
-}
-
-
-/* ==========================================
-   إنشاء بالونة
-========================================== */
+/* =========================================================
+   🎈 إنشاء بالون
+   ========================================================= */
 
 function createGameBalloon(
-    item,
+    choice,
+    target,
     index,
     duration
 ) {
 
-    if (
-        !balloonGame.active ||
-        balloonGame.paused
-    ) return;
-
-
     const arena =
-        document.getElementById(
-            "balloonArena"
-        );
+        document.getElementById("balloonArena");
 
     if (!arena) return;
 
+    if (!balloonGame.active) return;
 
     const balloon =
         document.createElement("button");
 
-
-    balloon.type =
-        "button";
-
+    balloon.type = "button";
 
     balloon.className =
         "game-balloon " +
@@ -5919,565 +5789,365 @@ function createGameBalloon(
             )
         ];
 
+    const letter =
+        typeof choice === "object"
+            ? choice.letter
+            : choice;
 
-    balloon.textContent =
-        letterWithFatha(
-            item.letter
-        );
+    balloon.textContent = letter;
 
-
-    balloon.dataset.letter =
-        item.letter;
-
-
-    balloon.dataset.session =
-        balloonGame.session;
-
+    balloon.dataset.letter = letter;
 
     balloon.setAttribute(
         "aria-label",
-        `حرف ${item.letter}`
+        "حرف " + letter
     );
-
 
     const arenaWidth =
-        arena.clientWidth;
+        arena.clientWidth || 700;
 
-
-    const isMobile =
-        window.innerWidth <= 600;
-
-
-    const balloonWidth =
-        isMobile ? 78 : 96;
-
+    const balloonSize = 75;
 
     const maxLeft =
-        Math.max(
-            10,
-            arenaWidth -
-            balloonWidth -
-            10
-        );
-
+        Math.max(10, arenaWidth - balloonSize - 10);
 
     const left =
-        Math.random() *
-        maxLeft;
-
-
-    balloon.style.left =
-        `${left}px`;
-
-
-    balloon.style.bottom =
-        `${-140 - index * 35}px`;
-
-
-    arena.appendChild(
-        balloon
-    );
-
-
-    const animation =
-        balloon.animate(
-
-            [
-
-                {
-                    transform:
-                        "translateY(0px)"
-                },
-
-                {
-                    transform:
-                        `translateY(-${
-                            arena.clientHeight + 190
-                        }px)`
-                }
-
-            ],
-
-            {
-
-                duration:
-                    duration,
-
-                easing:
-                    "linear",
-
-                fill:
-                    "forwards"
-
-            }
-
+        Math.floor(
+            Math.random() * maxLeft
         );
 
+    balloon.style.left =
+        left + "px";
 
-    balloon._animation =
-        animation;
+    balloon.style.bottom =
+        "-100px";
 
+    balloon.style.position =
+        "absolute";
+
+    balloon.style.zIndex = "10";
 
     balloon.addEventListener(
         "click",
-        () => {
+        function () {
 
             handleBalloonClick(
                 balloon,
-                item
+                letter,
+                target
             );
-
         }
     );
 
+    balloon.addEventListener(
+        "touchstart",
+        function () {
 
-    const removeTimer =
-        setTimeout(() => {
+            handleBalloonClick(
+                balloon,
+                letter,
+                target
+            );
 
-            if (
-                balloon.parentNode
-            ) {
+        },
+        { passive: true }
+    );
 
-                balloon.remove();
+    arena.appendChild(balloon);
 
-            }
+    /*
+       الحركة باستخدام bottom بدلاً من transform
+       حتى لا تتعارض مع CSS القديم.
+    */
 
-        }, duration + 500);
+    requestAnimationFrame(() => {
 
+        if (!balloonGame.active) return;
 
-    balloon._removeTimer =
-        removeTimer;
+        if (balloonGame.paused) return;
 
+        balloon.style.transition =
+            `bottom ${duration}ms linear`;
+
+        balloon.style.bottom =
+            (arena.clientHeight + 120) + "px";
+    });
+
+    const removeTimer = setTimeout(() => {
+
+        if (balloon.parentNode) {
+
+            balloon.remove();
+        }
+
+    }, duration + 300);
+
+    balloonGame.spawnTimers.push(removeTimer);
 }
 
 
-/* ==========================================
-   الضغط على البالونة
-========================================== */
+/* =========================================================
+   👆 الضغط على البالون
+   ========================================================= */
 
 function handleBalloonClick(
     balloon,
-    item
+    clickedLetter,
+    target
 ) {
 
-    if (
-        !balloonGame.active ||
-        balloonGame.paused
-    ) return;
+    if (!balloonGame.active) return;
 
+    if (balloonGame.paused) return;
 
-    if (
-        balloonGame.answered
-    ) return;
+    if (balloonGame.answered) return;
 
+    if (clickedLetter === target.letter) {
 
-    if (
-        balloon.dataset.session !==
-        String(balloonGame.session)
-    ) return;
+        balloonGame.answered = true;
 
-
-    const isCorrect =
-        item.letter ===
-        balloonGame.target.letter;
-
-
-    if (isCorrect) {
-
-        balloonGame.answered =
-            true;
-
-
-        stopRoundTimer();
-
-
-        balloonGame.streak++;
-
-
-        if (
-            balloonGame.streak >
-            balloonGame.bestStreak
-        ) {
-
-            balloonGame.bestStreak =
-                balloonGame.streak;
-
-        }
-
-
-        const points =
-            calculateBalloonPoints();
-
-
-        balloonGame.score +=
-            points;
-
-
-        correctLetters++;
-
-        saveCounters();
-
-
-        /*
-         * النجمة الأساسية
-         */
-        addStars(1);
-
-
-        balloonGame.earnedStars++;
-
-
-        balloon.classList.add(
-            "balloon-pop"
-        );
-
-
-        createPopEffect(
-            balloon
-        );
-
-
-        showBalloonMessage(
-            getRandomSuccessMessage(
-                balloonGame.streak
-            ),
-            "success"
-        );
-
-
-        speak(
-            getRandomSuccessSpeech(
-                balloonGame.streak
-            ),
-            {
-                rate: 0.82,
-                pitch: 1.05
-            }
-        );
-
-
-        /*
-         * إزالة باقي البالونات
-         */
-        removeRemainingBalloons(
-            balloon
-        );
-
-
-        updateBalloonHUD();
-
-
-        /*
-         * انتقال للجولة التالية
-         */
-        const session =
-            balloonGame.session;
-
-
-        balloonGame.nextRoundTimer =
-            setTimeout(() => {
-
-                if (
-                    !balloonGame.active ||
-                    session !== balloonGame.session
-                ) return;
-
-
-                nextBalloonRound();
-
-            }, 1100);
-
+        handleBalloonCorrect(balloon);
 
     } else {
 
-        handleBalloonMistake(
-            balloon
-        );
-
+        handleBalloonMistake(balloon);
     }
-
 }
 
 
-/* ==========================================
-   الخطأ
-========================================== */
+/* =========================================================
+   ✅ الإجابة الصحيحة
+   ========================================================= */
 
-function handleBalloonMistake(
-    balloon
-) {
+function handleBalloonCorrect(balloon) {
+
+    balloonGame.streak++;
+
+    if (
+        balloonGame.streak >
+        balloonGame.bestStreak
+    ) {
+
+        balloonGame.bestStreak =
+            balloonGame.streak;
+    }
+
+    const points =
+        calculateBalloonPoints();
+
+    balloonGame.score += points;
+
+    balloonGame.earnedStars++;
+
+    addStar();
+
+    balloon.classList.add("balloon-pop");
+
+    createPopEffect(balloon);
+
+    showBalloonMessage(
+        getRandomSuccessMessage(),
+        true
+    );
+
+    const speech =
+        getRandomSuccessSpeech();
+
+    if (typeof speak === "function") {
+
+        speak(speech);
+    }
+
+    updateBalloonHUD();
+
+    stopRoundTimer();
+
+    clearBalloonArena();
+
+    balloonGame.nextRoundTimer =
+        setTimeout(() => {
+
+            if (!balloonGame.active) return;
+
+            nextBalloonRound();
+
+        }, 900);
+}
+
+
+/* =========================================================
+   ❌ الإجابة الخاطئة
+   ========================================================= */
+
+function handleBalloonMistake(balloon) {
 
     balloonGame.streak = 0;
 
     balloonGame.lives--;
 
-
-    balloon.classList.add(
-        "balloon-wrong"
-    );
-
+    balloon.classList.add("balloon-wrong");
 
     showBalloonMessage(
-        balloonGame.lives > 0
-            ? "😊 حاول مرة أخرى"
-            : "💪 آخر محاولة!",
-        "wrong"
+        "😊 حاول مرة أخرى",
+        false
     );
 
+    if (typeof speak === "function") {
 
-    speak(
-        balloonGame.lives > 0
-            ? "حاول مرة أخرى"
-            : "ركز يا بطل",
-        {
-            rate: 0.78
-        }
-    );
-
+        speak("حاول مرة أخرى");
+    }
 
     updateBalloonHUD();
 
-
     setTimeout(() => {
 
-        if (
-            balloon.parentNode &&
-            balloonGame.active
-        ) {
+        if (balloon.parentNode) {
 
             balloon.classList.remove(
                 "balloon-wrong"
             );
-
         }
 
-    }, 550);
-
-
-    /*
-     * لا ننهي اللعبة مباشرة.
-     * الطفل يحصل على فرصة أخرى.
-     */
-
+    }, 500);
 }
 
 
-/* ==========================================
-   النقاط
-========================================== */
+/* =========================================================
+   ⭐ حساب النقاط
+   ========================================================= */
 
 function calculateBalloonPoints() {
 
     let points = 10;
 
+    points +=
+        (balloonGame.level - 1) * 5;
 
-    if (
-        balloonGame.level === 2
-    ) {
-
-        points += 3;
-
-    }
-
-
-    if (
-        balloonGame.level === 3
-    ) {
-
-        points += 6;
-
-    }
-
-
-    if (
-        balloonGame.streak >= 2
-    ) {
+    if (balloonGame.streak >= 3) {
 
         points += 5;
-
     }
 
-
-    if (
-        balloonGame.streak >= 4
-    ) {
-
-        points += 5;
-
-    }
-
-
-    if (
-        balloonGame.streak >= 6
-    ) {
+    if (balloonGame.streak >= 5) {
 
         points += 10;
-
     }
 
-
     return points;
-
 }
 
 
-/* ==========================================
-   مؤقت الجولة
-========================================== */
+/* =========================================================
+   ⏱️ مؤقت الجولة
+   ========================================================= */
 
 function startRoundTimer() {
 
     stopRoundTimer();
 
-
-    const settings =
-        balloonLevels[
-            balloonGame.level
-        ];
-
+    const level =
+        balloonLevels[balloonGame.level];
 
     balloonGame.timeLeft =
-        settings.time;
+        level.time;
 
-
-    updateBalloonHUD();
-
+    updateBalloonExtraHUD();
 
     balloonGame.roundTimer =
         setInterval(() => {
 
-            if (
-                !balloonGame.active ||
-                balloonGame.paused
-            ) return;
+            if (!balloonGame.active) return;
 
+            if (balloonGame.paused) return;
 
             balloonGame.timeLeft--;
 
+            updateBalloonExtraHUD();
 
-            updateBalloonHUD();
-
-
-            if (
-                balloonGame.timeLeft <= 0
-            ) {
+            if (balloonGame.timeLeft <= 0) {
 
                 handleBalloonTimeout();
-
             }
 
         }, 1000);
-
 }
 
 
-/* ==========================================
-   انتهاء وقت الجولة
-========================================== */
+/* =========================================================
+   ⏰ انتهاء الوقت
+   ========================================================= */
 
 function handleBalloonTimeout() {
 
+    if (balloonGame.answered) return;
+
+    balloonGame.answered = true;
+
     stopRoundTimer();
 
-
-    if (
-        balloonGame.answered
-    ) return;
-
-
-    balloonGame.answered =
-        true;
-
-
-    balloonGame.streak =
-        0;
-
+    balloonGame.streak = 0;
 
     balloonGame.lives--;
 
-
     showBalloonMessage(
-        "⏰ انتهى الوقت! حاول في الجولة التالية",
-        "wrong"
+        "⏰ انتهى الوقت",
+        false
     );
 
+    if (typeof speak === "function") {
 
-    speak(
-        "انتهى الوقت، حاول مرة أخرى",
-        {
-            rate: 0.78
-        }
-    );
+        speak("انتهى الوقت");
+    }
 
-
-    removeRemainingBalloons();
-
+    clearBalloonArena();
 
     updateBalloonHUD();
-
-
-    const session =
-        balloonGame.session;
-
 
     balloonGame.nextRoundTimer =
         setTimeout(() => {
 
-            if (
-                !balloonGame.active ||
-                session !== balloonGame.session
-            ) return;
-
+            if (!balloonGame.active) return;
 
             nextBalloonRound();
 
-        }, 1200);
-
+        }, 1000);
 }
 
 
-/* ==========================================
-   إيقاف المؤقت
-========================================== */
+/* =========================================================
+   🛑 إيقاف المؤقت
+   ========================================================= */
 
 function stopRoundTimer() {
 
-    if (
-        balloonGame.roundTimer
-    ) {
+    if (balloonGame.roundTimer) {
 
         clearInterval(
             balloonGame.roundTimer
         );
 
-        balloonGame.roundTimer =
-            null;
-
+        balloonGame.roundTimer = null;
     }
-
 }
 
 
-/* ==========================================
-   تنظيف مؤقتات إنشاء البالونات
-========================================== */
+/* =========================================================
+   🧹 حذف مؤقتات البالونات
+   ========================================================= */
 
 function clearBalloonSpawnTimers() {
 
     balloonGame.spawnTimers.forEach(
-        timer =>
-            clearTimeout(timer)
+        timer => clearTimeout(timer)
     );
 
-
     balloonGame.spawnTimers = [];
-
 }
 
 
-/* ==========================================
-   تنظيف جميع المؤقتات
-========================================== */
+/* =========================================================
+   🛑 إيقاف جميع مؤقتات اللعبة
+   ========================================================= */
 
 function stopBalloonGameTimers() {
 
@@ -6485,219 +6155,145 @@ function stopBalloonGameTimers() {
 
     clearBalloonSpawnTimers();
 
-
-    if (
-        balloonGame.nextRoundTimer
-    ) {
+    if (balloonGame.nextRoundTimer) {
 
         clearTimeout(
             balloonGame.nextRoundTimer
         );
 
-        balloonGame.nextRoundTimer =
-            null;
-
+        balloonGame.nextRoundTimer = null;
     }
-
 }
 
 
-/* ==========================================
-   إزالة البالونات
-========================================== */
+/* =========================================================
+   🎈 حذف البالونات الموجودة
+   ========================================================= */
 
-function removeRemainingBalloons(
-    exceptBalloon = null
-) {
+function removeRemainingBalloons() {
 
     const arena =
-        document.getElementById(
-            "balloonArena"
-        );
-
+        document.getElementById("balloonArena");
 
     if (!arena) return;
 
-
-    arena
-        .querySelectorAll(
+    const balloons =
+        arena.querySelectorAll(
             ".game-balloon"
-        )
-        .forEach(
-            balloon => {
-
-                if (
-                    balloon ===
-                    exceptBalloon
-                ) return;
-
-
-                if (
-                    balloon._animation
-                ) {
-
-                    try {
-                        balloon._animation.cancel();
-                    } catch (error) {}
-
-                }
-
-
-                if (
-                    balloon._removeTimer
-                ) {
-
-                    clearTimeout(
-                        balloon._removeTimer
-                    );
-
-                }
-
-
-                balloon.remove();
-
-            }
         );
 
+    balloons.forEach(balloon => {
+
+        balloon.remove();
+    });
 }
 
 
-/* ==========================================
-   رسائل التشجيع
-========================================== */
+/* =========================================================
+   🧹 تنظيف الساحة
+   ========================================================= */
 
-function getRandomSuccessMessage(
-    streak = 1
-) {
+function clearBalloonArena() {
 
-    if (streak >= 6) {
+    stopRoundTimer();
 
-        return "🔥 سلسلة مذهلة! أنت بطل!";
+    clearBalloonSpawnTimers();
 
-    }
-
-
-    if (streak >= 4) {
-
-        return "🏆 رائع! استمر في النجاح!";
-
-    }
+    removeRemainingBalloons();
+}
 
 
-    if (streak >= 2) {
+/* =========================================================
+   😊 رسائل النجاح
+   ========================================================= */
 
-        return "🌟 ممتاز! سلسلة رائعة!";
-
-    }
-
+function getRandomSuccessMessage() {
 
     const messages = [
-
-        "🎉 أحسنت يا بطل!",
-
-        "🌟 إجابة رائعة!",
-
-        "👏 ممتاز جدًا!",
-
-        "🔥 أنت رائع!",
-
-        "🏆 استمر يا بطل!"
-
+        "🎉 أحسنت!",
+        "👏 ممتاز!",
+        "🌟 رائع!",
+        "🥳 برافو!",
+        "💪 شاطر!",
+        "🏆 إجابة صحيحة!",
+        "✨ ممتاز يا بطل!"
     ];
-
 
     return messages[
         Math.floor(
-            Math.random() *
-            messages.length
+            Math.random() * messages.length
         )
     ];
-
 }
 
 
-function getRandomSuccessSpeech(
-    streak = 1
-) {
+/* =========================================================
+   🔊 أصوات النجاح
+   ========================================================= */
 
-    if (streak >= 6) {
-
-        return "مذهل يا بطل";
-
-    }
-
-
-    if (streak >= 4) {
-
-        return "رائع جدًا، استمر";
-
-    }
-
-
-    if (streak >= 2) {
-
-        return "ممتاز، سلسلة رائعة";
-
-    }
-
+function getRandomSuccessSpeech() {
 
     const messages = [
-
-        "أحسنت يا بطل",
-
-        "ممتاز جدًا",
-
-        "إجابة رائعة",
-
-        "رائع، استمر",
-
-        "أنت بطل"
-
+        "أحسنت",
+        "ممتاز",
+        "رائع",
+        "برافو",
+        "شاطر"
     ];
-
 
     return messages[
         Math.floor(
-            Math.random() *
-            messages.length
+            Math.random() * messages.length
         )
     ];
-
 }
 
 
-/* ==========================================
-   رسالة اللعبة
-========================================== */
+/* =========================================================
+   💬 عرض رسالة
+   ========================================================= */
 
 function showBalloonMessage(
-    text,
-    type
+    message,
+    success = true
 ) {
 
-    const message =
+    const box =
         document.getElementById(
             "balloonMessage"
         );
 
+    if (!box) return;
 
-    if (!message) return;
+    box.textContent = message;
 
+    box.classList.remove(
+        "success",
+        "error"
+    );
 
-    message.textContent =
-        text;
+    box.classList.add(
+        success ? "success" : "error"
+    );
 
+    box.style.opacity = "1";
 
-    message.className =
-        "balloon-message " +
-        type;
+    clearTimeout(
+        box._messageTimer
+    );
 
+    box._messageTimer =
+        setTimeout(() => {
+
+            box.style.opacity = "0";
+
+        }, 1200);
 }
 
 
-/* ==========================================
-   تحديث HUD
-========================================== */
+/* =========================================================
+   📊 تحديث بيانات اللعبة
+   ========================================================= */
 
 function updateBalloonHUD() {
 
@@ -6706,95 +6302,90 @@ function updateBalloonHUD() {
             "balloonScore"
         );
 
-
-    const streak =
-        document.getElementById(
-            "balloonStreak"
-        );
-
-
     const level =
         document.getElementById(
             "balloonLevel"
         );
-
 
     const progress =
         document.getElementById(
             "balloonProgressFill"
         );
 
+    const streak =
+        document.getElementById(
+            "balloonStreak"
+        );
+
+    const target =
+        document.getElementById(
+            "balloonTarget"
+        );
 
     if (score) {
 
         score.textContent =
-            arabicNumber(
-                balloonGame.score
-            );
-
+            balloonGame.score;
     }
-
-
-    if (streak) {
-
-        streak.textContent =
-            arabicNumber(
-                balloonGame.streak
-            );
-
-    }
-
 
     if (level) {
 
         level.textContent =
-            arabicNumber(
-                balloonGame.level
-            );
-
+            balloonGame.level;
     }
-
 
     if (progress) {
 
-        const percent =
+        const percentage =
             (
                 balloonGame.round /
                 balloonGame.totalRounds
             ) * 100;
 
-
         progress.style.width =
-            `${percent}%`;
-
+            percentage + "%";
     }
 
+    if (streak) {
+
+        streak.textContent =
+            balloonGame.streak;
+    }
+
+    if (target) {
+
+        target.textContent =
+            balloonGame.target
+                ? balloonGame.target.letter
+                : "؟";
+    }
 
     updateBalloonExtraHUD();
-
 }
 
 
-/* ==========================================
-   HUD إضافي
-========================================== */
+/* =========================================================
+   ❤️ الوقت والمحاولات
+   ========================================================= */
 
 function updateBalloonExtraHUD() {
 
-    let hud =
-        document.querySelector(
-            "#balloonGame .game-hud"
+    const controls =
+        document.getElementById(
+            "balloonControls"
         );
 
-
-    if (!hud) return;
-
+    if (!controls) return;
 
     let lives =
         document.getElementById(
             "balloonLives"
         );
 
+    let timer =
+        document.getElementById(
+            "balloonTimer"
+        );
 
     if (!lives) {
 
@@ -6805,68 +6396,10 @@ function updateBalloonExtraHUD() {
             "balloonLives";
 
         lives.className =
-            "hud-item balloon-lives";
+            "balloon-lives";
 
-
-        const streakBox =
-            document.getElementById(
-                "balloonStreak"
-            );
-
-
-        const streakContainer =
-            streakBox
-                ? streakBox.parentElement
-                : null;
-
-
-        if (
-            streakContainer &&
-            streakContainer.parentNode
-        ) {
-
-            streakContainer.parentNode.insertBefore(
-                lives,
-                streakContainer
-            );
-
-        } else {
-
-            hud.appendChild(
-                lives
-            );
-
-        }
-
+        controls.appendChild(lives);
     }
-
-
-    lives.textContent =
-        "❤️".repeat(
-            Math.max(
-                0,
-                balloonGame.lives
-            )
-        ) +
-        "🖤".repeat(
-            Math.max(
-                0,
-                3 - balloonGame.lives
-            )
-        );
-
-
-    lives.setAttribute(
-        "aria-label",
-        `المحاولات المتبقية ${balloonGame.lives}`
-    );
-
-
-    let timer =
-        document.getElementById(
-            "balloonTimer"
-        );
-
 
     if (!timer) {
 
@@ -6877,123 +6410,92 @@ function updateBalloonExtraHUD() {
             "balloonTimer";
 
         timer.className =
-            "hud-item balloon-timer";
+            "balloon-timer";
 
-        hud.appendChild(
-            timer
-        );
-
+        controls.appendChild(timer);
     }
 
+    lives.textContent =
+        "❤️".repeat(
+            Math.max(0, balloonGame.lives)
+        );
 
     timer.textContent =
-        `⏱️ ${arabicNumber(
-            balloonGame.timeLeft
-        )}`;
+        "⏱️ " +
+        balloonGame.timeLeft;
 
+    if (balloonGame.timeLeft <= 5) {
 
-    if (
-        balloonGame.timeLeft <= 3
-    ) {
-
-        timer.classList.add(
-            "danger"
-        );
+        timer.classList.add("danger");
 
     } else {
 
-        timer.classList.remove(
-            "danger"
-        );
-
+        timer.classList.remove("danger");
     }
-
 
     const best =
         document.getElementById(
             "balloonBestScore"
         );
 
-
     if (best) {
 
         best.textContent =
-            arabicNumber(
-                balloonGame.bestScore
-            );
-
+            balloonGame.bestScore;
     }
-
 }
 
 
-/* ==========================================
-   إيقاف / استكمال
-========================================== */
+/* =========================================================
+   ⏸️ إيقاف / تشغيل اللعبة
+   ========================================================= */
 
 function toggleBalloonPause() {
 
-    if (
-        !balloonGame.active
-    ) return;
-
+    if (!balloonGame.active) return;
 
     balloonGame.paused =
         !balloonGame.paused;
-
 
     const button =
         document.getElementById(
             "balloonPauseBtn"
         );
 
-
-    if (
-        balloonGame.paused
-    ) {
+    if (balloonGame.paused) {
 
         stopRoundTimer();
 
+        pauseBalloonAnimations();
 
         if (button) {
 
             button.textContent =
-                "▶️ استكمال";
-
+                "▶️ متابعة";
         }
-
-
-        pauseBalloonAnimations();
 
         showBalloonPauseOverlay();
 
-        stopAllAudio();
-
-
     } else {
+
+        resumeBalloonAnimations();
 
         if (button) {
 
             button.textContent =
                 "⏸️ إيقاف";
-
         }
-
-
-        hideBalloonPauseOverlay();
-
-        resumeBalloonAnimations();
 
         startRoundTimer();
 
+        hideBalloonPauseOverlay();
     }
-
 }
 
 
-/* ==========================================
-   إيقاف حركة البالونات
-========================================== */
+/* =========================================================
+   ⏸️ إيقاف حركة البالونات
+   ========================================================= */
 
 function pauseBalloonAnimations() {
 
@@ -7002,38 +6504,29 @@ function pauseBalloonAnimations() {
             "balloonArena"
         );
 
-
     if (!arena) return;
 
-
     arena
-        .querySelectorAll(
-            ".game-balloon"
-        )
-        .forEach(
-            balloon => {
+        .querySelectorAll(".game-balloon")
+        .forEach(balloon => {
 
-                if (
-                    balloon._animation
-                ) {
+            const computed =
+                getComputedStyle(balloon);
 
-                    try {
+            const bottom =
+                computed.bottom;
 
-                        balloon._animation.pause();
+            balloon.style.transition = "none";
 
-                    } catch (error) {}
-
-                }
-
-            }
-        );
-
+            balloon.style.bottom =
+                bottom;
+        });
 }
 
 
-/* ==========================================
-   استكمال حركة البالونات
-========================================== */
+/* =========================================================
+   ▶️ استئناف حركة البالونات
+   ========================================================= */
 
 function resumeBalloonAnimations() {
 
@@ -7042,71 +6535,51 @@ function resumeBalloonAnimations() {
             "balloonArena"
         );
 
-
     if (!arena) return;
 
-
     arena
-        .querySelectorAll(
-            ".game-balloon"
-        )
-        .forEach(
-            balloon => {
+        .querySelectorAll(".game-balloon")
+        .forEach(balloon => {
 
-                if (
-                    balloon._animation
-                ) {
+            balloon.style.transition =
+                "bottom 7000ms linear";
 
-                    try {
-
-                        balloon._animation.play();
-
-                    } catch (error) {}
-
-                }
-
-            }
-        );
-
+            balloon.style.bottom =
+                (
+                    arena.clientHeight + 120
+                ) + "px";
+        });
 }
 
 
-/* ==========================================
-   شاشة الإيقاف
-========================================== */
+/* =========================================================
+   ⏸️ شاشة الإيقاف
+   ========================================================= */
 
 function showBalloonPauseOverlay() {
 
-    const arena =
-        document.getElementById(
-            "balloonArena"
-        );
-
-
-    if (!arena) return;
-
-
-    if (
+    let overlay =
         document.getElementById(
             "balloonPauseOverlay"
-        )
-    ) return;
+        );
 
+    if (overlay) {
 
-    const overlay =
+        overlay.style.display = "flex";
+
+        return;
+    }
+
+    overlay =
         document.createElement("div");
-
 
     overlay.id =
         "balloonPauseOverlay";
 
-
     overlay.className =
         "balloon-pause-overlay";
 
-
     overlay.innerHTML = `
-
         <div class="pause-card">
 
             <div class="pause-icon">
@@ -7118,32 +6591,33 @@ function showBalloonPauseOverlay() {
             </h2>
 
             <p>
-                خذ وقتك يا بطل 😊
+                اضغط متابعة للعودة إلى اللعبة
             </p>
 
             <button
-                type="button"
-                class="primary"
-                onclick="toggleBalloonPause()"
-            >
-                ▶️ استكمال اللعب
+                class="balloon-control-btn"
+                onclick="toggleBalloonPause()">
+                ▶️ متابعة
             </button>
 
         </div>
-
     `;
 
+    const wrapper =
+        document.querySelector(
+            ".balloon-game-wrapper"
+        );
 
-    arena.appendChild(
-        overlay
-    );
+    if (wrapper) {
 
+        wrapper.appendChild(overlay);
+    }
 }
 
 
-/* ==========================================
-   إخفاء شاشة الإيقاف
-========================================== */
+/* =========================================================
+   ▶️ إخفاء شاشة الإيقاف
+   ========================================================= */
 
 function hideBalloonPauseOverlay() {
 
@@ -7152,283 +6626,144 @@ function hideBalloonPauseOverlay() {
             "balloonPauseOverlay"
         );
 
-
     if (overlay) {
 
-        overlay.remove();
-
+        overlay.style.display = "none";
     }
-
 }
 
 
-/* ==========================================
-   صوت الهدف
-========================================== */
+/* =========================================================
+   🔊 إعادة نطق الحرف
+   ========================================================= */
 
 function repeatBalloonTarget() {
 
-    if (
-        balloonGame.paused
-    ) return;
+    if (!balloonGame.active) return;
 
+    if (!balloonGame.target) return;
 
-    speakBalloonTarget();
-
-}
-
-
-function speakBalloonTarget() {
-
-    if (
-        !balloonGame.target ||
-        !balloonGame.active
-    ) return;
-
-
-    speak(
-
-        `ابحث عن حرف ${letterWithFatha(
-            balloonGame.target.letter
-        )}`,
-
-        {
-            rate: 0.72,
-            pitch: 1.05
-        }
-
+    speakBalloonTarget(
+        balloonGame.target
     );
-
 }
 
 
-/* ==========================================
-   تأثير الانفجار
-========================================== */
+/* =========================================================
+   🔊 نطق الحرف المطلوب
+   ========================================================= */
 
-function createPopEffect(
-    balloon
-) {
+function speakBalloonTarget(letterData) {
+
+    if (!letterData) return;
+
+    const letter =
+        letterData.letter || letterData;
+
+    const text =
+        "اضغط على حرف " + letter;
+
+    if (typeof speak === "function") {
+
+        speak(text);
+    }
+}
+
+
+/* =========================================================
+   💥 تأثير فرقعة
+   ========================================================= */
+
+function createPopEffect(balloon) {
+
+    const rect =
+        balloon.getBoundingClientRect();
 
     const arena =
         document.getElementById(
             "balloonArena"
         );
 
-
     if (!arena) return;
-
-
-    const rect =
-        balloon.getBoundingClientRect();
-
 
     const arenaRect =
         arena.getBoundingClientRect();
 
-
-    const centerX =
+    const x =
         rect.left -
         arenaRect.left +
         rect.width / 2;
 
-
-    const centerY =
+    const y =
         rect.top -
         arenaRect.top +
         rect.height / 2;
 
-
     const particles = [
-
-        "⭐",
         "✨",
-        "🎉",
+        "⭐",
         "💥",
         "🌟",
-        "🎈"
-
+        "🎉"
     ];
 
-
-    for (
-        let i = 0;
-        i < 18;
-        i++
-    ) {
+    particles.forEach((emoji, index) => {
 
         const particle =
             document.createElement("span");
 
-
         particle.className =
             "pop-particle";
 
-
         particle.textContent =
-            particles[
-                Math.floor(
-                    Math.random() *
-                    particles.length
-                )
-            ];
-
+            emoji;
 
         particle.style.left =
-            `${centerX}px`;
-
+            x + "px";
 
         particle.style.top =
-            `${centerY}px`;
-
-
-        particle.style.setProperty(
-            "--x",
-            `${Math.random() * 220 - 110}px`
-        );
-
+            y + "px";
 
         particle.style.setProperty(
-            "--y",
-            `${Math.random() * 220 - 110}px`
+            "--particle-x",
+            (
+                Math.random() * 120 - 60
+            ) + "px"
         );
 
-
-        particle.style.fontSize =
-            `${14 + Math.random() * 12}px`;
-
-
-        arena.appendChild(
-            particle
+        particle.style.setProperty(
+            "--particle-y",
+            (
+                Math.random() * 120 - 60
+            ) + "px"
         );
 
+        arena.appendChild(particle);
 
         setTimeout(() => {
 
             particle.remove();
 
-        }, 900);
-
-    }
-
+        }, 800);
+    });
 }
 
 
-/* ==========================================
-   تنظيف الساحة
-========================================== */
-
-function clearBalloonArena() {
-
-    const arena =
-        document.getElementById(
-            "balloonArena"
-        );
-
-
-    if (!arena) return;
-
-
-    arena
-        .querySelectorAll(
-            ".game-balloon, .pop-particle"
-        )
-        .forEach(
-            element => {
-
-                if (
-                    element._animation
-                ) {
-
-                    try {
-
-                        element._animation.cancel();
-
-                    } catch (error) {}
-
-                }
-
-
-                if (
-                    element._removeTimer
-                ) {
-
-                    clearTimeout(
-                        element._removeTimer
-                    );
-
-                }
-
-
-                element.remove();
-
-            }
-        );
-
-}
-
-
-/* ==========================================
-   نهاية اللعبة
-========================================== */
+/* =========================================================
+   🏁 إنهاء اللعبة
+   ========================================================= */
 
 function finishBalloonGame() {
 
-    if (
-        !balloonGame.active
-    ) return;
-
+    if (!balloonGame.active) return;
 
     stopBalloonGameTimers();
 
-
-    balloonGame.active =
-        false;
-
-    balloonGame.paused =
-        false;
-
-
     clearBalloonArena();
 
+    balloonGame.active = false;
 
-    const arena =
-        document.getElementById(
-            "balloonArena"
-        );
-
-
-    if (!arena) return;
-
-
-    /*
-     * حساب النجوم مرة واحدة فقط
-     */
-
-    const performanceStars =
-        Math.min(
-            10,
-            Math.max(
-                1,
-                Math.floor(
-                    balloonGame.score / 40
-                )
-            )
-        );
-
-
-    balloonGame.earnedStars +=
-        performanceStars;
-
-
-    addStars(
-        performanceStars
-    );
-
-
-    /*
-     * حفظ أفضل نتيجة
-     */
+    balloonGame.paused = false;
 
     if (
         balloonGame.score >
@@ -7438,47 +6773,48 @@ function finishBalloonGame() {
         balloonGame.bestScore =
             balloonGame.score;
 
-
         localStorage.setItem(
-            "taha_balloon_best_score",
+            "balloonBestScore",
             balloonGame.bestScore
         );
-
     }
 
-
-    /*
-     * إخفاء عناصر الإيقاف
-     */
-
-    hideBalloonPauseOverlay();
-
-
-    const controls =
+    const arena =
         document.getElementById(
-            "balloonControls"
+            "balloonArena"
         );
 
+    if (!arena) return;
 
-    if (controls) {
+    const oldFinish =
+        document.getElementById(
+            "balloonFinishScreen"
+        );
 
-        controls.style.display =
-            "none";
+    if (oldFinish) {
 
+        oldFinish.remove();
     }
 
-
-    /*
-     * شاشة النتيجة
-     */
+    const stars =
+        Math.min(
+            3,
+            Math.max(
+                1,
+                Math.ceil(
+                    balloonGame.score / 100
+                )
+            )
+        );
 
     const finish =
         document.createElement("div");
 
+    finish.id =
+        "balloonFinishScreen";
 
     finish.className =
         "balloon-finish-screen";
-
 
     finish.innerHTML = `
 
@@ -7487,121 +6823,104 @@ function finishBalloonGame() {
         </div>
 
         <h2>
-            أحسنت يا بطل!
+            أحسنت يا بطل! 🎉
         </h2>
 
         <p>
-            أكملت جميع الجولات 🎉
+            لقد أنهيت لعبة فرقع الحروف
         </p>
 
         <div class="finish-score">
-            🎯 النقاط:
-            ${arabicNumber(
-                balloonGame.score
-            )}
+            ${balloonGame.score}
         </div>
 
         <div class="finish-stars">
-            ⭐ نجوم اللعبة:
-            ${arabicNumber(
-                performanceStars
-            )}
+            ${"⭐".repeat(stars)}
         </div>
 
         <div class="finish-stats">
 
             <div>
-                🔥 أفضل سلسلة
+                <span>
+                    الجولة
+                </span>
+
                 <strong>
-                    ${arabicNumber(
-                        balloonGame.bestStreak
-                    )}
+                    ${balloonGame.totalRounds}
                 </strong>
             </div>
 
             <div>
-                🏆 أفضل نتيجة
+                <span>
+                    أفضل سلسلة
+                </span>
+
                 <strong>
-                    ${arabicNumber(
-                        balloonGame.bestScore
-                    )}
+                    ${balloonGame.bestStreak}
+                </strong>
+            </div>
+
+            <div>
+                <span>
+                    أفضل نتيجة
+                </span>
+
+                <strong>
+                    ${balloonGame.bestScore}
                 </strong>
             </div>
 
         </div>
 
         <button
-            class="primary"
-            type="button"
-            onclick="startBalloonGame('letters')"
-        >
+            class="balloon-control-btn"
+            onclick="startBalloonGame('letters')">
             🔄 العب مرة أخرى
         </button>
 
         <button
-            class="secondary"
-            type="button"
-            onclick="exitBalloonGame()"
-        >
-            🎮 الألعاب التعليمية
+            class="balloon-control-btn"
+            onclick="exitBalloonGame()">
+            🏠 العودة للألعاب
         </button>
-
     `;
 
+    arena.appendChild(finish);
 
-    arena.appendChild(
-        finish
-    );
+    if (typeof speak === "function") {
 
-
-    speak(
-        "مبروك يا بطل، أكملت اللعبة بنجاح"
-    );
-
+        speak("أحسنت يا بطل");
+    }
 }
 
 
-/* ==========================================
-   الخروج من اللعبة
-========================================== */
+/* =========================================================
+   🚪 الخروج من اللعبة
+   ========================================================= */
 
 function exitBalloonGame() {
 
-    balloonGame.active =
-        false;
-
-    balloonGame.paused =
-        false;
-
-    balloonGame.session++;
-
-
     stopBalloonGameTimers();
+
+    balloonGame.active = false;
+
+    balloonGame.paused = false;
+
+    balloonGame.target = null;
 
     clearBalloonArena();
 
     hideBalloonPauseOverlay();
-
-    stopAllAudio();
-
 
     const controls =
         document.getElementById(
             "balloonControls"
         );
 
-
     if (controls) {
 
-        controls.style.display =
-            "";
-
+        controls.remove();
     }
 
-
-    showScreen(
-        "games"
-    );
-
+    showScreen("games");
 }
-   
