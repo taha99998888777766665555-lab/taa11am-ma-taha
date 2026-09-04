@@ -7604,17 +7604,4 @@ function exitBalloonGame() {
     );
 
 }
-    balloonGame.active = false;
-
-
-    clearBalloonArena();
-
-
-    stopAllAudio();
-
-
-    showScreen(
-        "games"
-    );
-
-}
+   
