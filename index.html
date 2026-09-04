@@ -891,7 +891,242 @@
 </section>
 
 
+<!-- ==========================================
+     الألعاب التعليمية
+========================================== -->
 
+<section
+    id="games"
+    class="screen"
+>
+
+    <div class="games-home">
+
+        <div class="games-header">
+
+            <div class="games-title-icon">
+                🎮
+            </div>
+
+            <div>
+
+                <h2>
+                    الألعاب التعليمية
+                </h2>
+
+                <p>
+                    تعلم والعب واكسب النجوم ⭐
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="games-grid">
+
+            <button
+                class="game-launch-card balloon-game-card"
+                onclick="startBalloonGame('letters')"
+            >
+
+                <div class="game-card-icon">
+                    🎈
+                </div>
+
+                <h3>
+                    فرقع الحروف
+                </h3>
+
+                <p>
+                    اسمع الحرف ثم فرقع البالونة الصحيحة
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card disabled-game"
+                disabled
+            >
+
+                <div class="game-card-icon">
+                    🔢
+                </div>
+
+                <h3>
+                    فرقع الأرقام
+                </h3>
+
+                <p>
+                    قريبًا
+                </p>
+
+            </button>
+
+
+            <button
+                class="game-launch-card disabled-game"
+                disabled
+            >
+
+                <div class="game-card-icon">
+                    🧩
+                </div>
+
+                <h3>
+                    لعبة المطابقة
+                </h3>
+
+                <p>
+                    قريبًا
+                </p>
+
+            </button>
+
+        </div>
+
+
+        <button
+            class="secondary"
+            onclick="showScreen('home')"
+        >
+            🏠 الرئيسية
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- ==========================================
+     لعبة فرقع البالونات
+========================================== -->
+
+<section
+    id="balloonGame"
+    class="screen"
+>
+
+    <div class="balloon-game-wrapper">
+
+
+        <!-- شريط معلومات اللعبة -->
+
+        <div class="game-hud">
+
+            <div class="hud-item">
+
+                <span>⭐</span>
+
+                <strong id="balloonScore">
+                    ٠
+                </strong>
+
+            </div>
+
+
+            <div class="hud-center">
+
+                <div class="hud-level">
+                    المرحلة
+                    <span id="balloonLevel">
+                        ١
+                    </span>
+                </div>
+
+
+                <div class="balloon-progress">
+
+                    <div
+                        id="balloonProgressFill"
+                        class="balloon-progress-fill"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <div class="hud-item streak-box">
+
+                🔥
+
+                <strong id="balloonStreak">
+                    ٠
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- تعليمات -->
+
+        <div class="balloon-instruction">
+
+            <div class="instruction-label">
+                🎯 المطلوب
+            </div>
+
+            <div
+                id="balloonTarget"
+                class="balloon-target"
+            >
+                ب
+            </div>
+
+            <button
+                class="sound-target-btn"
+                onclick="repeatBalloonTarget()"
+            >
+                🔊 اسمع مرة أخرى
+            </button>
+
+        </div>
+
+
+        <!-- ساحة اللعب -->
+
+        <div
+            id="balloonArena"
+            class="balloon-arena"
+        >
+
+            <div class="arena-cloud cloud-one">
+                ☁️
+            </div>
+
+            <div class="arena-cloud cloud-two">
+                ☁️
+            </div>
+
+        </div>
+
+
+        <!-- الرسالة -->
+
+        <div
+            id="balloonMessage"
+            class="balloon-message"
+        ></div>
+
+
+        <button
+            class="secondary exit-game-btn"
+            onclick="exitBalloonGame()"
+        >
+            ⬅️ العودة للألعاب
+        </button>
+
+
+    </div>
+
+</section>
 <!-- ==========================================
      المكافآت
 ========================================== -->
@@ -944,7 +1179,10 @@
 
 </section>
 
-
+<button onclick="showScreen('games')">
+    🎮
+    <span>الألعاب التعليمية</span>
+</button>
 
 <!-- ==========================================
      المعلم
