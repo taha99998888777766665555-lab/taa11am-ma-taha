@@ -8204,13 +8204,26 @@ function handleNumberBalloonCorrect(
 
     addStars(1);
 
-    balloon.classList.add(
-        "balloon-pop"
-    );
+   /* 💥 تشغيل الفرقعة */
 
-    createNumberPopEffect(
-        balloon
-    );
+balloon.style.pointerEvents = "none";
+
+/* إيقاف حركة البالونة القديمة */
+balloon.style.transition = "none";
+
+/* تشغيل أنيميشن الفرقعة بالقوة */
+balloon.style.animation = "none";
+
+/* إعادة تشغيل الأنيميشن */
+void balloon.offsetWidth;
+
+balloon.style.animation =
+    "balloonPop .45s ease-out forwards";
+
+/* إضافة تأثير الجسيمات */
+createNumberPopEffect(
+    balloon
+);
 
     showNumberBalloonMessage(
         getNumberBalloonSuccessMessage(),
