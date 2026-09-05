@@ -9394,10 +9394,9 @@ function exitNumberBalloonGame() {
 
     showScreen("games");
 }
-
 /* =========================================================
    🚗🏁 سباق الحروف
-   النسخة المصححة والمتوافقة مع HTML الجديد
+   النسخة النهائية المصححة
    ========================================================= */
 
 const letterRaceGame = {
@@ -9416,7 +9415,7 @@ const letterRaceGame = {
         localStorage.getItem("letterRaceBestScore") || 0
     ),
 
-    selectedLane: 0,
+    selectedLane: 1,
 
     isRunning: false,
     isPaused: false,
@@ -9613,7 +9612,10 @@ function getLetterRaceChoices() {
 
     const choices = [target];
 
-    /* المستوى الثالث = حروف متشابهة */
+    /*
+       المستوى الثالث:
+       نستخدم حروفًا متشابهة بصريًا
+    */
 
     if (letterRaceGame.level >= 3) {
 
@@ -9681,6 +9683,10 @@ function startLetterRace() {
             level: 1,
             round: 0,
             lives: 3,
+
+            /*
+               البداية في الحارة الثانية
+            */
             selectedLane: 1,
 
             isRunning: true,
@@ -9751,9 +9757,12 @@ function startLetterRaceRound() {
         return;
     }
 
+    /*
+       تأكيد إعادة حالة الجولة
+    */
     letterRaceGame.round++;
-
     letterRaceGame.answered = false;
+    letterRaceGame.isRunning = true;
 
     updateLetterRaceLevel();
 
@@ -9800,8 +9809,8 @@ function startLetterRaceRound() {
 
 /* =========================================================
    🚪 إنشاء البوابات
-   مهم:
-   HTML يستخدم letterRaceOptions
+   الإصلاح المهم:
+   كل بوابة تحصل على موقعها تلقائيًا داخل الحارة
    ========================================================= */
 
 function createLetterRaceGates() {
@@ -9812,9 +9821,11 @@ function createLetterRaceGates() {
         );
 
     if (!container) {
+
         console.warn(
             "سباق الحروف: لم يتم العثور على letterRaceOptions"
         );
+
         return;
     }
 
@@ -9851,6 +9862,26 @@ function createLetterRaceGates() {
                 `بوابة حرف ${letter}`
             );
 
+            /*
+               تحديد مركز كل بوابة:
+               12.5%
+               37.5%
+               62.5%
+               87.5%
+            */
+
+            const gatePosition =
+                ((index + 0.5) / choices.length) * 100;
+
+            gate.style.left =
+                `${gatePosition}%`;
+
+            gate.style.top =
+                "50%";
+
+            gate.style.transform =
+                "translate(-50%, -50%)";
+
             gate.innerHTML = `
                 <div class="gate-roof">
                     🏁
@@ -9886,7 +9917,25 @@ function createLetterRaceGates() {
                         true
                     );
 
-                    checkLetterRaceGate();
+                    highlightLetterRaceSelectedGate();
+
+                    /*
+                       تأخير بسيط جدًا حتى تظهر
+                       حركة السيارة قبل النتيجة
+                    */
+                    setTimeout(() => {
+
+                        if (
+                            !letterRaceGame.answered &&
+                            letterRaceGame.isRunning &&
+                            !letterRaceGame.isPaused &&
+                            !letterRaceGame.isFinished
+                        ) {
+
+                            checkLetterRaceGate();
+                        }
+
+                    }, 120);
                 }
             );
 
@@ -9894,9 +9943,14 @@ function createLetterRaceGates() {
         }
     );
 
-    /* المسار الثاني كبداية */
+    /*
+       البداية في الحارة الثانية
+    */
 
-    letterRaceGame.selectedLane = 1;
+    letterRaceGame.selectedLane = Math.min(
+        1,
+        choices.length - 1
+    );
 
     moveLetterRaceCarToLane(
         letterRaceGame.selectedLane,
@@ -9908,7 +9962,10 @@ function createLetterRaceGates() {
 
 
 /* =========================================================
-   🚗 تحريك السيارة يمين ويسار
+   🚗 تحريك السيارة يمين / يسار
+   direction:
+   -1 = يسار
+   +1 = يمين
    ========================================================= */
 
 function moveLetterRaceCar(direction) {
@@ -9922,20 +9979,32 @@ function moveLetterRaceCar(direction) {
         return;
     }
 
-    const maxLane =
+    const totalLanes =
         Math.max(
-            0,
-            letterRaceGame.gates.length - 1
+            1,
+            letterRaceGame.gates.length
         );
 
+    const maxLane =
+        totalLanes - 1;
+
+    const newLane =
+        letterRaceGame.selectedLane +
+        direction;
+
+    /*
+       منع الخروج من الطريق
+    */
+
+    if (
+        newLane < 0 ||
+        newLane > maxLane
+    ) {
+        return;
+    }
+
     letterRaceGame.selectedLane =
-        Math.max(
-            0,
-            Math.min(
-                maxLane,
-                letterRaceGame.selectedLane + direction
-            )
-        );
+        newLane;
 
     moveLetterRaceCarToLane(
         letterRaceGame.selectedLane,
@@ -9947,7 +10016,7 @@ function moveLetterRaceCar(direction) {
 
 
 /* =========================================================
-   🚗 وضع السيارة داخل المسار
+   🚗 وضع السيارة داخل الحارة
    ========================================================= */
 
 function moveLetterRaceCarToLane(
@@ -9975,7 +10044,7 @@ function moveLetterRaceCarToLane(
             0,
             Math.min(
                 total - 1,
-                lane
+                Number(lane) || 0
             )
         );
 
@@ -9985,23 +10054,50 @@ function moveLetterRaceCarToLane(
             total
         ) * 100;
 
+    /*
+       left = مركز الحارة
+       transform = يجعل مركز السيارة
+       فوق مركز الحارة بالضبط
+    */
+
     if (animate) {
 
         car.style.transition =
-            "left .28s cubic-bezier(.2,.8,.2,1)";
+            "left .28s cubic-bezier(.22,.8,.25,1)";
 
     } else {
 
-        car.style.transition = "none";
+        car.style.transition =
+            "none";
     }
 
     car.style.left =
         `${position}%`;
 
+    /*
+       مهم جدًا:
+       لا نترك transform قديم من حركة النجاح
+    */
+
+    if (
+        !car.classList.contains("race-success") &&
+        !car.classList.contains("race-crash")
+    ) {
+
+        car.style.transform =
+            "translateX(-50%)";
+    }
+
     if (!animate) {
 
         requestAnimationFrame(() => {
-            car.style.transition = "";
+
+            if (car) {
+
+                car.style.transition =
+                    "";
+            }
+
         });
     }
 }
@@ -10033,6 +10129,9 @@ function highlightLetterRaceSelectedGate() {
 
 /* =========================================================
    ⌨️ لوحة المفاتيح
+   الإصلاح:
+   ArrowLeft = يسار
+   ArrowRight = يمين
    ========================================================= */
 
 function handleLetterRaceKeyboard(event) {
@@ -10046,7 +10145,7 @@ function handleLetterRaceKeyboard(event) {
         return;
     }
 
-    if (event.key === "ArrowRight") {
+    if (event.key === "ArrowLeft") {
 
         event.preventDefault();
 
@@ -10055,7 +10154,7 @@ function handleLetterRaceKeyboard(event) {
         return;
     }
 
-    if (event.key === "ArrowLeft") {
+    if (event.key === "ArrowRight") {
 
         event.preventDefault();
 
@@ -10124,16 +10223,28 @@ function setupLetterRaceControls() {
                 event.clientX -
                 letterRaceGame.touchStartX;
 
+            /*
+               حركة صغيرة = تجاهل
+            */
+
             if (
                 Math.abs(difference) < 35
             ) {
                 return;
             }
 
+            /*
+               سحب لليمين = السيارة يمين
+               سحب لليسار = السيارة يسار
+            */
+
             if (difference > 0) {
-                moveLetterRaceCar(-1);
-            } else {
+
                 moveLetterRaceCar(1);
+
+            } else {
+
+                moveLetterRaceCar(-1);
             }
         };
 }
@@ -10144,22 +10255,35 @@ function setupLetterRaceControls() {
    ========================================================= */
 
 function letterRaceLeft() {
-    moveLetterRaceCar(1);
-}
 
+    /*
+       الزر الموجود يسار الشاشة
+       يحرك السيارة إلى اليسار
+    */
 
-function letterRaceRight() {
     moveLetterRaceCar(-1);
 }
 
 
+function letterRaceRight() {
+
+    /*
+       الزر الموجود يمين الشاشة
+       يحرك السيارة إلى اليمين
+    */
+
+    moveLetterRaceCar(1);
+}
+
+
 function letterRaceSelect() {
+
     checkLetterRaceGate();
 }
 
 
 /* =========================================================
-   💨 حركة الطريق
+   💨 حركة الطريق + مؤقت الجولة
    ========================================================= */
 
 function startLetterRaceMovement() {
@@ -10226,7 +10350,10 @@ function startLetterRaceMovement() {
 
             if (
                 session !==
-                letterRaceGame.session
+                letterRaceGame.session ||
+                letterRaceGame.isFinished ||
+                letterRaceGame.isPaused ||
+                letterRaceGame.answered
             ) {
                 return;
             }
@@ -10313,9 +10440,13 @@ function handleLetterRaceCorrect(gate) {
 
     if (gate) {
 
-        gate.classList.remove("selected");
+        gate.classList.remove(
+            "selected"
+        );
 
-        gate.classList.add("correct");
+        gate.classList.add(
+            "correct"
+        );
     }
 
     const car =
@@ -10333,8 +10464,12 @@ function handleLetterRaceCorrect(gate) {
             "race-success"
         );
 
+        /*
+           نحافظ على مركز السيارة
+        */
+
         car.style.transform =
-            "translate(-50%, -50%) scale(1.12)";
+            "translateX(-50%) scale(1.12)";
     }
 
     letterRaceGame.streak++;
@@ -10418,8 +10553,13 @@ function handleLetterRaceCorrect(gate) {
                 "race-success"
             );
 
-            car.style.transform = "";
+            car.style.transform =
+                "translateX(-50%)";
         }
+
+        /*
+           إعادة تشغيل الجولة
+        */
 
         letterRaceGame.isRunning = true;
 
@@ -10461,6 +10601,11 @@ function handleLetterRaceWrong(gate) {
         return;
     }
 
+    /*
+       إيقاف الجولة الحالية فقط
+       وليس إيقاف اللعبة بالكامل
+    */
+
     letterRaceGame.isRunning = false;
 
     letterRaceGame.lives =
@@ -10487,18 +10632,20 @@ function handleLetterRaceWrong(gate) {
             "#letterRaceOptions .letter-race-gate"
         );
 
-    allGates.forEach(gateElement => {
+    allGates.forEach(
+        gateElement => {
 
-        if (
-            gateElement.dataset.letter ===
-            letterRaceGame.target
-        ) {
+            if (
+                gateElement.dataset.letter ===
+                letterRaceGame.target
+            ) {
 
-            gateElement.classList.add(
-                "correct"
-            );
+                gateElement.classList.add(
+                    "correct"
+                );
+            }
         }
-    });
+    );
 
     const car =
         document.getElementById(
@@ -10506,6 +10653,11 @@ function handleLetterRaceWrong(gate) {
         );
 
     if (car) {
+
+        car.classList.remove(
+            "race-success"
+        );
+
         car.classList.add(
             "race-crash"
         );
@@ -10528,9 +10680,15 @@ function handleLetterRaceWrong(gate) {
 
     setTimeout(() => {
 
+        /*
+           لو خرج اللاعب أثناء الانتظار
+           لا نبدأ جولة جديدة
+        */
+
         if (
             session !==
-            letterRaceGame.session
+            letterRaceGame.session ||
+            letterRaceGame.isFinished
         ) {
             return;
         }
@@ -10549,8 +10707,18 @@ function handleLetterRaceWrong(gate) {
             car.classList.remove(
                 "race-crash"
             );
+
+            car.style.transform =
+                "translateX(-50%)";
         }
 
+        /*
+           الإصلاح المهم:
+           إعادة كل حالات الجولة قبل البدء
+        */
+
+        letterRaceGame.answered = false;
+        letterRaceGame.isPaused = false;
         letterRaceGame.isRunning = true;
 
         startLetterRaceRound();
@@ -10855,7 +11023,9 @@ function createLetterRaceConfetti() {
         container.appendChild(confetti);
 
         setTimeout(() => {
+
             confetti.remove();
+
         }, 1800);
     }
 }
@@ -10907,7 +11077,9 @@ function createLetterRaceStarExplosion() {
         parent.appendChild(star);
 
         setTimeout(() => {
+
             star.remove();
+
         }, 900);
     }
 }
@@ -10955,7 +11127,9 @@ function showLetterRaceBrakeEffect() {
         parent.appendChild(effect);
 
         setTimeout(() => {
+
             effect.remove();
+
         }, 900);
     }
 }
@@ -10972,8 +11146,11 @@ function toggleLetterRacePause() {
     }
 
     if (letterRaceGame.isPaused) {
+
         resumeLetterRace();
+
     } else {
+
         pauseLetterRace();
     }
 }
@@ -11012,6 +11189,7 @@ function pauseLetterRace() {
         );
 
     if (button) {
+
         button.textContent =
             "▶️ استكمال السباق";
     }
@@ -11039,6 +11217,7 @@ function resumeLetterRace() {
         );
 
     if (button) {
+
         button.textContent =
             "⏸️ إيقاف السباق";
     }
@@ -11070,6 +11249,7 @@ function finishLetterRace(gameOver = false) {
     letterRaceGame.isFinished = true;
     letterRaceGame.isRunning = false;
     letterRaceGame.isPaused = false;
+    letterRaceGame.answered = true;
 
     clearTimeout(
         letterRaceGame.timer
@@ -11141,10 +11321,13 @@ function finishLetterRace(gameOver = false) {
     if (
         letterRaceGame.score >= 150
     ) {
+
         stars = 3;
+
     } else if (
         letterRaceGame.score >= 80
     ) {
+
         stars = 2;
     }
 
@@ -11326,8 +11509,9 @@ function exitLetterRace() {
         finish.remove();
     }
 
-    /* تنظيف البوابات
-       HTML = letterRaceOptions */
+    /*
+       تنظيف البوابات
+    */
 
     const gates =
         document.getElementById(
@@ -11338,7 +11522,9 @@ function exitLetterRace() {
         gates.innerHTML = "";
     }
 
-    /* تنظيف السيارة */
+    /*
+       تنظيف السيارة
+    */
 
     const car =
         document.getElementById(
@@ -11352,9 +11538,14 @@ function exitLetterRace() {
             "race-success"
         );
 
-        car.style.transform = "";
+        car.style.transform =
+            "translateX(-50%)";
 
-        car.style.left = "50%";
+        car.style.left =
+            "50%";
+
+        car.style.transition =
+            "none";
     }
 
     showScreen("games");
