@@ -1,1319 +1,2378 @@
 /* ==========================================
-   🌟 تعلم مع أ/ طه محمد 🌟
-   ملف style.css
+🌟 تعلم مع أ/ طه محمد 🌟
+ملف style.css
 ========================================== */
 
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  }
+
+html {
+scroll-behavior: smooth;
 }
 
 body {
-    margin: 0;
-    padding: 0;
-    font-family: "Tahoma", "Arial", sans-serif;
-    background: linear-gradient(135deg, #e0f7fa, #fff8e1);
-    color: #333;
-    direction: rtl;
-    line-height: 1.6;
+margin: 0;
+padding: 0;
+font-family: "Tahoma", "Arial", sans-serif;
+background: linear-gradient(135deg, #e0f7fa, #fff8e1);
+color: #333;
+direction: rtl;
+line-height: 1.6;
 }
 
 /* ==========================================
-   إمكانية الوصول: التركيز (Focus)
-   مهم جدًا لمن يستخدم لوحة مفاتيح أو
-   أجهزة تحكم بديلة
+إمكانية الوصول
 ========================================== */
 
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 .option:focus-visible {
-    outline: 4px solid #ff6f00;
-    outline-offset: 3px;
-    border-radius: 12px;
+outline: 4px solid #ff6f00;
+outline-offset: 3px;
+border-radius: 12px;
 }
 
 .screen:focus-visible,
 .screen:focus {
-    outline: none;
+outline: none;
 }
 
 /* ==========================================
-   احترام إعداد "تقليل الحركة" في الجهاز
-   لبعض الأطفال ذوي الحساسية الحسية
+تقليل الحركة
 ========================================== */
 
 @media (prefers-reduced-motion: reduce) {
 
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.001ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.001ms !important;
-        scroll-behavior: auto !important;
-    }
-
-    .menu button:hover,
-    .primary:hover,
-    .secondary:hover,
-    .success:hover,
-    .danger:hover,
-    .option:hover {
-        transform: none !important;
-    }
+```
+*,
+*::before,
+*::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
 }
 
-header {
-    background: linear-gradient(135deg, #2196f3, #673ab7);
-    color: white;
-    text-align: center;
-    padding: 25px 15px;
-    border-radius: 0 0 30px 30px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+.menu button:hover,
+.primary:hover,
+.secondary:hover,
+.success:hover,
+.danger:hover,
+.option:hover,
+.game-launch-card:hover {
+    transform: none !important;
 }
+```
 
-header h1 {
-    margin: 0;
-    font-size: 32px;
-}
-
-header p {
-    font-size: 18px;
-    margin: 10px 0;
-}
-
-.stats {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-    margin-top: 15px;
-}
-
-.stats span {
-    background: rgba(255,255,255,0.2);
-    padding: 10px 18px;
-    border-radius: 20px;
-    font-size: 17px;
-}
-
-.container {
-    max-width: 900px;
-    margin: auto;
-    padding: 20px;
-}
-
-.screen {
-    display: none;
-}
-
-.screen.active {
-    display: block;
-    animation: gentleFadeIn 0.3s ease;
-}
-
-@keyframes gentleFadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.card {
-    background: white;
-    border-radius: 25px;
-    padding: 25px;
-    margin: 15px auto;
-    text-align: center;
-    box-shadow: 0 5px 18px rgba(0,0,0,0.12);
-}
-
-.card h2 {
-    color: #3949ab;
-    margin-top: 5px;
-}
-
-.card h3 {
-    margin-top: 25px;
-    color: #555;
 }
 
 /* ==========================================
-   القائمة الرئيسية
+رأس التطبيق
+========================================== */
+
+header {
+background: linear-gradient(135deg, #2196f3, #673ab7);
+color: white;
+text-align: center;
+padding: 25px 15px;
+border-radius: 0 0 30px 30px;
+box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+header h1 {
+margin: 0;
+font-size: 32px;
+}
+
+header p {
+font-size: 18px;
+margin: 10px 0;
+}
+
+.stats {
+display: flex;
+justify-content: center;
+gap: 15px;
+flex-wrap: wrap;
+margin-top: 15px;
+}
+
+.stats span {
+background: rgba(255,255,255,0.2);
+padding: 10px 18px;
+border-radius: 20px;
+font-size: 17px;
+}
+
+.container {
+max-width: 900px;
+margin: auto;
+padding: 20px;
+}
+
+.screen {
+display: none;
+}
+
+.screen.active {
+display: block;
+animation: gentleFadeIn 0.3s ease;
+}
+
+@keyframes gentleFadeIn {
+from {
+opacity: 0;
+}
+
+```
+to {
+    opacity: 1;
+}
+```
+
+}
+
+/* ==========================================
+البطاقات
+========================================== */
+
+.card {
+background: white;
+border-radius: 25px;
+padding: 25px;
+margin: 15px auto;
+text-align: center;
+box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+}
+
+.card h2 {
+color: #3949ab;
+margin-top: 5px;
+}
+
+.card h3 {
+margin-top: 25px;
+color: #555;
+}
+
+/* ==========================================
+القائمة الرئيسية
 ========================================== */
 
 .menu {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-top: 25px;
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 15px;
+margin-top: 25px;
 }
 
 @media (min-width: 700px) {
 
-    .menu {
-        grid-template-columns: repeat(3, 1fr);
-    }
+```
+.menu {
+    grid-template-columns: repeat(3, 1fr);
+}
+```
 
 }
 
 .menu button {
-    border: none;
-    border-radius: 22px;
-    padding: 22px 10px;
-    font-size: 20px;
-    cursor: pointer;
-    background: #ffffff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    transition: 0.2s;
+border: none;
+border-radius: 22px;
+padding: 22px 10px;
+font-size: 20px;
+cursor: pointer;
+background: #ffffff;
+box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+transition: 0.2s;
 }
 
 .menu button:hover {
-    transform: translateY(-2px);
+transform: translateY(-2px);
 }
 
 .menu button span {
-    display: block;
-    margin-top: 8px;
-    font-weight: bold;
+display: block;
+margin-top: 8px;
+font-weight: bold;
 }
 
 /* ==========================================
-   الأزرار
+الأزرار
 ========================================== */
 
 button {
-    font-family: inherit;
+font-family: inherit;
 }
 
 .primary,
 .secondary,
 .success,
 .danger {
-    border: none;
-    border-radius: 15px;
-    padding: 13px 22px;
-    margin: 7px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: 0.2s;
+border: none;
+border-radius: 15px;
+padding: 13px 22px;
+margin: 7px;
+font-size: 18px;
+cursor: pointer;
+transition: 0.2s;
 }
 
 .primary {
-    background: #2196f3;
-    color: white;
+background: #2196f3;
+color: white;
 }
 
 .secondary {
-    background: #78909c;
-    color: white;
+background: #78909c;
+color: white;
 }
 
 .success {
-    background: #43a047;
-    color: white;
+background: #43a047;
+color: white;
 }
 
 .danger {
-    background: #e53935;
-    color: white;
+background: #e53935;
+color: white;
 }
 
 .primary:hover,
 .secondary:hover,
 .success:hover,
 .danger:hover {
-    transform: scale(1.03);
+transform: scale(1.03);
 }
 
 /* ==========================================
-   الحروف
+الحروف
 ========================================== */
 
 .letter {
-    font-size: 80px;
-    font-weight: bold;
-    color: #3949ab;
-    margin: 15px;
+font-size: 80px;
+font-weight: bold;
+color: #3949ab;
+margin: 15px;
 }
 
 .picture {
-    font-size: 70px;
-    margin: 15px;
+font-size: 70px;
+margin: 15px;
 }
 
 .word-name {
-    font-size: 30px;
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 15px;
+font-size: 30px;
+font-weight: bold;
+color: #555;
+margin-bottom: 15px;
 }
 
 .options {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin: 15px 0;
+display: flex;
+justify-content: center;
+flex-wrap: wrap;
+gap: 12px;
+margin: 15px 0;
 }
 
 .option {
-    min-width: 80px;
-    min-height: 60px;
-    border: none;
-    border-radius: 16px;
-    background: #e3f2fd;
-    color: #1565c0;
-    font-size: 28px;
-    font-weight: bold;
-    padding: 10px 20px;
-    cursor: pointer;
+min-width: 80px;
+min-height: 60px;
+border: none;
+border-radius: 16px;
+background: #e3f2fd;
+color: #1565c0;
+font-size: 28px;
+font-weight: bold;
+padding: 10px 20px;
+cursor: pointer;
 }
 
 .option:hover {
-    background: #bbdefb;
-    transform: scale(1.05);
+background: #bbdefb;
+transform: scale(1.05);
 }
 
 /* ==========================================
-   الكلمات
+الكلمات
 ========================================== */
 
 .big-word {
-    font-size: 55px;
-    font-weight: bold;
-    color: #6a1b9a;
-    margin: 20px;
+font-size: 55px;
+font-weight: bold;
+color: #6a1b9a;
+margin: 20px;
 }
 
 /* ==========================================
-   الأرقام
+الأرقام
 ========================================== */
 
 .number {
-    font-size: 80px;
-    font-weight: bold;
-    color: #00897b;
-    margin: 20px;
+font-size: 80px;
+font-weight: bold;
+color: #00897b;
+margin: 20px;
 }
 
 .count-items {
-    min-height: 70px;
-    font-size: 40px;
-    line-height: 1.6;
-    margin: 15px;
-    word-break: break-word;
+min-height: 70px;
+font-size: 40px;
+line-height: 1.6;
+margin: 15px;
+word-break: break-word;
 }
 
 /* ==========================================
-   العمليات الحسابية
+العمليات الحسابية
 ========================================== */
 
 .operation {
-    font-size: 50px;
-    font-weight: bold;
-    color: #ef6c00;
-    margin: 20px;
+font-size: 50px;
+font-weight: bold;
+color: #ef6c00;
+margin: 20px;
 }
 
 input[type="number"] {
-    width: 150px;
-    padding: 12px;
-    border: 3px solid #90caf9;
-    border-radius: 15px;
-    font-size: 30px;
-    text-align: center;
-    outline: none;
+width: 150px;
+padding: 12px;
+border: 3px solid #90caf9;
+border-radius: 15px;
+font-size: 30px;
+text-align: center;
+outline: none;
 }
 
 input[type="number"]:focus {
-    border-color: #1976d2;
+border-color: #1976d2;
 }
 
 /* ==========================================
-   الرسائل
+الرسائل
 ========================================== */
 
 .message {
-    min-height: 35px;
-    margin: 15px;
-    font-size: 22px;
-    font-weight: bold;
+min-height: 35px;
+margin: 15px;
+font-size: 22px;
+font-weight: bold;
 }
 
 .success-text {
-    color: #2e7d32;
+color: #2e7d32;
 }
 
 .error-text {
-    color: #d32f2f;
+color: #d32f2f;
 }
 
 /* ==========================================
-   الكتابة
+الكتابة
 ========================================== */
 
 .writing-guide {
-    font-size: 100px;
-    font-weight: bold;
-    color: #b0bec5;
-    margin: 10px;
+font-size: 100px;
+font-weight: bold;
+color: #b0bec5;
+margin: 10px;
 }
 
 #writingCanvas {
-    display: block;
-    width: 100%;
-    height: 300px;
-    background: #fff;
-    border: 4px dashed #90caf9;
-    border-radius: 20px;
-    margin: 15px auto;
-    touch-action: none;
+display: block;
+width: 100%;
+height: 300px;
+background: #fff;
+border: 4px dashed #90caf9;
+border-radius: 20px;
+margin: 15px auto;
+touch-action: none;
 }
 
 /* ==========================================
-   القرآن الكريم
+القرآن الكريم
 ========================================== */
 
 .quran-card {
-    background: #fff;
-    border: 3px solid #81c784;
+background: #fff;
+border: 3px solid #81c784;
 }
 
 .surah-name {
-    font-size: 30px;
-    font-weight: bold;
-    color: #2e7d32;
-    margin: 15px;
+font-size: 30px;
+font-weight: bold;
+color: #2e7d32;
+margin: 15px;
 }
 
 .surah-text {
-    font-family: "Traditional Arabic", "Amiri", "Tahoma", serif;
-    font-size: 30px;
-    line-height: 2.3;
-    background: #f1f8e9;
-    border-radius: 20px;
-    padding: 20px;
-    color: #1b5e20;
-    margin: 15px 0;
+font-family: "Traditional Arabic", "Amiri", "Tahoma", serif;
+font-size: 30px;
+line-height: 2.3;
+background: #f1f8e9;
+border-radius: 20px;
+padding: 20px;
+color: #1b5e20;
+margin: 15px 0;
 }
 
 .quran-decoration {
-    font-size: 60px;
-    margin: 10px;
+font-size: 60px;
+margin: 10px;
 }
 
 /* ==========================================
-   الحديث الشريف
+الحديث الشريف
 ========================================== */
 
 .hadith-card {
-    background: linear-gradient(135deg, #fffde7, #ffffff);
-    border: 3px solid #ffd54f;
+background: linear-gradient(135deg, #fffde7, #ffffff);
+border: 3px solid #ffd54f;
 }
 
 .hadith-image {
-    width: 100%;
-    max-width: 420px;
-    height: 230px;
-    margin: 15px auto;
-    border-radius: 22px;
-    object-fit: cover;
-    display: block;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+width: 100%;
+max-width: 420px;
+height: 230px;
+margin: 15px auto;
+border-radius: 22px;
+object-fit: cover;
+display: block;
+box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .hadith-icon {
-    font-size: 70px;
-    margin: 10px;
+font-size: 70px;
+margin: 10px;
 }
 
 .hadith-intro {
-    font-size: 17px;
-    color: #795548;
-    margin: 10px 0;
+font-size: 17px;
+color: #795548;
+margin: 10px 0;
 }
 
 .hadith-text {
-    background: #fff8e1;
-    border-radius: 20px;
-    padding: 22px;
-    font-size: 28px;
-    line-height: 2;
-    font-weight: bold;
-    color: #5d4037;
-    margin: 15px 0;
+background: #fff8e1;
+border-radius: 20px;
+padding: 22px;
+font-size: 28px;
+line-height: 2;
+font-weight: bold;
+color: #5d4037;
+margin: 15px 0;
 }
 
 .hadith-source {
-    font-size: 18px;
-    color: #795548;
-    margin: 15px;
+font-size: 18px;
+color: #795548;
+margin: 15px;
 }
 
 .hadith-meaning {
-    background: #fff3e0;
-    border-radius: 16px;
-    padding: 14px;
-    font-size: 19px;
-    color: #6d4c41;
-    margin: 10px 15px 20px;
+background: #fff3e0;
+border-radius: 16px;
+padding: 14px;
+font-size: 19px;
+color: #6d4c41;
+margin: 10px 15px 20px;
 }
 
 /* ==========================================
-   الأدعية
+الأدعية
 ========================================== */
 
 .dua-card {
-    background: linear-gradient(135deg, #e8f5e9, #ffffff);
-    border: 3px solid #81c784;
+background: linear-gradient(135deg, #e8f5e9, #ffffff);
+border: 3px solid #81c784;
 }
 
 .dua-image {
-    font-size: 60px;
-    margin: 10px;
+font-size: 60px;
+margin: 10px;
 }
 
 .dua-title {
-    font-size: 28px;
-    color: #2e7d32;
-    font-weight: bold;
+font-size: 28px;
+color: #2e7d32;
+font-weight: bold;
 }
 
 .dua-text {
-    background: #f1f8e9;
-    padding: 25px;
-    border-radius: 20px;
-    font-size: 30px;
-    line-height: 2;
-    color: #33691e;
-    font-weight: bold;
-    margin: 20px 0;
+background: #f1f8e9;
+padding: 25px;
+border-radius: 20px;
+font-size: 30px;
+line-height: 2;
+color: #33691e;
+font-weight: bold;
+margin: 20px 0;
 }
 
 /* ==========================================
-   المكافآت
+المكافآت
 ========================================== */
 
 .reward {
-    font-size: 100px;
-    margin: 20px;
+font-size: 100px;
+margin: 20px;
 }
 
 #rewardStars {
-    color: #f9a825;
-    font-size: 40px;
+color: #f9a825;
+font-size: 40px;
 }
 
 /* ==========================================
-   متابعة الطفل
+متابعة الطفل
 ========================================== */
 
 .teacher-stat {
-    background: #f5f5f5;
-    margin: 10px 0;
-    padding: 15px;
-    border-radius: 15px;
-    font-size: 20px;
+background: #f5f5f5;
+margin: 10px 0;
+padding: 15px;
+border-radius: 15px;
+font-size: 20px;
 }
 
 .teacher-stat b {
-    color: #3949ab;
-    font-size: 24px;
+color: #3949ab;
+font-size: 24px;
 }
 
 /* ==========================================
-   نافذة التأكيد الهادئة
-   (بديل هادئ لنافذة confirm الفجائية)
+نافذة التأكيد
 ========================================== */
 
 .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(50, 50, 60, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    z-index: 1000;
-    animation: gentleFadeIn 0.25s ease;
+position: fixed;
+inset: 0;
+background: rgba(50, 50, 60, 0.45);
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+z-index: 1000;
+animation: gentleFadeIn 0.25s ease;
 }
 
 .modal-overlay[hidden] {
-    display: none;
+display: none;
 }
 
 .modal-box {
-    background: #ffffff;
-    border-radius: 25px;
-    padding: 30px 25px;
-    max-width: 380px;
-    width: 100%;
-    text-align: center;
-    box-shadow: 0 8px 22px rgba(0,0,0,0.2);
+background: #ffffff;
+border-radius: 25px;
+padding: 30px 25px;
+max-width: 380px;
+width: 100%;
+text-align: center;
+box-shadow: 0 8px 22px rgba(0,0,0,0.2);
 }
 
 .modal-icon {
-    font-size: 45px;
-    margin-bottom: 10px;
+font-size: 45px;
+margin-bottom: 10px;
 }
 
 .modal-text {
-    font-size: 20px;
-    font-weight: bold;
-    color: #333;
-    margin: 0 0 20px;
+font-size: 20px;
+font-weight: bold;
+color: #333;
+margin: 0 0 20px;
 }
 
 .modal-actions {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
+display: flex;
+justify-content: center;
+flex-wrap: wrap;
 }
 
 /* ==========================================
-   تحسين الهاتف
-========================================== */
-
-@media (max-width: 600px) {
-
-    header h1 {
-        font-size: 25px;
-    }
-
-    header p {
-        font-size: 16px;
-    }
-
-    .container {
-        padding: 10px;
-    }
-
-    .card {
-        padding: 15px;
-    }
-
-    .menu {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-
-    .menu button {
-        padding: 18px 5px;
-        font-size: 18px;
-    }
-
-    .letter,
-    .number {
-        font-size: 65px;
-    }
-
-    .big-word {
-        font-size: 45px;
-    }
-
-    .operation {
-        font-size: 38px;
-    }
-
-    .surah-text,
-    .hadith-text,
-    .dua-text {
-        font-size: 24px;
-    }
-
-    .count-items {
-        font-size: 30px;
-    }
-
-    #writingCanvas {
-        height: 250px;
-    }
-
-    .primary,
-    .secondary,
-    .success,
-    .danger {
-        font-size: 16px;
-        padding: 11px 16px;
-    }
-}
-/* ==========================================
-   🎮 الألعاب التعليمية الاحترافية
+🎮 الألعاب التعليمية الاحترافية
 ========================================== */
 
 .games-home {
-    max-width: 1000px;
-    margin: auto;
-    padding: 20px;
-    text-align: center;
+max-width: 1000px;
+margin: auto;
+padding: 20px;
+text-align: center;
 }
 
 .games-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 30px;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 15px;
+margin-bottom: 30px;
 }
 
 .games-title-icon {
-    font-size: 55px;
-    animation: gameFloat 2s ease-in-out infinite;
+font-size: 55px;
+animation: gameFloat 2s ease-in-out infinite;
 }
 
 .games-header h2 {
-    margin: 0;
-    font-size: 32px;
+margin: 0;
+font-size: 32px;
 }
 
 .games-header p {
-    margin: 6px 0 0;
-    opacity: .75;
+margin: 6px 0 0;
+opacity: .75;
 }
 
 .games-grid {
-    display: grid;
-    grid-template-columns:
-        repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    margin-bottom: 25px;
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+gap: 20px;
+margin-bottom: 25px;
 }
 
 .game-launch-card {
-    border: 0;
-    border-radius: 28px;
-    padding: 25px 18px;
-    cursor: pointer;
-    background: white;
-    box-shadow:
-        0 10px 30px rgba(0,0,0,.10);
-    transition:
-        transform .25s,
-        box-shadow .25s;
-    font-family: inherit;
+border: 0;
+border-radius: 28px;
+padding: 25px 18px;
+cursor: pointer;
+background: white;
+box-shadow: 0 10px 30px rgba(0,0,0,.10);
+transition: transform .25s, box-shadow .25s;
+font-family: inherit;
 }
 
 .game-launch-card:hover {
-    transform: translateY(-8px);
-    box-shadow:
-        0 18px 40px rgba(0,0,0,.15);
+transform: translateY(-8px);
+box-shadow: 0 18px 40px rgba(0,0,0,.15);
 }
 
 .game-card-icon {
-    font-size: 65px;
-    margin-bottom: 10px;
+font-size: 65px;
+margin-bottom: 10px;
 }
 
 .game-launch-card h3 {
-    margin: 8px 0;
-    font-size: 23px;
+margin: 8px 0;
+font-size: 23px;
 }
 
 .game-launch-card p {
-    min-height: 45px;
-    opacity: .7;
+min-height: 45px;
+opacity: .7;
 }
 
 .game-launch-card span {
-    display: inline-block;
-    margin-top: 10px;
-    font-weight: bold;
+display: inline-block;
+margin-top: 10px;
+font-weight: bold;
 }
 
 .balloon-game-card {
-    background:
-        linear-gradient(
-            135deg,
-            #fff0f5,
-            #eef7ff
-        );
+background: linear-gradient(135deg, #fff0f5, #eef7ff);
+}
+
+.letter-race-game-card {
+background: linear-gradient(135deg, #fff7ed, #eff6ff);
+border: 3px solid #93c5fd;
+}
+
+.letter-race-game-card:hover {
+box-shadow:
+0 18px 40px rgba(37, 99, 235, .20);
 }
 
 .disabled-game {
-    opacity: .5;
-    cursor: not-allowed;
+opacity: .5;
+cursor: not-allowed;
 }
 
-
 /* ==========================================
-   🎈 لعبة البالونات
+🎈 لعبة البالونات
 ========================================== */
 
 .balloon-game-wrapper {
-    max-width: 950px;
-    margin: auto;
-    padding: 15px;
+max-width: 950px;
+margin: auto;
+padding: 15px;
 }
 
 .game-hud {
-    display: grid;
-    grid-template-columns:
-        110px 1fr 110px;
-    gap: 15px;
-    align-items: center;
-    margin-bottom: 18px;
+display: grid;
+grid-template-columns: 110px 1fr 110px;
+gap: 15px;
+align-items: center;
+margin-bottom: 18px;
 }
 
 .hud-item {
-    background: white;
-    border-radius: 18px;
-    padding: 12px;
-    box-shadow:
-        0 5px 15px rgba(0,0,0,.08);
-    font-size: 20px;
+background: white;
+border-radius: 18px;
+padding: 12px;
+box-shadow: 0 5px 15px rgba(0,0,0,.08);
+font-size: 20px;
 }
 
 .hud-center {
-    text-align: center;
+text-align: center;
 }
 
 .hud-level {
-    font-weight: bold;
-    margin-bottom: 7px;
+font-weight: bold;
+margin-bottom: 7px;
 }
 
 .balloon-progress {
-    height: 12px;
-    background: #e8edf3;
-    border-radius: 20px;
-    overflow: hidden;
+height: 12px;
+background: #e8edf3;
+border-radius: 20px;
+overflow: hidden;
 }
 
 .balloon-progress-fill {
-    width: 0%;
-    height: 100%;
-    background:
-        linear-gradient(
-            90deg,
-            #22c55e,
-            #84cc16
-        );
-    border-radius: inherit;
-    transition: width .35s ease;
+width: 0%;
+height: 100%;
+background: linear-gradient(90deg, #22c55e, #84cc16);
+border-radius: inherit;
+transition: width .35s ease;
 }
 
 .streak-box {
-    animation:
-        streakPulse 1.8s infinite;
+animation: streakPulse 1.8s infinite;
 }
 
-
-/* تعليمات اللعبة */
+/* تعليمات */
 
 .balloon-instruction {
-    background: white;
-    border-radius: 25px;
-    padding: 18px;
-    text-align: center;
-    margin-bottom: 15px;
-    box-shadow:
-        0 8px 20px rgba(0,0,0,.08);
+background: white;
+border-radius: 25px;
+padding: 18px;
+text-align: center;
+margin-bottom: 15px;
+box-shadow: 0 8px 20px rgba(0,0,0,.08);
 }
 
 .instruction-label {
-    font-size: 15px;
-    opacity: .65;
+font-size: 15px;
+opacity: .65;
 }
 
 .balloon-target {
-    font-size: 55px;
-    font-weight: bold;
-    margin: 5px 0;
+font-size: 55px;
+font-weight: bold;
+margin: 5px 0;
 }
 
 .sound-target-btn {
-    border: 0;
-    border-radius: 14px;
-    padding: 10px 18px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 16px;
+border: 0;
+border-radius: 14px;
+padding: 10px 18px;
+cursor: pointer;
+font-family: inherit;
+font-size: 16px;
 }
-
 
 /* ساحة اللعب */
 
 .balloon-arena {
-    position: relative;
-    height: 520px;
-    overflow: hidden;
-    border-radius: 30px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #7dd3fc 0%,
-            #bae6fd 45%,
-            #dcfce7 100%
-        );
-
-    box-shadow:
-        inset 0 0 30px rgba(255,255,255,.5),
-        0 10px 30px rgba(0,0,0,.12);
+position: relative;
+height: 520px;
+overflow: hidden;
+border-radius: 30px;
+background: linear-gradient(
+180deg,
+#7dd3fc 0%,
+#bae6fd 45%,
+#dcfce7 100%
+);
+box-shadow:
+inset 0 0 30px rgba(255,255,255,.5),
+0 10px 30px rgba(0,0,0,.12);
 }
 
-
-/* السحب */
-
 .arena-cloud {
-    position: absolute;
-    font-size: 70px;
-    opacity: .8;
-    pointer-events: none;
+position: absolute;
+font-size: 70px;
+opacity: .8;
+pointer-events: none;
 }
 
 .cloud-one {
-    top: 25px;
-    right: 10%;
-    animation:
-        cloudMove 18s linear infinite;
+top: 25px;
+right: 10%;
+animation: cloudMove 18s linear infinite;
 }
 
 .cloud-two {
-    top: 100px;
-    left: 5%;
-    font-size: 55px;
-    animation:
-        cloudMove 24s linear infinite reverse;
+top: 100px;
+left: 5%;
+font-size: 55px;
+animation: cloudMove 24s linear infinite reverse;
 }
-
 
 /* البالونة */
 
 .game-balloon {
-    position: absolute;
-
-    width: 95px;
-    height: 115px;
-
-    border-radius:
-        50% 50% 48% 48%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 45px;
-    font-weight: bold;
-
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
-
-    box-shadow:
-        inset -8px -10px 15px rgba(0,0,0,.12),
-        inset 8px 8px 12px rgba(255,255,255,.35),
-        0 8px 15px rgba(0,0,0,.12);
-
-    transition:
-        transform .15s ease,
-        opacity .15s ease;
-
-    /* مهم:
-       حركة البالونة يتم التحكم فيها من JavaScript */
-    animation: none;
-
-    will-change: transform, opacity;
+position: absolute;
+width: 95px;
+height: 115px;
+border-radius: 50% 50% 48% 48%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 45px;
+font-weight: bold;
+cursor: pointer;
+user-select: none;
+-webkit-user-select: none;
+touch-action: manipulation;
+box-shadow:
+inset -8px -10px 15px rgba(0,0,0,.12),
+inset 8px 8px 12px rgba(255,255,255,.35),
+0 8px 15px rgba(0,0,0,.12);
+transition:
+transform .15s ease,
+opacity .15s ease;
+animation: none;
+will-change: transform, opacity;
 }
 
 .game-balloon:hover {
-    transform: scale(1.08);
+transform: scale(1.08);
 }
 
 .game-balloon:active {
-    transform: scale(.94);
+transform: scale(.94);
 }
 
 .game-balloon::after {
-
-    content: "";
-
-    position: absolute;
-
-    bottom: -18px;
-
-    width: 2px;
-    height: 35px;
-
-    background:
-        rgba(80,80,80,.55);
-
+content: "";
+position: absolute;
+bottom: -18px;
+width: 2px;
+height: 35px;
+background: rgba(80,80,80,.55);
 }
 
-
-/* ألوان البالونات */
-
 .balloon-red {
-    background:
-        linear-gradient(
-            135deg,
-            #fb7185,
-            #e11d48
-        );
-    color: white;
+background: linear-gradient(135deg, #fb7185, #e11d48);
+color: white;
 }
 
 .balloon-blue {
-    background:
-        linear-gradient(
-            135deg,
-            #60a5fa,
-            #2563eb
-        );
-    color: white;
+background: linear-gradient(135deg, #60a5fa, #2563eb);
+color: white;
 }
 
 .balloon-yellow {
-    background:
-        linear-gradient(
-            135deg,
-            #fde047,
-            #f59e0b
-        );
+background: linear-gradient(135deg, #fde047, #f59e0b);
 }
 
 .balloon-purple {
-    background:
-        linear-gradient(
-            135deg,
-            #c084fc,
-            #7e22ce
-        );
-    color: white;
+background: linear-gradient(135deg, #c084fc, #7e22ce);
+color: white;
 }
 
 .balloon-green {
-    background:
-        linear-gradient(
-            135deg,
-            #86efac,
-            #16a34a
-        );
+background: linear-gradient(135deg, #86efac, #16a34a);
 }
 
-
-/* النجاح والخطأ */
-
 .balloon-pop {
-    animation:
-        balloonPop .45s ease-out forwards !important;
-
-    pointer-events: none !important;
-
-    z-index: 50 !important;
+animation: balloonPop .45s ease-out forwards !important;
+pointer-events: none !important;
+z-index: 50 !important;
 }
 
 .balloon-wrong {
-    animation:
-        balloonWrong .45s ease !important;
+animation: balloonWrong .45s ease !important;
 }
 
 .balloon-message {
-    min-height: 45px;
-    padding: 12px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
+min-height: 45px;
+padding: 12px;
+text-align: center;
+font-size: 22px;
+font-weight: bold;
 }
 
 .balloon-message.success {
-    color: #15803d;
+color: #15803d;
 }
 
 .balloon-message.wrong {
-    color: #dc2626;
+color: #dc2626;
 }
 
 .exit-game-btn {
-    display: block;
-    margin: 15px auto 0;
+display: block;
+margin: 15px auto 0;
 }
-
-
-/* جسيمات الانفجار */
 
 .pop-particle {
-    position: absolute;
-    pointer-events: none;
-    font-size: 22px;
-
-    animation:
-        particleBurst .7s ease-out forwards;
-
-    z-index: 100;
+position: absolute;
+pointer-events: none;
+font-size: 22px;
+animation: particleBurst .7s ease-out forwards;
+z-index: 100;
 }
 
+/* ==========================================
+🚗🏁 سباق الحروف
+========================================== */
+
+.letter-race-wrapper {
+width: 100%;
+max-width: 1000px;
+margin: auto;
+padding: 15px;
+text-align: center;
+}
+
+/* رأس السباق */
+
+.letter-race-wrapper .game-hud {
+margin-bottom: 15px;
+}
+
+/* لوحة التعليمات */
+
+.letter-race-instruction {
+background:
+linear-gradient(
+135deg,
+#ffffff,
+#f8fbff
+);
+border-radius: 26px;
+padding: 18px 15px;
+margin-bottom: 15px;
+box-shadow:
+0 8px 22px rgba(0,0,0,.09);
+border: 2px solid #dbeafe;
+}
+
+.letter-race-target {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+
+```
+min-width: 90px;
+min-height: 80px;
+
+margin: 7px auto;
+
+padding: 5px 20px;
+
+border-radius: 22px;
+
+background:
+    linear-gradient(
+        135deg,
+        #eff6ff,
+        #dbeafe
+    );
+
+color: #1d4ed8;
+
+font-size: 58px;
+font-weight: 900;
+
+box-shadow:
+    0 6px 15px rgba(37,99,235,.16);
+
+border: 3px solid #93c5fd;
+
+animation: raceTargetPulse 1.8s ease-in-out infinite;
+```
+
+}
 
 /* ==========================================
-   الحركات
+طريق السباق
+========================================== */
+
+.letter-race-track {
+position: relative;
+
+```
+width: 100%;
+height: 440px;
+
+overflow: hidden;
+
+border-radius: 32px;
+
+background:
+    linear-gradient(
+        180deg,
+        #7dd3fc 0%,
+        #bae6fd 34%,
+        #86efac 34%,
+        #4ade80 100%
+    );
+
+box-shadow:
+    inset 0 0 35px rgba(255,255,255,.45),
+    0 12px 30px rgba(0,0,0,.14);
+
+touch-action: none;
+
+isolation: isolate;
+```
+
+}
+
+/* خلفية السماء */
+
+.letter-race-track::before {
+content: "☁️        ☁️              ☁️";
+
+```
+position: absolute;
+
+top: 20px;
+left: 0;
+
+width: 200%;
+
+font-size: 55px;
+
+white-space: nowrap;
+
+opacity: .75;
+
+pointer-events: none;
+
+animation:
+    raceClouds 18s linear infinite;
+```
+
+}
+
+/* الشمس */
+
+.letter-race-track::after {
+content: "☀️";
+
+```
+position: absolute;
+
+top: 22px;
+right: 8%;
+
+font-size: 65px;
+
+pointer-events: none;
+
+filter: drop-shadow(
+    0 4px 8px rgba(0,0,0,.12)
+);
+```
+
+}
+
+/* ==========================================
+الطريق
+========================================== */
+
+.race-road {
+position: absolute;
+
+```
+left: 50%;
+bottom: 0;
+
+transform: translateX(-50%);
+
+width: 72%;
+height: 100%;
+
+background:
+    linear-gradient(
+        90deg,
+        #475569 0%,
+        #334155 8%,
+        #1e293b 50%,
+        #334155 92%,
+        #475569 100%
+    );
+
+border-left:
+    10px solid #f8fafc;
+
+border-right:
+    10px solid #f8fafc;
+
+box-shadow:
+    inset 15px 0 20px rgba(0,0,0,.15),
+    inset -15px 0 20px rgba(0,0,0,.15);
+
+overflow: hidden;
+```
+
+}
+
+/* خطوط الطريق */
+
+.road-line {
+position: absolute;
+
+```
+top: -120px;
+
+width: 12px;
+height: 80px;
+
+background: #ffffff;
+
+border-radius: 10px;
+
+opacity: .95;
+
+animation:
+    roadMove .7s linear infinite;
+
+box-shadow:
+    0 0 5px rgba(255,255,255,.4);
+```
+
+}
+
+.road-line-1 {
+left: 32%;
+}
+
+.road-line-2 {
+left: 50%;
+animation-delay: .23s;
+}
+
+.road-line-3 {
+left: 68%;
+animation-delay: .46s;
+}
+
+/* ==========================================
+سيارة الطفل
+========================================== */
+
+.letter-race-car {
+position: absolute;
+
+```
+z-index: 20;
+
+bottom: 28px;
+
+left: 50%;
+
+width: 78px;
+height: 92px;
+
+transform:
+    translateX(-50%);
+
+display: flex;
+
+align-items: center;
+justify-content: center;
+
+font-size: 58px;
+
+filter:
+    drop-shadow(
+        0 7px 6px rgba(0,0,0,.25)
+    );
+
+transition:
+    left .22s ease,
+    transform .15s ease;
+
+user-select: none;
+pointer-events: none;
+
+will-change:
+    left,
+    transform;
+```
+
+}
+
+/* حركة السيارة أثناء السرعة */
+
+.letter-race-car.racing {
+animation:
+carBounce .25s ease-in-out infinite alternate;
+}
+
+/* اهتزاز عند الخطأ */
+
+.letter-race-car.car-error {
+animation:
+carShake .45s ease;
+}
+
+/* نجاح */
+
+.letter-race-car.car-success {
+animation:
+carBoost .55s ease;
+}
+
+/* ==========================================
+خط النهاية
+========================================== */
+
+.finish-line {
+position: absolute;
+
+```
+top: 22px;
+left: 0;
+
+width: 100%;
+
+padding: 7px 0;
+
+text-align: center;
+
+font-size: 35px;
+
+background:
+    repeating-linear-gradient(
+        90deg,
+        #ffffff 0 22px,
+        #111827 22px 44px
+    );
+
+border-top:
+    4px solid white;
+
+border-bottom:
+    4px solid white;
+
+box-shadow:
+    0 5px 12px rgba(0,0,0,.2);
+
+z-index: 10;
+```
+
+}
+
+/* ==========================================
+بوابات الحروف
+========================================== */
+
+.letter-race-gate {
+position: absolute;
+
+```
+z-index: 15;
+
+bottom: 145px;
+
+width: 115px;
+min-height: 130px;
+
+border-radius: 22px;
+
+border:
+    5px solid #ffffff;
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+justify-content: center;
+
+font-family: inherit;
+
+font-size: 52px;
+font-weight: 900;
+
+cursor: pointer;
+
+color: #ffffff;
+
+text-shadow:
+    0 3px 4px rgba(0,0,0,.25);
+
+box-shadow:
+    0 10px 20px rgba(0,0,0,.20),
+    inset 0 5px 10px rgba(255,255,255,.25);
+
+transition:
+    transform .18s ease,
+    filter .18s ease,
+    opacity .2s ease;
+
+touch-action: manipulation;
+
+user-select: none;
+```
+
+}
+
+.letter-race-gate:hover {
+transform:
+translateY(-5px)
+scale(1.04);
+
+```
+filter: brightness(1.06);
+```
+
+}
+
+.letter-race-gate:active {
+transform:
+scale(.95);
+}
+
+.letter-race-gate::after {
+content: "بوابة";
+
+```
+display: block;
+
+font-size: 12px;
+font-weight: bold;
+
+margin-top: -3px;
+
+opacity: .85;
+```
+
+}
+
+.letter-race-gate.gate-one {
+left: 5%;
+background:
+linear-gradient(
+135deg,
+#fb7185,
+#be123c
+);
+}
+
+.letter-race-gate.gate-two {
+left: 29%;
+background:
+linear-gradient(
+135deg,
+#60a5fa,
+#1d4ed8
+);
+}
+
+.letter-race-gate.gate-three {
+right: 29%;
+background:
+linear-gradient(
+135deg,
+#facc15,
+#d97706
+);
+color: #422006;
+text-shadow: none;
+}
+
+.letter-race-gate.gate-four {
+right: 5%;
+background:
+linear-gradient(
+135deg,
+#c084fc,
+#7e22ce
+);
+}
+
+/* البوابة الصحيحة */
+
+.letter-race-gate.correct-gate {
+animation:
+gateCorrect .65s ease forwards;
+
+```
+box-shadow:
+    0 0 0 7px rgba(34,197,94,.25),
+    0 0 30px rgba(34,197,94,.8);
+```
+
+}
+
+/* البوابة الخطأ */
+
+.letter-race-gate.wrong-gate {
+animation:
+gateWrong .45s ease;
+}
+
+/* ==========================================
+اختيارات بديلة أسفل اللعبة
+========================================== */
+
+.letter-race-options {
+display: flex;
+
+```
+justify-content: center;
+
+flex-wrap: wrap;
+
+gap: 12px;
+
+margin: 15px auto;
+
+max-width: 800px;
+```
+
+}
+
+.letter-race-option {
+min-width: 80px;
+min-height: 65px;
+
+```
+border: 0;
+
+border-radius: 18px;
+
+padding: 8px 18px;
+
+background:
+    linear-gradient(
+        135deg,
+        #ffffff,
+        #eff6ff
+    );
+
+color: #1d4ed8;
+
+border:
+    3px solid #bfdbfe;
+
+font-family: inherit;
+
+font-size: 32px;
+font-weight: 900;
+
+cursor: pointer;
+
+box-shadow:
+    0 5px 12px rgba(0,0,0,.10);
+
+transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+```
+
+}
+
+.letter-race-option:hover {
+transform:
+translateY(-4px)
+scale(1.03);
+
+```
+box-shadow:
+    0 10px 18px rgba(37,99,235,.16);
+```
+
+}
+
+.letter-race-option:active {
+transform: scale(.94);
+}
+
+/* ==========================================
+مؤثرات سباق الحروف
+========================================== */
+
+.race-spark {
+position: absolute;
+
+```
+z-index: 50;
+
+pointer-events: none;
+
+font-size: 25px;
+
+animation:
+    raceSparkBurst .75s ease-out forwards;
+```
+
+}
+
+.race-confetti {
+position: absolute;
+
+```
+z-index: 100;
+
+pointer-events: none;
+
+font-size: 22px;
+
+animation:
+    raceConfettiFall 1s ease-out forwards;
+```
+
+}
+
+.race-speed-effect {
+position: absolute;
+
+```
+z-index: 3;
+
+width: 5px;
+
+height: 80px;
+
+border-radius: 20px;
+
+background:
+    rgba(255,255,255,.8);
+
+opacity: .7;
+
+animation:
+    speedLine .45s linear forwards;
+
+pointer-events: none;
+```
+
+}
+
+/* ==========================================
+شاشة نهاية سباق الحروف
+========================================== */
+
+.letter-race-finish-screen {
+position: absolute;
+
+```
+inset: 0;
+
+z-index: 200;
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+justify-content: center;
+
+text-align: center;
+
+padding: 25px;
+
+border-radius: inherit;
+
+background:
+    linear-gradient(
+        135deg,
+        rgba(255,255,255,.96),
+        rgba(239,246,255,.96)
+    );
+
+animation:
+    raceFinishAppear .5s ease;
+```
+
+}
+
+.letter-race-trophy {
+font-size: 90px;
+
+```
+animation:
+    raceTrophyBounce 1s ease-in-out infinite alternate;
+```
+
+}
+
+.letter-race-finish-screen h2 {
+margin: 10px 0;
+
+```
+font-size: 32px;
+
+color: #1d4ed8;
+```
+
+}
+
+.letter-race-finish-score {
+font-size: 23px;
+
+```
+font-weight: bold;
+
+margin: 8px;
+```
+
+}
+
+.letter-race-finish-stars {
+font-size: 25px;
+
+```
+margin: 8px 0 18px;
+```
+
+}
+
+.letter-race-finish-screen button {
+margin: 5px;
+}
+
+/* ==========================================
+مؤثرات الحركة
 ========================================== */
 
 @keyframes balloonFloat {
 
-    0%,
-    100% {
-        margin-top: 0;
-    }
-
-    50% {
-        margin-top: -10px;
-    }
-
+```
+0%,
+100% {
+    margin-top: 0;
 }
 
+50% {
+    margin-top: -10px;
+}
+```
+
+}
 
 @keyframes balloonPop {
 
-    0% {
-        transform:
-            scale(1)
-            rotate(0deg);
-        opacity: 1;
-    }
-
-    20% {
-        transform:
-            scale(1.12)
-            rotate(-4deg);
-        opacity: 1;
-    }
-
-    40% {
-        transform:
-            scale(1.35)
-            rotate(4deg);
-        opacity: 1;
-    }
-
-    60% {
-        transform:
-            scale(1.5)
-            rotate(-3deg);
-        opacity: .9;
-    }
-
-    80% {
-        transform:
-            scale(.75)
-            rotate(5deg);
-        opacity: .5;
-    }
-
-    100% {
-        transform:
-            scale(0)
-            rotate(0deg);
-        opacity: 0;
-    }
-
+```
+0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
 }
 
+20% {
+    transform: scale(1.12) rotate(-4deg);
+    opacity: 1;
+}
+
+40% {
+    transform: scale(1.35) rotate(4deg);
+    opacity: 1;
+}
+
+60% {
+    transform: scale(1.5) rotate(-3deg);
+    opacity: .9;
+}
+
+80% {
+    transform: scale(.75) rotate(5deg);
+    opacity: .5;
+}
+
+100% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+}
+```
+
+}
 
 @keyframes balloonWrong {
 
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    25% {
-        transform: translateX(-12px);
-    }
-
-    50% {
-        transform: translateX(0);
-    }
-
-    75% {
-        transform: translateX(12px);
-    }
-
+```
+0%,
+100% {
+    transform: translateX(0);
 }
 
+25% {
+    transform: translateX(-12px);
+}
+
+50% {
+    transform: translateX(0);
+}
+
+75% {
+    transform: translateX(12px);
+}
+```
+
+}
 
 @keyframes particleBurst {
 
-    from {
-        transform:
-            translate(0, 0)
-            scale(1)
-            rotate(0deg);
+```
+from {
+    transform:
+        translate(0, 0)
+        scale(1)
+        rotate(0deg);
 
-        opacity: 1;
-    }
-
-    to {
-        transform:
-            translate(
-                var(--x),
-                var(--y)
-            )
-            scale(0)
-            rotate(180deg);
-
-        opacity: 0;
-    }
-
+    opacity: 1;
 }
 
+to {
+    transform:
+        translate(var(--x), var(--y))
+        scale(0)
+        rotate(180deg);
+
+    opacity: 0;
+}
+```
+
+}
 
 @keyframes cloudMove {
 
-    0% {
-        transform: translateX(0);
-    }
-
-    50% {
-        transform: translateX(-40px);
-    }
-
-    100% {
-        transform: translateX(0);
-    }
-
+```
+0% {
+    transform: translateX(0);
 }
 
+50% {
+    transform: translateX(-40px);
+}
+
+100% {
+    transform: translateX(0);
+}
+```
+
+}
 
 @keyframes gameFloat {
 
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
-
+```
+0%,
+100% {
+    transform: translateY(0);
 }
 
+50% {
+    transform: translateY(-8px);
+}
+```
+
+}
 
 @keyframes streakPulse {
 
-    0%,
-    100% {
-        transform: scale(1);
-    }
+```
+0%,
+100% {
+    transform: scale(1);
+}
 
-    50% {
-        transform: scale(1.05);
-    }
+50% {
+    transform: scale(1.05);
+}
+```
 
 }
 
+/* ==========================================
+🚗 حركات سباق الحروف
+========================================== */
 
-/* الجوال */
+@keyframes roadMove {
 
-@media (max-width: 600px) {
+```
+from {
+    transform: translateY(0);
+}
 
-    .game-hud {
-        grid-template-columns:
-            80px 1fr 80px;
-
-        gap: 8px;
-    }
-
-    .hud-item {
-        font-size: 16px;
-        padding: 10px 5px;
-    }
-
-    .balloon-arena {
-        height: 500px;
-    }
-
-    .game-balloon {
-        width: 75px;
-        height: 92px;
-        font-size: 35px;
-    }
-
-    .balloon-target {
-        font-size: 45px;
-    }
+to {
+    transform: translateY(560px);
+}
+```
 
 }
 
+@keyframes raceClouds {
 
-.balloon-finish-screen {
-    position: absolute;
-    inset: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    align-items: center;
-    justify-content: center;
-
-    text-align: center;
-
-    padding: 25px;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255,255,255,.94),
-            rgba(255,255,255,.85)
-        );
-
-    animation:
-        finishAppear .5s ease;
+```
+from {
+    transform: translateX(0);
 }
 
+to {
+    transform: translateX(-50%);
+}
+```
 
-.finish-trophy {
-    font-size: 90px;
-
-    animation:
-        trophyBounce 1s infinite alternate;
 }
 
+@keyframes carBounce {
 
-.finish-score {
-    font-size: 22px;
-    margin: 10px;
-    font-weight: bold;
+```
+from {
+    transform:
+        translateX(-50%)
+        translateY(0)
+        rotate(-1deg);
 }
 
+to {
+    transform:
+        translateX(-50%)
+        translateY(-4px)
+        rotate(1deg);
+}
+```
 
-.finish-stars {
-    font-size: 20px;
-    margin-bottom: 20px;
 }
 
+@keyframes carShake {
 
-.balloon-finish-screen button {
-    margin: 5px;
+```
+0%,
+100% {
+    transform:
+        translateX(-50%)
+        rotate(0);
 }
 
+20% {
+    transform:
+        translateX(calc(-50% - 10px))
+        rotate(-7deg);
+}
+
+40% {
+    transform:
+        translateX(calc(-50% + 10px))
+        rotate(7deg);
+}
+
+60% {
+    transform:
+        translateX(calc(-50% - 7px))
+        rotate(-5deg);
+}
+
+80% {
+    transform:
+        translateX(calc(-50% + 7px))
+        rotate(5deg);
+}
+```
+
+}
+
+@keyframes carBoost {
+
+```
+0% {
+    transform:
+        translateX(-50%)
+        scale(1);
+}
+
+40% {
+    transform:
+        translateX(-50%)
+        scale(1.18);
+}
+
+70% {
+    transform:
+        translateX(-50%)
+        scale(.95);
+}
+
+100% {
+    transform:
+        translateX(-50%)
+        scale(1);
+}
+```
+
+}
+
+@keyframes raceTargetPulse {
+
+```
+0%,
+100% {
+    transform: scale(1);
+}
+
+50% {
+    transform: scale(1.04);
+}
+```
+
+}
+
+@keyframes gateCorrect {
+
+```
+0% {
+    transform: scale(1);
+    opacity: 1;
+}
+
+35% {
+    transform: scale(1.15) rotate(-3deg);
+    opacity: 1;
+}
+
+70% {
+    transform: scale(1.28) rotate(3deg);
+    opacity: .9;
+}
+
+100% {
+    transform: scale(.7);
+    opacity: 0;
+}
+```
+
+}
+
+@keyframes gateWrong {
+
+```
+0%,
+100% {
+    transform: translateX(0);
+}
+
+25% {
+    transform: translateX(-12px);
+}
+
+50% {
+    transform: translateX(12px);
+}
+
+75% {
+    transform: translateX(-8px);
+}
+```
+
+}
+
+@keyframes raceSparkBurst {
+
+```
+from {
+    transform:
+        translate(0,0)
+        scale(1)
+        rotate(0deg);
+
+    opacity: 1;
+}
+
+to {
+    transform:
+        translate(
+            var(--spark-x),
+            var(--spark-y)
+        )
+        scale(0)
+        rotate(180deg);
+
+    opacity: 0;
+}
+```
+
+}
+
+@keyframes raceConfettiFall {
+
+```
+from {
+    transform:
+        translateY(0)
+        rotate(0deg)
+        scale(1);
+
+    opacity: 1;
+}
+
+to {
+    transform:
+        translate(
+            var(--confetti-x),
+            var(--confetti-y)
+        )
+        rotate(540deg)
+        scale(.6);
+
+    opacity: 0;
+}
+```
+
+}
+
+@keyframes speedLine {
+
+```
+from {
+    transform:
+        translateY(-80px)
+        scaleY(.4);
+
+    opacity: 0;
+}
+
+30% {
+    opacity: .8;
+}
+
+to {
+    transform:
+        translateY(500px)
+        scaleY(1.4);
+
+    opacity: 0;
+}
+```
+
+}
+
+@keyframes raceFinishAppear {
+
+```
+from {
+    opacity: 0;
+    transform: scale(.88);
+}
+
+to {
+    opacity: 1;
+    transform: scale(1);
+}
+```
+
+}
+
+@keyframes raceTrophyBounce {
+
+```
+from {
+    transform: translateY(0) rotate(-3deg);
+}
+
+to {
+    transform: translateY(-12px) rotate(3deg);
+}
+```
+
+}
 
 @keyframes finishAppear {
 
-    from {
-        opacity: 0;
-        transform: scale(.9);
-    }
+```
+from {
+    opacity: 0;
+    transform: scale(.9);
+}
 
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+to {
+    opacity: 1;
+    transform: scale(1);
+}
+```
 
 }
 
-
 @keyframes trophyBounce {
 
-    from {
-        transform: translateY(0);
-    }
+```
+from {
+    transform: translateY(0);
+}
 
-    to {
-        transform: translateY(-12px);
-    }
+to {
+    transform: translateY(-12px);
+}
+```
+
+}
+
+/* ==========================================
+شاشة نهاية البالونات
+========================================== */
+
+.balloon-finish-screen {
+position: absolute;
+inset: 0;
+
+```
+display: flex;
+flex-direction: column;
+
+align-items: center;
+justify-content: center;
+
+text-align: center;
+
+padding: 25px;
+
+background:
+    linear-gradient(
+        135deg,
+        rgba(255,255,255,.94),
+        rgba(255,255,255,.85)
+    );
+
+animation:
+    finishAppear .5s ease;
+```
+
+}
+
+.finish-trophy {
+font-size: 90px;
+
+```
+animation:
+    trophyBounce 1s infinite alternate;
+```
+
+}
+
+.finish-score {
+font-size: 22px;
+margin: 10px;
+font-weight: bold;
+}
+
+.finish-stars {
+font-size: 20px;
+margin-bottom: 20px;
+}
+
+.balloon-finish-screen button {
+margin: 5px;
+}
+
+/* ==========================================
+تحسين الهاتف
+========================================== */
+
+@media (max-width: 600px) {
+
+```
+header h1 {
+    font-size: 25px;
+}
+
+header p {
+    font-size: 16px;
+}
+
+.container {
+    padding: 10px;
+}
+
+.card {
+    padding: 15px;
+}
+
+.menu {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.menu button {
+    padding: 18px 5px;
+    font-size: 18px;
+}
+
+.letter,
+.number {
+    font-size: 65px;
+}
+
+.big-word {
+    font-size: 45px;
+}
+
+.operation {
+    font-size: 38px;
+}
+
+.surah-text,
+.hadith-text,
+.dua-text {
+    font-size: 24px;
+}
+
+.count-items {
+    font-size: 30px;
+}
+
+#writingCanvas {
+    height: 250px;
+}
+
+.primary,
+.secondary,
+.success,
+.danger {
+    font-size: 16px;
+    padding: 11px 16px;
+}
+
+/* البالونات */
+
+.game-hud {
+    grid-template-columns: 80px 1fr 80px;
+    gap: 8px;
+}
+
+.hud-item {
+    font-size: 16px;
+    padding: 10px 5px;
+}
+
+.balloon-arena {
+    height: 500px;
+}
+
+.game-balloon {
+    width: 75px;
+    height: 92px;
+    font-size: 35px;
+}
+
+.balloon-target {
+    font-size: 45px;
+}
+
+/* سباق الحروف */
+
+.letter-race-wrapper {
+    padding: 8px;
+}
+
+.letter-race-track {
+    height: 500px;
+    border-radius: 24px;
+}
+
+.race-road {
+    width: 92%;
+    border-left-width: 7px;
+    border-right-width: 7px;
+}
+
+.letter-race-target {
+    min-width: 75px;
+    min-height: 68px;
+    font-size: 48px;
+}
+
+.letter-race-gate {
+    width: 68px;
+    min-height: 88px;
+    font-size: 36px;
+    border-width: 4px;
+    border-radius: 17px;
+}
+
+.letter-race-gate::after {
+    font-size: 9px;
+}
+
+.letter-race-gate.gate-one {
+    left: 2%;
+}
+
+.letter-race-gate.gate-two {
+    left: 26%;
+}
+
+.letter-race-gate.gate-three {
+    right: 26%;
+}
+
+.letter-race-gate.gate-four {
+    right: 2%;
+}
+
+.letter-race-car {
+    width: 65px;
+    height: 75px;
+    font-size: 48px;
+    bottom: 28px;
+}
+
+.finish-line {
+    font-size: 28px;
+    top: 20px;
+}
+
+.road-line {
+    width: 8px;
+    height: 65px;
+}
+
+.letter-race-option {
+    min-width: 65px;
+    min-height: 58px;
+    font-size: 28px;
+    padding: 6px 13px;
+}
+
+.letter-race-finish-screen h2 {
+    font-size: 26px;
+}
+
+.letter-race-trophy {
+    font-size: 75px;
+}
+```
+
+}
+
+/* ==========================================
+شاشات صغيرة جدًا
+========================================== */
+
+@media (max-width: 380px) {
+
+```
+.letter-race-track {
+    height: 460px;
+}
+
+.letter-race-gate {
+    width: 58px;
+    min-height: 78px;
+    font-size: 31px;
+}
+
+.letter-race-gate.gate-two {
+    left: 25%;
+}
+
+.letter-race-gate.gate-three {
+    right: 25%;
+}
+
+.letter-race-car {
+    font-size: 42px;
+}
+```
 
 }
