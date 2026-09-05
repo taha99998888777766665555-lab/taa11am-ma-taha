@@ -900,153 +900,155 @@
     class="screen"
 >
 
-```
-<div class="games-home">
+    <div class="games-home">
 
-    <div class="games-header">
+        <div class="games-header">
 
-        <div class="games-title-icon">
-            🎮
+            <div class="games-title-icon">
+                🎮
+            </div>
+
+            <div>
+                <h2>
+                    الألعاب التعليمية
+                </h2>
+
+                <p>
+                    تعلم والعب واكسب النجوم ⭐
+                </p>
+            </div>
+
         </div>
 
-        <div>
 
-            <h2>
-                الألعاب التعليمية
-            </h2>
+        <div class="games-grid">
 
-            <p>
-                تعلم والعب واكسب النجوم ⭐
-            </p>
+
+            <!-- =====================================
+                 🎈 فرقع الحروف
+            ====================================== -->
+
+            <button
+                class="game-launch-card balloon-game-card"
+                onclick="startBalloonGame('letters')"
+            >
+
+                <div class="game-card-icon">
+                    🎈
+                </div>
+
+                <h3>
+                    فرقع الحروف
+                </h3>
+
+                <p>
+                    اسمع الحرف ثم فرقع البالونة الصحيحة
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <!-- =====================================
+                 🔢 فرقع الأرقام
+            ====================================== -->
+
+            <button
+                class="game-launch-card balloon-game-card"
+                onclick="startNumberBalloonGame()"
+            >
+
+                <div class="game-card-icon">
+                    🔢
+                </div>
+
+                <h3>
+                    فرقع الأرقام
+                </h3>
+
+                <p>
+                    اسمع الرقم ثم فرقع البالونة الصحيحة
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <!-- =====================================
+                 🏁 سباق الحروف
+            ====================================== -->
+
+            <button
+                class="game-launch-card letter-race-game-card"
+                onclick="startLetterRace()"
+            >
+
+                <div class="game-card-icon">
+                    🏎️
+                </div>
+
+                <h3>
+                    سباق الحروف
+                </h3>
+
+                <p>
+                    اسمع الحرف، اختر بوابته، وانطلق نحو الفوز! 🏁
+                </p>
+
+                <span>
+                    ابدأ السباق ▶
+                </span>
+
+            </button>
+
+
+            <!-- =====================================
+                 🧩 لعبة المطابقة
+            ====================================== -->
+
+            <button
+                class="game-launch-card disabled-game"
+                disabled
+            >
+
+                <div class="game-card-icon">
+                    🧩
+                </div>
+
+                <h3>
+                    لعبة المطابقة
+                </h3>
+
+                <p>
+                    قريبًا
+                </p>
+
+            </button>
+
 
         </div>
 
-    </div>
-
-
-    <div class="games-grid">
-
-
-        <!-- فرقع الحروف -->
 
         <button
-            class="game-launch-card balloon-game-card"
-            onclick="startBalloonGame('letters')"
+            class="secondary"
+            onclick="showScreen('home')"
         >
-
-            <div class="game-card-icon">
-                🎈
-            </div>
-
-            <h3>
-                فرقع الحروف
-            </h3>
-
-            <p>
-                اسمع الحرف ثم فرقع البالونة الصحيحة
-            </p>
-
-            <span>
-                العب الآن ▶
-            </span>
-
+            🏠 الرئيسية
         </button>
-
-
-
-        <!-- فرقع الأرقام -->
-
-        <button
-            class="game-launch-card balloon-game-card"
-            onclick="startNumberBalloonGame()"
-        >
-
-            <div class="game-card-icon">
-                🔢
-            </div>
-
-            <h3>
-                فرقع الأرقام
-            </h3>
-
-            <p>
-                اسمع الرقم ثم فرقع البالونة الصحيحة
-            </p>
-
-            <span>
-                العب الآن ▶
-            </span>
-
-        </button>
-
-
-
-        <!-- سباق الحروف -->
-
-        <button
-            class="game-launch-card letter-race-game-card"
-            onclick="startLetterRace()"
-        >
-
-            <div class="game-card-icon">
-                🚗
-            </div>
-
-            <h3>
-                سباق الحروف
-            </h3>
-
-            <p>
-                اختر الحرف الصحيح وساعد السيارة على الفوز 🏁
-            </p>
-
-            <span>
-                العب الآن ▶
-            </span>
-
-        </button>
-
-
-
-        <!-- لعبة المطابقة -->
-
-        <button
-            class="game-launch-card disabled-game"
-            disabled
-        >
-
-            <div class="game-card-icon">
-                🧩
-            </div>
-
-            <h3>
-                لعبة المطابقة
-            </h3>
-
-            <p>
-                قريبًا
-            </p>
-
-        </button>
-
 
     </div>
-
-
-    <button
-        class="secondary"
-        onclick="showScreen('home')"
-    >
-        🏠 الرئيسية
-    </button>
-
-</div>
-```
 
 </section>
 
+
 <!-- ==========================================
-     لعبة فرقع الحروف
+     🎈 لعبة فرقع الحروف
 ========================================== -->
 
 <section
@@ -1054,123 +1056,118 @@
     class="screen"
 >
 
-```
-<div class="balloon-game-wrapper">
+    <div class="balloon-game-wrapper">
 
+        <div class="game-hud">
 
-    <div class="game-hud">
+            <div class="hud-item">
 
-        <div class="hud-item">
+                <span>⭐</span>
 
-            <span>⭐</span>
-
-            <strong id="balloonScore">
-                ٠
-            </strong>
-
-        </div>
-
-
-        <div class="hud-center">
-
-            <div class="hud-level">
-                المرحلة
-                <span id="balloonLevel">
-                    ١
-                </span>
-            </div>
-
-
-            <div class="balloon-progress">
-
-                <div
-                    id="balloonProgressFill"
-                    class="balloon-progress-fill"
-                ></div>
+                <strong id="balloonScore">
+                    ٠
+                </strong>
 
             </div>
 
+
+            <div class="hud-center">
+
+                <div class="hud-level">
+
+                    المرحلة
+
+                    <span id="balloonLevel">
+                        ١
+                    </span>
+
+                </div>
+
+
+                <div class="balloon-progress">
+
+                    <div
+                        id="balloonProgressFill"
+                        class="balloon-progress-fill"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <div class="hud-item streak-box">
+
+                🔥
+
+                <strong id="balloonStreak">
+                    ٠
+                </strong>
+
+            </div>
+
         </div>
 
 
-        <div class="hud-item streak-box">
+        <div class="balloon-instruction">
 
-            🔥
+            <div class="instruction-label">
+                🎯 المطلوب
+            </div>
 
-            <strong id="balloonStreak">
-                ٠
-            </strong>
+            <div
+                id="balloonTarget"
+                class="balloon-target"
+            >
+                ب
+            </div>
+
+            <button
+                class="sound-target-btn"
+                onclick="repeatBalloonTarget()"
+            >
+                🔊 اسمع مرة أخرى
+            </button>
 
         </div>
 
-    </div>
-
-
-
-    <div class="balloon-instruction">
-
-        <div class="instruction-label">
-            🎯 المطلوب
-        </div>
 
         <div
-            id="balloonTarget"
-            class="balloon-target"
+            id="balloonArena"
+            class="balloon-arena"
         >
-            ب
+
+            <div class="arena-cloud cloud-one">
+                ☁️
+            </div>
+
+            <div class="arena-cloud cloud-two">
+                ☁️
+            </div>
+
         </div>
 
+
+        <div
+            id="balloonMessage"
+            class="balloon-message"
+        ></div>
+
+
         <button
-            class="sound-target-btn"
-            onclick="repeatBalloonTarget()"
+            class="secondary exit-game-btn"
+            onclick="exitBalloonGame()"
         >
-            🔊 اسمع مرة أخرى
+            ⬅️ العودة للألعاب
         </button>
 
     </div>
 
-
-
-    <div
-        id="balloonArena"
-        class="balloon-arena"
-    >
-
-        <div class="arena-cloud cloud-one">
-            ☁️
-        </div>
-
-        <div class="arena-cloud cloud-two">
-            ☁️
-        </div>
-
-    </div>
-
-
-
-    <div
-        id="balloonMessage"
-        class="balloon-message"
-    ></div>
-
-
-
-    <button
-        class="secondary exit-game-btn"
-        onclick="exitBalloonGame()"
-    >
-        ⬅️ العودة للألعاب
-    </button>
-
-
-</div>
-```
-
 </section>
+
 
 <!-- ==========================================
      🔢 لعبة فرقع الأرقام
-     تم الإبقاء عليها مرة واحدة فقط
 ========================================== -->
 
 <section
@@ -1178,138 +1175,602 @@
     class="screen"
 >
 
-```
-<div class="balloon-game-wrapper">
+    <div class="balloon-game-wrapper">
 
+        <div class="game-hud">
 
-    <div class="game-hud">
+            <div class="hud-item">
 
-        <div class="hud-item">
+                <span>⭐</span>
 
-            <span>⭐</span>
-
-            <strong id="numberBalloonScore">
-                ٠
-            </strong>
-
-        </div>
-
-
-        <div class="hud-center">
-
-            <div class="hud-level">
-                المرحلة
-                <span id="numberBalloonLevel">
-                    ١
-                </span>
-            </div>
-
-
-            <div class="balloon-progress">
-
-                <div
-                    id="numberBalloonProgressFill"
-                    class="balloon-progress-fill"
-                ></div>
+                <strong id="numberBalloonScore">
+                    ٠
+                </strong>
 
             </div>
 
+
+            <div class="hud-center">
+
+                <div class="hud-level">
+
+                    المرحلة
+
+                    <span id="numberBalloonLevel">
+                        ١
+                    </span>
+
+                </div>
+
+
+                <div class="balloon-progress">
+
+                    <div
+                        id="numberBalloonProgressFill"
+                        class="balloon-progress-fill"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <div class="hud-item streak-box">
+
+                🔥
+
+                <strong id="numberBalloonStreak">
+                    ٠
+                </strong>
+
+            </div>
+
         </div>
 
 
-        <div class="hud-item streak-box">
+        <div class="balloon-instruction">
 
-            🔥
+            <div class="instruction-label">
+                🎯 اسمع الرقم ثم فرقعه
+            </div>
 
-            <strong id="numberBalloonStreak">
-                ٠
-            </strong>
+            <div
+                id="numberBalloonTarget"
+                class="balloon-target"
+            >
+                ؟
+            </div>
+
+            <button
+                class="sound-target-btn"
+                onclick="repeatNumberBalloonTarget()"
+            >
+                🔊 اسمع مرة أخرى
+            </button>
 
         </div>
 
-    </div>
-
-
-
-    <div class="balloon-instruction">
-
-        <div class="instruction-label">
-            🎯 اسمع الرقم ثم فرقعه
-        </div>
 
         <div
-            id="numberBalloonTarget"
-            class="balloon-target"
+            id="numberBalloonArena"
+            class="balloon-arena"
         >
-            ؟
+
+            <div class="arena-cloud cloud-one">
+                ☁️
+            </div>
+
+            <div class="arena-cloud cloud-two">
+                ☁️
+            </div>
+
         </div>
 
+
+        <div
+            id="numberBalloonMessage"
+            class="balloon-message"
+        ></div>
+
+
         <button
-            class="sound-target-btn"
-            onclick="repeatNumberBalloonTarget()"
+            class="secondary exit-game-btn"
+            onclick="exitNumberBalloonGame()"
         >
-            🔊 اسمع مرة أخرى
+            ⬅️ العودة للألعاب
         </button>
 
     </div>
 
+</section>
 
 
-    <div
-        id="numberBalloonArena"
-        class="balloon-arena"
-    >
+<!-- =========================================================
+     🏁🏎️ لعبة سباق الحروف الاحترافية
+========================================================= -->
 
-        <div class="arena-cloud cloud-one">
-            ☁️
+<section
+    id="letterRaceGame"
+    class="screen"
+>
+
+    <div class="letter-race-wrapper">
+
+
+        <!-- =========================================
+             الشريط العلوي
+        ========================================== -->
+
+        <div class="letter-race-topbar">
+
+            <button
+                class="race-top-btn"
+                onclick="exitLetterRace()"
+                aria-label="العودة للألعاب"
+            >
+                ⬅️
+            </button>
+
+
+            <div class="race-title">
+
+                <span>
+                    🏁
+                </span>
+
+                <strong>
+                    سباق الحروف
+                </strong>
+
+            </div>
+
+
+            <button
+                id="letterRacePauseBtn"
+                class="race-top-btn"
+                onclick="toggleLetterRacePause()"
+                aria-label="إيقاف مؤقت"
+            >
+                ⏸️
+            </button>
+
         </div>
 
-        <div class="arena-cloud cloud-two">
-            ☁️
+
+        <!-- =========================================
+             معلومات السباق
+        ========================================== -->
+
+        <div class="letter-race-hud">
+
+
+            <div class="race-hud-card">
+
+                <span class="race-hud-icon">
+                    ⭐
+                </span>
+
+                <div>
+
+                    <small>
+                        النقاط
+                    </small>
+
+                    <strong id="letterRaceScore">
+                        ٠
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="race-hud-card">
+
+                <span class="race-hud-icon">
+                    🔥
+                </span>
+
+                <div>
+
+                    <small>
+                        التتابع
+                    </small>
+
+                    <strong id="letterRaceStreak">
+                        ٠
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="race-hud-card race-round-card">
+
+                <small>
+                    السباق
+                </small>
+
+                <strong>
+
+                    <span id="letterRaceRound">
+                        ١
+                    </span>
+
+                    /
+
+                    <span id="letterRaceTotalRounds">
+                        ١٠
+                    </span>
+
+                </strong>
+
+            </div>
+
+
+            <div class="race-hud-card">
+
+                <span class="race-hud-icon">
+                    ❤️
+                </span>
+
+                <div>
+
+                    <small>
+                        المحاولات
+                    </small>
+
+                    <strong id="letterRaceLives">
+                        ❤️❤️❤️
+                    </strong>
+
+                </div>
+
+            </div>
+
+
         </div>
+
+
+        <!-- =========================================
+             المرحلة والتقدم
+        ========================================== -->
+
+        <div class="letter-race-level-bar">
+
+
+            <div class="race-level-info">
+
+                <span>
+                    🏆 المرحلة
+                </span>
+
+                <strong id="letterRaceLevel">
+                    ١
+                </strong>
+
+            </div>
+
+
+            <div class="race-progress-track">
+
+                <div
+                    id="letterRaceProgressFill"
+                    class="race-progress-fill"
+                ></div>
+
+            </div>
+
+
+            <div class="race-best">
+
+                🥇 الأفضل:
+
+                <strong id="letterRaceBestScore">
+                    ٠
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =========================================
+             المطلوب من الطفل
+        ========================================== -->
+
+        <div class="letter-race-command">
+
+
+            <div class="command-badge">
+                🎧 اسمع واختر
+            </div>
+
+
+            <div class="command-content">
+
+                <div class="command-label">
+                    الحرف المطلوب
+                </div>
+
+
+                <div
+                    id="letterRaceTarget"
+                    class="letter-race-target"
+                >
+                    بَ
+                </div>
+
+
+                <button
+                    class="race-listen-btn"
+                    onclick="repeatLetterRaceTarget()"
+                >
+
+                    🔊
+
+                    <span>
+                        اسمع الحرف
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================================
+             مضمار السباق
+        ========================================== -->
+
+        <div
+            id="letterRaceTrack"
+            class="professional-race-track"
+        >
+
+
+            <!-- السماء -->
+
+            <div class="race-sky">
+
+                <div class="race-cloud race-cloud-1">
+                    ☁️
+                </div>
+
+                <div class="race-cloud race-cloud-2">
+                    ☁️
+                </div>
+
+                <div class="race-cloud race-cloud-3">
+                    ☁️
+                </div>
+
+                <div class="race-sun">
+                    ☀️
+                </div>
+
+            </div>
+
+
+            <!-- الجبال -->
+
+            <div class="race-mountains">
+
+                <div class="mountain mountain-1"></div>
+
+                <div class="mountain mountain-2"></div>
+
+                <div class="mountain mountain-3"></div>
+
+            </div>
+
+
+            <!-- الطريق -->
+
+            <div class="professional-road">
+
+
+                <div class="road-side road-side-left"></div>
+
+                <div class="road-side road-side-right"></div>
+
+
+                <!-- خطوط المسارات -->
+
+                <div class="road-lane lane-1"></div>
+
+                <div class="road-lane lane-2"></div>
+
+                <div class="road-lane lane-3"></div>
+
+
+                <!-- بوابات الحروف -->
+
+                <div
+                    id="letterRaceOptions"
+                    class="letter-race-gates"
+                ></div>
+
+
+                <!-- السيارة -->
+
+                <div
+                    id="letterRaceCar"
+                    class="professional-race-car"
+                >
+
+                    <div class="car-shadow"></div>
+
+
+                    <div class="car-body">
+
+                        <div class="car-window"></div>
+
+                        <div
+                            class="car-light car-light-left"
+                        ></div>
+
+                        <div
+                            class="car-light car-light-right"
+                        ></div>
+
+
+                        <div
+                            class="car-wheel car-wheel-left"
+                        ></div>
+
+                        <div
+                            class="car-wheel car-wheel-right"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="car-flame">
+                        🔥
+                    </div>
+
+                </div>
+
+
+                <!-- خط النهاية -->
+
+                <div class="race-finish-line">
+
+                    <span>
+                        🏁
+                    </span>
+
+                    <span>
+                        🏁
+                    </span>
+
+                    <span>
+                        🏁
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- تأثير السرعة -->
+
+            <div
+                id="raceSpeedLines"
+                class="race-speed-lines"
+            ></div>
+
+
+            <!-- المؤثرات -->
+
+            <div
+                id="raceEffects"
+                class="race-effects"
+            ></div>
+
+
+        </div>
+
+
+        <!-- =========================================
+             رسالة التشجيع
+        ========================================== -->
+
+        <div
+            id="letterRaceMessage"
+            class="letter-race-message"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <!-- =========================================
+             أزرار التحكم
+        ========================================== -->
+
+        <div class="race-controls">
+
+
+            <button
+                class="race-control-btn"
+                onclick="letterRaceRight()"
+                aria-label="يمين"
+            >
+                ➡️
+            </button>
+
+
+            <button
+                class="race-control-select"
+                onclick="letterRaceSelect()"
+            >
+
+                🏎️
+
+                <span>
+                    اختيار
+                </span>
+
+            </button>
+
+
+            <button
+                class="race-control-btn"
+                onclick="letterRaceLeft()"
+                aria-label="يسار"
+            >
+                ⬅️
+            </button>
+
+
+        </div>
+
+
+        <!-- =========================================
+             تعليمات التحكم
+        ========================================== -->
+
+        <div class="race-help">
+
+            <span>
+                👈 اسحب
+            </span>
+
+            <span>
+                أو
+            </span>
+
+            <span>
+                ⌨️ استخدم الأسهم
+            </span>
+
+            <span>
+                أو
+            </span>
+
+            <span>
+                👆 اضغط البوابة
+            </span>
+
+        </div>
+
 
     </div>
 
-
-
-    <div
-        id="numberBalloonMessage"
-        class="balloon-message"
-    ></div>
-
-
-
-    <button
-        class="secondary exit-game-btn"
-        onclick="exitNumberBalloonGame()"
-    >
-        ⬅️ العودة للألعاب
-    </button>
-
-
-</div>
-```
-
 </section>
 
-<!-- =========================================================
-     🏁 بطاقة لعبة سباق الحروف
-========================================================= -->
-<button
-    class="game-launch-card letter-race-game-card"
-    onclick="startLetterRace()"
->
-    <div class="game-card-icon">🏎️</div>
 
-    <h3>سباق الحروف</h3>
+<!-- ==========================================
+     تشغيل JavaScript
+========================================== -->
 
-    <p>
-        اسمع الحرف، اختر بوابته، وانطلق نحو الفوز! 🏁
-    </p>
+<script src="script.js"></script>
 
-    <span>
-        ابدأ السباق ▶
-    </span>
-</button>
+</body>
 
 </html>
