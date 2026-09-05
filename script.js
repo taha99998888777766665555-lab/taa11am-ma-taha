@@ -7491,7 +7491,7 @@ function exitBalloonGame() {
 }
 /* =========================================================
    🔢 لعبة فرقع الأرقام - Number Balloon Game
-   لعبة مستقلة تمامًا عن لعبة فرقع الحروف
+   نسخة مستقلة ومحسنة
    ========================================================= */
 
 const numberBalloonGame = {
@@ -7522,7 +7522,7 @@ const numberBalloonGame = {
 
 
 /* =========================================================
-   🔢 الأرقام والكلمات العربية
+   🔢 كلمات الأرقام
    ========================================================= */
 
 const numberBalloonWords = {
@@ -7562,18 +7562,19 @@ const numberBalloonWords = {
 
 
 /* =========================================================
-   🔢 تحويل الرقم إلى أرقام عربية
+   🔢 تحويل الأرقام إلى أرقام عربية
    ========================================================= */
 
 function numberBalloonArabicNumber(number) {
-    return String(number).replace(/[0-9]/g, digit => {
-        return "٠١٢٣٤٥٦٧٨٩"[digit];
-    });
+    return String(number).replace(
+        /[0-9]/g,
+        digit => "٠١٢٣٤٥٦٧٨٩"[digit]
+    );
 }
 
 
 /* =========================================================
-   🎮 مستويات اللعبة
+   🎮 مستويات فرقع الأرقام
    ========================================================= */
 
 const numberBalloonLevels = {
@@ -7609,12 +7610,11 @@ const numberBalloonLevels = {
         min: 1,
         max: 30
     }
-
 };
 
 
 /* =========================================================
-   ▶️ بدء اللعبة
+   ▶️ بدء لعبة الأرقام
    ========================================================= */
 
 function startNumberBalloonGame() {
@@ -7622,7 +7622,9 @@ function startNumberBalloonGame() {
     stopNumberBalloonGameTimers();
 
     const oldFinish =
-        document.getElementById("numberBalloonFinishScreen");
+        document.getElementById(
+            "numberBalloonFinishScreen"
+        );
 
     if (oldFinish) {
         oldFinish.remove();
@@ -7643,7 +7645,7 @@ function startNumberBalloonGame() {
 
     numberBalloonGame.session++;
 
-    const currentSession =
+    const session =
         numberBalloonGame.session;
 
     showScreen("numberBalloonGame");
@@ -7656,7 +7658,7 @@ function startNumberBalloonGame() {
 
         if (
             !numberBalloonGame.active ||
-            currentSession !== numberBalloonGame.session
+            session !== numberBalloonGame.session
         ) {
             return;
         }
@@ -7668,13 +7670,15 @@ function startNumberBalloonGame() {
 
 
 /* =========================================================
-   🏟️ تجهيز الساحة
+   🏟️ تجهيز ساحة الأرقام
    ========================================================= */
 
 function prepareNumberBalloonArena() {
 
     const arena =
-        document.getElementById("numberBalloonArena");
+        document.getElementById(
+            "numberBalloonArena"
+        );
 
     if (!arena) return;
 
@@ -7686,7 +7690,7 @@ function prepareNumberBalloonArena() {
 
 
 /* =========================================================
-   🎮 أزرار التحكم
+   🎮 إنشاء معلومات اللعبة
    ========================================================= */
 
 function createNumberBalloonControls() {
@@ -7699,7 +7703,9 @@ function createNumberBalloonControls() {
     if (!wrapper) return;
 
     const old =
-        document.getElementById("numberBalloonControls");
+        document.getElementById(
+            "numberBalloonControls"
+        );
 
     if (old) {
         old.remove();
@@ -7748,19 +7754,25 @@ function createNumberBalloonControls() {
         >
             ⏸️ إيقاف
         </button>
-
     `;
 
     const exitButton =
-        wrapper.querySelector(".exit-game-btn");
+        wrapper.querySelector(
+            ".exit-game-btn"
+        );
 
     if (exitButton) {
+
         wrapper.insertBefore(
             controls,
             exitButton
         );
+
     } else {
-        wrapper.appendChild(controls);
+
+        wrapper.appendChild(
+            controls
+        );
     }
 }
 
@@ -7779,7 +7791,6 @@ function nextNumberBalloonRound() {
     }
 
     numberBalloonGame.round++;
-
     numberBalloonGame.answered = false;
 
     if (
@@ -7787,7 +7798,9 @@ function nextNumberBalloonRound() {
         numberBalloonGame.totalRounds
     ) {
 
-        finishNumberBalloonGame("completed");
+        finishNumberBalloonGame(
+            "completed"
+        );
 
         return;
     }
@@ -7802,18 +7815,22 @@ function nextNumberBalloonRound() {
 
     updateNumberBalloonHUD();
 
-    speakNumberBalloonTarget(target);
+    speakNumberBalloonTarget(
+        target
+    );
 
     clearNumberBalloonArena();
 
-    createNumberBalloonWave(target);
+    createNumberBalloonWave(
+        target
+    );
 
     startNumberBalloonRoundTimer();
 }
 
 
 /* =========================================================
-   🎯 تحديد مستوى اللعبة
+   📈 تحديد المستوى
    ========================================================= */
 
 function updateNumberBalloonLevel() {
@@ -7844,7 +7861,7 @@ function updateNumberBalloonLevel() {
 
 
 /* =========================================================
-   🎯 اختيار الرقم المطلوب حسب المستوى
+   🎯 الرقم المطلوب
    ========================================================= */
 
 function getRandomNumberBalloonTarget() {
@@ -7856,7 +7873,11 @@ function getRandomNumberBalloonTarget() {
 
     return Math.floor(
         Math.random() *
-        (level.max - level.min + 1)
+        (
+            level.max -
+            level.min +
+            1
+        )
     ) + level.min;
 }
 
@@ -7884,7 +7905,7 @@ function createNumberBalloonWave(target) {
         (number, index) => {
 
             const delay =
-                index * 450;
+                index * 400;
 
             const session =
                 numberBalloonGame.session;
@@ -7961,14 +7982,49 @@ function getNumberBalloonChoices(
         }
     }
 
-    return choices.sort(
-        () => Math.random() - 0.5
+    return shuffleNumberBalloonArray(
+        choices
     );
 }
 
 
 /* =========================================================
-   🎈 إنشاء بالونة رقم
+   🔀 خلط الأرقام
+   ========================================================= */
+
+function shuffleNumberBalloonArray(
+    array
+) {
+
+    const result = [...array];
+
+    for (
+        let i = result.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() *
+                (i + 1)
+            );
+
+        [
+            result[i],
+            result[j]
+        ] = [
+            result[j],
+            result[i]
+        ];
+    }
+
+    return result;
+}
+
+
+/* =========================================================
+   🎈 إنشاء بالونة
    ========================================================= */
 
 function createNumberGameBalloon(
@@ -7993,10 +8049,11 @@ function createNumberGameBalloon(
     }
 
     const balloon =
-        document.createElement("button");
+        document.createElement(
+            "button"
+        );
 
-    balloon.type =
-        "button";
+    balloon.type = "button";
 
     balloon.className =
         "game-balloon";
@@ -8027,34 +8084,30 @@ function createNumberGameBalloon(
         "pink"
     ];
 
-    const color =
-        colors[
-            Math.floor(
-                Math.random() *
-                colors.length
-            )
-        ];
-
     balloon.classList.add(
-        `balloon-${color}`
+        `balloon-${
+            colors[
+                Math.floor(
+                    Math.random() *
+                    colors.length
+                )
+            ]
+        }`
     );
 
-    const arenaWidth =
+    const maxLeft =
         Math.max(
-            80,
-            arena.clientWidth - 90
+            30,
+            arena.clientWidth - 100
         );
 
     const left =
         20 +
         Math.random() *
-        Math.max(
-            30,
-            arenaWidth - 40
-        );
+        maxLeft;
 
     const bottom =
-        -100 -
+        -110 -
         Math.random() * 80;
 
     balloon.style.left =
@@ -8071,7 +8124,7 @@ function createNumberGameBalloon(
 
     balloon.addEventListener(
         "click",
-        function () {
+        () => {
 
             handleNumberBalloonClick(
                 balloon,
@@ -8159,8 +8212,7 @@ function handleNumberBalloonClick(
             true;
 
         handleNumberBalloonCorrect(
-            balloon,
-            clickedNumber
+            balloon
         );
 
     } else {
@@ -8173,26 +8225,22 @@ function handleNumberBalloonClick(
 
 
 /* =========================================================
-   ✅ إجابة صحيحة
+   ✅ الرقم الصحيح
    ========================================================= */
 
 function handleNumberBalloonCorrect(
-    balloon,
-    number
+    balloon
 ) {
 
     stopNumberBalloonRoundTimer();
 
     numberBalloonGame.streak++;
 
-    if (
-        numberBalloonGame.streak >
-        numberBalloonGame.bestStreak
-    ) {
-
-        numberBalloonGame.bestStreak =
-            numberBalloonGame.streak;
-    }
+    numberBalloonGame.bestStreak =
+        Math.max(
+            numberBalloonGame.bestStreak,
+            numberBalloonGame.streak
+        );
 
     const points =
         calculateNumberBalloonPoints();
@@ -8202,28 +8250,29 @@ function handleNumberBalloonCorrect(
 
     numberBalloonGame.earnedStars++;
 
-    addStars(1);
+    if (
+        typeof addStars === "function"
+    ) {
+        addStars(1);
+    }
 
-   /* 💥 تشغيل الفرقعة */
+    balloon.style.pointerEvents =
+        "none";
 
-balloon.style.pointerEvents = "none";
+    balloon.style.transition =
+        "none";
 
-/* إيقاف حركة البالونة القديمة */
-balloon.style.transition = "none";
+    balloon.style.animation =
+        "none";
 
-/* تشغيل أنيميشن الفرقعة بالقوة */
-balloon.style.animation = "none";
+    void balloon.offsetWidth;
 
-/* إعادة تشغيل الأنيميشن */
-void balloon.offsetWidth;
+    balloon.style.animation =
+        "balloonPop .45s ease-out forwards";
 
-balloon.style.animation =
-    "balloonPop .45s ease-out forwards";
-
-/* إضافة تأثير الجسيمات */
-createNumberPopEffect(
-    balloon
-);
+    createNumberPopEffect(
+        balloon
+    );
 
     showNumberBalloonMessage(
         getNumberBalloonSuccessMessage(),
@@ -8231,9 +8280,6 @@ createNumberPopEffect(
     );
 
     speakNumberBalloonSuccess();
-
-    balloon.style.pointerEvents =
-        "none";
 
     updateNumberBalloonHUD();
 
@@ -8255,12 +8301,12 @@ createNumberPopEffect(
 
             nextNumberBalloonRound();
 
-        }, 750);
+        }, 800);
 }
 
 
 /* =========================================================
-   ❌ إجابة خاطئة
+   ❌ خطأ
    ========================================================= */
 
 function handleNumberBalloonMistake(
@@ -8290,11 +8336,13 @@ function handleNumberBalloonMistake(
     );
 
     showNumberBalloonMessage(
-        "😊 حاول مرة أخرى",
+        "😊 حَاوِلْ مَرَّةً أُخْرَى",
         false
     );
 
-    speakNumberBalloonRetry();
+    speak(
+        "حَاوِلْ مَرَّةً أُخْرَى"
+    );
 
     updateNumberBalloonHUD();
 
@@ -8323,7 +8371,7 @@ function handleNumberBalloonMistake(
                 );
             }
 
-        }, 450);
+        }, 500);
 
         return;
     }
@@ -8339,7 +8387,7 @@ function handleNumberBalloonMistake(
             );
         }
 
-    }, 500);
+    }, 550);
 }
 
 
@@ -8387,7 +8435,7 @@ function startNumberBalloonRoundTimer() {
 
 
 /* =========================================================
-   ⏰ انتهاء الوقت
+   ⏰ انتهى الوقت
    ========================================================= */
 
 function handleNumberBalloonTimeout() {
@@ -8414,11 +8462,13 @@ function handleNumberBalloonTimeout() {
         );
 
     showNumberBalloonMessage(
-        "⏰ انتهى الوقت",
+        "⏰ اِنْتَهَى الوَقْت",
         false
     );
 
-    speakNumberBalloonTimeout();
+    speak(
+        "اِنْتَهَى الوَقْت"
+    );
 
     clearNumberBalloonArena();
 
@@ -8456,7 +8506,7 @@ function handleNumberBalloonTimeout() {
 
 
 /* =========================================================
-   ⭐ حساب النقاط
+   ⭐ النقاط
    ========================================================= */
 
 function calculateNumberBalloonPoints() {
@@ -8468,7 +8518,10 @@ function calculateNumberBalloonPoints() {
     ) {
 
         points +=
-            (numberBalloonGame.level - 1) * 5;
+            (
+                numberBalloonGame.level -
+                1
+            ) * 5;
     }
 
     if (
@@ -8490,7 +8543,7 @@ function calculateNumberBalloonPoints() {
 
 
 /* =========================================================
-   🛑 إيقاف مؤقت الجولة
+   🛑 إيقاف المؤقت
    ========================================================= */
 
 function stopNumberBalloonRoundTimer() {
@@ -8510,7 +8563,7 @@ function stopNumberBalloonRoundTimer() {
 
 
 /* =========================================================
-   🧹 تنظيف مؤقتات إنشاء البالونات
+   🧹 تنظيف مؤقتات البالونات
    ========================================================= */
 
 function clearNumberBalloonSpawnTimers() {
@@ -8525,7 +8578,7 @@ function clearNumberBalloonSpawnTimers() {
 
 
 /* =========================================================
-   🛑 إيقاف جميع المؤقتات
+   🛑 إيقاف كل مؤقتات الأرقام
    ========================================================= */
 
 function stopNumberBalloonGameTimers() {
@@ -8576,47 +8629,58 @@ function speakNumberBalloonTarget(
     number
 ) {
 
-    if (
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
-
     const word =
         numberBalloonWords[number] ||
         String(number);
 
-    speechSynthesis.cancel();
-
-    const utterance =
-        new SpeechSynthesisUtterance(
-            word
-        );
-
-    utterance.lang =
-        "ar-SA";
-
-    utterance.rate =
-        0.7;
-
-    utterance.pitch =
-        1;
-
-    utterance.volume =
-        1;
-
     if (
-        typeof arabicVoice !== "undefined" &&
-        arabicVoice
+        typeof speak === "function"
     ) {
 
-        utterance.voice =
-            arabicVoice;
+        speak(
+            word,
+            {
+                rate: 0.68,
+                pitch: 1
+            }
+        );
+
+        return;
     }
 
-    speechSynthesis.speak(
-        utterance
-    );
+    if (
+        "speechSynthesis" in window
+    ) {
+
+        speechSynthesis.cancel();
+
+        const utterance =
+            new SpeechSynthesisUtterance(
+                word
+            );
+
+        utterance.lang =
+            "ar-SA";
+
+        utterance.rate =
+            0.68;
+
+        utterance.pitch =
+            1;
+
+        if (
+            typeof arabicVoice !== "undefined" &&
+            arabicVoice
+        ) {
+
+            utterance.voice =
+                arabicVoice;
+        }
+
+        speechSynthesis.speak(
+            utterance
+        );
+    }
 }
 
 
@@ -8627,7 +8691,7 @@ function speakNumberBalloonTarget(
 function repeatNumberBalloonTarget() {
 
     if (
-        !numberBalloonGame.target
+        numberBalloonGame.target === null
     ) {
         return;
     }
@@ -8639,7 +8703,7 @@ function repeatNumberBalloonTarget() {
 
 
 /* =========================================================
-   🔊 أصوات اللعبة
+   🔊 التشجيع
    ========================================================= */
 
 function speakNumberBalloonSuccess() {
@@ -8652,46 +8716,29 @@ function speakNumberBalloonSuccess() {
         "شَاطِر"
     ];
 
-    const message =
+    speak(
         messages[
             Math.floor(
                 Math.random() *
                 messages.length
             )
-        ];
-
-    speak(message);
-}
-
-
-function speakNumberBalloonRetry() {
-
-    speak(
-        "حاول مرة أخرى"
-    );
-}
-
-
-function speakNumberBalloonTimeout() {
-
-    speak(
-        "انتهى الوقت"
+        ]
     );
 }
 
 
 /* =========================================================
-   💬 رسائل اللعبة
+   💬 رسائل الأرقام
    ========================================================= */
 
 function getNumberBalloonSuccessMessage() {
 
     const messages = [
-        "🎉 أحسنت!",
-        "⭐ ممتاز!",
-        "🌟 رائع!",
-        "👏 برافو!",
-        "🏆 شاطر!"
+        "🎉 أَحْسَنْتَ!",
+        "⭐ مُمْتَاز!",
+        "🌟 رَائِع!",
+        "👏 بَرَافُو!",
+        "🏆 شَاطِر!"
     ];
 
     return messages[
@@ -8738,7 +8785,7 @@ function showNumberBalloonMessage(
 
 
 /* =========================================================
-   💥 تأثير الفرقعة
+   💥 انفجار البالونة
    ========================================================= */
 
 function createNumberPopEffect(
@@ -8750,7 +8797,9 @@ function createNumberPopEffect(
             "numberBalloonArena"
         );
 
-    if (!arena) return;
+    if (!arena || !balloon) {
+        return;
+    }
 
     const rect =
         balloon.getBoundingClientRect();
@@ -8779,7 +8828,7 @@ function createNumberPopEffect(
 
     for (
         let i = 0;
-        i < 10;
+        i < 12;
         i++
     ) {
 
@@ -8807,12 +8856,12 @@ function createNumberPopEffect(
 
         particle.style.setProperty(
             "--x",
-            `${(Math.random() - 0.5) * 180}px`
+            `${(Math.random() - 0.5) * 200}px`
         );
 
         particle.style.setProperty(
             "--y",
-            `${(Math.random() - 0.5) * 180}px`
+            `${(Math.random() - 0.5) * 200}px`
         );
 
         arena.appendChild(
@@ -8821,20 +8870,15 @@ function createNumberPopEffect(
 
         setTimeout(() => {
 
-            if (
-                particle.parentNode
-            ) {
+            particle.remove();
 
-                particle.remove();
-            }
-
-        }, 800);
+        }, 900);
     }
 }
 
 
 /* =========================================================
-   📊 تحديث واجهة اللعبة
+   📊 تحديث واجهة الأرقام
    ========================================================= */
 
 function updateNumberBalloonHUD() {
@@ -8891,7 +8935,7 @@ function updateNumberBalloonHUD() {
     if (target) {
 
         target.textContent =
-            numberBalloonGame.target
+            numberBalloonGame.target !== null
                 ? numberBalloonArabicNumber(
                     numberBalloonGame.target
                 )
@@ -8918,7 +8962,7 @@ function updateNumberBalloonHUD() {
 
 
 /* =========================================================
-   ❤️ المؤقت والأرواح وأفضل نتيجة
+   ❤️ الأرواح والمؤقت
    ========================================================= */
 
 function updateNumberBalloonExtraHUD() {
@@ -8976,7 +9020,7 @@ function updateNumberBalloonExtraHUD() {
 
 
 /* =========================================================
-   ⏸️ إيقاف / استكمال اللعبة
+   ⏸️ إيقاف / استكمال
    ========================================================= */
 
 function toggleNumberBalloonPause() {
@@ -9000,10 +9044,6 @@ function toggleNumberBalloonPause() {
 }
 
 
-/* =========================================================
-   ⏸️ إيقاف
-   ========================================================= */
-
 function pauseNumberBalloonGame() {
 
     if (
@@ -9016,6 +9056,12 @@ function pauseNumberBalloonGame() {
         true;
 
     stopNumberBalloonRoundTimer();
+
+    if (
+        "speechSynthesis" in window
+    ) {
+        speechSynthesis.cancel();
+    }
 
     showNumberBalloonPauseOverlay();
 
@@ -9031,10 +9077,6 @@ function pauseNumberBalloonGame() {
     }
 }
 
-
-/* =========================================================
-   ▶️ استكمال
-   ========================================================= */
 
 function resumeNumberBalloonGame() {
 
@@ -9070,7 +9112,7 @@ function resumeNumberBalloonGame() {
 
 
 /* =========================================================
-   ⏸️ شاشة الإيقاف
+   ⏸️ شاشة التوقف
    ========================================================= */
 
 function showNumberBalloonPauseOverlay() {
@@ -9102,7 +9144,7 @@ function showNumberBalloonPauseOverlay() {
                 </div>
 
                 <h2>
-                    اللعبة متوقفة
+                    اللُّعْبَة مُتَوَقِّفَة
                 </h2>
 
                 <button
@@ -9113,7 +9155,6 @@ function showNumberBalloonPauseOverlay() {
                 </button>
 
             </div>
-
         `;
 
         document.body.appendChild(
@@ -9126,10 +9167,6 @@ function showNumberBalloonPauseOverlay() {
     );
 }
 
-
-/* =========================================================
-   ▶️ إخفاء شاشة الإيقاف
-   ========================================================= */
 
 function hideNumberBalloonPauseOverlay() {
 
@@ -9148,7 +9185,7 @@ function hideNumberBalloonPauseOverlay() {
 
 
 /* =========================================================
-   🏆 نهاية اللعبة
+   🏆 نهاية لعبة الأرقام
    ========================================================= */
 
 function finishNumberBalloonGame(
@@ -9230,10 +9267,18 @@ function finishNumberBalloonGame(
         <h2>
             ${
                 completed
-                    ? "أحسنت! أنهيت لعبة فرقع الأرقام"
+                    ? "أَنْهَيْتَ لُعْبَة فَرِّقْع الأَرْقَام!"
                     : "انتهت اللعبة"
             }
         </h2>
+
+        <p>
+            ${
+                completed
+                    ? "مُمْتَاز! أَنْتَ بَطَلُ الأَرْقَام!"
+                    : "لَا بَأْسَ! حَاوِلْ مَرَّةً أُخْرَى"
+            }
+        </p>
 
         <div class="finish-score">
             ⭐
@@ -9243,7 +9288,7 @@ function finishNumberBalloonGame(
         </div>
 
         <div class="finish-stars">
-            🌟 نجوم مكتسبة:
+            🌟 النجوم المكتسبة:
             ${numberBalloonArabicNumber(
                 numberBalloonGame.earnedStars
             )}
@@ -9284,7 +9329,6 @@ function finishNumberBalloonGame(
             </button>
 
         </div>
-
     `;
 
     const wrapper =
@@ -9298,11 +9342,17 @@ function finishNumberBalloonGame(
             finish
         );
     }
+
+    speak(
+        completed
+            ? "مُمْتَاز! أَنْهَيْتَ لُعْبَة الأَرْقَام"
+            : "لَا بَأْسَ. حَاوِلْ مَرَّةً أُخْرَى"
+    );
 }
 
 
 /* =========================================================
-   🚪 الخروج من لعبة الأرقام
+   🚪 الخروج من الأرقام
    ========================================================= */
 
 function exitNumberBalloonGame() {
@@ -9347,73 +9397,116 @@ function exitNumberBalloonGame() {
 
 
 /* =========================================================
-   🔚 نهاية لعبة فرقع الأرقام
+   🚗🏁 سباق الحروف
+   نسخة احترافية ومستقلة
    ========================================================= */
-/* =========================================================
-🚗🏁 سباق الحروف الاحترافي
-لعبة مستقلة بالكامل
-========================================================= */
 
 const letterRaceGame = {
-target: "",
-gates: [],
-score: 0,
-stars: 0,
-streak: 0,
-level: 1,
-round: 0,
-totalRounds: 10,
 
-```
-lives: 3,
+    target: "",
 
-bestScore: Number(
-    localStorage.getItem("letterRaceBestScore")
-) || 0,
+    gates: [],
 
-selectedLane: 1,
+    score: 0,
 
-isRunning: false,
-isPaused: false,
-isFinished: false,
+    stars: 0,
 
-speed: 5,
+    streak: 0,
 
-timer: null,
-animationFrame: null,
+    bestStreak: 0,
 
-touchStartX: 0
-```
+    level: 1,
 
+    round: 0,
+
+    totalRounds: 10,
+
+    lives: 3,
+
+    bestScore: Number(
+        localStorage.getItem(
+            "letterRaceBestScore"
+        ) || 0
+    ),
+
+    selectedLane: 0,
+
+    isRunning: false,
+
+    isPaused: false,
+
+    isFinished: false,
+
+    answered: false,
+
+    speed: 5,
+
+    roundDuration: 12000,
+
+    timer: null,
+
+    animationFrame: null,
+
+    touchStartX: 0,
+
+    session: 0,
+
+    controlsCreated: false
 };
 
+
 /* =========================================================
-🔤 الحروف
-========================================================= */
+   🔤 الحروف العربية
+   ========================================================= */
+
+const letterRaceLetters = [
+    "أ",
+    "ب",
+    "ت",
+    "ث",
+    "ج",
+    "ح",
+    "خ",
+    "د",
+    "ذ",
+    "ر",
+    "ز",
+    "س",
+    "ش",
+    "ص",
+    "ض",
+    "ط",
+    "ظ",
+    "ع",
+    "غ",
+    "ف",
+    "ق",
+    "ك",
+    "ل",
+    "م",
+    "ن",
+    "ه",
+    "و",
+    "ي"
+];
+
 
 function getLetterRaceLetters() {
 
-```
-return [
-    "أ", "ب", "ت", "ث", "ج",
-    "ح", "خ", "د", "ذ", "ر",
-    "ز", "س", "ش", "ص", "ض",
-    "ط", "ظ", "ع", "غ", "ف",
-    "ق", "ك", "ل", "م", "ن",
-    "ه", "و", "ي"
-];
-```
-
+    return [
+        ...letterRaceLetters
+    ];
 }
 
+
 /* =========================================================
-🔊 نطق صوت الحرف بالحركة
-========================================================= */
+   🔊 أصوات الحروف
+   مهم:
+   أ = أَ وليس ألف
+   ========================================================= */
 
-function letterRaceSound(letter) {
+const letterRaceSounds = {
 
-```
-const sounds = {
     "أ": "أَ",
     "ب": "بَ",
     "ت": "تَ",
@@ -9444,210 +9537,376 @@ const sounds = {
     "ي": "يَ"
 };
 
-return sounds[letter] || letter;
-```
 
-}
-
-/* =========================================================
-🎙️ تشغيل الصوت
-========================================================= */
-
-function speakLetterRace(text) {
-
-```
-if (
-    typeof speak === "function"
+function letterRaceSound(
+    letter
 ) {
 
-    speak(text, {
-        rate: 0.75,
-        pitch: 1
-    });
-
-    return;
+    return (
+        letterRaceSounds[letter] ||
+        `${letter}َ`
+    );
 }
 
-
-if ("speechSynthesis" in window) {
-
-    speechSynthesis.cancel();
-
-    const utterance =
-        new SpeechSynthesisUtterance(text);
-
-    utterance.lang = "ar-SA";
-    utterance.rate = 0.75;
-    utterance.pitch = 1;
-
-    speechSynthesis.speak(utterance);
-}
-```
-
-}
 
 /* =========================================================
-🚗 بدء اللعبة
-========================================================= */
+   🔊 نطق الحرف
+   ========================================================= */
+
+function speakLetterRace(
+    text
+) {
+
+    if (
+        typeof speak === "function"
+    ) {
+
+        speak(
+            text,
+            {
+                rate: 0.68,
+                pitch: 1.05,
+                volume: 1
+            }
+        );
+
+        return;
+    }
+
+    if (
+        "speechSynthesis" in window
+    ) {
+
+        speechSynthesis.cancel();
+
+        const utterance =
+            new SpeechSynthesisUtterance(
+                text
+            );
+
+        utterance.lang =
+            "ar-SA";
+
+        utterance.rate =
+            0.68;
+
+        utterance.pitch =
+            1.05;
+
+        utterance.volume =
+            1;
+
+        if (
+            typeof arabicVoice !== "undefined" &&
+            arabicVoice
+        ) {
+
+            utterance.voice =
+                arabicVoice;
+        }
+
+        speechSynthesis.speak(
+            utterance
+        );
+    }
+}
+
+
+/* =========================================================
+   🧠 مجموعات الحروف المتشابهة
+   ========================================================= */
+
+const letterRaceSimilarGroups = [
+
+    ["ب", "ت", "ث"],
+
+    ["ج", "ح", "خ"],
+
+    ["د", "ذ"],
+
+    ["ر", "ز"],
+
+    ["س", "ش"],
+
+    ["ص", "ض"],
+
+    ["ط", "ظ"],
+
+    ["ع", "غ"],
+
+    ["ف", "ق"]
+];
+
+
+/* =========================================================
+   🔍 إيجاد مجموعة الحرف
+   ========================================================= */
+
+function getLetterRaceSimilarGroup(
+    letter
+) {
+
+    return (
+        letterRaceSimilarGroups.find(
+            group =>
+                group.includes(letter)
+        ) || [
+            letter
+        ]
+    );
+}
+
+
+/* =========================================================
+   🎯 إنشاء اختيارات السباق
+   ========================================================= */
+
+function getLetterRaceChoices() {
+
+    const target =
+        letterRaceGame.target;
+
+    const count = 4;
+
+    let choices = [
+        target
+    ];
+
+    /*
+       المستوى الأول:
+       حروف عشوائية سهلة.
+
+       المستوى الثاني:
+       يبدأ بإدخال حروف أكثر قربًا.
+
+       المستوى الثالث:
+       يعتمد على الحروف المتشابهة.
+    */
+
+    if (
+        letterRaceGame.level >= 3
+    ) {
+
+        const similar =
+            getLetterRaceSimilarGroup(
+                target
+            );
+
+        similar.forEach(
+            letter => {
+
+                if (
+                    choices.length < count &&
+                    !choices.includes(letter)
+                ) {
+
+                    choices.push(
+                        letter
+                    );
+                }
+            }
+        );
+    }
+
+    const all =
+        getLetterRaceLetters();
+
+    /*
+       ملء الباقي بحروف مختلفة
+    */
+
+    let guard = 0;
+
+    while (
+        choices.length < count &&
+        guard < 100
+    ) {
+
+        guard++;
+
+        const randomLetter =
+            all[
+                Math.floor(
+                    Math.random() *
+                    all.length
+                )
+            ];
+
+        if (
+            !choices.includes(
+                randomLetter
+            )
+        ) {
+
+            choices.push(
+                randomLetter
+            );
+        }
+    }
+
+    return shuffleLetterRaceArray(
+        choices
+    );
+}
+
+
+/* =========================================================
+   🔀 خلط الحروف
+   ========================================================= */
+
+function shuffleLetterRaceArray(
+    array
+) {
+
+    const result =
+        [...array];
+
+    for (
+        let i = result.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() *
+                (i + 1)
+            );
+
+        [
+            result[i],
+            result[j]
+        ] = [
+            result[j],
+            result[i]
+        ];
+    }
+
+    return result;
+}
+
+
+/* =========================================================
+   ▶️ بدء السباق
+   ========================================================= */
 
 function startLetterRace() {
 
-```
-stopLetterRace();
+    stopLetterRace();
 
-Object.assign(letterRaceGame, {
+    letterRaceGame.session++;
 
-    target: "",
-    gates: [],
-    score: 0,
-    stars: 0,
-    streak: 0,
-    level: 1,
-    round: 0,
+    Object.assign(
+        letterRaceGame,
+        {
 
-    lives: 3,
+            target: "",
 
-    selectedLane: 1,
+            gates: [],
 
-    isRunning: true,
-    isPaused: false,
-    isFinished: false,
+            score: 0,
 
-    speed: 5
-});
+            stars: 0,
 
+            streak: 0,
 
-showScreen("letterRaceGame");
+            bestStreak: 0,
 
+            level: 1,
 
-setTimeout(() => {
+            round: 0,
 
-    updateLetterRaceHUD();
+            lives: 3,
 
-    setupLetterRaceControls();
+            selectedLane: 0,
 
-    startLetterRaceRound();
+            isRunning: true,
 
-}, 150);
-```
+            isPaused: false,
 
+            isFinished: false,
+
+            answered: false,
+
+            speed: 5,
+
+            roundDuration: 12000,
+
+            timer: null,
+
+            animationFrame: null
+        }
+    );
+
+    const finish =
+        document.getElementById(
+            "letterRaceFinishScreen"
+        );
+
+    if (finish) {
+        finish.remove();
+    }
+
+    showScreen(
+        "letterRaceGame"
+    );
+
+    setTimeout(() => {
+
+        if (
+            !letterRaceGame.isRunning
+        ) {
+            return;
+        }
+
+        setupLetterRaceControls();
+
+        createLetterRaceGameControls();
+
+        updateLetterRaceHUD();
+
+        startLetterRaceRound();
+
+    }, 200);
 }
 
+
 /* =========================================================
-🏁 بدء جولة جديدة
-========================================================= */
+   🏁 بداية الجولة
+   ========================================================= */
 
 function startLetterRaceRound() {
 
-```
-if (
-    letterRaceGame.isFinished ||
-    letterRaceGame.isPaused
-) {
-    return;
-}
-
-
-if (
-    letterRaceGame.round >=
-    letterRaceGame.totalRounds
-) {
-
-    finishLetterRace();
-
-    return;
-}
-
-
-letterRaceGame.round++;
-
-
-updateLetterRaceLevel();
-
-
-const letters =
-    getLetterRaceLetters();
-
-
-letterRaceGame.target =
-    letters[
-        Math.floor(
-            Math.random() *
-            letters.length
-        )
-    ];
-
-
-createLetterRaceGates();
-
-
-updateLetterRaceHUD();
-
-
-moveLetterRaceCarToLane(
-    1,
-    false
-);
-
-
-showLetterRaceMessage(
-    `🎯 اسمع الحرف واختر البوابة الصحيحة`
-);
-
-
-setTimeout(() => {
-
     if (
-        !letterRaceGame.isPaused &&
-        !letterRaceGame.isFinished
+        letterRaceGame.isFinished ||
+        letterRaceGame.isPaused
     ) {
-
-        repeatLetterRaceTarget();
-
+        return;
     }
 
-}, 500);
+    if (
+        letterRaceGame.round >=
+        letterRaceGame.totalRounds
+    ) {
 
+        finishLetterRace(
+            false
+        );
 
-startLetterRaceMovement();
-```
+        return;
+    }
 
-}
+    letterRaceGame.round++;
 
-/* =========================================================
-🚪 إنشاء البوابات
-========================================================= */
+    letterRaceGame.answered =
+        false;
 
-function createLetterRaceGates() {
+    updateLetterRaceLevel();
 
-```
-const container =
-    document.getElementById(
-        "letterRaceGates"
-    );
+    const letters =
+        getLetterRaceLetters();
 
-if (!container) return;
-
-
-const gateCount =
-    letterRaceGame.level >= 3
-        ? 5
-        : 4;
-
-
-const letters =
-    getLetterRaceLetters();
-
-
-let choices =
-    [letterRaceGame.target];
-
-
-while (
-    choices.length < gateCount
-) {
-
-    const randomLetter =
+    letterRaceGame.target =
         letters[
             Math.floor(
                 Math.random() *
@@ -9655,407 +9914,294 @@ while (
             )
         ];
 
+    createLetterRaceGates();
+
+    updateLetterRaceHUD();
+
+    moveLetterRaceCarToLane(
+        letterRaceGame.selectedLane,
+        false
+    );
+
+    showLetterRaceMessage(
+        "🎯 اِسْمَعِ الحَرْفَ وَاخْتَرِ البَوَّابَةَ الصَّحِيحَة"
+    );
+
+    /*
+       نطق الحرف بالحركة فقط.
+       مثال:
+       أَ
+       وليس:
+       ألف
+    */
+
+    setTimeout(() => {
+
+        if (
+            letterRaceGame.isRunning &&
+            !letterRaceGame.isPaused &&
+            !letterRaceGame.isFinished
+        ) {
+
+            repeatLetterRaceTarget();
+        }
+
+    }, 350);
+
+    startLetterRaceMovement();
+}
+
+
+/* =========================================================
+   🚪 إنشاء البوابات
+   ========================================================= */
+
+function createLetterRaceGates() {
+
+    /*
+       HTML الحالي عندك يستخدم:
+       letterRaceOptions
+
+       لذلك نستخدمه أولًا.
+       ونسمح أيضًا بـ letterRaceGates
+       للتوافق مع أي نسخة قديمة.
+    */
+
+    let container =
+        document.getElementById(
+            "letterRaceOptions"
+        );
+
+    if (!container) {
+
+        container =
+            document.getElementById(
+                "letterRaceGates"
+            );
+    }
+
+    if (!container) {
+        return;
+    }
+
+    const choices =
+        getLetterRaceChoices();
+
+    letterRaceGame.gates =
+        choices;
+
+    container.innerHTML =
+        "";
+
+    container.className =
+        "letter-race-options";
+
+    choices.forEach(
+        (letter, index) => {
+
+            const gate =
+                document.createElement(
+                    "button"
+                );
+
+            gate.type =
+                "button";
+
+            gate.className =
+                "letter-race-gate";
+
+            gate.dataset.index =
+                String(index);
+
+            gate.dataset.letter =
+                letter;
+
+            gate.setAttribute(
+                "aria-label",
+                `بوابة حرف ${letter}`
+            );
+
+            gate.innerHTML = `
+
+                <div class="gate-roof">
+                    🏁
+                </div>
+
+                <div class="gate-letter">
+                    ${letter}
+                </div>
+
+                <div class="gate-base">
+                    🚦
+                </div>
+            `;
+
+            /*
+               يمكن للطفل لمس البوابة
+               مباشرة على الهاتف.
+            */
+
+            gate.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        letterRaceGame.isPaused ||
+                        !letterRaceGame.isRunning
+                    ) {
+                        return;
+                    }
+
+                    letterRaceGame.selectedLane =
+                        index;
+
+                    moveLetterRaceCarToLane(
+                        index,
+                        true
+                    );
+
+                    checkLetterRaceGate();
+                }
+            );
+
+            container.appendChild(
+                gate
+            );
+        }
+    );
+
+    /*
+       نعيد وضع السيارة
+       في منتصف المسارات.
+    */
+
+    letterRaceGame.selectedLane =
+        Math.floor(
+            choices.length / 2
+        );
+
+    moveLetterRaceCarToLane(
+        letterRaceGame.selectedLane,
+        false
+    );
+}
+
+
+/* =========================================================
+   🚗 تحريك السيارة
+   ========================================================= */
+
+function moveLetterRaceCar(
+    direction
+) {
 
     if (
-        !choices.includes(
-            randomLetter
-        )
+        !letterRaceGame.isRunning ||
+        letterRaceGame.isPaused ||
+        letterRaceGame.isFinished ||
+        letterRaceGame.answered
     ) {
+        return;
+    }
 
-        choices.push(
-            randomLetter
+    const maxLane =
+        Math.max(
+            0,
+            letterRaceGame.gates.length - 1
         );
 
-    }
-}
+    letterRaceGame.selectedLane =
+        Math.max(
+            0,
+            Math.min(
+                maxLane,
+                letterRaceGame.selectedLane +
+                direction
+            )
+        );
 
-
-choices =
-    shuffleLetterRaceArray(
-        choices
+    moveLetterRaceCarToLane(
+        letterRaceGame.selectedLane,
+        true
     );
-
-
-letterRaceGame.gates =
-    choices;
-
-
-container.innerHTML = "";
-
-
-choices.forEach(
-    (letter, index) => {
-
-        const gate =
-            document.createElement(
-                "div"
-            );
-
-        gate.className =
-            "letter-race-gate";
-
-        gate.dataset.index =
-            index;
-
-        gate.dataset.letter =
-            letter;
-
-
-        gate.innerHTML = `
-            <div class="gate-roof"></div>
-
-            <div class="gate-letter">
-                ${letter}
-            </div>
-        `;
-
-
-        container.appendChild(
-            gate
-        );
-
-    }
-);
-
-
-moveLetterRaceCarToLane(
-    Math.min(
-        1,
-        gateCount - 1
-    ),
-    false
-);
-```
-
 }
+
 
 /* =========================================================
-🔀 خلط المصفوفة
-========================================================= */
-
-function shuffleLetterRaceArray(array) {
-
-```
-const copy =
-    [...array];
-
-
-for (
-    let i = copy.length - 1;
-    i > 0;
-    i--
-) {
-
-    const j =
-        Math.floor(
-            Math.random() *
-            (i + 1)
-        );
-
-
-    [
-        copy[i],
-        copy[j]
-    ] =
-    [
-        copy[j],
-        copy[i]
-    ];
-}
-
-
-return copy;
-```
-
-}
-
-/* =========================================================
-🚗 تحريك السيارة بين المسارات
-========================================================= */
-
-function moveLetterRaceCar(direction) {
-
-```
-if (
-    !letterRaceGame.isRunning ||
-    letterRaceGame.isPaused ||
-    letterRaceGame.isFinished
-) {
-    return;
-}
-
-
-const maxLane =
-    letterRaceGame.gates.length - 1;
-
-
-letterRaceGame.selectedLane +=
-    direction;
-
-
-if (
-    letterRaceGame.selectedLane < 0
-) {
-
-    letterRaceGame.selectedLane =
-        0;
-
-}
-
-
-if (
-    letterRaceGame.selectedLane >
-    maxLane
-) {
-
-    letterRaceGame.selectedLane =
-        maxLane;
-
-}
-
-
-moveLetterRaceCarToLane(
-    letterRaceGame.selectedLane,
-    true
-);
-```
-
-}
-
-/* =========================================================
-🚗 وضع السيارة في المسار
-========================================================= */
+   🚗 وضع السيارة
+   ========================================================= */
 
 function moveLetterRaceCarToLane(
-lane,
-animate = true
+    lane,
+    animate = true
 ) {
 
-```
-const car =
-    document.getElementById(
-        "letterRaceCar"
-    );
+    const car =
+        document.getElementById(
+            "letterRaceCar"
+        );
 
-if (!car) return;
+    if (!car) {
+        return;
+    }
 
+    const total =
+        Math.max(
+            1,
+            letterRaceGame.gates.length
+        );
 
-const total =
-    Math.max(
-        1,
-        letterRaceGame.gates.length
-    );
+    const safeLane =
+        Math.max(
+            0,
+            Math.min(
+                total - 1,
+                lane
+            )
+        );
 
+    const position =
+        (
+            (
+                safeLane +
+                0.5
+            ) /
+            total
+        ) * 100;
 
-const position =
-    ((lane + 0.5) / total) * 100;
-
-
-if (!animate) {
-
-    car.style.transition =
-        "none";
-
-}
-
-
-car.style.left =
-    `${position}%`;
-
-
-if (!animate) {
-
-    requestAnimationFrame(() => {
+    if (!animate) {
 
         car.style.transition =
-            "";
+            "none";
+    } else {
 
-    });
+        car.style.transition =
+            "left .28s cubic-bezier(.2,.8,.2,1)";
+    }
 
+    car.style.left =
+        `${position}%`;
+
+    if (!animate) {
+
+        requestAnimationFrame(
+            () => {
+
+                car.style.transition =
+                    "";
+            }
+        );
+    }
 }
-```
 
-}
 
 /* =========================================================
-⌨️ التحكم بالكيبورد
-========================================================= */
+   ⌨️ الكيبورد
+   ========================================================= */
 
-function handleLetterRaceKeyboard(event) {
-
-```
-if (
-    !letterRaceGame.isRunning ||
-    letterRaceGame.isPaused
+function handleLetterRaceKeyboard(
+    event
 ) {
-    return;
-}
-
-
-if (
-    event.key === "ArrowRight"
-) {
-
-    event.preventDefault();
-
-    moveLetterRaceCar(
-        -1
-    );
-
-}
-
-
-if (
-    event.key === "ArrowLeft"
-) {
-
-    event.preventDefault();
-
-    moveLetterRaceCar(
-        1
-    );
-
-}
-
-
-if (
-    event.key === " "
-) {
-
-    event.preventDefault();
-
-    checkLetterRaceGate();
-
-}
-```
-
-}
-
-/* =========================================================
-📱 إعداد التحكم
-========================================================= */
-
-function setupLetterRaceControls() {
-
-```
-document.removeEventListener(
-    "keydown",
-    handleLetterRaceKeyboard
-);
-
-
-document.addEventListener(
-    "keydown",
-    handleLetterRaceKeyboard
-);
-
-
-const track =
-    document.getElementById(
-        "letterRaceTrack"
-    );
-
-
-if (!track) return;
-
-
-track.onpointerdown =
-    function(event) {
-
-        letterRaceGame.touchStartX =
-            event.clientX;
-
-    };
-
-
-track.onpointerup =
-    function(event) {
-
-        const difference =
-            event.clientX -
-            letterRaceGame.touchStartX;
-
-
-        if (
-            Math.abs(difference) <
-            40
-        ) {
-
-            checkLetterRaceGate();
-
-            return;
-        }
-
-
-        if (
-            difference > 0
-        ) {
-
-            moveLetterRaceCar(
-                -1
-            );
-
-        } else {
-
-            moveLetterRaceCar(
-                1
-            );
-
-        }
-
-    };
-```
-
-}
-
-/* =========================================================
-🔘 أزرار التحكم
-========================================================= */
-
-function letterRaceLeft() {
-
-```
-moveLetterRaceCar(
-    -1
-);
-```
-
-}
-
-function letterRaceRight() {
-
-```
-moveLetterRaceCar(
-    1
-);
-```
-
-}
-
-function letterRaceSelect() {
-
-```
-checkLetterRaceGate();
-```
-
-}
-
-/* =========================================================
-💨 حركة السباق المستمرة
-========================================================= */
-
-function startLetterRaceMovement() {
-
-```
-cancelAnimationFrame(
-    letterRaceGame.animationFrame
-);
-
-
-let roadOffset = 0;
-
-
-function animate() {
 
     if (
         !letterRaceGame.isRunning ||
@@ -10065,715 +10211,270 @@ function animate() {
         return;
     }
 
-
-    roadOffset +=
-        letterRaceGame.speed;
-
-
-    const road =
-        document.getElementById(
-            "letterRaceRoad"
-        );
-
-
-    if (road) {
-
-        road.style.backgroundPositionY =
-            `${roadOffset}px`;
-
-    }
-
-
-    letterRaceGame.animationFrame =
-        requestAnimationFrame(
-            animate
-        );
-}
-
-
-animate();
-
-
-clearTimeout(
-    letterRaceGame.timer
-);
-
-
-const roundTime =
-    Math.max(
-        7000,
-        14000 -
-        (
-            letterRaceGame.level *
-            1500
-        )
-    );
-
-
-letterRaceGame.timer =
-    setTimeout(
-        checkLetterRaceGate,
-        roundTime
-    );
-```
-
-}
-
-/* =========================================================
-🎯 فحص البوابة الحالية
-========================================================= */
-
-function checkLetterRaceGate() {
-
-```
-if (
-    !letterRaceGame.isRunning ||
-    letterRaceGame.isPaused ||
-    letterRaceGame.isFinished
-) {
-    return;
-}
-
-
-clearTimeout(
-    letterRaceGame.timer
-);
-
-
-const selectedLetter =
-    letterRaceGame.gates[
-        letterRaceGame.selectedLane
-    ];
-
-
-const gates =
-    document.querySelectorAll(
-        ".letter-race-gate"
-    );
-
-
-const selectedGate =
-    gates[
-        letterRaceGame.selectedLane
-    ];
-
-
-if (
-    selectedLetter ===
-    letterRaceGame.target
-) {
-
-    handleLetterRaceCorrect(
-        selectedGate
-    );
-
-} else {
-
-    handleLetterRaceWrong(
-        selectedGate
-    );
-
-}
-```
-
-}
-
-/* =========================================================
-✅ إجابة صحيحة
-========================================================= */
-
-function handleLetterRaceCorrect(gate) {
-
-```
-if (
-    letterRaceGame.isFinished
-) return;
-
-
-letterRaceGame.isRunning =
-    false;
-
-
-if (gate) {
-
-    gate.classList.add(
-        "correct"
-    );
-
-}
-
-
-const car =
-    document.getElementById(
-        "letterRaceCar"
-    );
-
-
-if (car) {
-
-    car.classList.add(
-        "race-success"
-    );
-
-}
-
-
-letterRaceGame.streak++;
-
-
-let points =
-    10 +
-    (
-        letterRaceGame.streak *
-        2
-    );
-
-
-letterRaceGame.score +=
-    points;
-
-
-letterRaceGame.stars +=
-    1;
-
-
-addLetterRaceGlobalStar();
-
-
-createLetterRaceConfetti();
-
-createLetterRaceStarExplosion();
-
-
-const encouragements = [
-    "أَحْسَنْتَ!",
-    "مُمْتَاز!",
-    "رَائِع!",
-    "بَرَافُو!",
-    "شَاطِر!"
-];
-
-
-const encouragement =
-    encouragements[
-        Math.floor(
-            Math.random() *
-            encouragements.length
-        )
-    ];
-
-
-showLetterRaceMessage(
-    `${encouragement} ⭐ +${points}`
-);
-
-
-speakLetterRace(
-    encouragement
-);
-
-
-updateLetterRaceHUD();
-
-
-setTimeout(() => {
-
     if (
-        letterRaceGame.round >=
-        letterRaceGame.totalRounds
+        event.key === "ArrowRight"
     ) {
 
-        finishLetterRace();
+        event.preventDefault();
 
-    } else {
+        /*
+           اتجاه RTL:
+           السهم الأيمن = مسار يمين
+        */
 
-        letterRaceGame.isRunning =
-            true;
-
-        startLetterRaceRound();
-
-    }
-
-}, 1600);
-```
-
-}
-
-/* =========================================================
-❌ إجابة خاطئة
-========================================================= */
-
-function handleLetterRaceWrong(gate) {
-
-```
-if (
-    letterRaceGame.isFinished
-) return;
-
-
-letterRaceGame.isRunning =
-    false;
-
-
-letterRaceGame.lives--;
-
-
-letterRaceGame.streak =
-    0;
-
-
-if (gate) {
-
-    gate.classList.add(
-        "wrong"
-    );
-
-}
-
-
-const car =
-    document.getElementById(
-        "letterRaceCar"
-    );
-
-
-if (car) {
-
-    car.classList.add(
-        "race-crash"
-    );
-
-}
-
-
-showLetterRaceBrakeEffect();
-
-
-showLetterRaceMessage(
-    "❌ حَاوِلْ مَرَّةً أُخْرَى"
-);
-
-
-speakLetterRace(
-    "حَاوِلْ مَرَّةً أُخْرَى"
-);
-
-
-updateLetterRaceHUD();
-
-
-setTimeout(() => {
-
-    if (
-        letterRaceGame.lives <= 0
-    ) {
-
-        finishLetterRace(
-            true
+        moveLetterRaceCar(
+            -1
         );
 
         return;
     }
 
+    if (
+        event.key === "ArrowLeft"
+    ) {
 
-    letterRaceGame.isRunning =
+        event.preventDefault();
+
+        moveLetterRaceCar(
+            1
+        );
+
+        return;
+    }
+
+    if (
+        event.key === " " ||
+        event.key === "Enter"
+    ) {
+
+        event.preventDefault();
+
+        checkLetterRaceGate();
+    }
+}
+
+
+/* =========================================================
+   📱 أزرار الهاتف + اللمس
+   ========================================================= */
+
+function setupLetterRaceControls() {
+
+    document.removeEventListener(
+        "keydown",
+        handleLetterRaceKeyboard
+    );
+
+    document.addEventListener(
+        "keydown",
+        handleLetterRaceKeyboard
+    );
+
+    const track =
+        document.getElementById(
+            "letterRaceTrack"
+        );
+
+    if (!track) {
+        return;
+    }
+
+    track.onpointerdown =
+        event => {
+
+            letterRaceGame.touchStartX =
+                event.clientX;
+        };
+
+    track.onpointerup =
+        event => {
+
+            if (
+                !letterRaceGame.isRunning ||
+                letterRaceGame.isPaused
+            ) {
+                return;
+            }
+
+            const difference =
+                event.clientX -
+                letterRaceGame.touchStartX;
+
+            if (
+                Math.abs(difference) < 35
+            ) {
+
+                return;
+            }
+
+            if (
+                difference > 0
+            ) {
+
+                moveLetterRaceCar(
+                    -1
+                );
+
+            } else {
+
+                moveLetterRaceCar(
+                    1
+                );
+            }
+        };
+}
+
+
+/* =========================================================
+   🔘 أزرار التحكم
+   ========================================================= */
+
+function letterRaceLeft() {
+
+    moveLetterRaceCar(
+        1
+    );
+}
+
+
+function letterRaceRight() {
+
+    moveLetterRaceCar(
+        -1
+    );
+}
+
+
+function letterRaceSelect() {
+
+    checkLetterRaceGate();
+}
+
+
+/* =========================================================
+   🎮 إنشاء أزرار السباق
+   ========================================================= */
+
+function createLetterRaceGameControls() {
+
+    const wrapper =
+        document.querySelector(
+            "#letterRaceGame .letter-race-wrapper"
+        );
+
+    if (!wrapper) {
+        return;
+    }
+
+    const old =
+        document.getElementById(
+            "letterRaceControls"
+        );
+
+    if (old) {
+        old.remove();
+    }
+
+    const controls =
+        document.createElement(
+            "div"
+        );
+
+    controls.id =
+        "letterRaceControls";
+
+    controls.className =
+        "letter-race-controls";
+
+    controls.innerHTML = `
+
+        <div class="letter-race-extra-hud">
+
+            <div
+                id="letterRaceLives"
+                class="letter-race-lives"
+            >
+                ❤️❤️❤️
+            </div>
+
+            <div
+                id="letterRaceBestScore"
+                class="letter-race-best-score"
+            >
+                🏆 ٠
+            </div>
+
+        </div>
+
+        <div class="letter-race-mobile-controls">
+
+            <button
+                type="button"
+                class="race-control-btn race-left-btn"
+                onclick="letterRaceLeft()"
+                aria-label="تحريك السيارة لليسار"
+            >
+                ◀️
+            </button>
+
+            <button
+                type="button"
+                class="race-control-btn race-select-btn"
+                onclick="letterRaceSelect()"
+            >
+                🏁 اخْتَر
+            </button>
+
+            <button
+                type="button"
+                class="race-control-btn race-right-btn"
+                onclick="letterRaceRight()"
+                aria-label="تحريك السيارة لليمين"
+            >
+                ▶️
+            </button>
+
+        </div>
+
+        <button
+            id="letterRacePauseBtn"
+            type="button"
+            class="race-pause-btn"
+            onclick="toggleLetterRacePause()"
+        >
+            ⏸️ إيقاف السباق
+        </button>
+    `;
+
+    const exitButton =
+        wrapper.querySelector(
+            ".exit-game-btn"
+        );
+
+    if (exitButton) {
+
+        wrapper.insertBefore(
+            controls,
+            exitButton
+        );
+
+    } else {
+
+        wrapper.appendChild(
+            controls
+        );
+    }
+
+    letterRaceGame.controlsCreated =
         true;
-
-
-    startLetterRaceRound();
-
-}, 1500);
-```
-
 }
+
 
 /* =========================================================
-⭐ إضافة نجمة للنظام الأساسي
-========================================================= */
+   💨 حركة الطريق
+   ========================================================= */
 
-function addLetterRaceGlobalStar() {
-
-```
-if (
-    typeof addStars ===
-    "function"
-) {
-
-    addStars(1);
-
-}
-```
-
-}
-
-/* =========================================================
-📈 المستويات
-========================================================= */
-
-function updateLetterRaceLevel() {
-
-```
-if (
-    letterRaceGame.round >= 8
-) {
-
-    letterRaceGame.level =
-        3;
-
-    letterRaceGame.speed =
-        10;
-
-} else if (
-    letterRaceGame.round >= 4
-) {
-
-    letterRaceGame.level =
-        2;
-
-    letterRaceGame.speed =
-        7;
-
-} else {
-
-    letterRaceGame.level =
-        1;
-
-    letterRaceGame.speed =
-        5;
-}
-```
-
-}
-
-/* =========================================================
-📊 تحديث لوحة المعلومات
-========================================================= */
-
-function updateLetterRaceHUD() {
-
-```
-setText(
-    "letterRaceScore",
-    letterRaceGame.score
-);
-
-setText(
-    "letterRaceLevel",
-    letterRaceGame.level
-);
-
-setText(
-    "letterRaceStreak",
-    letterRaceGame.streak
-);
-
-setText(
-    "letterRaceLives",
-    "❤️".repeat(
-        Math.max(
-            0,
-            letterRaceGame.lives
-        )
-    )
-);
-
-setText(
-    "letterRaceBestScore",
-    letterRaceGame.bestScore
-);
-
-const progress =
-    document.getElementById(
-        "letterRaceProgressFill"
-    );
-
-
-if (progress) {
-
-    const percent =
-        (
-            (
-                letterRaceGame.round - 1
-            ) /
-            letterRaceGame.totalRounds
-        ) *
-        100;
-
-
-    progress.style.width =
-        `${Math.max(0, percent)}%`;
-
-}
-```
-
-}
-
-/* =========================================================
-🔢 تحديث نص بأمان
-========================================================= */
-
-function setText(id, value) {
-
-```
-const element =
-    document.getElementById(id);
-
-if (!element) return;
-
-
-if (
-    typeof arabicNumber ===
-    "function" &&
-    typeof value === "number"
-) {
-
-    element.textContent =
-        arabicNumber(value);
-
-} else {
-
-    element.textContent =
-        value;
-
-}
-```
-
-}
-
-/* =========================================================
-🔊 إعادة سماع الحرف
-========================================================= */
-
-function repeatLetterRaceTarget() {
-
-```
-speakLetterRace(
-    letterRaceSound(
-        letterRaceGame.target
-    )
-);
-```
-
-}
-
-/* =========================================================
-💬 الرسائل
-========================================================= */
-
-function showLetterRaceMessage(text) {
-
-```
-const element =
-    document.getElementById(
-        "letterRaceMessage"
-    );
-
-if (!element) return;
-
-
-element.textContent =
-    text;
-
-element.classList.add(
-    "show"
-);
-
-
-setTimeout(() => {
-
-    element.classList.remove(
-        "show"
-    );
-
-}, 1800);
-```
-
-}
-
-/* =========================================================
-🎉 الكونفيتي
-========================================================= */
-
-function createLetterRaceConfetti() {
-
-```
-const container =
-    document.getElementById(
-        "letterRaceTrack"
-    );
-
-if (!container) return;
-
-
-for (
-    let i = 0;
-    i < 25;
-    i++
-) {
-
-    const confetti =
-        document.createElement(
-            "span"
-        );
-
-    confetti.className =
-        "race-confetti";
-
-
-    confetti.style.left =
-        `${Math.random() * 100}%`;
-
-
-    confetti.style.animationDelay =
-        `${Math.random() * 0.5}s`;
-
-
-    container.appendChild(
-        confetti
-    );
-
-
-    setTimeout(() => {
-
-        confetti.remove();
-
-    }, 1800);
-}
-```
-
-}
-
-/* =========================================================
-💥 انفجار النجوم
-========================================================= */
-
-function createLetterRaceStarExplosion() {
-
-```
-const car =
-    document.getElementById(
-        "letterRaceCar"
-    );
-
-if (!car) return;
-
-
-const parent =
-    car.parentElement;
-
-if (!parent) return;
-
-
-for (
-    let i = 0;
-    i < 8;
-    i++
-) {
-
-    const star =
-        document.createElement(
-            "span"
-        );
-
-    star.className =
-        "race-star-burst";
-
-    star.textContent =
-        "⭐";
-
-
-    star.style.setProperty(
-        "--x",
-        `${(Math.random() - 0.5) * 180}px`
-    );
-
-    star.style.setProperty(
-        "--y",
-        `${(Math.random() - 0.5) * 150}px`
-    );
-
-
-    parent.appendChild(
-        star
-    );
-
-
-    setTimeout(() => {
-
-        star.remove();
-
-    }, 900);
-}
-```
-
-}
-
-/* =========================================================
-💨 تأثير الفرامل
-========================================================= */
-
-function showLetterRaceBrakeEffect() {
-
-```
-const car =
-    document.getElementById(
-        "letterRaceCar"
-    );
-
-if (!car) return;
-
-
-const effect =
-    document.createElement(
-        "span"
-    );
-
-effect.className =
-    "race-brake-effect";
-
-effect.textContent =
-    "💨";
-
-
-car.parentElement.appendChild(
-    effect
-);
-
-
-setTimeout(() => {
-
-    effect.remove();
-
-}, 900);
-```
-
-}
-
-/* =========================================================
-⏸️ إيقاف واستكمال
-========================================================= */
-
-function toggleLetterRacePause() {
-
-```
-if (
-    letterRaceGame.isFinished
-) return;
-
-
-letterRaceGame.isPaused =
-    !letterRaceGame.isPaused;
-
-
-const button =
-    document.getElementById(
-        "letterRacePauseBtn"
-    );
-
-
-if (
-    letterRaceGame.isPaused
-) {
+function startLetterRaceMovement() {
 
     cancelAnimationFrame(
         letterRaceGame.animationFrame
@@ -10783,206 +10484,1238 @@ if (
         letterRaceGame.timer
     );
 
+    let roadOffset = 0;
 
-    if (button) {
+    const session =
+        letterRaceGame.session;
 
-        button.textContent =
-            "▶️ استكمال";
+    function animate() {
 
+        if (
+            !letterRaceGame.isRunning ||
+            letterRaceGame.isPaused ||
+            letterRaceGame.isFinished ||
+            session !== letterRaceGame.session
+        ) {
+            return;
+        }
+
+        roadOffset +=
+            letterRaceGame.speed;
+
+        const road =
+            document.querySelector(
+                "#letterRaceGame .race-road"
+            );
+
+        if (road) {
+
+            road.style.backgroundPositionY =
+                `${roadOffset}px`;
+        }
+
+        letterRaceGame.animationFrame =
+            requestAnimationFrame(
+                animate
+            );
     }
 
+    animate();
 
-    showLetterRaceMessage(
-        "⏸️ تم إيقاف السباق"
-    );
+    letterRaceGame.timer =
+        setTimeout(
+            () => {
 
-} else {
+                if (
+                    session !==
+                    letterRaceGame.session
+                ) {
+                    return;
+                }
 
-    if (button) {
+                checkLetterRaceGate();
 
-        button.textContent =
-            "⏸️ إيقاف";
-
-    }
-
-
-    showLetterRaceMessage(
-        "🏁 استعد!"
-    );
-
-
-    letterRaceGame.isRunning =
-        true;
-
-
-    startLetterRaceMovement();
+            },
+            letterRaceGame.roundDuration
+        );
 }
-```
 
-}
 
 /* =========================================================
-🏆 نهاية اللعبة
-========================================================= */
+   🎯 اختيار البوابة
+   ========================================================= */
 
-function finishLetterRace(
-gameOver = false
+function checkLetterRaceGate() {
+
+    if (
+        !letterRaceGame.isRunning ||
+        letterRaceGame.isPaused ||
+        letterRaceGame.isFinished ||
+        letterRaceGame.answered
+    ) {
+        return;
+    }
+
+    letterRaceGame.answered =
+        true;
+
+    clearTimeout(
+        letterRaceGame.timer
+    );
+
+    cancelAnimationFrame(
+        letterRaceGame.animationFrame
+    );
+
+    const selectedLetter =
+        letterRaceGame.gates[
+            letterRaceGame.selectedLane
+        ];
+
+    const gates =
+        document.querySelectorAll(
+            ".letter-race-gate"
+        );
+
+    const selectedGate =
+        gates[
+            letterRaceGame.selectedLane
+        ];
+
+    if (
+        selectedLetter ===
+        letterRaceGame.target
+    ) {
+
+        handleLetterRaceCorrect(
+            selectedGate
+        );
+
+    } else {
+
+        handleLetterRaceWrong(
+            selectedGate
+        );
+    }
+}
+
+
+/* =========================================================
+   ✅ فوز
+   ========================================================= */
+
+function handleLetterRaceCorrect(
+    gate
 ) {
 
-```
-letterRaceGame.isFinished =
-    true;
+    if (
+        letterRaceGame.isFinished
+    ) {
+        return;
+    }
 
-letterRaceGame.isRunning =
-    false;
+    letterRaceGame.isRunning =
+        false;
+
+    if (gate) {
+
+        gate.classList.add(
+            "correct"
+        );
+    }
+
+    const car =
+        document.getElementById(
+            "letterRaceCar"
+        );
+
+    if (car) {
+
+        car.classList.remove(
+            "race-crash"
+        );
+
+        car.classList.add(
+            "race-success"
+        );
+
+        car.style.transform =
+            "translate(-50%, -50%) scale(1.18)";
+    }
+
+    letterRaceGame.streak++;
+
+    letterRaceGame.bestStreak =
+        Math.max(
+            letterRaceGame.bestStreak,
+            letterRaceGame.streak
+        );
+
+    const points =
+        calculateLetterRacePoints();
+
+    letterRaceGame.score +=
+        points;
+
+    letterRaceGame.stars++;
+
+    if (
+        typeof addStars === "function"
+    ) {
+
+        addStars(1);
+    }
+
+    createLetterRaceConfetti();
+
+    createLetterRaceStarExplosion();
+
+    const encouragements = [
+        "أَحْسَنْتَ!",
+        "مُمْتَاز!",
+        "رَائِع!",
+        "بَرَافُو!",
+        "شَاطِر!"
+    ];
+
+    const encouragement =
+        encouragements[
+            Math.floor(
+                Math.random() *
+                encouragements.length
+            )
+        ];
+
+    showLetterRaceMessage(
+        `${encouragement} ⭐ +${numberBalloonArabicNumber(points)}`
+    );
+
+    speakLetterRace(
+        encouragement
+    );
+
+    updateLetterRaceHUD();
+
+    const session =
+        letterRaceGame.session;
+
+    setTimeout(() => {
+
+        if (
+            session !==
+            letterRaceGame.session ||
+            letterRaceGame.isFinished
+        ) {
+            return;
+        }
+
+        if (
+            letterRaceGame.round >=
+            letterRaceGame.totalRounds
+        ) {
+
+            finishLetterRace(
+                false
+            );
+
+            return;
+        }
+
+        if (car) {
+
+            car.classList.remove(
+                "race-success"
+            );
+
+            car.style.transform =
+                "";
+        }
+
+        letterRaceGame.isRunning =
+            true;
+
+        startLetterRaceRound();
+
+    }, 1200);
+}
 
 
-stopLetterRace();
+/* =========================================================
+   ⭐ حساب نقاط السباق
+   ========================================================= */
+
+function calculateLetterRacePoints() {
+
+    let points =
+        10 +
+        (
+            letterRaceGame.level *
+            5
+        );
+
+    if (
+        letterRaceGame.streak >= 3
+    ) {
+
+        points += 5;
+    }
+
+    if (
+        letterRaceGame.streak >= 5
+    ) {
+
+        points += 10;
+    }
+
+    return points;
+}
 
 
-if (
-    letterRaceGame.score >
-    letterRaceGame.bestScore
+/* =========================================================
+   ❌ خطأ
+   ========================================================= */
+
+function handleLetterRaceWrong(
+    gate
 ) {
 
-    letterRaceGame.bestScore =
-        letterRaceGame.score;
+    if (
+        letterRaceGame.isFinished
+    ) {
+        return;
+    }
+
+    letterRaceGame.isRunning =
+        false;
+
+    letterRaceGame.lives =
+        Math.max(
+            0,
+            letterRaceGame.lives - 1
+        );
+
+    letterRaceGame.streak =
+        0;
+
+    if (gate) {
+
+        gate.classList.add(
+            "wrong"
+        );
+    }
+
+    const car =
+        document.getElementById(
+            "letterRaceCar"
+        );
+
+    if (car) {
+
+        car.classList.add(
+            "race-crash"
+        );
+    }
+
+    showLetterRaceBrakeEffect();
+
+    showLetterRaceMessage(
+        "❌ حَاوِلْ مَرَّةً أُخْرَى"
+    );
+
+    speakLetterRace(
+        "حَاوِلْ مَرَّةً أُخْرَى"
+    );
+
+    updateLetterRaceHUD();
+
+    const session =
+        letterRaceGame.session;
+
+    setTimeout(() => {
+
+        if (
+            session !==
+            letterRaceGame.session
+        ) {
+            return;
+        }
+
+        if (
+            letterRaceGame.lives <= 0
+        ) {
+
+            finishLetterRace(
+                true
+            );
+
+            return;
+        }
+
+        if (car) {
+
+            car.classList.remove(
+                "race-crash"
+            );
+        }
+
+        letterRaceGame.isRunning =
+            true;
+
+        startLetterRaceRound();
+
+    }, 1100);
+}
 
 
-    localStorage.setItem(
+/* =========================================================
+   📈 مستويات السيارات
+   ========================================================= */
+
+function updateLetterRaceLevel() {
+
+    if (
+        letterRaceGame.round >= 8
+    ) {
+
+        letterRaceGame.level =
+            3;
+
+        letterRaceGame.speed =
+            11;
+
+        letterRaceGame.roundDuration =
+            8500;
+
+    } else if (
+        letterRaceGame.round >= 4
+    ) {
+
+        letterRaceGame.level =
+            2;
+
+        letterRaceGame.speed =
+            8;
+
+        letterRaceGame.roundDuration =
+            10000;
+
+    } else {
+
+        letterRaceGame.level =
+            1;
+
+        letterRaceGame.speed =
+            5;
+
+        letterRaceGame.roundDuration =
+            12000;
+    }
+}
+
+
+/* =========================================================
+   📊 لوحة معلومات السباق
+   ========================================================= */
+
+function updateLetterRaceHUD() {
+
+    setLetterRaceText(
+        "letterRaceScore",
+        letterRaceGame.score,
+        true
+    );
+
+    setLetterRaceText(
+        "letterRaceLevel",
+        letterRaceGame.level,
+        true
+    );
+
+    setLetterRaceText(
+        "letterRaceStreak",
+        letterRaceGame.streak,
+        true
+    );
+
+    setLetterRaceText(
+        "letterRaceLives",
+        "❤️".repeat(
+            Math.max(
+                0,
+                letterRaceGame.lives
+            )
+        ),
+        false
+    );
+
+    setLetterRaceText(
         "letterRaceBestScore",
-        letterRaceGame.bestScore
+        letterRaceGame.bestScore,
+        true
+    );
+
+    const target =
+        document.getElementById(
+            "letterRaceTarget"
+        );
+
+    if (target) {
+
+        target.textContent =
+            letterRaceGame.target
+                ? letterRaceGame.target
+                : "؟";
+    }
+
+    const progress =
+        document.getElementById(
+            "letterRaceProgressFill"
+        );
+
+    if (progress) {
+
+        const percent =
+            Math.min(
+                100,
+                (
+                    letterRaceGame.round /
+                    letterRaceGame.totalRounds
+                ) * 100
+            );
+
+        progress.style.width =
+            `${percent}%`;
+    }
+}
+
+
+/* =========================================================
+   🔢 كتابة رقم عربي في HUD
+   ========================================================= */
+
+function setLetterRaceText(
+    id,
+    value,
+    convertNumber
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+    if (!element) {
+        return;
+    }
+
+    if (
+        convertNumber &&
+        typeof value === "number"
+    ) {
+
+        element.textContent =
+            numberBalloonArabicNumber(
+                value
+            );
+
+    } else {
+
+        element.textContent =
+            value;
+    }
+}
+
+
+/* =========================================================
+   🔊 إعادة سماع الحرف
+   ========================================================= */
+
+function repeatLetterRaceTarget() {
+
+    if (
+        !letterRaceGame.target
+    ) {
+        return;
+    }
+
+    /*
+       مهم جدًا:
+       لن ننطق اسم الحرف.
+       سننطق:
+       أَ
+       بَ
+       تَ
+       ...
+    */
+
+    speakLetterRace(
+        letterRaceSound(
+            letterRaceGame.target
+        )
     );
 }
 
 
-updateLetterRaceHUD();
+/* =========================================================
+   💬 رسالة السباق
+   ========================================================= */
 
+function showLetterRaceMessage(
+    text
+) {
 
-const gates =
-    document.getElementById(
-        "letterRaceGates"
+    const element =
+        document.getElementById(
+            "letterRaceMessage"
+        );
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent =
+        text;
+
+    element.classList.remove(
+        "success"
     );
 
+    if (
+        text.includes(
+            "أَحْسَنْتَ"
+        ) ||
+        text.includes(
+            "مُمْتَاز"
+        ) ||
+        text.includes(
+            "رَائِع"
+        ) ||
+        text.includes(
+            "بَرَافُو"
+        ) ||
+        text.includes(
+            "شَاطِر"
+        )
+    ) {
 
-if (gates) {
+        element.classList.add(
+            "success"
+        );
+    }
 
-    gates.innerHTML = `
-        <div class="letter-race-result">
+    element.classList.add(
+        "show"
+    );
 
-            <div class="result-icon">
-                ${gameOver ? "💪" : "🏆"}
+    clearTimeout(
+        element._letterRaceMessageTimer
+    );
+
+    element._letterRaceMessageTimer =
+        setTimeout(() => {
+
+            element.classList.remove(
+                "show"
+            );
+
+        }, 1800);
+}
+
+
+/* =========================================================
+   🎉 كونفيتي
+   ========================================================= */
+
+function createLetterRaceConfetti() {
+
+    const container =
+        document.getElementById(
+            "letterRaceTrack"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    for (
+        let i = 0;
+        i < 30;
+        i++
+    ) {
+
+        const confetti =
+            document.createElement(
+                "span"
+            );
+
+        confetti.className =
+            "race-confetti";
+
+        confetti.style.left =
+            `${Math.random() * 100}%`;
+
+        confetti.style.animationDelay =
+            `${Math.random() * 0.4}s`;
+
+        container.appendChild(
+            confetti
+        );
+
+        setTimeout(() => {
+
+            confetti.remove();
+
+        }, 1800);
+    }
+}
+
+
+/* =========================================================
+   ⭐ انفجار النجوم
+   ========================================================= */
+
+function createLetterRaceStarExplosion() {
+
+    const car =
+        document.getElementById(
+            "letterRaceCar"
+        );
+
+    if (!car) {
+        return;
+    }
+
+    const parent =
+        car.parentElement;
+
+    if (!parent) {
+        return;
+    }
+
+    for (
+        let i = 0;
+        i < 12;
+        i++
+    ) {
+
+        const star =
+            document.createElement(
+                "span"
+            );
+
+        star.className =
+            "race-star-burst";
+
+        star.textContent =
+            "⭐";
+
+        star.style.setProperty(
+            "--x",
+            `${(Math.random() - 0.5) * 220}px`
+        );
+
+        star.style.setProperty(
+            "--y",
+            `${(Math.random() - 0.5) * 180}px`
+        );
+
+        parent.appendChild(
+            star
+        );
+
+        setTimeout(() => {
+
+            star.remove();
+
+        }, 900);
+    }
+}
+
+
+/* =========================================================
+   💨 تأثير الفرامل
+   ========================================================= */
+
+function showLetterRaceBrakeEffect() {
+
+    const car =
+        document.getElementById(
+            "letterRaceCar"
+        );
+
+    if (!car) {
+        return;
+    }
+
+    const parent =
+        car.parentElement;
+
+    if (!parent) {
+        return;
+    }
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
+
+        const effect =
+            document.createElement(
+                "span"
+            );
+
+        effect.className =
+            "race-brake-effect";
+
+        effect.textContent =
+            "💨";
+
+        effect.style.left =
+            `${30 + i * 12}%`;
+
+        parent.appendChild(
+            effect
+        );
+
+        setTimeout(() => {
+
+            effect.remove();
+
+        }, 900);
+    }
+}
+
+
+/* =========================================================
+   ⏸️ إيقاف / استكمال السباق
+   ========================================================= */
+
+function toggleLetterRacePause() {
+
+    if (
+        letterRaceGame.isFinished ||
+        !letterRaceGame.isRunning
+    ) {
+        return;
+    }
+
+    if (
+        letterRaceGame.isPaused
+    ) {
+
+        resumeLetterRace();
+
+    } else {
+
+        pauseLetterRace();
+    }
+}
+
+
+function pauseLetterRace() {
+
+    if (
+        letterRaceGame.isPaused
+    ) {
+        return;
+    }
+
+    letterRaceGame.isPaused =
+        true;
+
+    cancelAnimationFrame(
+        letterRaceGame.animationFrame
+    );
+
+    clearTimeout(
+        letterRaceGame.timer
+    );
+
+    if (
+        "speechSynthesis" in window
+    ) {
+
+        speechSynthesis.cancel();
+    }
+
+    const button =
+        document.getElementById(
+            "letterRacePauseBtn"
+        );
+
+    if (button) {
+
+        button.textContent =
+            "▶️ استكمال السباق";
+    }
+
+    showLetterRaceMessage(
+        "⏸️ السِّبَاقُ مُتَوَقِّف"
+    );
+}
+
+
+function resumeLetterRace() {
+
+    if (
+        !letterRaceGame.isPaused
+    ) {
+        return;
+    }
+
+    letterRaceGame.isPaused =
+        false;
+
+    const button =
+        document.getElementById(
+            "letterRacePauseBtn"
+        );
+
+    if (button) {
+
+        button.textContent =
+            "⏸️ إيقاف السباق";
+    }
+
+    showLetterRaceMessage(
+        "🏁 اِسْتَعِدْ!"
+    );
+
+    if (
+        !letterRaceGame.answered
+    ) {
+
+        letterRaceGame.isRunning =
+            true;
+
+        startLetterRaceMovement();
+    }
+}
+
+
+/* =========================================================
+   🏆 نهاية السباق
+   ========================================================= */
+
+function finishLetterRace(
+    gameOver = false
+) {
+
+    if (
+        letterRaceGame.isFinished
+    ) {
+        return;
+    }
+
+    letterRaceGame.isFinished =
+        true;
+
+    letterRaceGame.isRunning =
+        false;
+
+    letterRaceGame.isPaused =
+        false;
+
+    stopLetterRace();
+
+    if (
+        letterRaceGame.score >
+        letterRaceGame.bestScore
+    ) {
+
+        letterRaceGame.bestScore =
+            letterRaceGame.score;
+
+        localStorage.setItem(
+            "letterRaceBestScore",
+            String(
+                letterRaceGame.bestScore
+            )
+        );
+    }
+
+    updateLetterRaceHUD();
+
+    const old =
+        document.getElementById(
+            "letterRaceFinishScreen"
+        );
+
+    if (old) {
+        old.remove();
+    }
+
+    const screen =
+        document.getElementById(
+            "letterRaceGame"
+        );
+
+    if (!screen) {
+        return;
+    }
+
+    const finish =
+        document.createElement(
+            "div"
+        );
+
+    finish.id =
+        "letterRaceFinishScreen";
+
+    finish.className =
+        "letter-race-result";
+
+    const completed =
+        !gameOver;
+
+    const stars =
+        Math.min(
+            3,
+            Math.max(
+                1,
+                Math.ceil(
+                    letterRaceGame.score /
+                    80
+                )
+            )
+        );
+
+    finish.innerHTML = `
+
+        <div class="result-icon">
+            ${completed ? "🏆" : "💪"}
+        </div>
+
+        <h2>
+            ${
+                completed
+                    ? "أَنْهَيْتَ السِّبَاق!"
+                    : "لَا بَأْسَ يَا بَطَل!"
+            }
+        </h2>
+
+        <p>
+            ${
+                completed
+                    ? "مُمْتَاز! أَنْتَ بَطَلُ الحُرُوف!"
+                    : "حَاوِلْ مَرَّةً أُخْرَى وَسَتَفُوز!"
+            }
+        </p>
+
+        <div class="result-score">
+            ⭐
+            ${numberBalloonArabicNumber(
+                letterRaceGame.score
+            )}
+        </div>
+
+        <div class="result-stars">
+            ${"⭐".repeat(stars)}
+        </div>
+
+        <div class="result-stats">
+
+            <div>
+                <span>
+                    🔥 أفضل تتابع
+                </span>
+
+                <strong>
+                    ${numberBalloonArabicNumber(
+                        letterRaceGame.bestStreak
+                    )}
+                </strong>
             </div>
 
-            <h2>
-                ${
-                    gameOver
-                        ? "لا بأس يا بطل!"
-                        : "أَنْهَيْتَ السِّبَاق!"
-                }
-            </h2>
-
-            <p>
-                ${
-                    gameOver
-                        ? "حَاوِلْ مَرَّةً أُخْرَى وَسَتَفُوز!"
-                        : "مُمْتَاز! أَنْتَ بَطَلُ الحُرُوف!"
-                }
-            </p>
-
-            <div class="result-stats">
-
-                <div>
-                    ⭐ النقاط
-                    <strong>
-                        ${letterRaceGame.score}
-                    </strong>
-                </div>
-
-                <div>
+            <div>
+                <span>
                     🏆 أفضل نتيجة
-                    <strong>
-                        ${letterRaceGame.bestScore}
-                    </strong>
-                </div>
+                </span>
 
+                <strong>
+                    ${numberBalloonArabicNumber(
+                        letterRaceGame.bestScore
+                    )}
+                </strong>
             </div>
+
+            <div>
+                <span>
+                    ❤️ الأرواح المتبقية
+                </span>
+
+                <strong>
+                    ${numberBalloonArabicNumber(
+                        letterRaceGame.lives
+                    )}
+                </strong>
+            </div>
+
+        </div>
+
+        <div class="result-actions">
 
             <button
                 class="primary"
                 onclick="startLetterRace()"
             >
-                🔄 سباق جديد
+                🔄 سِبَاقٌ جَدِيد
+            </button>
+
+            <button
+                class="secondary"
+                onclick="exitLetterRace()"
+            >
+                ⬅️ العودة للألعاب
             </button>
 
         </div>
     `;
+
+    const wrapper =
+        screen.querySelector(
+            ".letter-race-wrapper"
+        );
+
+    if (wrapper) {
+
+        wrapper.appendChild(
+            finish
+        );
+    }
+
+    speakLetterRace(
+        completed
+            ? "مُمْتَاز! أَنْهَيْتَ السِّبَاق!"
+            : "لَا بَأْسَ. حَاوِلْ مَرَّةً أُخْرَى"
+    );
 }
 
-
-speakLetterRace(
-    gameOver
-        ? "لا بأس. حَاوِلْ مَرَّةً أُخْرَى"
-        : "مُمْتَاز! أَنْهَيْتَ السِّبَاق!"
-);
-```
-
-}
 
 /* =========================================================
-🛑 إيقاف اللعبة
-========================================================= */
+   🛑 إيقاف كل شيء في السباق
+   ========================================================= */
 
 function stopLetterRace() {
 
-```
-clearTimeout(
-    letterRaceGame.timer
-);
+    clearTimeout(
+        letterRaceGame.timer
+    );
 
+    letterRaceGame.timer =
+        null;
 
-cancelAnimationFrame(
-    letterRaceGame.animationFrame
-);
+    cancelAnimationFrame(
+        letterRaceGame.animationFrame
+    );
 
+    letterRaceGame.animationFrame =
+        null;
 
-document.removeEventListener(
-    "keydown",
-    handleLetterRaceKeyboard
-);
+    document.removeEventListener(
+        "keydown",
+        handleLetterRaceKeyboard
+    );
 
+    const track =
+        document.getElementById(
+            "letterRaceTrack"
+        );
 
-if (
-    "speechSynthesis" in window
-) {
+    if (track) {
 
-    speechSynthesis.cancel();
+        track.onpointerdown =
+            null;
 
+        track.onpointerup =
+            null;
+    }
+
+    if (
+        "speechSynthesis" in window
+    ) {
+
+        speechSynthesis.cancel();
+    }
 }
-```
 
-}
 
 /* =========================================================
-🚪 الخروج من اللعبة
-========================================================= */
+   🚪 الخروج من سباق الحروف
+   ========================================================= */
 
 function exitLetterRace() {
 
-```
-stopLetterRace();
+    stopLetterRace();
+
+    letterRaceGame.session++;
+
+    letterRaceGame.isRunning =
+        false;
+
+    letterRaceGame.isPaused =
+        false;
+
+    letterRaceGame.isFinished =
+        true;
+
+    letterRaceGame.answered =
+        true;
+
+    letterRaceGame.target =
+        "";
+
+    letterRaceGame.gates =
+        [];
+
+    const finish =
+        document.getElementById(
+            "letterRaceFinishScreen"
+        );
+
+    if (finish) {
+        finish.remove();
+    }
+
+    const controls =
+        document.getElementById(
+            "letterRaceControls"
+        );
+
+    if (controls) {
+        controls.remove();
+    }
+
+    const options =
+        document.getElementById(
+            "letterRaceOptions"
+        );
+
+    if (options) {
+        options.innerHTML =
+            "";
+    }
+
+    const gates =
+        document.getElementById(
+            "letterRaceGates"
+        );
+
+    if (gates) {
+        gates.innerHTML =
+            "";
+    }
+
+    showScreen(
+        "games"
+    );
+}
 
 
-letterRaceGame.isRunning =
-    false;
-
-letterRaceGame.isPaused =
-    false;
-
-letterRaceGame.isFinished =
-    true;
-
-
+/* =========================================================
+   🔚 نهاية قسم الألعاب
+   ========================================================= */
 showScreen("games");
 ```
 
