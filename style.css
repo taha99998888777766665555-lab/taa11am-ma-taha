@@ -2257,41 +2257,532 @@ header p {
 
 .balloon-target {
     font-size: 45px;
-}
+/* =========================================================
+   🏁🏎️ سباق الحروف — التصميم الاحترافي
+========================================================= */
 
-/* سباق الحروف */
+#letterRaceGame {
+    padding: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
 
 .letter-race-wrapper {
-    padding: 8px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px;
+    box-sizing: border-box;
 }
 
-.letter-race-track {
-    height: 500px;
-    border-radius: 24px;
+
+/* =========================================================
+   الشريط العلوي
+========================================================= */
+
+.letter-race-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
-.race-road {
-    width: 92%;
-    border-left-width: 7px;
-    border-right-width: 7px;
+.race-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.race-title span {
+    font-size: 30px;
+}
+
+.race-top-btn {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 15px;
+    background: #ffffff;
+    box-shadow: 0 5px 15px rgba(0,0,0,.12);
+    font-size: 22px;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.race-top-btn:hover {
+    transform: translateY(-2px);
+}
+
+.race-top-btn:active {
+    transform: scale(.92);
+}
+
+
+/* =========================================================
+   HUD
+========================================================= */
+
+.letter-race-hud {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.race-hud-card {
+    min-height: 68px;
+    padding: 9px 12px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 6px 18px rgba(0,0,0,.10);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+}
+
+.race-hud-card div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.race-hud-card small {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: .7;
+}
+
+.race-hud-card strong {
+    font-size: 21px;
+    font-weight: 900;
+}
+
+.race-hud-icon {
+    font-size: 25px;
+}
+
+.race-round-card {
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+/* =========================================================
+   المرحلة والتقدم
+========================================================= */
+
+.letter-race-level-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    border-radius: 17px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 5px 16px rgba(0,0,0,.08);
+}
+
+.race-level-info,
+.race-best {
+    white-space: nowrap;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.race-level-info strong {
+    font-size: 19px;
+}
+
+.race-progress-track {
+    flex: 1;
+    height: 12px;
+    background: #e8edf3;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.race-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ffd54f, #ff9800);
+    transition: width .4s ease;
+}
+
+
+/* =========================================================
+   لوحة الحرف المطلوب
+========================================================= */
+
+.letter-race-command {
+    position: relative;
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #fff8df, #ffffff);
+    box-shadow: 0 7px 20px rgba(0,0,0,.09);
+    text-align: center;
+}
+
+.command-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 50px;
+    background: #ffffff;
+    box-shadow: 0 3px 10px rgba(0,0,0,.08);
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.command-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 7px;
+}
+
+.command-label {
+    font-size: 14px;
+    font-weight: 800;
 }
 
 .letter-race-target {
-    min-width: 75px;
-    min-height: 68px;
-    font-size: 48px;
+    min-width: 80px;
+    min-height: 65px;
+    padding: 4px 15px;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 5px 14px rgba(0,0,0,.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 46px;
+    line-height: 1;
+    font-weight: 900;
+}
+
+.race-listen-btn {
+    border: none;
+    border-radius: 15px;
+    padding: 11px 17px;
+    background: #2196f3;
+    color: white;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 5px 12px rgba(33,150,243,.25);
+    transition: .2s ease;
+}
+
+.race-listen-btn:hover {
+    transform: translateY(-2px);
+}
+
+.race-listen-btn:active {
+    transform: scale(.95);
+}
+
+
+/* =========================================================
+   مضمار السباق
+========================================================= */
+
+.professional-race-track {
+    position: relative;
+    width: 100%;
+    height: 570px;
+    border-radius: 28px;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(
+        to bottom,
+        #73d7ff 0%,
+        #bdefff 42%,
+        #86d66d 43%,
+        #59bd54 100%
+    );
+    box-shadow:
+        0 12px 30px rgba(0,0,0,.18),
+        inset 0 0 0 4px rgba(255,255,255,.4);
+    touch-action: pan-y;
+}
+
+
+/* =========================================================
+   السماء
+========================================================= */
+
+.race-sky {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.race-sun {
+    position: absolute;
+    top: 22px;
+    right: 7%;
+    font-size: 58px;
+    filter: drop-shadow(0 5px 8px rgba(0,0,0,.12));
+}
+
+.race-cloud {
+    position: absolute;
+    font-size: 55px;
+    opacity: .9;
+    animation: raceCloudMove 18s linear infinite;
+}
+
+.race-cloud-1 {
+    top: 30px;
+    left: 8%;
+}
+
+.race-cloud-2 {
+    top: 105px;
+    left: 48%;
+    animation-duration: 24s;
+}
+
+.race-cloud-3 {
+    top: 55px;
+    right: 25%;
+    animation-duration: 21s;
+}
+
+@keyframes raceCloudMove {
+    0% {
+        transform: translateX(-30px);
+    }
+
+    50% {
+        transform: translateX(35px);
+    }
+
+    100% {
+        transform: translateX(-30px);
+    }
+}
+
+
+/* =========================================================
+   الجبال
+========================================================= */
+
+.race-mountains {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 210px;
+    height: 190px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.mountain {
+    position: absolute;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-left: 120px solid transparent;
+    border-right: 120px solid transparent;
+    border-bottom: 170px solid rgba(74,145,108,.55);
+}
+
+.mountain::after {
+    content: "";
+    position: absolute;
+    left: -65px;
+    top: 75px;
+    width: 0;
+    height: 0;
+    border-left: 65px solid transparent;
+    border-right: 65px solid transparent;
+    border-bottom: 95px solid rgba(255,255,255,.35);
+}
+
+.mountain-1 {
+    left: 5%;
+}
+
+.mountain-2 {
+    left: 35%;
+    transform: scale(1.3);
+}
+
+.mountain-3 {
+    right: 5%;
+    transform: scale(.9);
+}
+
+
+/* =========================================================
+   الطريق
+========================================================= */
+
+.professional-road {
+    position: absolute;
+    z-index: 5;
+    left: 13%;
+    right: 13%;
+    top: 0;
+    bottom: 0;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            #4b5058 0,
+            #4b5058 30px,
+            #454a51 30px,
+            #454a51 60px
+        );
+    border-left: 14px solid #ffffff;
+    border-right: 14px solid #ffffff;
+    box-shadow:
+        inset 10px 0 0 rgba(0,0,0,.10),
+        inset -10px 0 0 rgba(0,0,0,.10),
+        0 0 25px rgba(0,0,0,.20);
+}
+
+
+/* =========================================================
+   حواف الطريق
+========================================================= */
+
+.road-side {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    z-index: 2;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            #ffffff 0,
+            #ffffff 25px,
+            #ef5350 25px,
+            #ef5350 50px
+        );
+}
+
+.road-side-left {
+    left: -14px;
+}
+
+.road-side-right {
+    right: -14px;
+}
+
+
+/* =========================================================
+   خطوط المسارات
+========================================================= */
+
+.road-lane {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    z-index: 2;
+    opacity: .65;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 38px,
+            rgba(255,255,255,.9) 38px,
+            rgba(255,255,255,.9) 78px
+        );
+}
+
+.lane-1 {
+    left: 25%;
+}
+
+.lane-2 {
+    left: 50%;
+}
+
+.lane-3 {
+    left: 75%;
+}
+
+
+/* =========================================================
+   بوابات الحروف
+========================================================= */
+
+.letter-race-gates {
+    position: absolute;
+    z-index: 15;
+    inset: 0;
+    pointer-events: none;
 }
 
 .letter-race-gate {
-    width: 68px;
-    min-height: 88px;
-    font-size: 36px;
-    border-width: 4px;
-    border-radius: 17px;
+    position: absolute;
+    top: 105px;
+    width: 21%;
+    min-height: 110px;
+    border: 5px solid #ffffff;
+    border-radius: 18px 18px 25px 25px;
+    background: linear-gradient(
+        to bottom,
+        #ffca28,
+        #ff9800
+    );
+    color: #222;
+    font-size: 48px;
+    font-weight: 900;
+    line-height: 1;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow:
+        0 8px 0 rgba(0,0,0,.16),
+        0 12px 22px rgba(0,0,0,.20);
+    text-shadow: 0 2px 0 rgba(255,255,255,.7);
+    transition:
+        transform .2s ease,
+        filter .2s ease,
+        box-shadow .2s ease;
+}
+
+.letter-race-gate:hover {
+    transform: translateY(-5px) scale(1.04);
+    filter: brightness(1.06);
+}
+
+.letter-race-gate:active {
+    transform: scale(.95);
+}
+
+.letter-race-gate::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    right: 7px;
+    top: 7px;
+    height: 8px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.65);
 }
 
 .letter-race-gate::after {
-    font-size: 9px;
+    content: "بوابة";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 7px;
+    font-size: 11px;
+    font-weight: 900;
+    opacity: .75;
 }
 
 .letter-race-gate.gate-one {
@@ -2299,80 +2790,674 @@ header p {
 }
 
 .letter-race-gate.gate-two {
-    left: 26%;
+    left: 27%;
 }
 
 .letter-race-gate.gate-three {
-    right: 26%;
+    left: 52%;
 }
 
 .letter-race-gate.gate-four {
-    right: 2%;
+    left: 77%;
 }
 
-.letter-race-car {
-    width: 65px;
-    height: 75px;
-    font-size: 48px;
-    bottom: 28px;
+.letter-race-gate.selected {
+    transform: scale(1.08);
+    box-shadow:
+        0 0 0 6px rgba(255,235,59,.45),
+        0 10px 25px rgba(0,0,0,.25);
 }
 
-.finish-line {
-    font-size: 28px;
+.letter-race-gate.correct {
+    background: linear-gradient(
+        to bottom,
+        #66bb6a,
+        #2e7d32
+    );
+    color: white;
+    animation: correctGate .55s ease;
+}
+
+.letter-race-gate.wrong {
+    background: linear-gradient(
+        to bottom,
+        #ef5350,
+        #c62828
+    );
+    color: white;
+    animation: wrongGate .5s ease;
+}
+
+@keyframes correctGate {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.18) rotate(-3deg);
+    }
+
+    100% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes wrongGate {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-10px);
+    }
+
+    50% {
+        transform: translateX(10px);
+    }
+
+    75% {
+        transform: translateX(-7px);
+    }
+}
+
+
+/* =========================================================
+   السيارة
+========================================================= */
+
+.professional-race-car {
+    position: absolute;
+    z-index: 25;
+    left: 12.5%;
+    bottom: 55px;
+    width: 72px;
+    height: 105px;
+    transform: translateX(-50%);
+    transition:
+        left .32s cubic-bezier(.2,.8,.2,1),
+        transform .15s ease;
+    pointer-events: none;
+}
+
+.car-shadow {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: -6px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,.32);
+    filter: blur(5px);
+}
+
+.car-body {
+    position: absolute;
+    left: 7px;
+    right: 7px;
+    top: 10px;
+    bottom: 8px;
+    border-radius: 25px 25px 18px 18px;
+    background: linear-gradient(
+        90deg,
+        #d32f2f,
+        #f44336 45%,
+        #b71c1c
+    );
+    border: 4px solid #ffffff;
+    box-shadow:
+        inset 0 0 10px rgba(255,255,255,.25),
+        0 7px 14px rgba(0,0,0,.25);
+}
+
+.car-window {
+    position: absolute;
+    left: 13px;
+    right: 13px;
+    top: 12px;
+    height: 30px;
+    border-radius: 12px 12px 7px 7px;
+    background: linear-gradient(
+        135deg,
+        #dff7ff,
+        #4fc3f7
+    );
+    border: 3px solid rgba(255,255,255,.9);
+}
+
+.car-light {
+    position: absolute;
+    top: 50px;
+    width: 13px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff59d;
+    box-shadow: 0 0 12px #fff176;
+}
+
+.car-light-left {
+    left: 5px;
+}
+
+.car-light-right {
+    right: 5px;
+}
+
+.car-wheel {
+    position: absolute;
+    width: 12px;
+    height: 25px;
+    border-radius: 8px;
+    background: #202124;
+    border: 2px solid #555;
+}
+
+.car-wheel-left {
+    left: -9px;
+    top: 43px;
+}
+
+.car-wheel-right {
+    right: -9px;
+    top: 43px;
+}
+
+.car-flame {
+    position: absolute;
+    left: 50%;
+    bottom: -22px;
+    transform: translateX(-50%);
+    font-size: 25px;
+    animation: carFlame .25s infinite alternate;
+}
+
+@keyframes carFlame {
+    from {
+        transform: translateX(-50%) scale(.8);
+    }
+
+    to {
+        transform: translateX(-50%) scale(1.15);
+    }
+}
+
+
+/* =========================================================
+   خط النهاية
+========================================================= */
+
+.race-finish-line {
+    position: absolute;
+    z-index: 10;
     top: 20px;
-}
-
-.road-line {
-    width: 8px;
-    height: 65px;
-}
-
-.letter-race-option {
-    min-width: 65px;
-    min-height: 58px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 45px;
     font-size: 28px;
-    padding: 6px 13px;
+    opacity: .9;
 }
 
-.letter-race-finish-screen h2 {
+
+/* =========================================================
+   تأثيرات السرعة
+========================================================= */
+
+.race-speed-lines {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 8%,
+            rgba(255,255,255,.45) 8%,
+            rgba(255,255,255,.45) 8.5%,
+            transparent 8.5%,
+            transparent 17%
+        );
+}
+
+.race-speed-lines.active {
+    opacity: .35;
+    animation: speedLines .35s linear infinite;
+}
+
+@keyframes speedLines {
+    from {
+        transform: translateY(-20px);
+    }
+
+    to {
+        transform: translateY(40px);
+    }
+}
+
+
+/* =========================================================
+   المؤثرات
+========================================================= */
+
+.race-effects {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.race-star-effect {
+    position: absolute;
+    font-size: 30px;
+    animation: raceStarExplosion .9s ease-out forwards;
+}
+
+@keyframes raceStarExplosion {
+    0% {
+        opacity: 1;
+        transform: translate(0,0) scale(.5) rotate(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform:
+            translate(
+                var(--x),
+                var(--y)
+            )
+            scale(1.4)
+            rotate(240deg);
+    }
+}
+
+
+/* =========================================================
+   رسالة التشجيع
+========================================================= */
+
+.letter-race-message {
+    min-height: 48px;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 900;
+    border-radius: 17px;
+    transition: .25s ease;
+}
+
+.letter-race-message.success {
+    background: rgba(76,175,80,.14);
+}
+
+.letter-race-message.error {
+    background: rgba(244,67,54,.14);
+}
+
+
+/* =========================================================
+   أزرار التحكم
+========================================================= */
+
+.race-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 12px 0;
+}
+
+.race-control-btn,
+.race-control-select {
+    border: none;
+    cursor: pointer;
+    font-weight: 900;
+    transition: .18s ease;
+    box-shadow: 0 6px 15px rgba(0,0,0,.15);
+}
+
+.race-control-btn {
+    width: 68px;
+    height: 58px;
+    border-radius: 18px;
+    background: #ffffff;
     font-size: 26px;
 }
 
-.letter-race-trophy {
-    font-size: 75px;
+.race-control-select {
+    min-width: 125px;
+    height: 58px;
+    padding: 0 20px;
+    border-radius: 18px;
+    background: linear-gradient(
+        135deg,
+        #ffca28,
+        #ff9800
+    );
+    color: #222;
+    font-size: 17px;
 }
-```
 
+.race-control-select span {
+    margin-right: 5px;
 }
 
-/* ==========================================
-شاشات صغيرة جدًا
-========================================== */
+.race-control-btn:hover,
+.race-control-select:hover {
+    transform: translateY(-3px);
+}
+
+.race-control-btn:active,
+.race-control-select:active {
+    transform: scale(.93);
+}
+
+
+/* =========================================================
+   تعليمات التحكم
+========================================================= */
+
+.race-help {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    opacity: .75;
+}
+
+
+/* =========================================================
+   الاستجابة للموبايل
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .letter-race-wrapper {
+        padding: 7px;
+    }
+
+    .race-title {
+        font-size: 20px;
+    }
+
+    .race-title span {
+        font-size: 25px;
+    }
+
+    .race-top-btn {
+        width: 43px;
+        height: 43px;
+        font-size: 19px;
+    }
+
+    .letter-race-hud {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .race-hud-card {
+        min-height: 58px;
+        padding: 7px;
+    }
+
+    .race-hud-card strong {
+        font-size: 18px;
+    }
+
+    .race-hud-icon {
+        font-size: 21px;
+    }
+
+    .letter-race-level-bar {
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+
+    .race-progress-track {
+        order: 3;
+        flex-basis: 100%;
+    }
+
+    .race-best {
+        margin-right: auto;
+    }
+
+    .command-content {
+        gap: 9px;
+        flex-wrap: wrap;
+    }
+
+    .letter-race-target {
+        min-width: 70px;
+        min-height: 58px;
+        font-size: 39px;
+    }
+
+    .race-listen-btn {
+        padding: 10px 13px;
+        font-size: 13px;
+    }
+
+    .professional-race-track {
+        height: 510px;
+        border-radius: 22px;
+    }
+
+    .professional-road {
+        left: 7%;
+        right: 7%;
+        border-left-width: 9px;
+        border-right-width: 9px;
+    }
+
+    .road-side {
+        width: 9px;
+    }
+
+    .road-side-left {
+        left: -9px;
+    }
+
+    .road-side-right {
+        right: -9px;
+    }
+
+    .letter-race-gate {
+        width: 22%;
+        min-height: 88px;
+        top: 105px;
+        font-size: 35px;
+        border-width: 4px;
+    }
+
+    .letter-race-gate.gate-one {
+        left: 1%;
+    }
+
+    .letter-race-gate.gate-two {
+        left: 26%;
+    }
+
+    .letter-race-gate.gate-three {
+        left: 51%;
+    }
+
+    .letter-race-gate.gate-four {
+        left: 76%;
+    }
+
+    .professional-race-car {
+        width: 61px;
+        height: 92px;
+        bottom: 45px;
+    }
+
+    .car-body {
+        border-width: 3px;
+    }
+
+    .race-sun {
+        font-size: 42px;
+    }
+
+    .race-cloud {
+        font-size: 42px;
+    }
+
+    .race-mountains {
+        bottom: 180px;
+    }
+
+    .race-control-btn {
+        width: 62px;
+        height: 55px;
+    }
+
+    .race-control-select {
+        min-width: 110px;
+        height: 55px;
+    }
+
+    .letter-race-message {
+        font-size: 20px;
+        min-height: 42px;
+    }
+}
+
+
+/* =========================================================
+   شاشات صغيرة جدًا
+========================================================= */
 
 @media (max-width: 380px) {
 
-```
-.letter-race-track {
-    height: 460px;
+    .letter-race-wrapper {
+        padding: 5px;
+    }
+
+    .race-title {
+        font-size: 17px;
+    }
+
+    .race-title span {
+        font-size: 21px;
+    }
+
+    .race-top-btn {
+        width: 39px;
+        height: 39px;
+    }
+
+    .race-hud-card {
+        min-height: 53px;
+    }
+
+    .race-hud-card small {
+        font-size: 10px;
+    }
+
+    .race-hud-card strong {
+        font-size: 16px;
+    }
+
+    .professional-race-track {
+        height: 460px;
+    }
+
+    .letter-race-gate {
+        min-height: 75px;
+        font-size: 29px;
+        top: 95px;
+    }
+
+    .professional-race-car {
+        width: 55px;
+        height: 83px;
+        bottom: 38px;
+    }
+
+    .race-control-btn {
+        width: 55px;
+        height: 50px;
+        font-size: 22px;
+    }
+
+    .race-control-select {
+        min-width: 95px;
+        height: 50px;
+        font-size: 14px;
+    }
+
+    .race-help {
+        font-size: 10px;
+    }
 }
 
-.letter-race-gate {
-    width: 58px;
-    min-height: 78px;
-    font-size: 31px;
+
+/* =========================================================
+   حركة السيارة أثناء السباق
+========================================================= */
+
+.professional-race-car.racing {
+    animation: carBounce .22s infinite alternate;
 }
 
-.letter-race-gate.gate-two {
-    left: 25%;
+@keyframes carBounce {
+    from {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    to {
+        transform: translateX(-50%) translateY(-3px);
+    }
 }
 
-.letter-race-gate.gate-three {
-    right: 25%;
+
+/* =========================================================
+   اهتزاز عند الخطأ
+========================================================= */
+
+.professional-race-car.crashed {
+    animation: carCrash .5s ease;
 }
 
-.letter-race-car {
-    font-size: 42px;
-}
-```
+@keyframes carCrash {
 
+    0%,
+    100% {
+        transform: translateX(-50%) rotate(0);
+    }
+
+    20% {
+        transform: translateX(-50%) rotate(-8deg);
+    }
+
+    40% {
+        transform: translateX(-50%) rotate(8deg);
+    }
+
+    60% {
+        transform: translateX(-50%) rotate(-6deg);
+    }
+
+    80% {
+        transform: translateX(-50%) rotate(5deg);
+    }
+}
+
+
+/* =========================================================
+   إخفاء العناصر القديمة الخاصة بالتصميم السابق
+========================================================= */
+
+#letterRaceGame .race-road,
+#letterRaceGame .letter-race-option,
+#letterRaceGame .finish-line {
+    display: none !important;
 }
