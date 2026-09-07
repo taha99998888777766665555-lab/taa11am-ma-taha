@@ -46,7 +46,6 @@ outline: none;
 
 @media (prefers-reduced-motion: reduce) {
 
-```
 *,
 *::before,
 *::after {
@@ -65,7 +64,6 @@ outline: none;
 .game-launch-card:hover {
     transform: none !important;
 }
-```
 
 }
 
@@ -127,11 +125,9 @@ from {
 opacity: 0;
 }
 
-```
 to {
     opacity: 1;
 }
-```
 
 }
 
@@ -171,11 +167,9 @@ margin-top: 25px;
 
 @media (min-width: 700px) {
 
-```
 .menu {
     grid-template-columns: repeat(3, 1fr);
 }
-```
 
 }
 
@@ -3330,34 +3324,7 @@ z-index: 100;
     .professional-race-car,
     .race-confetti,
     .race-star-burst,
-    .race-brake-effect {
-        animation: none !important;
-    }
-
-    * {
-        scroll-behavior: auto !important;
-    }
-}
-        height: 70px;
-        font-size: 29px;
-    }
-
-    .professional-race-car {
-        width: 24%;
-        bottom: 10%;
-    }
-}
-
-/* =========================================================
-   ♿ تقليل الحركة لمن يحتاجها
-========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-    .race-cloud,
-    .road-lane,
-    .car-body,
-    .car-flame,
+    .race-brake-effect,
     .race-speed-lines.active {
         animation: none !important;
     }
@@ -3385,3 +3352,575 @@ z-index: 100;
         height: 130px;
     }
 }
+
+
+/* =========================================================
+   🧩🧩🧩 لعبة المطابقة - Matching Game
+========================================================= */
+
+/* ---------- بطاقة اللعبة في القائمة ---------- */
+
+.matching-game-card {
+    background: linear-gradient(135deg, #f3e8ff, #e0f2fe);
+    border: 3px solid #c4b5fd;
+}
+
+.matching-game-card:hover {
+    box-shadow: 0 18px 40px rgba(124, 58, 237, .20);
+}
+
+/* ---------- بطاقات اختيار النمط ---------- */
+
+.matching-mode-card {
+    background: linear-gradient(135deg, #fdf4ff, #eef2ff);
+    border: 3px solid #ddd6fe;
+}
+
+.matching-mode-pictures {
+    background: linear-gradient(135deg, #fff7ed, #fefce8);
+    border-color: #fde68a;
+}
+
+.matching-mode-words {
+    background: linear-gradient(135deg, #ecfeff, #eff6ff);
+    border-color: #a5f3fc;
+}
+
+.matching-mode-numbers {
+    background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+    border-color: #86efac;
+}
+
+/* ---------- إطار شاشة اللعب ---------- */
+
+.matching-game-wrapper {
+    position: relative;
+
+    max-width: 950px;
+    margin: auto;
+    padding: 15px;
+}
+
+/* ---------- الشريط العلوي ---------- */
+
+.matching-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    margin-bottom: 16px;
+}
+
+.matching-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 22px;
+    font-weight: 900;
+
+    color: #3730a3;
+}
+
+/* ---------- لوحة المعلومات ---------- */
+
+.matching-hud {
+    display: grid;
+    grid-template-columns: 1fr 1fr 130px;
+    gap: 12px;
+
+    margin-bottom: 15px;
+}
+
+.matching-hud .hud-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    text-align: center;
+}
+
+.matching-round-card {
+    flex-direction: column;
+    gap: 2px !important;
+}
+
+.matching-round-card small {
+    font-size: 12px;
+    opacity: .65;
+}
+
+/* ---------- التعليمات ---------- */
+
+.matching-instruction {
+    background: white;
+    border-radius: 22px;
+    padding: 14px 18px;
+    text-align: center;
+    margin-bottom: 15px;
+
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+
+    font-size: 18px;
+    font-weight: 800;
+
+    color: #4338ca;
+}
+
+/* ---------- لوحة المطابقة ---------- */
+
+.matching-board {
+    position: relative;
+
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+
+    min-height: 380px;
+
+    padding: 20px 14px;
+
+    border-radius: 30px;
+
+    background: linear-gradient(
+        180deg,
+        #f5f3ff 0%,
+        #eef2ff 55%,
+        #ecfeff 100%
+    );
+
+    box-shadow:
+        inset 0 0 30px rgba(255,255,255,.6),
+        0 10px 30px rgba(0,0,0,.10);
+
+    overflow: hidden;
+}
+
+.matching-lines-svg {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    pointer-events: none;
+    z-index: 1;
+}
+
+.matching-column {
+    position: relative;
+    z-index: 2;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    max-width: 46%;
+}
+
+/* ---------- بطاقة عنصر المطابقة ---------- */
+
+.matching-card {
+    border: 0;
+    border-radius: 20px;
+
+    min-height: 70px;
+
+    padding: 10px 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: white;
+
+    box-shadow:
+        0 6px 0 rgba(0,0,0,.08),
+        0 8px 18px rgba(0,0,0,.10);
+
+    font-family: inherit;
+    font-weight: 900;
+
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+
+    transition:
+        transform .15s ease,
+        box-shadow .15s ease,
+        background .2s ease,
+        border-color .2s ease;
+}
+
+.matching-target-card {
+    touch-action: manipulation;
+    cursor: pointer;
+}
+
+.matching-card:active {
+    transform: scale(.96);
+}
+
+.matching-letter-face {
+    font-size: 40px;
+    color: #4338ca;
+}
+
+.matching-number-face {
+    font-size: 36px;
+    color: #15803d;
+}
+
+.matching-emoji-face {
+    font-size: 38px;
+}
+
+.matching-word-face {
+    font-size: 22px;
+    color: #0e7490;
+}
+
+.matching-quantity-face {
+    font-size: 20px;
+    line-height: 1.3;
+    flex-wrap: wrap;
+    letter-spacing: 1px;
+}
+
+/* ---------- حالات البطاقة ---------- */
+
+.matching-selected {
+    border: 3px solid #6366f1;
+    background: #eef2ff;
+    box-shadow:
+        0 0 0 5px rgba(99,102,241,.25),
+        0 8px 18px rgba(0,0,0,.10);
+
+    transform: scale(1.04);
+}
+
+.matching-matched {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    box-shadow:
+        0 0 0 4px rgba(34,197,94,.25),
+        0 8px 18px rgba(0,0,0,.08);
+
+    cursor: default;
+    opacity: .9;
+}
+
+.matching-correct-pulse {
+    animation: matchingCorrectPulse .55s ease;
+}
+
+.matching-wrong {
+    animation: matchingShake .5s ease;
+
+    background: #fee2e2 !important;
+    box-shadow:
+        0 0 0 4px rgba(239,68,68,.3) !important;
+}
+
+.matching-hint-glow {
+    animation: matchingHintGlow 1.5s ease;
+}
+
+.matching-nudge {
+    animation: matchingNudge .4s ease;
+}
+
+/* ---------- خطوط الربط ---------- */
+
+.matching-temp-line {
+    stroke: #6366f1;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 8 6;
+    opacity: .85;
+}
+
+.matching-solved-line {
+    stroke: #22c55e;
+    stroke-width: 5;
+    stroke-linecap: round;
+    opacity: .8;
+    animation: matchingLineDraw .4s ease;
+}
+
+/* ---------- رسالة اللعبة ---------- */
+
+.matching-message {
+    min-height: 40px;
+
+    padding: 10px;
+
+    text-align: center;
+
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.matching-message.success {
+    color: #15803d;
+}
+
+.matching-message.wrong {
+    color: #dc2626;
+}
+
+/* ---------- شاشة النتيجة النهائية ---------- */
+
+.matching-result {
+    position: absolute;
+    inset: 0;
+
+    z-index: 200;
+
+    min-height: 100%;
+
+    padding: 30px 20px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    border-radius: 28px;
+
+    background: radial-gradient(
+        circle at 50% 20%,
+        rgba(255,255,255,.96),
+        rgba(238,242,255,.97)
+    );
+
+    box-shadow: 0 15px 45px rgba(0,0,0,.3);
+
+    animation: resultAppear .35s ease;
+}
+
+.matching-result .result-icon {
+    font-size: 70px;
+
+    animation: resultTrophy 1s ease-in-out infinite alternate;
+}
+
+.matching-result h2 {
+    margin: 10px 0 5px;
+
+    color: #172033;
+
+    font-size: clamp(23px, 6vw, 34px);
+    font-weight: 1000;
+}
+
+.matching-result p {
+    margin: 4px 0 14px;
+
+    color: #667085;
+
+    font-size: 16px;
+    font-weight: 800;
+}
+
+/* ---------- الحركات ---------- */
+
+@keyframes matchingCorrectPulse {
+
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes matchingShake {
+
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-8px);
+    }
+
+    40% {
+        transform: translateX(8px);
+    }
+
+    60% {
+        transform: translateX(-6px);
+    }
+
+    80% {
+        transform: translateX(6px);
+    }
+}
+
+@keyframes matchingHintGlow {
+
+    0%, 100% {
+        box-shadow: 0 8px 18px rgba(0,0,0,.10);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 8px rgba(245,158,11,.35),
+            0 8px 18px rgba(0,0,0,.10);
+    }
+}
+
+@keyframes matchingNudge {
+
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes matchingLineDraw {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: .8;
+    }
+}
+
+/* =========================================================
+   📱 الجوال - لعبة المطابقة
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .matching-game-wrapper {
+        padding: 8px;
+    }
+
+    .matching-title {
+        font-size: 18px;
+    }
+
+    .matching-hud {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .matching-round-card {
+        grid-column: span 2;
+    }
+
+    .matching-instruction {
+        font-size: 15px;
+        padding: 10px 12px;
+    }
+
+    .matching-board {
+        gap: 10px;
+        padding: 14px 8px;
+        min-height: 320px;
+    }
+
+    .matching-card {
+        min-height: 58px;
+        border-radius: 16px;
+        padding: 8px;
+    }
+
+    .matching-letter-face {
+        font-size: 32px;
+    }
+
+    .matching-number-face {
+        font-size: 28px;
+    }
+
+    .matching-emoji-face {
+        font-size: 30px;
+    }
+
+    .matching-word-face {
+        font-size: 17px;
+    }
+
+    .matching-quantity-face {
+        font-size: 15px;
+    }
+
+    .matching-result h2 {
+        font-size: 22px;
+    }
+
+    .matching-result p {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 420px) {
+
+    .matching-column {
+        max-width: 48%;
+        gap: 10px;
+    }
+
+    .matching-card {
+        min-height: 52px;
+    }
+
+    .matching-letter-face {
+        font-size: 28px;
+    }
+
+    .matching-emoji-face {
+        font-size: 26px;
+    }
+
+    .matching-word-face {
+        font-size: 15px;
+    }
+
+    .matching-quantity-face {
+        font-size: 13px;
+    }
+}
+
+/* ---------- تقليل الحركة ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .matching-correct-pulse,
+    .matching-wrong,
+    .matching-hint-glow,
+    .matching-nudge,
+    .matching-solved-line,
+    .matching-result .result-icon {
+        animation: none !important;
+    }
+}
+
+/* ---------- تحسين اللمس ---------- */
+
+.matching-card {
+    -webkit-touch-callout: none;
+}
+
+/* =========================================================
+   🔚 نهاية قسم لعبة المطابقة
+========================================================= */
