@@ -5,7 +5,6 @@
 <head>
     <meta charset="UTF-8">
 
-```
 <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
@@ -17,7 +16,6 @@
     rel="stylesheet"
     href="style.css"
 >
-```
 
 </head>
 
@@ -29,7 +27,6 @@
 
 <header>
 
-```
 <h1>🌟 تعلم مع أ/طه محمد 🌟</h1>
 
 <p>
@@ -51,7 +48,6 @@
     </span>
 
 </div>
-```
 
 </header>
 
@@ -66,7 +62,6 @@
     class="screen active"
 >
 
-```
 <h2>
     ماذا تريد أن تتعلم؟ 😊
 </h2>
@@ -172,7 +167,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -185,7 +179,6 @@
     class="screen"
 >
 
-```
 <div class="card">
 
 
@@ -263,7 +256,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -276,7 +268,6 @@
     class="screen"
 >
 
-```
 <div class="card">
 
 
@@ -346,7 +337,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -359,7 +349,6 @@
     class="screen"
 >
 
-```
 <div class="card">
 
 
@@ -429,7 +418,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -442,7 +430,6 @@
     class="screen"
 >
 
-```
 <div class="card">
 
 
@@ -510,7 +497,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -523,7 +509,6 @@
     class="screen"
 >
 
-```
 <div class="card">
 
 
@@ -593,7 +578,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -606,7 +590,6 @@
     class="screen"
 >
 
-```
 <div class="card">
 
 
@@ -676,7 +659,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -686,7 +668,6 @@
 
 <section id="quran" class="screen">
 
-```
 <div class="card quran-card">
 
     <h2>📖 القرآن الكريم</h2>
@@ -732,7 +713,6 @@
     </button>
 
 </div>
-```
 
 </section>
 
@@ -745,7 +725,6 @@
     class="screen"
 >
 
-```
 <div class="card hadith-card">
 
 
@@ -816,7 +795,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -829,7 +807,6 @@
     class="screen"
 >
 
-```
 <div class="card dua-card">
 
 
@@ -887,7 +864,6 @@
 
 
 </div>
-```
 
 </section>
 
@@ -1013,8 +989,8 @@
             ====================================== -->
 
             <button
-                class="game-launch-card disabled-game"
-                disabled
+                class="game-launch-card matching-game-card"
+                onclick="showScreen('matchingModes')"
             >
 
                 <div class="game-card-icon">
@@ -1026,8 +1002,12 @@
                 </h3>
 
                 <p>
-                    قريبًا
+                    اربط كل عنصر بما يناسبه بالسحب أو باللمس
                 </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
 
             </button>
 
@@ -1765,9 +1745,301 @@
 </section>
 
 
+<!-- =========================================================
+     🧩 لعبة المطابقة - اختيار النمط
+========================================================= -->
+
+<section
+    id="matchingModes"
+    class="screen"
+>
+
+    <div class="games-home">
+
+        <div class="games-header">
+
+            <div class="games-title-icon">
+                🧩
+            </div>
+
+            <div>
+                <h2>
+                    لعبة المطابقة
+                </h2>
+
+                <p>
+                    اختر نوع المطابقة الذي تريد اللعب به 🌟
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="games-grid">
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-pictures"
+                onclick="startMatchingGame('letters-pictures')"
+            >
+
+                <div class="game-card-icon">
+                    🔤🖼️
+                </div>
+
+                <h3>
+                    الحروف والصور
+                </h3>
+
+                <p>
+                    اربط كل حرف بالصورة المناسبة له
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-words"
+                onclick="startMatchingGame('letters-words')"
+            >
+
+                <div class="game-card-icon">
+                    🔤📖
+                </div>
+
+                <h3>
+                    الحروف والكلمات
+                </h3>
+
+                <p>
+                    اربط كل حرف بالكلمة التي تبدأ به
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-numbers"
+                onclick="startMatchingGame('numbers-quantities')"
+            >
+
+                <div class="game-card-icon">
+                    🔢🍎
+                </div>
+
+                <h3>
+                    الأرقام والكميات
+                </h3>
+
+                <p>
+                    اربط كل رقم بعدد العناصر المناسب
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+        </div>
+
+
+        <button
+            class="secondary"
+            onclick="showScreen('games')"
+        >
+            🏠 الألعاب
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     🧩 لعبة المطابقة - سير اللعب
+========================================================= -->
+
+<section
+    id="matchingGame"
+    class="screen"
+>
+
+    <div class="matching-game-wrapper">
+
+
+        <!-- ===================================
+             الشريط العلوي
+        ==================================== -->
+
+        <div class="matching-topbar">
+
+            <button
+                class="race-top-btn"
+                onclick="exitMatchingGame()"
+                aria-label="العودة للألعاب"
+            >
+                ⬅️
+            </button>
+
+            <div class="matching-title">
+
+                <span>
+                    🧩
+                </span>
+
+                <strong>
+                    لعبة المطابقة
+                </strong>
+
+            </div>
+
+            <button
+                class="race-top-btn"
+                onclick="matchingHint()"
+                aria-label="تلميح"
+            >
+                💡
+            </button>
+
+        </div>
+
+
+        <!-- ===================================
+             لوحة المعلومات
+        ==================================== -->
+
+        <div class="matching-hud">
+
+            <div class="hud-item">
+
+                <span>⭐</span>
+
+                <strong id="matchingScore">
+                    ٠
+                </strong>
+
+            </div>
+
+
+            <div class="hud-item streak-box">
+
+                🔥
+
+                <strong id="matchingStreak">
+                    ٠
+                </strong>
+
+            </div>
+
+
+            <div class="hud-item matching-round-card">
+
+                <small>
+                    الجولة
+                </small>
+
+                <strong>
+
+                    <span id="matchingRound">
+                        ١
+                    </span>
+
+                    /
+
+                    <span id="matchingTotalRounds">
+                        ٥
+                    </span>
+
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- ===================================
+             التعليمات
+        ==================================== -->
+
+        <div class="matching-instruction">
+
+            <div
+                id="matchingInstructionLabel"
+                class="instruction-label"
+            >
+                🎯 اربط كل عنصر بما يناسبه
+            </div>
+
+        </div>
+
+
+        <!-- ===================================
+             لوحة المطابقة
+        ==================================== -->
+
+        <div
+            id="matchingBoard"
+            class="matching-board"
+        >
+
+            <svg
+                id="matchingLinesSvg"
+                class="matching-lines-svg"
+            ></svg>
+
+            <div
+                id="matchingSourceColumn"
+                class="matching-column matching-column-source"
+            ></div>
+
+            <div
+                id="matchingTargetColumn"
+                class="matching-column matching-column-target"
+            ></div>
+
+        </div>
+
+
+        <!-- ===================================
+             رسالة اللعبة
+        ==================================== -->
+
+        <div
+            id="matchingMessage"
+            class="matching-message"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <button
+            class="secondary exit-game-btn"
+            onclick="exitMatchingGame()"
+        >
+            ⬅️ العودة للألعاب
+        </button>
+
+
+    </div>
+
+</section>
+
+
 <!-- ==========================================
      تشغيل JavaScript
 ========================================== -->
+
+</main>
 
 <script src="script.js"></script>
 
