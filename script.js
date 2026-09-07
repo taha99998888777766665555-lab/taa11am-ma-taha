@@ -480,6 +480,14 @@ function showScreen(screenId) {
     stopAllAudio();
     invalidateLetterGameSession();
 
+    if (
+        typeof matchingGame !== "undefined" &&
+        matchingGame.active &&
+        screenId !== "matchingGame"
+    ) {
+        stopMatchingGame();
+    }
+
     document
         .querySelectorAll(".screen")
         .forEach(screen => {
@@ -11554,4 +11562,1253 @@ function exitLetterRace() {
 
 /* =========================================================
    🔚 نهاية قسم سباق الحروف
+   ========================================================= */
+
+
+/* =========================================================
+   🧩🧩🧩 لعبة المطابقة - Matching Game
+   يدعم: المطابقة بالحروف والصور، الحروف والكلمات،
+   الأرقام والكميات - سحب وإفلات + ضغط/لمس + صوت + تلميحات
+   ========================================================= */
+
+const matchingGame = {
+
+    mode: "letters-pictures",
+
+    round: 0,
+    totalRounds: 5,
+
+    score: 0,
+    mistakes: 0,
+
+    streak: 0,
+    bestStreak: 0,
+
+    matchedCount: 0,
+
+    pairs: [],
+
+    selectedSourceId: null,
+
+    dragSourceId: null,
+    activePointerId: null,
+    dragMoved: false,
+    dragStartX: 0,
+    dragStartY: 0,
+
+    active: false,
+    paused: false,
+
+    session: 0,
+
+    roundTimer: null,
+
+    bestScore: Number(
+        localStorage.getItem("matchingBestScore") || 0
+    )
+
+};
+
+
+/* =========================================================
+   🎉 عبارات النجاح
+   ========================================================= */
+
+const matchingSuccessPhrases = [
+    "أَحْسَنْتَ! 🌟",
+    "مُمْتَاز! 👏",
+    "رَائِع! 🎉",
+    "بَطَل! 💪",
+    "عَمَلٌ جَمِيل! 😍",
+    "بَارِك اللهُ فِيك! ✨"
+];
+
+function getMatchingSuccessMessage() {
+
+    return matchingSuccessPhrases[
+        Math.floor(
+            Math.random() * matchingSuccessPhrases.length
+        )
+    ];
+}
+
+
+/* =========================================================
+   🔊 نطق نص المطابقة
+   ========================================================= */
+
+function speakMatchingLabel(text) {
+
+    if (typeof speak === "function") {
+        speak(text);
+    }
+}
+
+
+/* =========================================================
+   📋 عدد الأزواج حسب الجولة
+   ========================================================= */
+
+function getMatchingPairsCountForRound(round) {
+
+    const counts = [3, 4, 4, 5, 6];
+
+    return counts[
+        Math.min(round, counts.length - 1)
+    ];
+}
+
+
+/* =========================================================
+   🧠 توليد بيانات الأزواج حسب النمط
+   ========================================================= */
+
+function generateMatchingPairs(mode, count) {
+
+    let pool = [];
+
+    if (mode === "letters-pictures") {
+
+        pool = letters.map((item, index) => ({
+            id: "LP" + index,
+            source: item.letter,
+            target: item.emoji,
+            sourceSpeak: item.letter,
+            targetSpeak: item.word,
+            sourceClass: "matching-letter-face",
+            targetClass: "matching-emoji-face"
+        }));
+
+    } else if (mode === "letters-words") {
+
+        pool = letters.map((item, index) => ({
+            id: "LW" + index,
+            source: item.letter,
+            target: item.word,
+            sourceSpeak: item.letter,
+            targetSpeak: item.word,
+            sourceClass: "matching-letter-face",
+            targetClass: "matching-word-face"
+        }));
+
+    } else {
+
+        pool = [];
+
+        for (let n = 1; n <= 10; n++) {
+
+            pool.push({
+                id: "NQ" + n,
+                source: arabicNumber(n),
+                target: "🍎".repeat(n),
+                sourceSpeak:
+                    numberWords[n] || arabicNumber(n),
+                targetSpeak:
+                    numberWords[n] || arabicNumber(n),
+                sourceClass: "matching-number-face",
+                targetClass: "matching-quantity-face"
+            });
+        }
+    }
+
+    const chosen =
+        shuffle(pool).slice(
+            0,
+            Math.min(count, pool.length)
+        );
+
+    return chosen.map(pair => ({
+        ...pair,
+        matched: false
+    }));
+}
+
+
+/* =========================================================
+   📝 عنوان التعليمات حسب النمط
+   ========================================================= */
+
+function setMatchingInstructionLabel(mode) {
+
+    const label = $("matchingInstructionLabel");
+
+    if (!label) return;
+
+    const texts = {
+        "letters-pictures":
+            "🎯 اربط كل حرف بالصورة المناسبة له",
+        "letters-words":
+            "🎯 اربط كل حرف بالكلمة التي تبدأ به",
+        "numbers-quantities":
+            "🎯 اربط كل رقم بعدد العناصر المناسب"
+    };
+
+    label.textContent =
+        texts[mode] ||
+        "🎯 اربط كل عنصر بما يناسبه";
+}
+
+
+/* =========================================================
+   ▶️ بدء لعبة المطابقة
+   ========================================================= */
+
+function startMatchingGame(mode) {
+
+    stopMatchingGame();
+
+    matchingGame.mode = mode || "letters-pictures";
+
+    matchingGame.round = 0;
+    matchingGame.totalRounds = 5;
+
+    matchingGame.score = 0;
+    matchingGame.mistakes = 0;
+
+    matchingGame.streak = 0;
+    matchingGame.bestStreak = 0;
+
+    matchingGame.matchedCount = 0;
+    matchingGame.pairs = [];
+
+    matchingGame.selectedSourceId = null;
+    matchingGame.dragSourceId = null;
+    matchingGame.activePointerId = null;
+
+    matchingGame.active = true;
+    matchingGame.paused = false;
+
+    matchingGame.session++;
+
+    showScreen("matchingGame");
+
+    setMatchingInstructionLabel(matchingGame.mode);
+
+    updateMatchingHUD();
+
+    setTimeout(() => {
+
+        if (!matchingGame.active) return;
+
+        buildMatchingRound();
+
+    }, 150);
+}
+
+
+/* =========================================================
+   🧩 بناء جولة جديدة
+   ========================================================= */
+
+function buildMatchingRound() {
+
+    if (!matchingGame.active) return;
+
+    clearMatchingBoard();
+
+    matchingGame.matchedCount = 0;
+
+    matchingGame.pairs =
+        generateMatchingPairs(
+            matchingGame.mode,
+            getMatchingPairsCountForRound(
+                matchingGame.round
+            )
+        );
+
+    renderMatchingBoard();
+
+    updateMatchingHUD();
+
+    showMatchingMessage(
+        "🧩 اربط كل عنصر بما يناسبه",
+        ""
+    );
+}
+
+
+/* =========================================================
+   🎨 رسم لوحة المطابقة
+   ========================================================= */
+
+function renderMatchingBoard() {
+
+    const sourceCol = $("matchingSourceColumn");
+    const targetCol = $("matchingTargetColumn");
+
+    if (!sourceCol || !targetCol) return;
+
+    sourceCol.innerHTML = "";
+    targetCol.innerHTML = "";
+
+    const sourceOrder = shuffle(matchingGame.pairs);
+    const targetOrder = shuffle(matchingGame.pairs);
+
+    sourceOrder.forEach(pair => {
+
+        const card = document.createElement("button");
+
+        card.type = "button";
+
+        card.className =
+            "matching-card matching-source-card " +
+            (pair.sourceClass || "");
+
+        card.dataset.id = pair.id;
+
+        card.setAttribute(
+            "aria-label",
+            "عنصر للمطابقة: " + pair.sourceSpeak
+        );
+
+        card.textContent = pair.source;
+
+        card.addEventListener(
+            "pointerdown",
+            event => matchingSourcePointerDown(event, pair.id)
+        );
+
+        card.addEventListener(
+            "pointermove",
+            matchingSourcePointerMove
+        );
+
+        card.addEventListener(
+            "pointerup",
+            matchingSourcePointerUp
+        );
+
+        card.addEventListener(
+            "pointercancel",
+            matchingSourcePointerUp
+        );
+
+        sourceCol.appendChild(card);
+    });
+
+    targetOrder.forEach(pair => {
+
+        const card = document.createElement("button");
+
+        card.type = "button";
+
+        card.className =
+            "matching-card matching-target-card " +
+            (pair.targetClass || "");
+
+        card.dataset.id = pair.id;
+
+        card.setAttribute(
+            "aria-label",
+            "هدف المطابقة: " + pair.targetSpeak
+        );
+
+        card.textContent = pair.target;
+
+        card.addEventListener(
+            "click",
+            event => matchingTargetClick(event, pair.id)
+        );
+
+        targetCol.appendChild(card);
+    });
+
+    ensureMatchingLineLayer();
+}
+
+
+/* =========================================================
+   🧹 تفريغ اللوحة
+   ========================================================= */
+
+function clearMatchingBoard() {
+
+    removeMatchingTempLine();
+
+    const svg = $("matchingLinesSvg");
+
+    if (svg) {
+        svg.innerHTML = "";
+    }
+
+    const sourceCol = $("matchingSourceColumn");
+    const targetCol = $("matchingTargetColumn");
+
+    if (sourceCol) sourceCol.innerHTML = "";
+    if (targetCol) targetCol.innerHTML = "";
+}
+
+
+/* =========================================================
+   ✅ إلغاء تحديد المصدر الحالي
+   ========================================================= */
+
+function clearMatchingSelection() {
+
+    document
+        .querySelectorAll(
+            ".matching-source-card.matching-selected"
+        )
+        .forEach(el => {
+            el.classList.remove("matching-selected");
+        });
+
+    matchingGame.selectedSourceId = null;
+}
+
+
+/* =========================================================
+   👆⬅️➡️ التفاعل: الضغط والسحب من عنصر المصدر
+   ========================================================= */
+
+function matchingSourcePointerDown(event, pairId) {
+
+    const state = matchingGame;
+
+    if (!state.active || state.paused) return;
+
+    const pair =
+        state.pairs.find(p => p.id === pairId);
+
+    if (!pair || pair.matched) return;
+
+    const card = event.currentTarget;
+
+    /*
+       إذا كان هذا العنصر محددًا مسبقًا،
+       نعتبر الضغط عليه مرة أخرى إلغاءً للتحديد.
+    */
+
+    if (
+        state.selectedSourceId === pairId &&
+        state.dragSourceId === null
+    ) {
+
+        state.selectedSourceId = null;
+
+        card.classList.remove("matching-selected");
+
+        event.preventDefault();
+
+        return;
+    }
+
+    try {
+        card.setPointerCapture(event.pointerId);
+    } catch (error) {}
+
+    clearMatchingSelection();
+
+    card.classList.add("matching-selected");
+
+    state.activePointerId = event.pointerId;
+    state.dragSourceId = pairId;
+    state.dragStartX = event.clientX;
+    state.dragStartY = event.clientY;
+    state.dragMoved = false;
+
+    speakMatchingLabel(
+        pair.sourceSpeak || pair.source
+    );
+
+    ensureMatchingLineLayer();
+
+    updateMatchingTempLine(
+        card,
+        event.clientX,
+        event.clientY
+    );
+
+    event.preventDefault();
+}
+
+
+function matchingSourcePointerMove(event) {
+
+    const state = matchingGame;
+
+    if (state.dragSourceId === null) return;
+
+    if (event.pointerId !== state.activePointerId) return;
+
+    const dx = event.clientX - state.dragStartX;
+    const dy = event.clientY - state.dragStartY;
+
+    if (Math.hypot(dx, dy) > 6) {
+        state.dragMoved = true;
+    }
+
+    const card = event.currentTarget;
+
+    updateMatchingTempLine(
+        card,
+        event.clientX,
+        event.clientY
+    );
+}
+
+
+function matchingSourcePointerUp(event) {
+
+    const state = matchingGame;
+
+    if (state.dragSourceId === null) return;
+
+    if (event.pointerId !== state.activePointerId) return;
+
+    const card = event.currentTarget;
+
+    try {
+        card.releasePointerCapture(event.pointerId);
+    } catch (error) {}
+
+    const sourceId = state.dragSourceId;
+    const moved = state.dragMoved;
+
+    removeMatchingTempLine();
+
+    let targetCard = null;
+
+    if (
+        typeof document.elementFromPoint === "function"
+    ) {
+
+        const dropEl =
+            document.elementFromPoint(
+                event.clientX,
+                event.clientY
+            );
+
+        targetCard =
+            dropEl ?
+                dropEl.closest(".matching-target-card") :
+                null;
+    }
+
+    state.dragSourceId = null;
+    state.activePointerId = null;
+
+    if (
+        targetCard &&
+        !targetCard.classList.contains("matching-matched")
+    ) {
+
+        evaluateMatchingAttempt(
+            sourceId,
+            targetCard.dataset.id,
+            card,
+            targetCard
+        );
+
+        return;
+    }
+
+    if (!moved) {
+
+        /*
+           ضغطة بسيطة (تاب) بدون سحب حقيقي:
+           نبقي العنصر محددًا لينتظر ضغطة
+           على الهدف المناسب.
+        */
+
+        state.selectedSourceId = sourceId;
+
+    } else {
+
+        card.classList.remove("matching-selected");
+
+        state.selectedSourceId = null;
+    }
+}
+
+
+/* =========================================================
+   👆 التفاعل: الضغط على عنصر الهدف
+   ========================================================= */
+
+function matchingTargetClick(event, targetId) {
+
+    const state = matchingGame;
+
+    if (!state.active || state.paused) return;
+
+    const pair =
+        state.pairs.find(p => p.id === targetId);
+
+    if (!pair || pair.matched) return;
+
+    if (state.selectedSourceId === null) {
+
+        speakMatchingLabel(
+            pair.targetSpeak || pair.target
+        );
+
+        const card = event.currentTarget;
+
+        card.classList.add("matching-nudge");
+
+        setTimeout(() => {
+            card.classList.remove("matching-nudge");
+        }, 400);
+
+        return;
+    }
+
+    const sourceId = state.selectedSourceId;
+
+    const sourceCard =
+        document.querySelector(
+            '.matching-source-card[data-id="' +
+            sourceId + '"]'
+        );
+
+    const targetCard = event.currentTarget;
+
+    evaluateMatchingAttempt(
+        sourceId,
+        targetId,
+        sourceCard,
+        targetCard
+    );
+}
+
+
+/* =========================================================
+   ⚖️ تقييم محاولة المطابقة
+   ========================================================= */
+
+function evaluateMatchingAttempt(
+    sourceId,
+    targetId,
+    sourceCardEl,
+    targetCardEl
+) {
+
+    const state = matchingGame;
+
+    if (!state.active) return;
+
+    clearMatchingSelection();
+
+    if (sourceCardEl) {
+        sourceCardEl.classList.remove("matching-selected");
+    }
+
+    if (sourceId === targetId) {
+
+        handleMatchingCorrect(
+            sourceId,
+            sourceCardEl,
+            targetCardEl
+        );
+
+    } else {
+
+        handleMatchingWrong(
+            sourceCardEl,
+            targetCardEl
+        );
+    }
+}
+
+
+/* =========================================================
+   ✅ إجابة صحيحة
+   ========================================================= */
+
+function handleMatchingCorrect(
+    pairId,
+    sourceCardEl,
+    targetCardEl
+) {
+
+    const state = matchingGame;
+
+    const pair =
+        state.pairs.find(p => p.id === pairId);
+
+    if (!pair || pair.matched) return;
+
+    pair.matched = true;
+
+    state.matchedCount++;
+
+    state.streak++;
+
+    if (state.streak > state.bestStreak) {
+        state.bestStreak = state.streak;
+    }
+
+    const points =
+        10 + Math.min(state.streak, 5) * 2;
+
+    state.score += points;
+
+    if (typeof addStars === "function") {
+        addStars(1);
+    }
+
+    if (sourceCardEl) {
+
+        sourceCardEl.classList.add(
+            "matching-matched",
+            "matching-correct-pulse"
+        );
+    }
+
+    if (targetCardEl) {
+
+        targetCardEl.classList.add(
+            "matching-matched",
+            "matching-correct-pulse"
+        );
+    }
+
+    setTimeout(() => {
+
+        if (sourceCardEl) {
+            sourceCardEl.classList.remove(
+                "matching-correct-pulse"
+            );
+        }
+
+        if (targetCardEl) {
+            targetCardEl.classList.remove(
+                "matching-correct-pulse"
+            );
+        }
+
+    }, 550);
+
+    if (sourceCardEl && targetCardEl) {
+        drawMatchingPermanentLine(
+            sourceCardEl,
+            targetCardEl
+        );
+    }
+
+    showMatchingMessage(
+        getMatchingSuccessMessage(),
+        "success"
+    );
+
+    speakMatchingLabel(getMatchingSuccessMessage());
+
+    updateMatchingHUD();
+
+    if (state.matchedCount >= state.pairs.length) {
+
+        state.roundTimer = setTimeout(() => {
+
+            if (!state.active) return;
+
+            finishMatchingRound();
+
+        }, 750);
+    }
+}
+
+
+/* =========================================================
+   ❌ إجابة خاطئة
+   ========================================================= */
+
+function handleMatchingWrong(sourceCardEl, targetCardEl) {
+
+    const state = matchingGame;
+
+    state.streak = 0;
+    state.mistakes++;
+
+    if (sourceCardEl) {
+
+        sourceCardEl.classList.add("matching-wrong");
+
+        setTimeout(() => {
+            sourceCardEl.classList.remove(
+                "matching-wrong"
+            );
+        }, 500);
+    }
+
+    if (targetCardEl) {
+
+        targetCardEl.classList.add("matching-wrong");
+
+        setTimeout(() => {
+            targetCardEl.classList.remove(
+                "matching-wrong"
+            );
+        }, 500);
+    }
+
+    showMatchingMessage(
+        "😊 حاول مرة أخرى",
+        "wrong"
+    );
+
+    speakMatchingLabel("حاول مرة أخرى");
+
+    updateMatchingHUD();
+}
+
+
+/* =========================================================
+   💡 تلميح
+   ========================================================= */
+
+function matchingHint() {
+
+    const state = matchingGame;
+
+    if (!state.active || state.paused) return;
+
+    const remaining =
+        state.pairs.filter(p => !p.matched);
+
+    if (!remaining.length) return;
+
+    const pair = remaining[0];
+
+    const sourceEl =
+        document.querySelector(
+            '.matching-source-card[data-id="' +
+            pair.id + '"]'
+        );
+
+    const targetEl =
+        document.querySelector(
+            '.matching-target-card[data-id="' +
+            pair.id + '"]'
+        );
+
+    [sourceEl, targetEl].forEach(el => {
+
+        if (!el) return;
+
+        el.classList.add("matching-hint-glow");
+
+        setTimeout(() => {
+            el.classList.remove("matching-hint-glow");
+        }, 1500);
+    });
+
+    speakMatchingLabel(
+        pair.sourceSpeak || pair.source
+    );
+
+    showMatchingMessage(
+        "💡 انتبه لهذين العنصرين",
+        ""
+    );
+}
+
+
+/* =========================================================
+   🏁 إنهاء الجولة الحالية
+   ========================================================= */
+
+function finishMatchingRound() {
+
+    const state = matchingGame;
+
+    if (!state.active) return;
+
+    state.round++;
+
+    showMatchingMessage(
+        "🎉 أحسنت! أكملت الجولة",
+        "success"
+    );
+
+    speakMatchingLabel("أحسنت! أكملت الجولة");
+
+    if (state.round >= state.totalRounds) {
+
+        state.roundTimer = setTimeout(() => {
+
+            if (!state.active) return;
+
+            finishMatchingGame();
+
+        }, 900);
+
+    } else {
+
+        state.roundTimer = setTimeout(() => {
+
+            if (!state.active) return;
+
+            buildMatchingRound();
+
+        }, 1100);
+    }
+}
+
+
+/* =========================================================
+   🏆 إنهاء اللعبة كاملة
+   ========================================================= */
+
+function finishMatchingGame() {
+
+    const state = matchingGame;
+
+    state.active = false;
+
+    if (state.score > state.bestScore) {
+
+        state.bestScore = state.score;
+
+        localStorage.setItem(
+            "matchingBestScore",
+            String(state.bestScore)
+        );
+    }
+
+    if (typeof addStars === "function") {
+        addStars(3);
+    }
+
+    const screen = $("matchingGame");
+
+    if (!screen) return;
+
+    const old = $("matchingFinishScreen");
+
+    if (old) old.remove();
+
+    const finish = document.createElement("div");
+
+    finish.id = "matchingFinishScreen";
+    finish.className = "matching-result";
+
+    let starsCount = 1;
+
+    if (state.mistakes === 0) {
+        starsCount = 3;
+    } else if (state.mistakes <= 3) {
+        starsCount = 2;
+    }
+
+    finish.innerHTML =
+        '<div class="result-icon">🏆</div>' +
+        '<h2>أَحْسَنْتَ! أَكْمَلْتَ لُعْبَةَ المُطَابَقَة</h2>' +
+        '<p>أَنْتَ بَطَلُ المُطَابَقَة!</p>' +
+        '<div class="result-score">⭐ ' +
+            arabicNumber(state.score) +
+        '</div>' +
+        '<div class="result-stars">' +
+            "⭐".repeat(starsCount) +
+        '</div>' +
+        '<div class="result-stats">' +
+            '<div><span>🔥 أفضل تتابع</span><strong>' +
+                arabicNumber(state.bestStreak) +
+            '</strong></div>' +
+            '<div><span>🏆 أفضل نتيجة</span><strong>' +
+                arabicNumber(state.bestScore) +
+            '</strong></div>' +
+            '<div><span>❌ الأخطاء</span><strong>' +
+                arabicNumber(state.mistakes) +
+            '</strong></div>' +
+        '</div>' +
+        '<div class="result-actions">' +
+            '<button class="primary" type="button" ' +
+            'onclick="startMatchingGame(\'' +
+            state.mode + '\')">' +
+            '🔄 لعبة جديدة</button>' +
+            '<button class="secondary" type="button" ' +
+            'onclick="exitMatchingGame()">' +
+            '⬅️ العودة للألعاب</button>' +
+        '</div>';
+
+    const wrapper =
+        screen.querySelector(".matching-game-wrapper");
+
+    if (wrapper) {
+        wrapper.appendChild(finish);
+    }
+
+    speakMatchingLabel(
+        "أحسنت! أكملت لعبة المطابقة"
+    );
+}
+
+
+/* =========================================================
+   📊 تحديث لوحة المعلومات
+   ========================================================= */
+
+function updateMatchingHUD() {
+
+    const state = matchingGame;
+
+    if ($("matchingScore")) {
+        $("matchingScore").textContent =
+            arabicNumber(state.score);
+    }
+
+    if ($("matchingStreak")) {
+        $("matchingStreak").textContent =
+            arabicNumber(state.streak);
+    }
+
+    if ($("matchingRound")) {
+        $("matchingRound").textContent =
+            arabicNumber(
+                Math.min(
+                    state.round + 1,
+                    state.totalRounds
+                )
+            );
+    }
+
+    if ($("matchingTotalRounds")) {
+        $("matchingTotalRounds").textContent =
+            arabicNumber(state.totalRounds);
+    }
+}
+
+
+/* =========================================================
+   💬 رسالة اللعبة
+   ========================================================= */
+
+function showMatchingMessage(text, type) {
+
+    const el = $("matchingMessage");
+
+    if (!el) return;
+
+    el.textContent = text;
+
+    el.className =
+        "matching-message" +
+        (type ? " " + type : "");
+}
+
+
+/* =========================================================
+   📐 خطوط الربط (SVG)
+   ========================================================= */
+
+function ensureMatchingLineLayer() {
+
+    const svg = $("matchingLinesSvg");
+    const board = $("matchingBoard");
+
+    if (!svg || !board) return null;
+
+    const rect = board.getBoundingClientRect();
+
+    svg.setAttribute(
+        "width",
+        Math.max(rect.width, 1)
+    );
+
+    svg.setAttribute(
+        "height",
+        Math.max(rect.height, 1)
+    );
+
+    svg.setAttribute(
+        "viewBox",
+        "0 0 " +
+        Math.max(rect.width, 1) + " " +
+        Math.max(rect.height, 1)
+    );
+
+    return svg;
+}
+
+function getMatchingBoardRelativeCenter(el) {
+
+    const board = $("matchingBoard");
+
+    if (!board || !el) return { x: 0, y: 0 };
+
+    const boardRect = board.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+
+    return {
+        x:
+            elRect.left + elRect.width / 2 -
+            boardRect.left,
+        y:
+            elRect.top + elRect.height / 2 -
+            boardRect.top
+    };
+}
+
+function updateMatchingTempLine(sourceEl, clientX, clientY) {
+
+    const svg = ensureMatchingLineLayer();
+
+    if (!svg) return;
+
+    const board = $("matchingBoard");
+
+    if (!board) return;
+
+    const boardRect = board.getBoundingClientRect();
+
+    const start =
+        getMatchingBoardRelativeCenter(sourceEl);
+
+    const end = {
+        x: clientX - boardRect.left,
+        y: clientY - boardRect.top
+    };
+
+    let line = $("matchingTempLine");
+
+    if (!line) {
+
+        line =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "line"
+            );
+
+        line.id = "matchingTempLine";
+
+        line.setAttribute(
+            "class",
+            "matching-temp-line"
+        );
+
+        svg.appendChild(line);
+    }
+
+    line.setAttribute("x1", start.x);
+    line.setAttribute("y1", start.y);
+    line.setAttribute("x2", end.x);
+    line.setAttribute("y2", end.y);
+}
+
+function removeMatchingTempLine() {
+
+    const line = $("matchingTempLine");
+
+    if (line) line.remove();
+}
+
+function drawMatchingPermanentLine(sourceEl, targetEl) {
+
+    const svg = ensureMatchingLineLayer();
+
+    if (!svg) return;
+
+    const start =
+        getMatchingBoardRelativeCenter(sourceEl);
+
+    const end =
+        getMatchingBoardRelativeCenter(targetEl);
+
+    const line =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "line"
+        );
+
+    line.setAttribute(
+        "class",
+        "matching-solved-line"
+    );
+
+    line.setAttribute("x1", start.x);
+    line.setAttribute("y1", start.y);
+    line.setAttribute("x2", end.x);
+    line.setAttribute("y2", end.y);
+
+    svg.appendChild(line);
+}
+
+function redrawMatchingLines() {
+
+    const svg = $("matchingLinesSvg");
+
+    if (!svg) return;
+
+    ensureMatchingLineLayer();
+
+    svg
+        .querySelectorAll(".matching-solved-line")
+        .forEach(line => line.remove());
+
+    matchingGame.pairs
+        .filter(pair => pair.matched)
+        .forEach(pair => {
+
+            const sourceEl =
+                document.querySelector(
+                    '.matching-source-card[data-id="' +
+                    pair.id + '"]'
+                );
+
+            const targetEl =
+                document.querySelector(
+                    '.matching-target-card[data-id="' +
+                    pair.id + '"]'
+                );
+
+            if (sourceEl && targetEl) {
+
+                drawMatchingPermanentLine(
+                    sourceEl,
+                    targetEl
+                );
+            }
+        });
+}
+
+window.addEventListener("resize", () => {
+
+    if (matchingGame.active) {
+        redrawMatchingLines();
+    }
+});
+
+
+/* =========================================================
+   🛑 إيقاف اللعبة (تنظيف)
+   ========================================================= */
+
+function stopMatchingGame() {
+
+    clearTimeout(matchingGame.roundTimer);
+
+    matchingGame.roundTimer = null;
+
+    matchingGame.active = false;
+    matchingGame.paused = false;
+
+    matchingGame.selectedSourceId = null;
+    matchingGame.dragSourceId = null;
+    matchingGame.activePointerId = null;
+
+    clearMatchingBoard();
+
+    const finish = $("matchingFinishScreen");
+
+    if (finish) finish.remove();
+}
+
+
+/* =========================================================
+   🚪 الخروج من لعبة المطابقة
+   ========================================================= */
+
+function exitMatchingGame() {
+
+    stopMatchingGame();
+
+    matchingGame.session++;
+
+    showScreen("games");
+}
+
+
+/* =========================================================
+   🔚 نهاية قسم لعبة المطابقة
    ========================================================= */
