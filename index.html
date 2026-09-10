@@ -1775,7 +1775,55 @@
         </div>
 
 
-        <div class="games-grid">
+        <div class="games-grid matching-modes-grid">
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-letters"
+                onclick="startMatchingGame('letters-letters')"
+            >
+
+                <div class="game-card-icon">
+                    🔤🔤
+                </div>
+
+                <h3>
+                    حرف ↔ حرف
+                </h3>
+
+                <p>
+                    ابحث عن الحرف المطابق لنفس الحرف
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-picpic"
+                onclick="startMatchingGame('pictures-pictures')"
+            >
+
+                <div class="game-card-icon">
+                    🖼️🖼️
+                </div>
+
+                <h3>
+                    صورة ↔ صورة
+                </h3>
+
+                <p>
+                    اربط كل صورة بنفس الصورة المطابقة لها
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
 
 
             <button
@@ -1788,11 +1836,59 @@
                 </div>
 
                 <h3>
-                    الحروف والصور
+                    حرف ↔ صورة
                 </h3>
 
                 <p>
                     اربط كل حرف بالصورة المناسبة له
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-picword"
+                onclick="startMatchingGame('pictures-words')"
+            >
+
+                <div class="game-card-icon">
+                    🖼️📖
+                </div>
+
+                <h3>
+                    صورة ↔ كلمة
+                </h3>
+
+                <p>
+                    اربط كل صورة بالكلمة الصحيحة لها
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-wordpic"
+                onclick="startMatchingGame('words-pictures')"
+            >
+
+                <div class="game-card-icon">
+                    📖🖼️
+                </div>
+
+                <h3>
+                    كلمة ↔ صورة
+                </h3>
+
+                <p>
+                    اقرأ الكلمة واربطها بصورتها
                 </p>
 
                 <span>
@@ -1812,11 +1908,59 @@
                 </div>
 
                 <h3>
-                    الحروف والكلمات
+                    حرف ↔ كلمة
                 </h3>
 
                 <p>
                     اربط كل حرف بالكلمة التي تبدأ به
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-soundletter"
+                onclick="startMatchingGame('letter-sound-letters')"
+            >
+
+                <div class="game-card-icon">
+                    🔊🔤
+                </div>
+
+                <h3>
+                    صوت الحرف ↔ الحرف
+                </h3>
+
+                <p>
+                    استمع لصوت الحرف (أَ، بَ، تَ) واختر الحرف
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-soundword"
+                onclick="startMatchingGame('word-sound-pictures')"
+            >
+
+                <div class="game-card-icon">
+                    🔊🖼️
+                </div>
+
+                <h3>
+                    صوت الكلمة ↔ الصورة
+                </h3>
+
+                <p>
+                    استمع للكلمة واختر الصورة المناسبة
                 </p>
 
                 <span>
@@ -1836,11 +1980,35 @@
                 </div>
 
                 <h3>
-                    الأرقام والكميات
+                    رقم ↔ كمية
                 </h3>
 
                 <p>
                     اربط كل رقم بعدد العناصر المناسب
+                </p>
+
+                <span>
+                    العب الآن ▶
+                </span>
+
+            </button>
+
+
+            <button
+                class="game-launch-card matching-mode-card matching-mode-forms"
+                onclick="startMatchingGame('letters-forms')"
+            >
+
+                <div class="game-card-icon">
+                    🔤🧩
+                </div>
+
+                <h3>
+                    الحرف وأشكاله
+                </h3>
+
+                <p>
+                    منفصل - أول الكلمة - وسطها - آخرها
                 </p>
 
                 <span>
@@ -1937,6 +2105,19 @@
 
                 <strong id="matchingStreak">
                     ٠
+                </strong>
+
+            </div>
+
+
+            <div class="hud-item matching-difficulty-badge">
+
+                <small>
+                    المستوى
+                </small>
+
+                <strong id="matchingDifficultyLevel">
+                    ١
                 </strong>
 
             </div>
