@@ -11566,9 +11566,149 @@ function exitLetterRace() {
 
 
 /* =========================================================
-   🧩🧩🧩 لعبة المطابقة - Matching Game
-   يدعم: المطابقة بالحروف والصور، الحروف والكلمات،
-   الأرقام والكميات - سحب وإفلات + ضغط/لمس + صوت + تلميحات
+   🧩🧩🧩 لعبة المطابقة - Matching Game (10 أنماط)
+   تدعم: حرف↔حرف، صورة↔صورة، حرف↔صورة، صورة↔كلمة،
+   كلمة↔صورة، حرف↔كلمة، صوت الحرف↔الحرف، صوت الكلمة↔الصورة،
+   رقم↔كمية، الحرف↔أشكاله (منفصل/أول/وسط/آخر)
+   يدعم: Tap-to-Match + Drag & Drop + Magnet Snap +
+   صوت تعليمي + تلميحات تدريجية + Errorless Learning/Fading +
+   نقاط ونجوم + حفظ التقدم لكل نمط + تدرج الصعوبة
+   ========================================================= */
+
+/* =========================================================
+   🔡 أشكال الحروف حسب الموضع (منفصل / أول / وسط / آخر)
+   تعتمد على نطاق يونيكود Arabic Presentation Forms-B
+   ========================================================= */
+
+const arabicLetterForms = {
+    "أ": { isolated: "\uFE83", final: "\uFE84" },
+    "ب": {
+        isolated: "\uFE8F", initial: "\uFE91",
+        medial: "\uFE92", final: "\uFE90"
+    },
+    "ت": {
+        isolated: "\uFE95", initial: "\uFE97",
+        medial: "\uFE98", final: "\uFE96"
+    },
+    "ث": {
+        isolated: "\uFE99", initial: "\uFE9B",
+        medial: "\uFE9C", final: "\uFE9A"
+    },
+    "ج": {
+        isolated: "\uFE9D", initial: "\uFE9F",
+        medial: "\uFEA0", final: "\uFE9E"
+    },
+    "ح": {
+        isolated: "\uFEA1", initial: "\uFEA3",
+        medial: "\uFEA4", final: "\uFEA2"
+    },
+    "خ": {
+        isolated: "\uFEA5", initial: "\uFEA7",
+        medial: "\uFEA8", final: "\uFEA6"
+    },
+    "د": { isolated: "\uFEA9", final: "\uFEAA" },
+    "ذ": { isolated: "\uFEAB", final: "\uFEAC" },
+    "ر": { isolated: "\uFEAD", final: "\uFEAE" },
+    "ز": { isolated: "\uFEAF", final: "\uFEB0" },
+    "س": {
+        isolated: "\uFEB1", initial: "\uFEB3",
+        medial: "\uFEB4", final: "\uFEB2"
+    },
+    "ش": {
+        isolated: "\uFEB5", initial: "\uFEB7",
+        medial: "\uFEB8", final: "\uFEB6"
+    },
+    "ص": {
+        isolated: "\uFEB9", initial: "\uFEBB",
+        medial: "\uFEBC", final: "\uFEBA"
+    },
+    "ض": {
+        isolated: "\uFEBD", initial: "\uFEBF",
+        medial: "\uFEC0", final: "\uFEBE"
+    },
+    "ط": {
+        isolated: "\uFEC1", initial: "\uFEC3",
+        medial: "\uFEC4", final: "\uFEC2"
+    },
+    "ظ": {
+        isolated: "\uFEC5", initial: "\uFEC7",
+        medial: "\uFEC8", final: "\uFEC6"
+    },
+    "ع": {
+        isolated: "\uFEC9", initial: "\uFECB",
+        medial: "\uFECC", final: "\uFECA"
+    },
+    "غ": {
+        isolated: "\uFECD", initial: "\uFECF",
+        medial: "\uFED0", final: "\uFECE"
+    },
+    "ف": {
+        isolated: "\uFED1", initial: "\uFED3",
+        medial: "\uFED4", final: "\uFED2"
+    },
+    "ق": {
+        isolated: "\uFED5", initial: "\uFED7",
+        medial: "\uFED8", final: "\uFED6"
+    },
+    "ك": {
+        isolated: "\uFED9", initial: "\uFEDB",
+        medial: "\uFEDC", final: "\uFEDA"
+    },
+    "ل": {
+        isolated: "\uFEDD", initial: "\uFEDF",
+        medial: "\uFEE0", final: "\uFEDE"
+    },
+    "م": {
+        isolated: "\uFEE1", initial: "\uFEE3",
+        medial: "\uFEE4", final: "\uFEE2"
+    },
+    "ن": {
+        isolated: "\uFEE5", initial: "\uFEE7",
+        medial: "\uFEE8", final: "\uFEE6"
+    },
+    "ه": {
+        isolated: "\uFEE9", initial: "\uFEEB",
+        medial: "\uFEEC", final: "\uFEEA"
+    },
+    "و": { isolated: "\uFEED", final: "\uFEEE" },
+    "ي": {
+        isolated: "\uFEF1", initial: "\uFEF3",
+        medial: "\uFEF4", final: "\uFEF2"
+    }
+};
+
+const arabicFormPositionLabels = {
+    isolated: "منفصل",
+    initial: "أول الكلمة",
+    medial: "وسط الكلمة",
+    final: "آخر الكلمة"
+};
+
+/* =========================================================
+   🖼️ مجموعة صور عامة لنمط "صورة ↔ صورة"
+   ========================================================= */
+
+const matchingObjectsPool = [
+    { name: "شمس", emoji: "☀️" },
+    { name: "قمر", emoji: "🌙" },
+    { name: "نجمة", emoji: "⭐" },
+    { name: "زهرة", emoji: "🌸" },
+    { name: "شجرة", emoji: "🌳" },
+    { name: "كرة", emoji: "⚽" },
+    { name: "سيارة", emoji: "🚗" },
+    { name: "منزل", emoji: "🏠" },
+    { name: "قطة", emoji: "🐱" },
+    { name: "كلب", emoji: "🐶" },
+    { name: "سمكة", emoji: "🐠" },
+    { name: "طائر", emoji: "🐦" },
+    { name: "تفاحة", emoji: "🍏" },
+    { name: "موزة", emoji: "🍌" },
+    { name: "مظلة", emoji: "☂️" },
+    { name: "ساعة", emoji: "⏰" }
+];
+
+/* =========================================================
+   🎮 حالة لعبة المطابقة
    ========================================================= */
 
 const matchingGame = {
@@ -11596,6 +11736,11 @@ const matchingGame = {
     dragStartX: 0,
     dragStartY: 0,
 
+    magnetTargetId: null,
+
+    hintLevel: 0,
+    consecutiveWrong: 0,
+
     active: false,
     paused: false,
 
@@ -11603,11 +11748,83 @@ const matchingGame = {
 
     roundTimer: null,
 
-    bestScore: Number(
-        localStorage.getItem("matchingBestScore") || 0
-    )
+    difficultyLevel: 1,
+
+    bestScore: 0,
+
+    /* يُحمَّل عند أول استخدام (حفظ التقدم لكل نمط) */
+    progress: null
 
 };
+
+
+/* =========================================================
+   💾 حفظ واسترجاع التقدم (لكل نمط على حدة)
+   ========================================================= */
+
+function loadMatchingProgress() {
+
+    let progress = {};
+
+    try {
+
+        const raw =
+            localStorage.getItem("matchingProgressV2");
+
+        if (raw) {
+            progress = JSON.parse(raw) || {};
+        }
+
+    } catch (error) {
+        progress = {};
+    }
+
+    /* توافق مع النسخة القديمة: نقل أفضل نتيجة سابقة
+       إلى نمط "الحروف والصور" إن لم تكن هناك بيانات جديدة */
+
+    const legacyBest =
+        Number(
+            localStorage.getItem("matchingBestScore") || 0
+        );
+
+    if (!progress["letters-pictures"] && legacyBest > 0) {
+
+        progress["letters-pictures"] = {
+            bestScore: legacyBest,
+            bestStars: 0,
+            difficultyLevel: 1,
+            plays: 0
+        };
+    }
+
+    return progress;
+}
+
+function saveMatchingProgress() {
+
+    try {
+
+        localStorage.setItem(
+            "matchingProgressV2",
+            JSON.stringify(matchingGame.progress || {})
+        );
+
+    } catch (error) {}
+}
+
+function getMatchingModeProgress(mode) {
+
+    const progress = matchingGame.progress || {};
+
+    return (
+        progress[mode] || {
+            bestScore: 0,
+            bestStars: 0,
+            difficultyLevel: 1,
+            plays: 0
+        }
+    );
+}
 
 
 /* =========================================================
@@ -11646,69 +11863,221 @@ function speakMatchingLabel(text) {
 
 
 /* =========================================================
-   📋 عدد الأزواج حسب الجولة
+   📈 تدرج الصعوبة: عدد الجولات وعدد الأزواج
    ========================================================= */
 
-function getMatchingPairsCountForRound(round) {
+function getMatchingTotalRounds(difficultyLevel) {
 
-    const counts = [3, 4, 4, 5, 6];
+    const level = difficultyLevel || 1;
 
-    return counts[
-        Math.min(round, counts.length - 1)
-    ];
+    return Math.min(5 + Math.floor((level - 1) / 2), 7);
+}
+
+function getMatchingPairsCountForRound(round, difficultyLevel) {
+
+    const level = difficultyLevel || 1;
+
+    const base = [3, 4, 4, 5, 6, 6, 7];
+
+    const idx = Math.min(round, base.length - 1);
+
+    const bonus = Math.min(level - 1, 3);
+
+    return Math.min(base[idx] + bonus, 8);
 }
 
 
 /* =========================================================
-   🧠 توليد بيانات الأزواج حسب النمط
+   🔤 بناء مجموعة "الحرف وأشكاله"
+   ========================================================= */
+
+function buildLetterFormsPool() {
+
+    const pool = [];
+
+    letters.forEach(item => {
+
+        const forms = arabicLetterForms[item.letter];
+
+        if (!forms) return;
+
+        Object.keys(forms).forEach(posKey => {
+
+            const glyph = forms[posKey];
+
+            if (!glyph) return;
+
+            const posLabel =
+                arabicFormPositionLabels[posKey] || posKey;
+
+            pool.push({
+                id:
+                    "LF" +
+                    item.letter.charCodeAt(0) +
+                    "-" + posKey,
+                source: glyph,
+                target: item.letter + " (" + posLabel + ")",
+                sourceSpeak: letterWithFatha(item.letter),
+                targetSpeak:
+                    "حرف " + item.letter +
+                    " في " + posLabel,
+                sourceClass: "matching-form-face",
+                targetClass: "matching-label-face"
+            });
+        });
+    });
+
+    return pool;
+}
+
+
+/* =========================================================
+   🧠 توليد بيانات الأزواج حسب النمط (10 أنماط)
    ========================================================= */
 
 function generateMatchingPairs(mode, count) {
 
     let pool = [];
 
-    if (mode === "letters-pictures") {
+    switch (mode) {
 
-        pool = letters.map((item, index) => ({
-            id: "LP" + index,
-            source: item.letter,
-            target: item.emoji,
-            sourceSpeak: item.letter,
-            targetSpeak: item.word,
-            sourceClass: "matching-letter-face",
-            targetClass: "matching-emoji-face"
-        }));
+        case "letters-letters":
 
-    } else if (mode === "letters-words") {
+            pool = letters.map((item, index) => ({
+                id: "LL" + index,
+                source: item.letter,
+                target: item.letter,
+                sourceSpeak: letterWithFatha(item.letter),
+                targetSpeak: letterWithFatha(item.letter),
+                sourceClass: "matching-letter-face",
+                targetClass: "matching-letter-face-alt"
+            }));
 
-        pool = letters.map((item, index) => ({
-            id: "LW" + index,
-            source: item.letter,
-            target: item.word,
-            sourceSpeak: item.letter,
-            targetSpeak: item.word,
-            sourceClass: "matching-letter-face",
-            targetClass: "matching-word-face"
-        }));
+            break;
 
-    } else {
+        case "pictures-pictures":
 
-        pool = [];
+            pool = matchingObjectsPool.map((item, index) => ({
+                id: "PP" + index,
+                source: item.emoji,
+                target: item.emoji,
+                sourceSpeak: item.name,
+                targetSpeak: item.name,
+                sourceClass: "matching-emoji-face",
+                targetClass: "matching-emoji-face"
+            }));
 
-        for (let n = 1; n <= 10; n++) {
+            break;
 
-            pool.push({
-                id: "NQ" + n,
-                source: arabicNumber(n),
-                target: "🍎".repeat(n),
-                sourceSpeak:
-                    numberWords[n] || arabicNumber(n),
-                targetSpeak:
-                    numberWords[n] || arabicNumber(n),
-                sourceClass: "matching-number-face",
-                targetClass: "matching-quantity-face"
-            });
-        }
+        case "pictures-words":
+
+            pool = letters.map((item, index) => ({
+                id: "PW" + index,
+                source: item.emoji,
+                target: item.word,
+                sourceSpeak: item.word,
+                targetSpeak: item.word,
+                sourceClass: "matching-emoji-face",
+                targetClass: "matching-word-face"
+            }));
+
+            break;
+
+        case "words-pictures":
+
+            pool = letters.map((item, index) => ({
+                id: "WP" + index,
+                source: item.word,
+                target: item.emoji,
+                sourceSpeak: item.word,
+                targetSpeak: item.word,
+                sourceClass: "matching-word-face",
+                targetClass: "matching-emoji-face"
+            }));
+
+            break;
+
+        case "letters-words":
+
+            pool = letters.map((item, index) => ({
+                id: "LW" + index,
+                source: item.letter,
+                target: item.word,
+                sourceSpeak: item.letter,
+                targetSpeak: item.word,
+                sourceClass: "matching-letter-face",
+                targetClass: "matching-word-face"
+            }));
+
+            break;
+
+        case "letter-sound-letters":
+
+            pool = letters.map((item, index) => ({
+                id: "SL" + index,
+                source: letterWithFatha(item.letter),
+                target: item.letter,
+                sourceSpeak: letterWithFatha(item.letter),
+                targetSpeak: item.letter,
+                sourceClass: "matching-letter-face",
+                targetClass: "matching-letter-face-alt"
+            }));
+
+            break;
+
+        case "word-sound-pictures":
+
+            pool = letters.map((item, index) => ({
+                id: "WS" + index,
+                source: item.word,
+                sourceDisplay: "🔊",
+                target: item.emoji,
+                sourceSpeak: item.word,
+                targetSpeak: item.word,
+                sourceClass: "matching-sound-face",
+                targetClass: "matching-emoji-face"
+            }));
+
+            break;
+
+        case "letters-forms":
+
+            pool = buildLetterFormsPool();
+
+            break;
+
+        case "numbers-quantities":
+
+            pool = [];
+
+            for (let n = 1; n <= 10; n++) {
+
+                pool.push({
+                    id: "NQ" + n,
+                    source: arabicNumber(n),
+                    target: "🍎".repeat(n),
+                    sourceSpeak:
+                        numberWords[n] || arabicNumber(n),
+                    targetSpeak:
+                        numberWords[n] || arabicNumber(n),
+                    sourceClass: "matching-number-face",
+                    targetClass: "matching-quantity-face"
+                });
+            }
+
+            break;
+
+        default: /* "letters-pictures" وأي نمط غير معروف */
+
+            pool = letters.map((item, index) => ({
+                id: "LP" + index,
+                source: item.letter,
+                target: item.emoji,
+                sourceSpeak: item.letter,
+                targetSpeak: item.word,
+                sourceClass: "matching-letter-face",
+                targetClass: "matching-emoji-face"
+            }));
     }
 
     const chosen =
@@ -11735,12 +12104,26 @@ function setMatchingInstructionLabel(mode) {
     if (!label) return;
 
     const texts = {
+        "letters-letters":
+            "🎯 اربط كل حرف بنفس الحرف",
+        "pictures-pictures":
+            "🎯 اربط كل صورة بنفس الصورة المطابقة لها",
         "letters-pictures":
             "🎯 اربط كل حرف بالصورة المناسبة له",
+        "pictures-words":
+            "🎯 اربط كل صورة بالكلمة الصحيحة لها",
+        "words-pictures":
+            "🎯 اقرأ الكلمة واربطها بصورتها",
         "letters-words":
             "🎯 اربط كل حرف بالكلمة التي تبدأ به",
+        "letter-sound-letters":
+            "🎯 استمع لصوت الحرف واختر الحرف الصحيح",
+        "word-sound-pictures":
+            "🎯 استمع للكلمة واختر الصورة المناسبة",
         "numbers-quantities":
-            "🎯 اربط كل رقم بعدد العناصر المناسب"
+            "🎯 اربط كل رقم بعدد العناصر المناسب",
+        "letters-forms":
+            "🎯 اربط شكل الحرف بموضعه الصحيح في الكلمة"
     };
 
     label.textContent =
@@ -11759,8 +12142,23 @@ function startMatchingGame(mode) {
 
     matchingGame.mode = mode || "letters-pictures";
 
+    if (!matchingGame.progress) {
+        matchingGame.progress = loadMatchingProgress();
+    }
+
+    const modeProgress =
+        getMatchingModeProgress(matchingGame.mode);
+
+    matchingGame.difficultyLevel =
+        modeProgress.difficultyLevel || 1;
+
+    matchingGame.bestScore =
+        modeProgress.bestScore || 0;
+
     matchingGame.round = 0;
-    matchingGame.totalRounds = 5;
+
+    matchingGame.totalRounds =
+        getMatchingTotalRounds(matchingGame.difficultyLevel);
 
     matchingGame.score = 0;
     matchingGame.mistakes = 0;
@@ -11774,6 +12172,10 @@ function startMatchingGame(mode) {
     matchingGame.selectedSourceId = null;
     matchingGame.dragSourceId = null;
     matchingGame.activePointerId = null;
+    matchingGame.magnetTargetId = null;
+
+    matchingGame.hintLevel = 0;
+    matchingGame.consecutiveWrong = 0;
 
     matchingGame.active = true;
     matchingGame.paused = false;
@@ -11807,12 +12209,15 @@ function buildMatchingRound() {
     clearMatchingBoard();
 
     matchingGame.matchedCount = 0;
+    matchingGame.hintLevel = 0;
+    matchingGame.consecutiveWrong = 0;
 
     matchingGame.pairs =
         generateMatchingPairs(
             matchingGame.mode,
             getMatchingPairsCountForRound(
-                matchingGame.round
+                matchingGame.round,
+                matchingGame.difficultyLevel
             )
         );
 
@@ -11861,7 +12266,8 @@ function renderMatchingBoard() {
             "عنصر للمطابقة: " + pair.sourceSpeak
         );
 
-        card.textContent = pair.source;
+        card.textContent =
+            pair.sourceDisplay || pair.source;
 
         card.addEventListener(
             "pointerdown",
@@ -11903,7 +12309,8 @@ function renderMatchingBoard() {
             "هدف المطابقة: " + pair.targetSpeak
         );
 
-        card.textContent = pair.target;
+        card.textContent =
+            pair.targetDisplay || pair.target;
 
         card.addEventListener(
             "click",
@@ -11924,6 +12331,7 @@ function renderMatchingBoard() {
 function clearMatchingBoard() {
 
     removeMatchingTempLine();
+    clearMatchingMagnet();
 
     const svg = $("matchingLinesSvg");
 
@@ -11954,6 +12362,93 @@ function clearMatchingSelection() {
         });
 
     matchingGame.selectedSourceId = null;
+}
+
+
+/* =========================================================
+   🧲 المغناطيس أثناء السحب
+   ========================================================= */
+
+const MATCHING_MAGNET_RADIUS = 85;
+
+function clearMatchingMagnet() {
+
+    document
+        .querySelectorAll(".matching-magnet-target")
+        .forEach(el => {
+            el.classList.remove("matching-magnet-target");
+        });
+
+    matchingGame.magnetTargetId = null;
+}
+
+function findNearestMatchingTarget(clientX, clientY) {
+
+    const candidates =
+        document.querySelectorAll(
+            ".matching-target-card:not(.matching-matched)" +
+            ":not(.matching-faded)"
+        );
+
+    let nearestEl = null;
+    let nearestDist = Infinity;
+
+    candidates.forEach(el => {
+
+        const rect = el.getBoundingClientRect();
+
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        const dist =
+            Math.hypot(clientX - cx, clientY - cy);
+
+        if (dist < nearestDist) {
+            nearestDist = dist;
+            nearestEl = el;
+        }
+    });
+
+    return { el: nearestEl, dist: nearestDist };
+}
+
+
+/* =========================================================
+   🧽 تلاشي المشتتات (تعلّم بلا أخطاء / Fading)
+   ========================================================= */
+
+function fadeDistractorTargets(correctId, countToFade) {
+
+    const candidates =
+        matchingGame.pairs
+            .filter(p => !p.matched && p.id !== correctId)
+            .map(p =>
+                document.querySelector(
+                    '.matching-target-card[data-id="' +
+                    p.id + '"]'
+                )
+            )
+            .filter(el =>
+                el &&
+                !el.classList.contains("matching-faded")
+            );
+
+    shuffle(candidates)
+        .slice(0, Math.max(0, countToFade))
+        .forEach(el => {
+            el.classList.add("matching-faded");
+            el.setAttribute("aria-disabled", "true");
+        });
+}
+
+function unfadeAllMatchingTargets() {
+
+    document
+        .querySelectorAll(".matching-faded")
+        .forEach(el => {
+            el.classList.remove("matching-faded");
+            el.removeAttribute("aria-disabled");
+        });
 }
 
 
@@ -11998,6 +12493,7 @@ function matchingSourcePointerDown(event, pairId) {
     } catch (error) {}
 
     clearMatchingSelection();
+    clearMatchingMagnet();
 
     card.classList.add("matching-selected");
 
@@ -12040,11 +12536,34 @@ function matchingSourcePointerMove(event) {
 
     const card = event.currentTarget;
 
-    updateMatchingTempLine(
-        card,
-        event.clientX,
-        event.clientY
-    );
+    const nearest =
+        findNearestMatchingTarget(
+            event.clientX,
+            event.clientY
+        );
+
+    clearMatchingMagnet();
+
+    if (nearest.el && nearest.dist <= MATCHING_MAGNET_RADIUS) {
+
+        nearest.el.classList.add("matching-magnet-target");
+        state.magnetTargetId = nearest.el.dataset.id;
+
+        updateMatchingTempLine(
+            card,
+            event.clientX,
+            event.clientY,
+            nearest.el
+        );
+
+    } else {
+
+        updateMatchingTempLine(
+            card,
+            event.clientX,
+            event.clientY
+        );
+    }
 }
 
 
@@ -12064,8 +12583,10 @@ function matchingSourcePointerUp(event) {
 
     const sourceId = state.dragSourceId;
     const moved = state.dragMoved;
+    const magnetTargetId = state.magnetTargetId;
 
     removeMatchingTempLine();
+    clearMatchingMagnet();
 
     let targetCard = null;
 
@@ -12083,6 +12604,33 @@ function matchingSourcePointerUp(event) {
             dropEl ?
                 dropEl.closest(".matching-target-card") :
                 null;
+    }
+
+    /*
+       المغناطيس: إن لم يكن هناك عنصر واضح تحت الإصبع
+       لكن كان هناك هدف قريب أثناء السحب، نعتبره الهدف.
+    */
+
+    if (
+        (
+            !targetCard ||
+            targetCard.classList.contains("matching-matched")
+        ) &&
+        magnetTargetId
+    ) {
+
+        const magnetEl =
+            document.querySelector(
+                '.matching-target-card[data-id="' +
+                magnetTargetId + '"]'
+            );
+
+        if (
+            magnetEl &&
+            !magnetEl.classList.contains("matching-matched")
+        ) {
+            targetCard = magnetEl;
+        }
     }
 
     state.dragSourceId = null;
@@ -12206,7 +12754,8 @@ function evaluateMatchingAttempt(
 
         handleMatchingWrong(
             sourceCardEl,
-            targetCardEl
+            targetCardEl,
+            sourceId
         );
     }
 }
@@ -12232,6 +12781,7 @@ function handleMatchingCorrect(
     pair.matched = true;
 
     state.matchedCount++;
+    state.consecutiveWrong = 0;
 
     state.streak++;
 
@@ -12247,6 +12797,9 @@ function handleMatchingCorrect(
     if (typeof addStars === "function") {
         addStars(1);
     }
+
+    /* إعادة إظهار أي عناصر تم إخفاؤها مؤقتًا لتسهيل الإجابة */
+    unfadeAllMatchingTargets();
 
     if (sourceCardEl) {
 
@@ -12313,12 +12866,17 @@ function handleMatchingCorrect(
    ❌ إجابة خاطئة
    ========================================================= */
 
-function handleMatchingWrong(sourceCardEl, targetCardEl) {
+function handleMatchingWrong(
+    sourceCardEl,
+    targetCardEl,
+    sourceId
+) {
 
     const state = matchingGame;
 
     state.streak = 0;
     state.mistakes++;
+    state.consecutiveWrong = (state.consecutiveWrong || 0) + 1;
 
     if (sourceCardEl) {
 
@@ -12350,11 +12908,27 @@ function handleMatchingWrong(sourceCardEl, targetCardEl) {
     speakMatchingLabel("حاول مرة أخرى");
 
     updateMatchingHUD();
+
+    /*
+       تعلّم بلا أخطاء (Errorless Learning / Fading):
+       بعد خطأين متتاليين على نفس المحاولة نقلّل عدد
+       المشتتات المتاحة لنسهّل الوصول للإجابة الصحيحة.
+    */
+
+    if (state.consecutiveWrong >= 2 && sourceId) {
+
+        const remainingCount =
+            state.pairs.filter(p => !p.matched).length;
+
+        if (remainingCount > 2) {
+            fadeDistractorTargets(sourceId, 1);
+        }
+    }
 }
 
 
 /* =========================================================
-   💡 تلميح
+   💡 تلميح تدريجي (Progressive Hints)
    ========================================================= */
 
 function matchingHint() {
@@ -12370,6 +12944,10 @@ function matchingHint() {
 
     const pair = remaining[0];
 
+    state.hintLevel = (state.hintLevel || 0) + 1;
+
+    const level = state.hintLevel;
+
     const sourceEl =
         document.querySelector(
             '.matching-source-card[data-id="' +
@@ -12382,25 +12960,67 @@ function matchingHint() {
             pair.id + '"]'
         );
 
+    const glowClass =
+        level >= 3 ?
+            "matching-hint-glow-strong" :
+            "matching-hint-glow";
+
     [sourceEl, targetEl].forEach(el => {
 
         if (!el) return;
 
-        el.classList.add("matching-hint-glow");
+        el.classList.add(glowClass);
 
         setTimeout(() => {
-            el.classList.remove("matching-hint-glow");
-        }, 1500);
+            el.classList.remove(
+                "matching-hint-glow",
+                "matching-hint-glow-strong"
+            );
+        }, 1600);
     });
 
-    speakMatchingLabel(
-        pair.sourceSpeak || pair.source
-    );
+    if (level === 1) {
 
-    showMatchingMessage(
-        "💡 انتبه لهذين العنصرين",
-        ""
-    );
+        /* المستوى الأول: مجرد لفت انتباه بسيط */
+
+        showMatchingMessage(
+            "🔍 انظر جيدًا لهذين العنصرين",
+            ""
+        );
+
+    } else if (level === 2) {
+
+        /* المستوى الثاني: إضافة الصوت التعليمي */
+
+        speakMatchingLabel(
+            pair.sourceSpeak || pair.source
+        );
+
+        showMatchingMessage(
+            "💡 استمع جيدًا ثم اربط بينهما",
+            ""
+        );
+
+    } else {
+
+        /* المستوى الثالث فأعلى: تلاشي المشتتات (Fading) */
+
+        speakMatchingLabel(
+            pair.sourceSpeak || pair.source
+        );
+
+        if (remaining.length > 2) {
+            fadeDistractorTargets(
+                pair.id,
+                remaining.length - 2
+            );
+        }
+
+        showMatchingMessage(
+            "🌟 لقد سهّلنا عليك الاختيار الآن!",
+            ""
+        );
+    }
 }
 
 
@@ -12447,7 +13067,7 @@ function finishMatchingRound() {
 
 
 /* =========================================================
-   🏆 إنهاء اللعبة كاملة
+   🏆 إنهاء اللعبة كاملة + حفظ التقدم + تدرج الصعوبة
    ========================================================= */
 
 function finishMatchingGame() {
@@ -12456,15 +13076,77 @@ function finishMatchingGame() {
 
     state.active = false;
 
-    if (state.score > state.bestScore) {
+    let starsCount = 1;
 
-        state.bestScore = state.score;
-
-        localStorage.setItem(
-            "matchingBestScore",
-            String(state.bestScore)
-        );
+    if (state.mistakes === 0) {
+        starsCount = 3;
+    } else if (state.mistakes <= 3) {
+        starsCount = 2;
     }
+
+    if (!state.progress) {
+        state.progress = loadMatchingProgress();
+    }
+
+    const existing = getMatchingModeProgress(state.mode);
+
+    existing.plays = (existing.plays || 0) + 1;
+
+    existing.bestScore =
+        Math.max(existing.bestScore || 0, state.score);
+
+    existing.bestStars =
+        Math.max(existing.bestStars || 0, starsCount);
+
+    /*
+       تدرج الصعوبة: نرفع المستوى إذا أتقن الطفل الجولة
+       بلا أخطاء، ونخفضه قليلًا إذا واجه صعوبة كبيرة،
+       ونثبّته في الحالات المتوسطة.
+    */
+
+    const currentLevel = existing.difficultyLevel || 1;
+
+    if (state.mistakes === 0 && currentLevel < 5) {
+
+        existing.difficultyLevel = currentLevel + 1;
+
+    } else if (
+        state.mistakes >= state.totalRounds * 3 &&
+        currentLevel > 1
+    ) {
+
+        existing.difficultyLevel = currentLevel - 1;
+
+    } else {
+
+        existing.difficultyLevel = currentLevel;
+    }
+
+    state.progress[state.mode] = existing;
+
+    saveMatchingProgress();
+
+    state.bestScore = existing.bestScore;
+    state.difficultyLevel = existing.difficultyLevel;
+
+    /* توافق مع المفتاح القديم لأفضل نتيجة عامة */
+
+    try {
+
+        const legacyBest =
+            Number(
+                localStorage.getItem("matchingBestScore") || 0
+            );
+
+        if (state.score > legacyBest) {
+
+            localStorage.setItem(
+                "matchingBestScore",
+                String(state.score)
+            );
+        }
+
+    } catch (error) {}
 
     if (typeof addStars === "function") {
         addStars(3);
@@ -12482,14 +13164,6 @@ function finishMatchingGame() {
 
     finish.id = "matchingFinishScreen";
     finish.className = "matching-result";
-
-    let starsCount = 1;
-
-    if (state.mistakes === 0) {
-        starsCount = 3;
-    } else if (state.mistakes <= 3) {
-        starsCount = 2;
-    }
 
     finish.innerHTML =
         '<div class="result-icon">🏆</div>' +
@@ -12510,6 +13184,9 @@ function finishMatchingGame() {
             '</strong></div>' +
             '<div><span>❌ الأخطاء</span><strong>' +
                 arabicNumber(state.mistakes) +
+            '</strong></div>' +
+            '<div><span>🎯 المستوى الجديد</span><strong>' +
+                arabicNumber(state.difficultyLevel) +
             '</strong></div>' +
         '</div>' +
         '<div class="result-actions">' +
@@ -12551,6 +13228,11 @@ function updateMatchingHUD() {
     if ($("matchingStreak")) {
         $("matchingStreak").textContent =
             arabicNumber(state.streak);
+    }
+
+    if ($("matchingDifficultyLevel")) {
+        $("matchingDifficultyLevel").textContent =
+            arabicNumber(state.difficultyLevel || 1);
     }
 
     if ($("matchingRound")) {
@@ -12640,7 +13322,12 @@ function getMatchingBoardRelativeCenter(el) {
     };
 }
 
-function updateMatchingTempLine(sourceEl, clientX, clientY) {
+function updateMatchingTempLine(
+    sourceEl,
+    clientX,
+    clientY,
+    snapTargetEl
+) {
 
     const svg = ensureMatchingLineLayer();
 
@@ -12655,10 +13342,13 @@ function updateMatchingTempLine(sourceEl, clientX, clientY) {
     const start =
         getMatchingBoardRelativeCenter(sourceEl);
 
-    const end = {
-        x: clientX - boardRect.left,
-        y: clientY - boardRect.top
-    };
+    const end =
+        snapTargetEl ?
+            getMatchingBoardRelativeCenter(snapTargetEl) :
+            {
+                x: clientX - boardRect.left,
+                y: clientY - boardRect.top
+            };
 
     let line = $("matchingTempLine");
 
@@ -12787,6 +13477,7 @@ function stopMatchingGame() {
     matchingGame.dragSourceId = null;
     matchingGame.activePointerId = null;
 
+    clearMatchingMagnet();
     clearMatchingBoard();
 
     const finish = $("matchingFinishScreen");
