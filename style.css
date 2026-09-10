@@ -3391,6 +3391,67 @@ z-index: 100;
     border-color: #86efac;
 }
 
+.matching-mode-letters {
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+    border-color: #c7d2fe;
+}
+
+.matching-mode-picpic {
+    background: linear-gradient(135deg, #fdf2f8, #fff1f2);
+    border-color: #fbcfe8;
+}
+
+.matching-mode-picword {
+    background: linear-gradient(135deg, #fff7ed, #fff1f2);
+    border-color: #fed7aa;
+}
+
+.matching-mode-wordpic {
+    background: linear-gradient(135deg, #f0f9ff, #ecfeff);
+    border-color: #bae6fd;
+}
+
+.matching-mode-soundletter {
+    background: linear-gradient(135deg, #fefce8, #fff7ed);
+    border-color: #fde68a;
+}
+
+.matching-mode-soundword {
+    background: linear-gradient(135deg, #f5f3ff, #fdf4ff);
+    border-color: #ddd6fe;
+}
+
+.matching-mode-forms {
+    background: linear-gradient(135deg, #ecfdf5, #f0fdfa);
+    border-color: #99f6e4;
+}
+
+/* ---------- شبكة أنماط المطابقة (10 أنماط) ---------- */
+
+.matching-modes-grid {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+}
+
+.matching-modes-grid .game-launch-card {
+    padding: 18px 12px;
+}
+
+.matching-modes-grid .game-card-icon {
+    font-size: 44px;
+    margin-bottom: 6px;
+}
+
+.matching-modes-grid .game-launch-card h3 {
+    font-size: 18px;
+    margin: 6px 0;
+}
+
+.matching-modes-grid .game-launch-card p {
+    min-height: 36px;
+    font-size: 13px;
+}
+
 /* ---------- إطار شاشة اللعب ---------- */
 
 .matching-game-wrapper {
@@ -3427,8 +3488,8 @@ z-index: 100;
 
 .matching-hud {
     display: grid;
-    grid-template-columns: 1fr 1fr 130px;
-    gap: 12px;
+    grid-template-columns: 1fr 1fr 100px 130px;
+    gap: 10px;
 
     margin-bottom: 15px;
 }
@@ -3442,14 +3503,20 @@ z-index: 100;
     text-align: center;
 }
 
-.matching-round-card {
+.matching-round-card,
+.matching-difficulty-badge {
     flex-direction: column;
     gap: 2px !important;
 }
 
-.matching-round-card small {
+.matching-round-card small,
+.matching-difficulty-badge small {
     font-size: 12px;
     opacity: .65;
+}
+
+.matching-difficulty-badge strong {
+    color: #b45309;
 }
 
 /* ---------- التعليمات ---------- */
@@ -3592,6 +3659,39 @@ z-index: 100;
     letter-spacing: 1px;
 }
 
+.matching-form-face {
+    font-size: 46px;
+    color: #0f766e;
+}
+
+.matching-label-face {
+    font-size: 18px;
+    color: #0e7490;
+}
+
+.matching-sound-face {
+    font-size: 34px;
+    animation: matchingSoundPulse 1.6s ease-in-out infinite;
+}
+
+.matching-letter-face-alt {
+    font-size: 40px;
+    color: #7c3aed;
+}
+
+@keyframes matchingSoundPulse {
+
+    0%, 100% {
+        transform: scale(1);
+        opacity: .9;
+    }
+
+    50% {
+        transform: scale(1.12);
+        opacity: 1;
+    }
+}
+
 /* ---------- حالات البطاقة ---------- */
 
 .matching-selected {
@@ -3630,8 +3730,31 @@ z-index: 100;
     animation: matchingHintGlow 1.5s ease;
 }
 
+.matching-hint-glow-strong {
+    animation: matchingHintGlowStrong 1.6s ease;
+}
+
 .matching-nudge {
     animation: matchingNudge .4s ease;
+}
+
+/* ---------- المغناطيس أثناء السحب ---------- */
+
+.matching-magnet-target {
+    transform: scale(1.08);
+    border: 3px solid #6366f1 !important;
+    box-shadow:
+        0 0 0 6px rgba(99,102,241,.25),
+        0 10px 22px rgba(0,0,0,.12) !important;
+}
+
+/* ---------- تلاشي المشتتات (تعلم بلا أخطاء) ---------- */
+
+.matching-faded {
+    opacity: .3;
+    filter: grayscale(60%);
+    pointer-events: none;
+    transition: opacity .4s ease, filter .4s ease;
 }
 
 /* ---------- خطوط الربط ---------- */
@@ -3782,6 +3905,21 @@ z-index: 100;
     }
 }
 
+@keyframes matchingHintGlowStrong {
+
+    0%, 100% {
+        box-shadow: 0 8px 18px rgba(0,0,0,.10);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 12px rgba(234,88,12,.4),
+            0 8px 18px rgba(0,0,0,.10);
+        transform: scale(1.06);
+    }
+}
+
 @keyframes matchingNudge {
 
     0%, 100% {
@@ -3864,6 +4002,30 @@ z-index: 100;
         font-size: 15px;
     }
 
+    .matching-form-face {
+        font-size: 36px;
+    }
+
+    .matching-label-face {
+        font-size: 14px;
+    }
+
+    .matching-sound-face {
+        font-size: 28px;
+    }
+
+    .matching-letter-face-alt {
+        font-size: 32px;
+    }
+
+    .matching-hud {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .matching-difficulty-badge {
+        grid-column: span 2;
+    }
+
     .matching-result h2 {
         font-size: 22px;
     }
@@ -3899,6 +4061,18 @@ z-index: 100;
     .matching-quantity-face {
         font-size: 13px;
     }
+
+    .matching-form-face {
+        font-size: 30px;
+    }
+
+    .matching-sound-face {
+        font-size: 24px;
+    }
+
+    .matching-letter-face-alt {
+        font-size: 28px;
+    }
 }
 
 /* ---------- تقليل الحركة ---------- */
@@ -3908,8 +4082,10 @@ z-index: 100;
     .matching-correct-pulse,
     .matching-wrong,
     .matching-hint-glow,
+    .matching-hint-glow-strong,
     .matching-nudge,
     .matching-solved-line,
+    .matching-sound-face,
     .matching-result .result-icon {
         animation: none !important;
     }
