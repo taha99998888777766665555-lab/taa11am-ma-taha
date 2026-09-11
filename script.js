@@ -13503,3 +13503,1426 @@ function exitMatchingGame() {
 /* =========================================================
    🔚 نهاية قسم لعبة المطابقة
    ========================================================= */
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   🌟 التطوير الجديد — تعلم مع أ/طه محمد 🌟
+   الملف الشخصي | PWA | لوحة المعلم | المكافآت والشهادات |
+   المهمة اليومية | الإعدادات
+   =====================================================================
+   ملاحظة: كل ما يلي إضافي بالكامل ولا يحذف أو يستبدل أي نظام موجود.
+   نستخدم نفس نظام النجوم/المستوى/localStorage الحالي ونطوّر عليه فقط.
+========================================================================= */
+
+/* =========================================================
+   ⚙️ الإعدادات (الصوت، الاهتزاز، الوضع الليلي، الوضع الهادئ)
+========================================================= */
+
+const Settings = (function () {
+
+    const defaults = {
+        sound: true,
+        haptic: true,
+        dark: false,
+        calm: false
+    };
+
+    function loadFromStorage() {
+        try {
+            const saved = JSON.parse(
+                localStorage.getItem("taha_settings") || "{}"
+            );
+            return Object.assign({}, defaults, saved);
+        } catch (error) {
+            return Object.assign({}, defaults);
+        }
+    }
+
+    let current = loadFromStorage();
+
+    function save() {
+        localStorage.setItem(
+            "taha_settings",
+            JSON.stringify(current)
+        );
+    }
+
+    function apply() {
+        if (!document.body) return;
+        document.body.classList.toggle("dark-mode", !!current.dark);
+        document.body.classList.toggle("calm-mode", !!current.calm);
+    }
+
+    function get() {
+        return current;
+    }
+
+    function set(key, value) {
+        current[key] = value;
+        save();
+        apply();
+    }
+
+    return { get, set, apply };
+
+})();
+
+function updateSettingFromUI(key, value) {
+    Settings.set(key, value);
+}
+
+/* =========================================================
+   📊 وحدة التحليلات (الصحيح/الخطأ، الحروف المتعلمة، الأرقام)
+========================================================= */
+
+const Analytics = (function () {
+
+    function activeScreenId() {
+        const el = document.querySelector(".screen.active");
+        return el ? el.id : "home";
+    }
+
+    function getWrongTotal() {
+        return Number(
+            localStorage.getItem("taha_wrong_total") || 0
+        );
+    }
+
+    function bumpWrongTotal() {
+        const total = getWrongTotal() + 1;
+        localStorage.setItem("taha_wrong_total", String(total));
+        return total;
+    }
+
+    function getLetterAttempts() {
+        try {
+            return JSON.parse(
+                localStorage.getItem("taha_letter_attempts") || "{}"
+            );
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function saveLetterAttempts(data) {
+        localStorage.setItem(
+            "taha_letter_attempts",
+            JSON.stringify(data)
+        );
+    }
+
+    function markLetterAttempt(letter, correct) {
+        const data = getLetterAttempts();
+
+        if (!data[letter]) {
+            data[letter] = { correct: 0, wrong: 0 };
+        }
+
+        if (correct) {
+            data[letter].correct++;
+        } else {
+            data[letter].wrong++;
+        }
+
+        saveLetterAttempts(data);
+    }
+
+    function getLearnedLetters() {
+        try {
+            return JSON.parse(
+                localStorage.getItem("taha_letters_learned") || "[]"
+            );
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function markLetterLearned(letter) {
+        const arr = getLearnedLetters();
+
+        if (!arr.includes(letter)) {
+            arr.push(letter);
+            localStorage.setItem(
+                "taha_letters_learned",
+                JSON.stringify(arr)
+            );
+        }
+    }
+
+    function getLearnedNumbers() {
+        try {
+            return JSON.parse(
+                localStorage.getItem("taha_numbers_learned") || "[]"
+            );
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function markNumberLearned(num) {
+        const arr = getLearnedNumbers();
+
+        if (!arr.includes(num)) {
+            arr.push(num);
+            localStorage.setItem(
+                "taha_numbers_learned",
+                JSON.stringify(arr)
+            );
+        }
+    }
+
+    function recordCorrectEvent() {
+
+        const screenId = activeScreenId();
+
+        if (
+            screenId === "letters" &&
+            typeof letters !== "undefined" &&
+            letters[currentLetterIndex]
+        ) {
+            const currentLetter = letters[currentLetterIndex].letter;
+            markLetterAttempt(currentLetter, true);
+            markLetterLearned(currentLetter);
+        }
+
+        if (
+            Settings.get().haptic &&
+            "vibrate" in navigator
+        ) {
+            try {
+                navigator.vibrate(35);
+            } catch (error) {}
+        }
+
+        checkBadges();
+    }
+
+    function recordWrongEvent() {
+
+        bumpWrongTotal();
+
+        const screenId = activeScreenId();
+
+        if (
+            screenId === "letters" &&
+            typeof letters !== "undefined" &&
+            letters[currentLetterIndex]
+        ) {
+            markLetterAttempt(
+                letters[currentLetterIndex].letter,
+                false
+            );
+        }
+    }
+
+    return {
+        activeScreenId,
+        getWrongTotal,
+        getLetterAttempts,
+        getLearnedLetters,
+        getLearnedNumbers,
+        markNumberLearned,
+        recordCorrectEvent,
+        recordWrongEvent
+    };
+
+})();
+
+/* =========================================================
+   🔍 مراقبة الإجابات الخاطئة تلقائيًا (بدون تعديل الألعاب)
+========================================================= */
+
+(function initWrongAnswerObserver() {
+
+    const wrongPattern =
+        /(?:^|\s)(wrong|balloon-wrong|matching-wrong)(?:\s|$)/;
+
+    const observer = new MutationObserver(mutations => {
+
+        mutations.forEach(mutation => {
+
+            if (
+                mutation.type !== "attributes" ||
+                mutation.attributeName !== "class"
+            ) return;
+
+            const newClass =
+                (mutation.target && mutation.target.className) || "";
+
+            const oldClass = mutation.oldValue || "";
+
+            if (
+                wrongPattern.test(String(newClass)) &&
+                !wrongPattern.test(String(oldClass))
+            ) {
+                Analytics.recordWrongEvent();
+            }
+        });
+    });
+
+    if (document.body) {
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ["class"],
+            attributeOldValue: true,
+            subtree: true
+        });
+    }
+
+})();
+
+/* =========================================================
+   ⏱️ متابعة وقت التعلم
+========================================================= */
+
+const TimeTracker = (function () {
+
+    function todayKey() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function getByDate() {
+        try {
+            return JSON.parse(
+                localStorage.getItem("taha_time_by_date") || "{}"
+            );
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function getTotal() {
+        return Number(
+            localStorage.getItem("taha_time_total_seconds") || 0
+        );
+    }
+
+    function tick(seconds) {
+        const byDate = getByDate();
+        const key = todayKey();
+
+        byDate[key] = (byDate[key] || 0) + seconds;
+
+        localStorage.setItem(
+            "taha_time_by_date",
+            JSON.stringify(byDate)
+        );
+
+        localStorage.setItem(
+            "taha_time_total_seconds",
+            String(getTotal() + seconds)
+        );
+    }
+
+    function getTodaySeconds() {
+        return getByDate()[todayKey()] || 0;
+    }
+
+    return { tick, getTodaySeconds, getTotal };
+
+})();
+
+setInterval(() => {
+    if (document.visibilityState === "visible") {
+        TimeTracker.tick(15);
+    }
+}, 15000);
+
+/* =========================================================
+   🏅 الأوسمة والإنجازات
+========================================================= */
+
+const Badges = (function () {
+
+    function getEarned() {
+        try {
+            return JSON.parse(
+                localStorage.getItem("taha_badges") || "[]"
+            );
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function isEarned(id) {
+        return getEarned().includes(id);
+    }
+
+    function award(id) {
+        const list = getEarned();
+
+        if (!list.includes(id)) {
+            list.push(id);
+            localStorage.setItem(
+                "taha_badges",
+                JSON.stringify(list)
+            );
+            return true;
+        }
+
+        return false;
+    }
+
+    return { getEarned, isEarned, award };
+
+})();
+
+const LETTERS_TOTAL =
+    (typeof letters !== "undefined" && letters.length) || 28;
+
+const NUMBERS_TOTAL = 40;
+
+const BADGE_DEFS = [
+    {
+        id: "first_star",
+        emoji: "🌟",
+        name: "أول نجمة",
+        test: () => stars >= 1
+    },
+    {
+        id: "stars_50",
+        emoji: "⭐",
+        name: "٥٠ نجمة",
+        test: () => stars >= 50
+    },
+    {
+        id: "stars_150",
+        emoji: "✨",
+        name: "١٥٠ نجمة",
+        test: () => stars >= 150
+    },
+    {
+        id: "stars_300",
+        emoji: "💫",
+        name: "٣٠٠ نجمة",
+        test: () => stars >= 300
+    },
+    {
+        id: "level_3",
+        emoji: "🎯",
+        name: "المستوى ٣",
+        test: () => level >= 3
+    },
+    {
+        id: "level_5",
+        emoji: "🚀",
+        name: "المستوى ٥",
+        test: () => level >= 5
+    },
+    {
+        id: "letters_champ",
+        emoji: "🔤",
+        name: "بطل الحروف",
+        test: () => Analytics.getLearnedLetters().length >= LETTERS_TOTAL
+    },
+    {
+        id: "numbers_champ",
+        emoji: "🔢",
+        name: "بطل الأرقام",
+        test: () => Analytics.getLearnedNumbers().length >= NUMBERS_TOTAL
+    },
+    {
+        id: "quest_5",
+        emoji: "🗓️",
+        name: "٥ مهام يومية",
+        test: () =>
+            Number(
+                localStorage.getItem("taha_quests_completed_total") || 0
+            ) >= 5
+    },
+    {
+        id: "quest_20",
+        emoji: "🏆",
+        name: "٢٠ مهمة يومية",
+        test: () =>
+            Number(
+                localStorage.getItem("taha_quests_completed_total") || 0
+            ) >= 20
+    }
+];
+
+function checkBadges() {
+
+    let newlyEarned = false;
+
+    BADGE_DEFS.forEach(def => {
+        if (!Badges.isEarned(def.id) && def.test()) {
+            if (Badges.award(def.id)) {
+                newlyEarned = true;
+            }
+        }
+    });
+
+    return newlyEarned;
+}
+
+/* =========================================================
+   🗓️ المهمة اليومية
+========================================================= */
+
+const DailyQuest = (function () {
+
+    const TEMPLATES = [
+        {
+            id: "letters",
+            label: "أجب بشكل صحيح في تحدي الحروف",
+            emoji: "🔤",
+            counterRef: () => correctLetters
+        },
+        {
+            id: "words",
+            label: "تدرّب على كلمات جديدة",
+            emoji: "📖",
+            counterRef: () => correctWords
+        },
+        {
+            id: "numbers",
+            label: "استكشف أرقامًا جديدة",
+            emoji: "🔢",
+            counterRef: () => correctNumbers
+        },
+        {
+            id: "addition",
+            label: "حل مسائل جمع",
+            emoji: "➕",
+            counterRef: () => correctAddition
+        },
+        {
+            id: "subtraction",
+            label: "حل مسائل طرح",
+            emoji: "➖",
+            counterRef: () => correctSubtraction
+        },
+        {
+            id: "writing",
+            label: "تدرّب على الكتابة",
+            emoji: "✏️",
+            counterRef: () =>
+                Number(
+                    localStorage.getItem("taha_correct_writing") || 0
+                )
+        }
+    ];
+
+    function todayKey() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function load() {
+        try {
+            return JSON.parse(
+                localStorage.getItem("taha_daily_quest") || "null"
+            );
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function save(data) {
+        localStorage.setItem(
+            "taha_daily_quest",
+            JSON.stringify(data)
+        );
+    }
+
+    function seededRandom(seedStr) {
+
+        let seed = 0;
+
+        for (let i = 0; i < seedStr.length; i++) {
+            seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+        }
+
+        return function () {
+            seed = (seed * 1103515245 + 12345) >>> 0;
+            return (seed % 1000) / 1000;
+        };
+    }
+
+    function generate() {
+
+        const today = todayKey();
+        const rand = seededRandom(today);
+
+        const shuffled = [...TEMPLATES].sort(() => rand() - 0.5);
+        const picked = shuffled.slice(0, 3);
+
+        const targetBase =
+            3 + Math.min(typeof level !== "undefined" ? level : 1, 6);
+
+        const quests = picked.map(t => ({
+            id: t.id,
+            label: t.label,
+            emoji: t.emoji,
+            target: targetBase,
+            baseline: t.counterRef(),
+            reward: 10,
+            doneAwarded: false
+        }));
+
+        const data = { date: today, quests };
+
+        save(data);
+
+        return data;
+    }
+
+    function getToday() {
+        let data = load();
+
+        if (!data || data.date !== todayKey()) {
+            data = generate();
+        }
+
+        return data;
+    }
+
+    function checkProgress() {
+
+        const data = getToday();
+
+        const templateById = {};
+        TEMPLATES.forEach(t => { templateById[t.id] = t; });
+
+        let changed = false;
+
+        data.quests.forEach(quest => {
+
+            const template = templateById[quest.id];
+            if (!template) return;
+
+            const current = template.counterRef();
+            const progress = Math.max(0, current - quest.baseline);
+
+            if (progress >= quest.target && !quest.doneAwarded) {
+
+                quest.doneAwarded = true;
+                changed = true;
+
+                addStars(quest.reward);
+
+                const totalCompleted =
+                    Number(
+                        localStorage.getItem(
+                            "taha_quests_completed_total"
+                        ) || 0
+                    ) + 1;
+
+                localStorage.setItem(
+                    "taha_quests_completed_total",
+                    String(totalCompleted)
+                );
+
+                checkBadges();
+            }
+        });
+
+        if (changed) save(data);
+
+        return data;
+    }
+
+    return { getToday, checkProgress, TEMPLATES };
+
+})();
+
+/* =========================================================
+   🛍️ متجر المكافآت (خلفيات، شخصيات، ملصقات)
+========================================================= */
+
+const STORE_ITEMS = [
+    { id: "bg_ocean", type: "background", emoji: "🌊", name: "المحيط", cost: 20, cssClass: "theme-ocean" },
+    { id: "bg_space", type: "background", emoji: "🌌", name: "الفضاء", cost: 30, cssClass: "theme-space" },
+    { id: "bg_forest", type: "background", emoji: "🌳", name: "الغابة", cost: 30, cssClass: "theme-forest" },
+    { id: "char_cat", type: "character", emoji: "🐱", name: "قطة", cost: 15 },
+    { id: "char_bear", type: "character", emoji: "🐻", name: "دب", cost: 15 },
+    { id: "char_bunny", type: "character", emoji: "🐰", name: "أرنب", cost: 15 },
+    { id: "char_unicorn", type: "character", emoji: "🦄", name: "يونيكورن", cost: 40 },
+    { id: "sticker_star", type: "sticker", emoji: "🌟", name: "ملصق نجمة", cost: 10 },
+    { id: "sticker_heart", type: "sticker", emoji: "💖", name: "ملصق قلب", cost: 10 },
+    { id: "sticker_rainbow", type: "sticker", emoji: "🌈", name: "ملصق قوس قزح", cost: 15 },
+    { id: "sticker_trophy", type: "sticker", emoji: "🏆", name: "ملصق كأس", cost: 15 }
+];
+
+function getStoreOwned() {
+    try {
+        return JSON.parse(
+            localStorage.getItem("taha_store_owned") || "[]"
+        );
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveStoreOwned(arr) {
+    localStorage.setItem("taha_store_owned", JSON.stringify(arr));
+}
+
+function getStoreEquipped() {
+    try {
+        return JSON.parse(
+            localStorage.getItem("taha_store_equipped") || "{}"
+        );
+    } catch (error) {
+        return {};
+    }
+}
+
+function saveStoreEquipped(obj) {
+    localStorage.setItem("taha_store_equipped", JSON.stringify(obj));
+}
+
+function buyStoreItem(id) {
+
+    const item = STORE_ITEMS.find(i => i.id === id);
+    if (!item) return;
+
+    const owned = getStoreOwned();
+    const msgEl = $("rewardsMsg");
+
+    if (owned.includes(id)) {
+        equipStoreItem(id);
+        return;
+    }
+
+    if (stars < item.cost) {
+        if (msgEl) {
+            msgEl.textContent = "😊 تحتاج المزيد من النجوم لشراء هذا العنصر";
+        }
+        return;
+    }
+
+    addStars(-item.cost);
+
+    owned.push(id);
+    saveStoreOwned(owned);
+
+    if (msgEl) {
+        msgEl.textContent = "🎉 تم الشراء بنجاح!";
+    }
+
+    equipStoreItem(id);
+    renderRewardsScreen();
+}
+
+function equipStoreItem(id) {
+
+    const item = STORE_ITEMS.find(i => i.id === id);
+    if (!item) return;
+
+    const owned = getStoreOwned();
+    if (!owned.includes(id)) return;
+
+    const equipped = getStoreEquipped();
+
+    if (item.type === "background") {
+
+        equipped.background = id;
+
+        document.body.className = document.body.className
+            .split(" ")
+            .filter(c => c && !c.startsWith("theme-"))
+            .join(" ");
+
+        if (item.cssClass) {
+            document.body.classList.add(item.cssClass);
+        }
+    }
+
+    if (item.type === "character") {
+        equipped.character = id;
+        applyProfileToHeader();
+    }
+
+    saveStoreEquipped(equipped);
+    renderRewardsScreen();
+}
+
+function renderStoreGrid() {
+
+    const grid = $("rewardsStoreGrid");
+    if (!grid) return;
+
+    const owned = getStoreOwned();
+    const equipped = getStoreEquipped();
+
+    grid.innerHTML = STORE_ITEMS.map(item => {
+
+        const isOwned = owned.includes(item.id);
+
+        const isEquipped =
+            (item.type === "background" && equipped.background === item.id) ||
+            (item.type === "character" && equipped.character === item.id);
+
+        const classes = ["store-item"];
+        if (isOwned) classes.push("owned");
+        if (isEquipped) classes.push("equipped");
+
+        let priceLabel;
+
+        if (!isOwned) {
+            priceLabel = "⭐ " + arabicNumber(item.cost);
+        } else if (item.type === "sticker") {
+            priceLabel = "✅ في حقيبتي";
+        } else {
+            priceLabel = isEquipped ? "✅ مُفعّل" : "👆 تفعيل";
+        }
+
+        return `
+            <button class="${classes.join(" ")}" onclick="buyStoreItem('${item.id}')">
+                <span class="store-emoji">${item.emoji}</span>
+                <span>${item.name}</span>
+                <span class="store-price">${priceLabel}</span>
+            </button>
+        `;
+    }).join("");
+}
+
+/* =========================================================
+   🏅 عرض شبكة الأوسمة
+========================================================= */
+
+function renderBadgesGrid() {
+
+    const grid = $("rewardsBadgesGrid");
+    if (!grid) return;
+
+    const earned = Badges.getEarned();
+
+    grid.innerHTML = BADGE_DEFS.map(def => {
+        const isEarned = earned.includes(def.id);
+        return `
+            <div class="badge-item ${isEarned ? "earned" : ""}">
+                <span class="badge-emoji">${def.emoji}</span>
+                <span>${def.name}</span>
+            </div>
+        `;
+    }).join("");
+}
+
+/* =========================================================
+   📜 الشهادات
+========================================================= */
+
+function renderCertificatesGrid() {
+
+    const grid = $("rewardsCertificatesGrid");
+    if (!grid) return;
+
+    const learnedLetters = Analytics.getLearnedLetters().length;
+    const learnedNumbers = Analytics.getLearnedNumbers().length;
+
+    const lettersUnlocked = learnedLetters >= LETTERS_TOTAL;
+    const numbersUnlocked = learnedNumbers >= NUMBERS_TOTAL;
+
+    grid.innerHTML = `
+        <button class="certificate-card ${lettersUnlocked ? "unlocked" : ""}"
+                onclick="${lettersUnlocked ? "openCertificate('letters')" : ""}">
+            <div class="cert-icon">🔤</div>
+            <div>شهادة الحروف</div>
+            <small>${lettersUnlocked ? "مكتملة ✅" : arabicNumber(learnedLetters) + "/" + arabicNumber(LETTERS_TOTAL)}</small>
+        </button>
+
+        <button class="certificate-card ${numbersUnlocked ? "unlocked" : ""}"
+                onclick="${numbersUnlocked ? "openCertificate('numbers')" : ""}">
+            <div class="cert-icon">🔢</div>
+            <div>شهادة الأرقام</div>
+            <small>${numbersUnlocked ? "مكتملة ✅" : arabicNumber(learnedNumbers) + "/" + arabicNumber(NUMBERS_TOTAL)}</small>
+        </button>
+    `;
+}
+
+function openCertificate(type) {
+
+    const name =
+        localStorage.getItem("taha_child_name") || "بطل متميز";
+
+    const nameEl = $("certChildName");
+    const typeEl = $("certType");
+    const dateEl = $("certDate");
+
+    if (nameEl) nameEl.textContent = name;
+
+    if (typeEl) {
+        typeEl.textContent =
+            type === "letters"
+                ? "لإتمامه تعلم جميع الحروف العربية بنجاح 🔤"
+                : "لإتمامه تعلم الأرقام بنجاح 🔢";
+    }
+
+    if (dateEl) {
+        const now = new Date();
+        dateEl.textContent =
+            "بتاريخ: " + now.toLocaleDateString("ar-EG");
+    }
+
+    showScreen("certificateView");
+}
+
+function renderRewardsScreen() {
+    updateStats();
+    renderBadgesGrid();
+    renderCertificatesGrid();
+    renderStoreGrid();
+}
+
+/* =========================================================
+   👤 الملف الشخصي
+========================================================= */
+
+const AVATAR_OPTIONS = [
+    "🦁", "🐯", "🐱", "🐶", "🐰", "🐻",
+    "🐼", "🦊", "🐵", "🦄", "🐸", "🐢",
+    "🦋", "🐬", "🦉", "🐘"
+];
+
+function openProfileScreen() {
+    showScreen("profile");
+}
+
+function renderProfileScreen() {
+
+    const nameInput = $("profileNameInput");
+    const grid = $("avatarGrid");
+
+    const savedName = localStorage.getItem("taha_child_name") || "";
+    const savedAvatar = localStorage.getItem("taha_child_avatar") || "🦁";
+
+    if (nameInput) nameInput.value = savedName;
+
+    if (grid) {
+        grid.innerHTML = AVATAR_OPTIONS.map(emoji => `
+            <button type="button"
+                    class="avatar-option ${emoji === savedAvatar ? "selected" : ""}"
+                    data-avatar="${emoji}"
+                    onclick="selectAvatarOption(this)">
+                ${emoji}
+            </button>
+        `).join("");
+    }
+
+    const msgEl = $("profileSaveMsg");
+    if (msgEl) msgEl.textContent = "";
+}
+
+function selectAvatarOption(button) {
+    document
+        .querySelectorAll(".avatar-option")
+        .forEach(btn => btn.classList.remove("selected"));
+
+    button.classList.add("selected");
+}
+
+function saveProfile() {
+
+    const nameInput = $("profileNameInput");
+    const selected = document.querySelector(".avatar-option.selected");
+    const msgEl = $("profileSaveMsg");
+
+    const name = nameInput ? nameInput.value.trim() : "";
+    const avatar = selected ? selected.dataset.avatar : "🦁";
+
+    if (!name) {
+        if (msgEl) msgEl.textContent = "😊 من فضلك اكتب اسمك أولًا";
+        return;
+    }
+
+    localStorage.setItem("taha_child_name", name);
+    localStorage.setItem("taha_child_avatar", avatar);
+
+    applyProfileToHeader();
+
+    if (msgEl) msgEl.textContent = "🎉 تم الحفظ بنجاح!";
+
+    setTimeout(() => showScreen("home"), 900);
+}
+
+function applyProfileToHeader() {
+
+    const name = localStorage.getItem("taha_child_name");
+    const avatar = localStorage.getItem("taha_child_avatar") || "🦁";
+
+    const nameEl = $("headerNameDisplay");
+    const avatarEl = $("headerAvatarDisplay");
+
+    if (nameEl) {
+        nameEl.textContent = name ? name : "أهلًا بك!";
+    }
+
+    const equipped = getStoreEquipped();
+
+    let equippedCharEmoji = null;
+
+    if (equipped.character) {
+        const charItem = STORE_ITEMS.find(i => i.id === equipped.character);
+        if (charItem) equippedCharEmoji = charItem.emoji;
+    }
+
+    if (avatarEl) {
+        avatarEl.textContent = equippedCharEmoji || avatar;
+    }
+}
+
+/* =========================================================
+   👨‍🏫 لوحة المعلم / ولي الأمر
+========================================================= */
+
+let teacherUnlockedSession = false;
+let teacherMathAnswer = 0;
+
+function generateTeacherMathQuestion() {
+    const a = 2 + Math.floor(Math.random() * 8);
+    const b = 2 + Math.floor(Math.random() * 8);
+    teacherMathAnswer = a + b;
+    return `${arabicNumber(a)} + ${arabicNumber(b)} = ؟`;
+}
+
+function renderTeacherLockOrContent() {
+
+    const overlay = $("teacherLockOverlay");
+    const content = $("teacherContent");
+
+    if (!overlay || !content) return;
+
+    if (teacherUnlockedSession) {
+        overlay.style.display = "none";
+        content.style.display = "block";
+        renderTeacherStats();
+        return;
+    }
+
+    overlay.style.display = "block";
+    content.style.display = "none";
+
+    const pin = localStorage.getItem("taha_teacher_pin");
+    const questionEl = $("teacherLockQuestion");
+    const msgEl = $("teacherLockMsg");
+    const input = $("teacherLockAnswerInput");
+
+    if (msgEl) msgEl.textContent = "";
+    if (input) input.value = "";
+
+    if (pin) {
+        if (questionEl) questionEl.textContent = "🔢 أدخل الرمز السري (٤ أرقام)";
+        if (input) input.setAttribute("maxlength", "4");
+    } else {
+        if (questionEl) questionEl.textContent = generateTeacherMathQuestion();
+        if (input) input.removeAttribute("maxlength");
+    }
+}
+
+function attemptTeacherUnlock() {
+
+    const input = $("teacherLockAnswerInput");
+    const msgEl = $("teacherLockMsg");
+
+    if (!input) return;
+
+    const pin = localStorage.getItem("taha_teacher_pin");
+    const value = input.value.trim();
+
+    let correct = false;
+
+    if (pin) {
+        correct = value === pin;
+    } else {
+        correct = Number(value) === teacherMathAnswer;
+    }
+
+    if (correct) {
+        teacherUnlockedSession = true;
+        renderTeacherLockOrContent();
+    } else {
+        if (msgEl) msgEl.textContent = "😊 حاول مرة أخرى";
+        renderTeacherLockOrContent();
+    }
+}
+
+function lockTeacherPanel() {
+    teacherUnlockedSession = false;
+    renderTeacherLockOrContent();
+}
+
+function setTeacherPin() {
+
+    const input = $("teacherPinInputNew");
+    const msgEl = $("teacherPinMsg");
+
+    if (!input) return;
+
+    const value = input.value.trim();
+
+    if (!/^\d{4}$/.test(value)) {
+        if (msgEl) msgEl.textContent = "من فضلك أدخل ٤ أرقام فقط";
+        return;
+    }
+
+    localStorage.setItem("taha_teacher_pin", value);
+    input.value = "";
+
+    if (msgEl) msgEl.textContent = "✅ تم حفظ رمز الحماية";
+}
+
+function clearTeacherPin() {
+    localStorage.removeItem("taha_teacher_pin");
+
+    const msgEl = $("teacherPinMsg");
+    if (msgEl) {
+        msgEl.textContent =
+            "تم إلغاء الرمز، سيتم استخدام سؤال حسابي بدلًا منه";
+    }
+}
+
+function renderTeacherStats() {
+
+    updateStats();
+
+    const wrongTotal = Analytics.getWrongTotal();
+
+    const correctSum =
+        correctLetters +
+        correctWords +
+        correctNumbers +
+        correctAddition +
+        correctSubtraction;
+
+    const totalAttempts = correctSum + wrongTotal;
+
+    const accuracy =
+        totalAttempts > 0
+            ? Math.round((correctSum / totalAttempts) * 100)
+            : 100;
+
+    if ($("teacherWrong")) {
+        $("teacherWrong").textContent = arabicNumber(wrongTotal);
+    }
+
+    if ($("teacherAccuracy")) {
+        $("teacherAccuracy").textContent = "٪" + arabicNumber(accuracy);
+    }
+
+    const todayMinutes = Math.round(TimeTracker.getTodaySeconds() / 60);
+    const totalMinutes = Math.round(TimeTracker.getTotal() / 60);
+
+    if ($("teacherTimeToday")) {
+        $("teacherTimeToday").textContent =
+            arabicNumber(todayMinutes) + " دقيقة";
+    }
+
+    if ($("teacherTimeTotal")) {
+        $("teacherTimeTotal").textContent =
+            arabicNumber(totalMinutes) + " دقيقة";
+    }
+
+    if ($("teacherBadgesCount")) {
+        $("teacherBadgesCount").textContent =
+            arabicNumber(Badges.getEarned().length) + " وسام";
+    }
+
+    renderSkillsReview();
+}
+
+function renderSkillsReview() {
+
+    const container = $("teacherSkillsReview");
+    if (!container) return;
+
+    const attempts = Analytics.getLetterAttempts();
+
+    const rows = Object.keys(attempts)
+        .map(letter => {
+            const a = attempts[letter];
+            const total = a.correct + a.wrong;
+            const accuracy = total > 0 ? a.correct / total : 1;
+            return { letter, total, accuracy };
+        })
+        .filter(r => r.total >= 2 && r.accuracy < 0.7)
+        .sort((a, b) => a.accuracy - b.accuracy)
+        .slice(0, 6);
+
+    if (rows.length === 0) {
+        container.innerHTML =
+            '<p class="teacher-empty-note">لا توجد مهارات تحتاج مراجعة حاليًا 🎉</p>';
+        return;
+    }
+
+    container.innerHTML = rows.map(r => `
+        <div class="skill-review-item">
+            <b>${r.letter}</b>
+            <span>${arabicNumber(Math.round(r.accuracy * 100))}٪ صحيح</span>
+        </div>
+    `).join("");
+}
+
+/* =========================================================
+   🗓️ عرض شاشة المهمة اليومية
+========================================================= */
+
+function renderDailyQuestScreen() {
+
+    const data = DailyQuest.checkProgress();
+
+    const list = $("dailyQuestList");
+    const dateEl = $("dailyQuestDate");
+    const allDoneMsg = $("dailyQuestAllDoneMsg");
+
+    if (dateEl) {
+        dateEl.textContent =
+            "مهام يوم: " + new Date().toLocaleDateString("ar-EG");
+    }
+
+    if (!list) return;
+
+    const templateById = {};
+    DailyQuest.TEMPLATES.forEach(t => { templateById[t.id] = t; });
+
+    list.innerHTML = data.quests.map(q => {
+
+        const template = templateById[q.id];
+        const current = template ? template.counterRef() : 0;
+        const progress = Math.min(q.target, Math.max(0, current - q.baseline));
+        const percent = Math.round((progress / q.target) * 100);
+        const isDone = progress >= q.target;
+
+        return `
+            <div class="quest-item ${isDone ? "done" : ""}">
+                <div class="quest-item-top">
+                    <span>${q.emoji} ${q.label}</span>
+                    <span>${arabicNumber(progress)}/${arabicNumber(q.target)}</span>
+                </div>
+                <div class="quest-progress-bar">
+                    <div class="quest-progress-fill" style="width:${percent}%"></div>
+                </div>
+                <div class="quest-reward">
+                    ${isDone
+                        ? "✅ تم! حصلت على ⭐ " + arabicNumber(q.reward)
+                        : "🎁 المكافأة: ⭐ " + arabicNumber(q.reward)}
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    const allDone = data.quests.every(q => q.doneAwarded);
+
+    if (allDoneMsg) {
+        allDoneMsg.style.display = allDone ? "block" : "none";
+    }
+}
+
+/* =========================================================
+   ⚙️ عرض شاشة الإعدادات
+========================================================= */
+
+let deferredInstallPrompt = null;
+
+function renderSettingsScreen() {
+
+    const s = Settings.get();
+
+    if ($("settingsSoundToggle")) $("settingsSoundToggle").checked = !!s.sound;
+    if ($("settingsHapticToggle")) $("settingsHapticToggle").checked = !!s.haptic;
+    if ($("settingsDarkToggle")) $("settingsDarkToggle").checked = !!s.dark;
+    if ($("settingsCalmToggle")) $("settingsCalmToggle").checked = !!s.calm;
+
+    const installBtn = $("settingsInstallBtn");
+    if (installBtn) {
+        installBtn.style.display = deferredInstallPrompt
+            ? "inline-block"
+            : "none";
+    }
+}
+
+function triggerAppInstall() {
+
+    if (!deferredInstallPrompt) return;
+
+    deferredInstallPrompt.prompt();
+
+    deferredInstallPrompt.userChoice.finally(() => {
+        deferredInstallPrompt = null;
+        const installBtn = $("settingsInstallBtn");
+        if (installBtn) installBtn.style.display = "none";
+    });
+}
+
+window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+
+    const installBtn = $("settingsInstallBtn");
+    if (installBtn) installBtn.style.display = "inline-block";
+});
+
+/* =========================================================
+   📲 تسجيل Service Worker لدعم العمل دون إنترنت والتثبيت
+========================================================= */
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker
+            .register("service-worker.js")
+            .catch(() => {});
+    });
+}
+
+/* =========================================================
+   🔗 دمج التطوير الجديد مع النظام الحالي (بدون كسر أي شيء)
+========================================================= */
+
+/* --- ربط شاشة (showScreen) بعرض الشاشات الجديدة --- */
+
+const originalShowScreen = showScreen;
+
+showScreen = function (screenId) {
+
+    originalShowScreen(screenId);
+
+    if (screenId === "teacher") {
+        renderTeacherLockOrContent();
+    }
+
+    if (screenId === "rewards") {
+        renderRewardsScreen();
+    }
+
+    if (screenId === "settings") {
+        renderSettingsScreen();
+    }
+
+    if (screenId === "dailyQuest") {
+        renderDailyQuestScreen();
+    }
+
+    if (screenId === "profile") {
+        renderProfileScreen();
+    }
+};
+
+/* --- ربط النجوم (addStars) بالتحليلات والمهمة اليومية والاهتزاز --- */
+
+const originalAddStars = addStars;
+let addStarsReentrant = false;
+
+addStars = function (amount) {
+
+    originalAddStars(amount);
+
+    if (addStarsReentrant) return;
+
+    addStarsReentrant = true;
+
+    try {
+        const amt = Number(amount) || 0;
+
+        if (amt > 0) {
+            Analytics.recordCorrectEvent();
+        }
+
+        DailyQuest.checkProgress();
+
+    } finally {
+        addStarsReentrant = false;
+    }
+};
+
+/* --- ربط الصوت بإعداد تشغيل/إيقاف الصوت --- */
+
+const originalSpeakFn = speak;
+
+speak = function (text, options) {
+    if (!Settings.get().sound) return;
+    originalSpeakFn(text, options);
+};
+
+/* --- تفعيل عداد الكلمات المُتدرّب عليها --- */
+
+const originalNextWord = nextWord;
+
+nextWord = function () {
+    originalNextWord();
+    correctWords++;
+    saveCounters();
+    updateStats();
+    DailyQuest.checkProgress();
+};
+
+/* --- تفعيل عداد الأرقام المُتدرّب عليها وتتبع الأرقام المتعلمة --- */
+
+const originalNextNumber = nextNumber;
+
+nextNumber = function () {
+    originalNextNumber();
+    correctNumbers++;
+    saveCounters();
+    updateStats();
+    DailyQuest.checkProgress();
+};
+
+const originalRenderCurrentNumber = renderCurrentNumber;
+
+renderCurrentNumber = function () {
+    originalRenderCurrentNumber();
+    Analytics.markNumberLearned(currentNumber);
+};
+
+/* --- تتبع تدريبات الكتابة (لأغراض المهمة اليومية) --- */
+
+const originalFinishWriting = finishWriting;
+
+finishWriting = function () {
+
+    originalFinishWriting();
+
+    const writingCount =
+        Number(localStorage.getItem("taha_correct_writing") || 0) + 1;
+
+    localStorage.setItem("taha_correct_writing", String(writingCount));
+
+    DailyQuest.checkProgress();
+};
+
+/* --- احترام الوضع الهادئ عند عرض المؤثرات (Confetti) --- */
+
+if (typeof createLetterRaceConfetti === "function") {
+
+    const originalConfetti = createLetterRaceConfetti;
+
+    createLetterRaceConfetti = function (...args) {
+        if (Settings.get().calm) return;
+        return originalConfetti.apply(this, args);
+    };
+}
+
+/* =========================================================
+   🚀 تهيئة التطوير الجديد عند تحميل الصفحة
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    Settings.apply();
+    applyProfileToHeader();
+    renderSettingsScreen();
+
+    const equipped = getStoreEquipped();
+
+    if (equipped.background) {
+        const bgItem = STORE_ITEMS.find(i => i.id === equipped.background);
+        if (bgItem && bgItem.cssClass) {
+            document.body.classList.add(bgItem.cssClass);
+        }
+    }
+
+    checkBadges();
+    DailyQuest.checkProgress();
+
+    if (!localStorage.getItem("taha_child_name")) {
+        setTimeout(() => {
+            openProfileScreen();
+        }, 500);
+    }
+});
+
+/* =========================================================
+   🔚 نهاية قسم التطوير الجديد
+========================================================= */
