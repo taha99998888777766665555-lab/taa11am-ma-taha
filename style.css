@@ -4100,3 +4100,708 @@ z-index: 100;
 /* =========================================================
    🔚 نهاية قسم لعبة المطابقة
 ========================================================= */
+
+/* =========================================================
+   🆕 التطوير الجديد: الملف الشخصي، PWA، لوحة المعلم،
+   المكافآت والشهادات، المهمة اليومية، الإعدادات
+========================================================= */
+
+:root {
+    --bg-light-1: #e0f7fa;
+    --bg-light-2: #fff8e1;
+    --text-main: #333;
+    --card-bg: #ffffff;
+    --card-shadow: rgba(0,0,0,0.12);
+    --header-1: #2196f3;
+    --header-2: #673ab7;
+}
+
+/* ---------- شريحة الملف الشخصي في الرأس ---------- */
+
+.profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.22);
+    border: none;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 15px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: 0.2s;
+}
+
+.profile-chip:hover {
+    background: rgba(255,255,255,0.35);
+    transform: scale(1.03);
+}
+
+#headerAvatarDisplay {
+    font-size: 20px;
+}
+
+/* ---------- شاشة الملف الشخصي ---------- */
+
+.profile-label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #555;
+}
+
+.profile-name-input {
+    width: 100%;
+    max-width: 320px;
+    padding: 12px 16px;
+    font-size: 18px;
+    border: 2px solid #bbdefb;
+    border-radius: 14px;
+    margin: 10px auto;
+    text-align: center;
+    font-family: inherit;
+}
+
+.profile-name-input:focus {
+    outline: none;
+    border-color: #2196f3;
+}
+
+.avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 400px;
+    margin: 15px auto;
+}
+
+@media (min-width: 500px) {
+    .avatar-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+.avatar-option {
+    font-size: 32px;
+    background: #f1f8ff;
+    border: 3px solid transparent;
+    border-radius: 16px;
+    padding: 10px 0;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.avatar-option:hover {
+    transform: scale(1.08);
+    background: #e3f2fd;
+}
+
+.avatar-option.selected {
+    border-color: #2196f3;
+    background: #bbdefb;
+}
+
+/* ---------- لوحة المعلم ---------- */
+
+.teacher-card {
+    text-align: center;
+}
+
+.teacher-lock-overlay {
+    background: #f5f7ff;
+    border-radius: 18px;
+    padding: 25px 15px;
+    margin-top: 10px;
+}
+
+.teacher-lock-prompt {
+    font-size: 18px;
+    font-weight: bold;
+    color: #3949ab;
+}
+
+.teacher-lock-question {
+    font-size: 24px;
+    font-weight: bold;
+    color: #6a1b9a;
+    margin: 10px 0;
+}
+
+.teacher-lock-input {
+    width: 100%;
+    max-width: 220px;
+    padding: 12px 16px;
+    font-size: 22px;
+    text-align: center;
+    border: 2px solid #bbdefb;
+    border-radius: 14px;
+    margin: 10px auto;
+    display: block;
+    font-family: inherit;
+}
+
+.teacher-lock-input:focus {
+    outline: none;
+    border-color: #2196f3;
+}
+
+.teacher-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+@media (min-width: 600px) {
+    .teacher-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.teacher-stat-box {
+    background: #f1f8ff;
+    border-radius: 16px;
+    padding: 14px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.teacher-stat-box span {
+    font-size: 14px;
+    color: #607d8b;
+}
+
+.teacher-stat-box b {
+    font-size: 22px;
+    color: #1565c0;
+}
+
+.teacher-progress-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 420px;
+    margin: 10px auto;
+    text-align: right;
+}
+
+.teacher-progress-row {
+    display: flex;
+    justify-content: space-between;
+    background: #f8f9fa;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 16px;
+}
+
+.teacher-progress-row b {
+    color: #43a047;
+}
+
+.teacher-skills-review {
+    max-width: 500px;
+    margin: 10px auto;
+    text-align: right;
+}
+
+.teacher-empty-note {
+    color: #90a4ae;
+    font-size: 15px;
+}
+
+.skill-review-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff3e0;
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.skill-review-item b {
+    color: #e65100;
+    font-size: 20px;
+}
+
+.teacher-badges-count {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff8f00;
+}
+
+.teacher-pin-setup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.teacher-pin-setup .teacher-lock-input {
+    margin: 0;
+    max-width: 200px;
+}
+
+.teacher-note {
+    font-size: 14px;
+    color: #78909c;
+    max-width: 480px;
+    margin: 8px auto;
+}
+
+/* ---------- الأوسمة والشهادات والمتجر ---------- */
+
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 500px;
+    margin: 15px auto;
+}
+
+@media (min-width: 600px) {
+    .badges-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.badge-item {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 14px 6px;
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.35;
+    filter: grayscale(1);
+    transition: 0.2s;
+}
+
+.badge-item.earned {
+    opacity: 1;
+    filter: none;
+    background: linear-gradient(135deg, #fff9c4, #ffe082);
+    box-shadow: 0 3px 10px rgba(255,193,7,0.4);
+}
+
+.badge-emoji {
+    font-size: 30px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.certificates-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.certificate-card {
+    background: #f1f8ff;
+    border-radius: 18px;
+    padding: 18px 20px;
+    text-align: center;
+    min-width: 150px;
+    opacity: 0.5;
+    filter: grayscale(0.6);
+}
+
+.certificate-card.unlocked {
+    opacity: 1;
+    filter: none;
+    background: linear-gradient(135deg, #e1f5fe, #f3e5f5);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.certificate-card .cert-icon {
+    font-size: 36px;
+}
+
+.store-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    max-width: 560px;
+    margin: 15px auto;
+}
+
+@media (min-width: 600px) {
+    .store-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.store-item {
+    background: #f8f9fa;
+    border: none;
+    border-radius: 16px;
+    padding: 16px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.store-item:hover {
+    transform: translateY(-2px);
+}
+
+.store-item .store-emoji {
+    font-size: 34px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.store-item .store-price {
+    display: block;
+    margin-top: 6px;
+    font-weight: bold;
+    color: #ff8f00;
+}
+
+.store-item.owned {
+    background: linear-gradient(135deg, #c8e6c9, #dcedc8);
+}
+
+.store-item.equipped {
+    outline: 3px solid #43a047;
+}
+
+/* ---------- شهادة الطباعة ---------- */
+
+.certificate-paper {
+    background: #fffdf5;
+    border: 10px solid #ffca28;
+    border-radius: 20px;
+    max-width: 650px;
+    margin: 20px auto;
+    padding: 10px;
+}
+
+.certificate-border {
+    border: 3px dashed #6a1b9a;
+    border-radius: 12px;
+    padding: 35px 20px;
+    text-align: center;
+}
+
+.certificate-emoji {
+    font-size: 50px;
+}
+
+.certificate-title {
+    font-size: 34px;
+    color: #6a1b9a;
+    margin: 10px 0;
+}
+
+.certificate-sub {
+    font-size: 16px;
+    color: #777;
+}
+
+.certificate-name {
+    font-size: 38px;
+    font-weight: bold;
+    color: #2196f3;
+    margin: 15px 0;
+    border-bottom: 3px solid #ffca28;
+    display: inline-block;
+    padding: 0 20px 8px;
+}
+
+.certificate-body {
+    font-size: 18px;
+    color: #444;
+    margin: 15px 0;
+}
+
+.certificate-date {
+    font-size: 14px;
+    color: #999;
+}
+
+.certificate-signature {
+    margin-top: 25px;
+    font-weight: bold;
+    color: #673ab7;
+}
+
+.certificate-actions {
+    text-align: center;
+    margin-top: 15px;
+}
+
+@media print {
+    header,
+    .container > .screen:not(#certificateView),
+    .no-print {
+        display: none !important;
+    }
+
+    #certificateView {
+        display: block !important;
+    }
+
+    body {
+        background: white !important;
+    }
+}
+
+/* ---------- المهمة اليومية ---------- */
+
+.quest-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 520px;
+    margin: 15px auto;
+}
+
+.quest-item {
+    background: #f1f8ff;
+    border-radius: 16px;
+    padding: 14px 18px;
+    text-align: right;
+}
+
+.quest-item.done {
+    background: linear-gradient(135deg, #c8e6c9, #dcedc8);
+}
+
+.quest-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.quest-progress-bar {
+    background: #e0e0e0;
+    border-radius: 20px;
+    height: 12px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.quest-progress-fill {
+    background: linear-gradient(90deg, #43a047, #8bc34a);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.quest-reward {
+    font-size: 13px;
+    color: #ff8f00;
+    margin-top: 6px;
+}
+
+/* ---------- الإعدادات ---------- */
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 460px;
+    margin: 15px auto;
+}
+
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 14px 18px;
+    border-radius: 16px;
+    font-size: 16px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 30px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #cfd8dc;
+    transition: 0.3s;
+    border-radius: 30px;
+}
+
+.switch .slider::before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    right: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.switch input:checked + .slider {
+    background-color: #43a047;
+}
+
+.switch input:checked + .slider::before {
+    transform: translateX(-22px);
+}
+
+/* =========================================================
+   🌙 الوضع الليلي
+========================================================= */
+
+body.dark-mode {
+    background: linear-gradient(135deg, #10131f, #1b1330);
+    color: #e8eaf6;
+}
+
+body.dark-mode header {
+    background: linear-gradient(135deg, #14213d, #3a1c71);
+}
+
+body.dark-mode .card,
+body.dark-mode .teacher-stat-box,
+body.dark-mode .teacher-progress-row,
+body.dark-mode .quest-item,
+body.dark-mode .settings-row,
+body.dark-mode .badge-item,
+body.dark-mode .certificate-card,
+body.dark-mode .store-item,
+body.dark-mode .teacher-lock-overlay,
+body.dark-mode .skill-review-item {
+    background: #1e2233;
+    color: #e8eaf6;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.4);
+}
+
+body.dark-mode .card h2,
+body.dark-mode .card h3 {
+    color: #90caf9;
+}
+
+body.dark-mode .menu button {
+    background: #232946;
+    color: #e8eaf6;
+}
+
+body.dark-mode .option {
+    background: #232946;
+    color: #90caf9;
+}
+
+body.dark-mode .profile-name-input,
+body.dark-mode .teacher-lock-input {
+    background: #232946;
+    color: #e8eaf6;
+    border-color: #3949ab;
+}
+
+body.dark-mode .avatar-option {
+    background: #232946;
+}
+
+body.dark-mode .teacher-progress-row,
+body.dark-mode .settings-row,
+body.dark-mode .quest-item {
+    background: #232946;
+}
+
+body.dark-mode .certificate-paper {
+    background: #1e2233;
+}
+
+body.dark-mode .certificate-name {
+    color: #90caf9;
+}
+
+/* =========================================================
+   🧘 الوضع الهادئ (تقليل الحركة والمؤثرات)
+========================================================= */
+
+body.calm-mode *,
+body.calm-mode *::before,
+body.calm-mode *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.15s !important;
+    scroll-behavior: auto !important;
+}
+
+body.calm-mode .menu button:hover,
+body.calm-mode .primary:hover,
+body.calm-mode .secondary:hover,
+body.calm-mode .success:hover,
+body.calm-mode .danger:hover,
+body.calm-mode .option:hover,
+body.calm-mode .game-launch-card:hover {
+    transform: none !important;
+}
+
+/* =========================================================
+   📱 استجابة إضافية للشاشات الصغيرة
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .profile-chip {
+        font-size: 13px;
+        padding: 5px 12px;
+    }
+
+    .teacher-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .badges-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .store-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .certificate-title {
+        font-size: 26px;
+    }
+
+    .certificate-name {
+        font-size: 28px;
+    }
+}
+
+/* ---------- خلفيات المتجر (اختيارية) ---------- */
+
+body.theme-ocean {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+body.theme-space {
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #eee;
+}
+
+body.theme-forest {
+    background: linear-gradient(135deg, #56ab2f, #a8e063);
+}
