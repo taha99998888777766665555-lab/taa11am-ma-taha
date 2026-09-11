@@ -13,6 +13,19 @@
 <title>تعلم مع أ/طه محمد</title>
 
 <link
+    rel="manifest"
+    href="manifest.json"
+>
+
+<meta name="theme-color" content="#2196f3">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="تعلم مع طه">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+
+<link
     rel="stylesheet"
     href="style.css"
 >
@@ -26,6 +39,16 @@
 ========================================== -->
 
 <header>
+
+<button
+    class="profile-chip"
+    id="headerProfileChip"
+    onclick="openProfileScreen()"
+    aria-label="ملفي الشخصي"
+>
+    <span id="headerAvatarDisplay">🦁</span>
+    <span id="headerNameDisplay">أهلًا بك!</span>
+</button>
 
 <h1>🌟 تعلم مع أ/طه محمد 🌟</h1>
 
@@ -163,6 +186,30 @@
     >
         🎮
         <span>الألعاب التعليمية</span>
+    </button>
+
+
+    <button
+        onclick="showScreen('dailyQuest')"
+    >
+        🗓️
+        <span>مهمة اليوم</span>
+    </button>
+
+
+    <button
+        onclick="openProfileScreen()"
+    >
+        👤
+        <span>ملفي الشخصي</span>
+    </button>
+
+
+    <button
+        onclick="showScreen('settings')"
+    >
+        ⚙️
+        <span>الإعدادات</span>
     </button>
 
 
@@ -2212,6 +2259,377 @@
 
 
     </div>
+
+</section>
+
+
+<!-- =========================================================
+     👤 الملف الشخصي
+========================================================= -->
+
+<section id="profile" class="screen">
+
+<div class="card">
+
+    <h2>👤 ملفي الشخصي</h2>
+
+    <p>اختر اسمك وصورتك المفضلة 😊</p>
+
+    <label class="profile-label" for="profileNameInput">اسمي هو:</label>
+
+    <input
+        type="text"
+        id="profileNameInput"
+        class="profile-name-input"
+        maxlength="20"
+        placeholder="اكتب اسمك هنا"
+        autocomplete="off"
+    >
+
+    <h3>اختر صورتك (Avatar)</h3>
+
+    <div id="avatarGrid" class="avatar-grid"></div>
+
+    <div
+        id="profileSaveMsg"
+        class="message"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+    <button class="primary" onclick="saveProfile()">💾 حفظ</button>
+
+    <button class="secondary" onclick="showScreen('home')">🏠 الرئيسية</button>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     👨‍🏫 لوحة المعلم / ولي الأمر
+========================================================= -->
+
+<section id="teacher" class="screen">
+
+<div class="card teacher-card">
+
+    <h2>👨‍🏫 لوحة المعلم وولي الأمر</h2>
+
+    <!-- 🔒 شاشة الحماية -->
+    <div id="teacherLockOverlay" class="teacher-lock-overlay">
+
+        <p id="teacherLockPrompt" class="teacher-lock-prompt">
+            🔒 هذه اللوحة لولي الأمر أو المعلم فقط
+        </p>
+
+        <p id="teacherLockQuestion" class="teacher-lock-question"></p>
+
+        <input
+            type="tel"
+            inputmode="numeric"
+            id="teacherLockAnswerInput"
+            class="teacher-lock-input"
+            placeholder="أدخل الإجابة"
+            autocomplete="off"
+        >
+
+        <div
+            id="teacherLockMsg"
+            class="message"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+        <button class="primary" onclick="attemptTeacherUnlock()">🔓 دخول</button>
+
+        <button class="secondary" onclick="showScreen('home')">🏠 الرئيسية</button>
+
+    </div>
+
+    <!-- 📊 محتوى اللوحة (يظهر بعد فتح القفل) -->
+    <div id="teacherContent" class="teacher-content" style="display:none;">
+
+        <div class="teacher-stats-grid">
+
+            <div class="teacher-stat-box">
+                <span>⭐ النجوم</span>
+                <b id="teacherStars">٠</b>
+            </div>
+
+            <div class="teacher-stat-box">
+                <span>🎯 المستوى</span>
+                <b id="teacherLevel">١</b>
+            </div>
+
+            <div class="teacher-stat-box">
+                <span>✅ نسبة الصحيح</span>
+                <b id="teacherAccuracy">٪٠</b>
+            </div>
+
+            <div class="teacher-stat-box">
+                <span>❌ الإجابات الخاطئة</span>
+                <b id="teacherWrong">٠</b>
+            </div>
+
+            <div class="teacher-stat-box">
+                <span>⏱️ وقت اليوم</span>
+                <b id="teacherTimeToday">٠ دقيقة</b>
+            </div>
+
+            <div class="teacher-stat-box">
+                <span>⏳ إجمالي وقت التعلم</span>
+                <b id="teacherTimeTotal">٠ دقيقة</b>
+            </div>
+
+        </div>
+
+        <h3>📚 تقدّم المهارات</h3>
+
+        <div class="teacher-progress-grid">
+
+            <div class="teacher-progress-row">
+                <span>🔤 الحروف</span>
+                <b id="teacherLetters">٠</b>
+            </div>
+
+            <div class="teacher-progress-row">
+                <span>📖 الكلمات</span>
+                <b id="teacherWords">٠</b>
+            </div>
+
+            <div class="teacher-progress-row">
+                <span>🔢 الأرقام</span>
+                <b id="teacherNumbers">٠</b>
+            </div>
+
+            <div class="teacher-progress-row">
+                <span>➕ الجمع</span>
+                <b id="teacherAddition">٠</b>
+            </div>
+
+            <div class="teacher-progress-row">
+                <span>➖ الطرح</span>
+                <b id="teacherSubtraction">٠</b>
+            </div>
+
+        </div>
+
+        <h3>🔍 مهارات تحتاج مراجعة</h3>
+
+        <div id="teacherSkillsReview" class="teacher-skills-review">
+            <p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>
+        </div>
+
+        <h3>🏅 الأوسمة المكتسبة</h3>
+
+        <p id="teacherBadgesCount" class="teacher-badges-count">٠ وسام</p>
+
+        <h3>🔐 إعدادات الحماية</h3>
+
+        <div class="teacher-pin-setup">
+
+            <input
+                type="tel"
+                inputmode="numeric"
+                maxlength="4"
+                id="teacherPinInputNew"
+                class="teacher-lock-input"
+                placeholder="رمز جديد (٤ أرقام) — اختياري"
+                autocomplete="off"
+            >
+
+            <button class="secondary" onclick="setTeacherPin()">حفظ الرمز</button>
+
+            <button class="secondary" onclick="clearTeacherPin()">إلغاء الرمز</button>
+
+        </div>
+
+        <p id="teacherPinMsg" class="message" role="status" aria-live="polite"></p>
+
+        <p class="teacher-note">
+            💡 عند ترك خانة الرمز فارغة، ستظهر لك مسألة حسابية بسيطة بدلًا من الرمز.
+        </p>
+
+        <button class="secondary" onclick="lockTeacherPanel()">🔒 قفل اللوحة</button>
+
+        <button class="secondary" onclick="showScreen('home')">🏠 الرئيسية</button>
+
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     🏆 المكافآت والشهادات والأوسمة والمتجر
+========================================================= -->
+
+<section id="rewards" class="screen">
+
+<div class="card">
+
+    <h2>🏆 مكافآتي</h2>
+
+    <div class="stats">
+        <span>⭐ رصيد النجوم: <b id="rewardStars">٠</b></span>
+    </div>
+
+    <h3>🏅 الأوسمة</h3>
+
+    <div id="rewardsBadgesGrid" class="badges-grid"></div>
+
+    <h3>📜 الشهادات</h3>
+
+    <div id="rewardsCertificatesGrid" class="certificates-grid"></div>
+
+    <h3>🛍️ متجر المكافآت</h3>
+
+    <p class="teacher-note">استبدل نجومك بخلفيات وشخصيات وملصقات جميلة 🎁</p>
+
+    <div id="rewardsStoreGrid" class="store-grid"></div>
+
+    <div
+        id="rewardsMsg"
+        class="message"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+    <button class="secondary" onclick="showScreen('home')">🏠 الرئيسية</button>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     📜 عرض الشهادة للطباعة
+========================================================= -->
+
+<section id="certificateView" class="screen">
+
+<div class="certificate-paper" id="certificatePaper">
+
+    <div class="certificate-border">
+
+        <div class="certificate-emoji">🏆</div>
+
+        <h2 class="certificate-title">شهادة تفوّق</h2>
+
+        <p class="certificate-sub">تُمنح هذه الشهادة إلى</p>
+
+        <div class="certificate-name" id="certChildName">--</div>
+
+        <p class="certificate-body" id="certType">لإتمامه تعلم الحروف العربية بنجاح</p>
+
+        <p class="certificate-date" id="certDate">--</p>
+
+        <p class="certificate-signature">تعلم مع أ/طه محمد 🌟</p>
+
+    </div>
+
+</div>
+
+<div class="certificate-actions no-print">
+
+    <button class="primary" onclick="window.print()">🖨️ طباعة</button>
+
+    <button class="secondary" onclick="showScreen('rewards')">⬅️ رجوع</button>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     🗓️ مهمة اليوم
+========================================================= -->
+
+<section id="dailyQuest" class="screen">
+
+<div class="card">
+
+    <h2>🗓️ مهمة اليوم</h2>
+
+    <p id="dailyQuestDate" class="teacher-note">--</p>
+
+    <p>مهام بسيطة اختيارية بدون وقت محدد ⏳🚫 — العب بالسرعة التي تناسبك 😊</p>
+
+    <div id="dailyQuestList" class="quest-list"></div>
+
+    <p id="dailyQuestAllDoneMsg" class="message correct" style="display:none;">
+        🎉 أحسنت! أنهيت كل مهام اليوم
+    </p>
+
+    <button class="secondary" onclick="showScreen('home')">🏠 الرئيسية</button>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     ⚙️ الإعدادات
+========================================================= -->
+
+<section id="settings" class="screen">
+
+<div class="card">
+
+    <h2>⚙️ الإعدادات</h2>
+
+    <div class="settings-list">
+
+        <div class="settings-row">
+            <span>🔊 الصوت والمؤثرات</span>
+            <label class="switch">
+                <input type="checkbox" id="settingsSoundToggle" onchange="updateSettingFromUI('sound', this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="settings-row">
+            <span>📳 الاهتزاز عند الإجابة (Haptic)</span>
+            <label class="switch">
+                <input type="checkbox" id="settingsHapticToggle" onchange="updateSettingFromUI('haptic', this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="settings-row">
+            <span>🌙 الوضع الليلي</span>
+            <label class="switch">
+                <input type="checkbox" id="settingsDarkToggle" onchange="updateSettingFromUI('dark', this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="settings-row">
+            <span>🧘 الوضع الهادئ (تقليل الحركة)</span>
+            <label class="switch">
+                <input type="checkbox" id="settingsCalmToggle" onchange="updateSettingFromUI('calm', this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+    </div>
+
+    <div id="settingsSaveMsg" class="message correct">✅ يتم الحفظ تلقائيًا</div>
+
+    <button
+        class="primary"
+        id="settingsInstallBtn"
+        onclick="triggerAppInstall()"
+        style="display:none;"
+    >
+        📲 تثبيت التطبيق على الجهاز
+    </button>
+
+    <button class="secondary" onclick="showScreen('home')">🏠 الرئيسية</button>
+
+</div>
 
 </section>
 
