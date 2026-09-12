@@ -4805,3 +4805,128 @@ body.theme-space {
 body.theme-forest {
     background: linear-gradient(135deg, #56ab2f, #a8e063);
 }
+
+/* =========================================================
+   🆕 إضافات لعبة المطابقة: 4 أنماط جديدة فقط
+   (حرف↔حرف الأشكال / حرف↔صورة متنوع / صورة↔كلمة الأماكن /
+   شكل الحرف↔الكلمة)
+   لا يوجد أي تعديل على الأنماط أو الأنماط البصرية الحالية.
+========================================================= */
+
+/* ---------- ألوان بطاقات اختيار الأنماط الجديدة ---------- */
+
+.matching-mode-formsform {
+    background: linear-gradient(135deg, #eef9ff, #e0f2fe);
+    border-color: #7dd3fc;
+}
+
+.matching-mode-objectletter {
+    background: linear-gradient(135deg, #fff9e6, #fef3c7);
+    border-color: #fcd34d;
+}
+
+.matching-mode-places {
+    background: linear-gradient(135deg, #eafaf1, #d1fae5);
+    border-color: #6ee7b7;
+}
+
+.matching-mode-shapeword {
+    background: linear-gradient(135deg, #f5f0ff, #ede9fe);
+    border-color: #c4b5fd;
+}
+
+/* =========================================================
+   🖼️ تكبير البطاقات والصور والكلمات لهذه الأنماط الأربعة فقط
+   (بدون أي تأثير على الأنماط العشرة الحالية)
+========================================================= */
+
+#matchingBoard[data-mode="forms-forms"],
+#matchingBoard[data-mode="objects-letters"],
+#matchingBoard[data-mode="places-words"],
+#matchingBoard[data-mode="letterform-word"] {
+    min-height: min(62vh, 560px);
+    padding: clamp(14px, 3vw, 30px);
+    gap: clamp(10px, 3vw, 28px);
+}
+
+#matchingBoard[data-mode="forms-forms"] .matching-column,
+#matchingBoard[data-mode="objects-letters"] .matching-column,
+#matchingBoard[data-mode="places-words"] .matching-column,
+#matchingBoard[data-mode="letterform-word"] .matching-column {
+    max-width: 48%;
+    gap: clamp(10px, 2.4vw, 20px);
+}
+
+#matchingBoard[data-mode="forms-forms"] .matching-card,
+#matchingBoard[data-mode="objects-letters"] .matching-card,
+#matchingBoard[data-mode="places-words"] .matching-card,
+#matchingBoard[data-mode="letterform-word"] .matching-card {
+    min-height: clamp(80px, 15vh, 150px);
+    width: 100%;
+    padding: clamp(10px, 2.4vw, 22px);
+    border-radius: 26px;
+}
+
+/* أشكال الحروف (المصدر في نمطي forms-forms و letterform-word) */
+
+#matchingBoard[data-mode="forms-forms"] .matching-form-face,
+#matchingBoard[data-mode="letterform-word"] .matching-form-face {
+    font-size: clamp(46px, 10vw, 90px);
+    line-height: 1;
+}
+
+/* الحروف المفردة (نمط حرف↔صورة) */
+
+#matchingBoard[data-mode="objects-letters"] .matching-letter-face {
+    font-size: clamp(42px, 10vw, 88px);
+}
+
+/* الصور (الرموز التعبيرية) في الأنماط الجديدة */
+
+#matchingBoard[data-mode="objects-letters"] .matching-emoji-face,
+#matchingBoard[data-mode="places-words"] .matching-emoji-face {
+    font-size: clamp(44px, 11vw, 92px);
+}
+
+/* الكلمات في الأنماط الجديدة */
+
+#matchingBoard[data-mode="places-words"] .matching-word-face,
+#matchingBoard[data-mode="letterform-word"] .matching-word-face {
+    font-size: clamp(22px, 4.4vw, 36px);
+    font-weight: 900;
+}
+
+/* استجابة إضافية للجوال لهذه الأنماط تحديدًا */
+
+@media (max-width: 640px) {
+
+    #matchingBoard[data-mode="forms-forms"],
+    #matchingBoard[data-mode="objects-letters"],
+    #matchingBoard[data-mode="places-words"],
+    #matchingBoard[data-mode="letterform-word"] {
+        min-height: min(70vh, 620px);
+        padding: 10px;
+        gap: 10px;
+    }
+
+    #matchingBoard[data-mode="forms-forms"] .matching-card,
+    #matchingBoard[data-mode="objects-letters"] .matching-card,
+    #matchingBoard[data-mode="places-words"] .matching-card,
+    #matchingBoard[data-mode="letterform-word"] .matching-card {
+        min-height: clamp(70px, 12vh, 110px);
+        border-radius: 20px;
+    }
+}
+
+/* شاشات كبيرة (كمبيوتر): إتاحة مساحة أوسع لهذه الأنماط */
+
+@media (min-width: 900px) {
+
+    #matchingBoard[data-mode="forms-forms"],
+    #matchingBoard[data-mode="objects-letters"],
+    #matchingBoard[data-mode="places-words"],
+    #matchingBoard[data-mode="letterform-word"] {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+}
