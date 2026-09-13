@@ -1735,9 +1735,10 @@ function gamePictureOnly(content, item) {
 function gameOddLookingLetter(content, item) {
 
     const similarGroups = {
-        "ب": ["ت", "ث", "ن"],
-        "ت": ["ب", "ث", "ن"],
-        "ث": ["ب", "ت", "ن"],
+        "أ": ["ل", "ك"],
+        "ب": ["ت", "ث", "ن", "ي"],
+        "ت": ["ب", "ث", "ن", "ي"],
+        "ث": ["ب", "ت", "ن", "ي"],
         "ج": ["ح", "خ"],
         "ح": ["ج", "خ"],
         "خ": ["ج", "ح"],
@@ -1755,8 +1756,13 @@ function gameOddLookingLetter(content, item) {
         "غ": ["ع"],
         "ف": ["ق"],
         "ق": ["ف"],
-        "ه": ["و"],
-        "و": ["ه"]
+        "ك": ["ل", "أ"],
+        "ل": ["ك", "أ"],
+        "م": ["ه"],
+        "ن": ["ب", "ت", "ث", "ي"],
+        "ه": ["م"],
+        "و": ["ف"],
+        "ي": ["ب", "ت", "ث", "ن"]
     };
 
     let choices =
@@ -15354,4 +15360,1951 @@ startMatchingGame = function (mode) {
 
 /* =========================================================
    🔚 نهاية قسم تطوير لعبة المطابقة
+========================================================= */
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   🔤🎓 تطوير قسم "الحروف" فقط — Activity / Game Engine احترافي
+   =====================================================================
+   هذا القسم بالكامل إضافي ومعزول. لا يحذف ولا يعدّل أي لعبة من الألعاب
+   العشرين الأصلية (gameChooseCorrectLetter ... gameFinalChallenge)، ولا
+   يمس أي قسم آخر في التطبيق (الكلمات، الأرقام، الكتابة، المطابقة،
+   الألعاب المستقلة، القرآن، الحديث، الأدعية، إلخ).
+   النظام يبني فوق الموجود ويكمله بمحرك أنشطة قابل للتوسع.
+========================================================================= */
+
+/* =========================================================
+   🔊 نطق الحرف بحركات مختلفة (فتحة/ضمة/كسرة) — بدون Browser
+   TTS بديل؛ نستخدم نفس نظام speak() الحالي بالمشروع لأنه لا
+   توجد ملفات صوت مسجّلة داخل المشروع لقسم الحروف.
+========================================================= */
+
+function letterWithDamma(letter) {
+    const clean = removeArabicHarakat(letter);
+    return clean + "ُ";
+}
+
+function letterWithKasra(letter) {
+    const clean = removeArabicHarakat(letter);
+    return clean + "ِ";
+}
+
+/* =========================================================
+   🔤 قواعد اتصال الحروف العربية الحقيقية
+   نحدد شكل أي حرف داخل أي كلمة حسب موضعه الفعلي، دون افتراض
+   أن كل حرف له 3 أو 4 أشكال متصلة. الحروف التالية لا تتصل بما
+   بعدها إطلاقًا: ا (أ إ آ) د ذ ر ز و — ولها شكلان فقط
+   (منفصل/آخر) في arabicLetterForms المعرّفة مسبقًا بالمشروع.
+========================================================= */
+
+const LETTER_NON_CONNECTORS = new Set(
+    ["ا", "أ", "إ", "آ", "د", "ذ", "ر", "ز", "و"]
+);
+
+function getRealLetterFormKeyAtIndex(word, index) {
+
+    const chars = Array.from(word);
+    const n = chars.length;
+    const current = chars[index];
+
+    const hasIncoming =
+        index > 0 &&
+        !LETTER_NON_CONNECTORS.has(chars[index - 1]);
+
+    const hasOutgoing =
+        index < n - 1 &&
+        !LETTER_NON_CONNECTORS.has(current);
+
+    if (hasIncoming && hasOutgoing) return "medial";
+    if (hasIncoming && !hasOutgoing) return "final";
+    if (!hasIncoming && hasOutgoing) return "initial";
+
+    return "isolated";
+}
+
+function getRealLetterGlyphAtIndex(word, index) {
+
+    const chars = Array.from(word);
+    const letter = chars[index];
+    const posKey = getRealLetterFormKeyAtIndex(word, index);
+
+    const forms =
+        (typeof arabicLetterForms !== "undefined" &&
+            arabicLetterForms[letter]) ||
+        null;
+
+    const glyph =
+        (forms && (forms[posKey] || forms.isolated)) ||
+        letter;
+
+    return { letter, posKey, glyph };
+}
+
+/* =========================================================
+   📖 بنك كلمات وصور إضافي خاص بقسم الحروف فقط (للتعميم)
+   معزول تمامًا عن أي بيانات مستخدمة في أقسام أخرى (المطابقة
+   مثلًا لها بنك بيانات خاص بها منفصل تمامًا عن هذا).
+   لكل حرف عدة كلمات مناسبة للأطفال حتى لا يحفظ الطفل علاقة
+   ثابتة مثل: م = موز فقط.
+========================================================= */
+
+const letterExtraWordBank = {
+    "أ": [
+        { word: "أسد", emoji: "🦁" },
+        { word: "أرنب", emoji: "🐰" },
+        { word: "أذن", emoji: "👂" }
+    ],
+    "ب": [
+        { word: "بطة", emoji: "🦆" },
+        { word: "بيضة", emoji: "🥚" },
+        { word: "باب", emoji: "🚪" },
+        { word: "بقرة", emoji: "🐄" }
+    ],
+    "ت": [
+        { word: "تمساح", emoji: "🐊" },
+        { word: "تفاح", emoji: "🍎" },
+        { word: "تاج", emoji: "👑" }
+    ],
+    "ث": [
+        { word: "ثعلب", emoji: "🦊" },
+        { word: "ثلج", emoji: "❄️" }
+    ],
+    "ج": [
+        { word: "جمل", emoji: "🐪" },
+        { word: "جزر", emoji: "🥕" },
+        { word: "جبل", emoji: "⛰️" }
+    ],
+    "ح": [
+        { word: "حصان", emoji: "🐎" },
+        { word: "حمامة", emoji: "🕊️" },
+        { word: "حذاء", emoji: "👞" }
+    ],
+    "خ": [
+        { word: "خروف", emoji: "🐑" },
+        { word: "خيار", emoji: "🥒" },
+        { word: "خيمة", emoji: "⛺" }
+    ],
+    "د": [
+        { word: "دب", emoji: "🐻" },
+        { word: "دجاجة", emoji: "🐔" },
+        { word: "دراجة", emoji: "🚲" }
+    ],
+    "ذ": [
+        { word: "ذرة", emoji: "🌽" },
+        { word: "ذئب", emoji: "🐺" }
+    ],
+    "ر": [
+        { word: "رمان", emoji: "🍎" },
+        { word: "رجل", emoji: "👤" }
+    ],
+    "ز": [
+        { word: "زرافة", emoji: "🦒" },
+        { word: "زهرة", emoji: "🌸" }
+    ],
+    "س": [
+        { word: "سمكة", emoji: "🐟" },
+        { word: "سيارة", emoji: "🚗" },
+        { word: "ساعة", emoji: "⏰" }
+    ],
+    "ش": [
+        { word: "شمس", emoji: "☀️" },
+        { word: "شجرة", emoji: "🌳" }
+    ],
+    "ص": [
+        { word: "صقر", emoji: "🦅" },
+        { word: "صندوق", emoji: "📦" }
+    ],
+    "ض": [
+        { word: "ضفدع", emoji: "🐸" },
+        { word: "ضوء", emoji: "💡" }
+    ],
+    "ط": [
+        { word: "طائرة", emoji: "✈️" },
+        { word: "طبق", emoji: "🍽️" }
+    ],
+    "ظ": [
+        { word: "ظرف", emoji: "✉️" },
+        { word: "ظبي", emoji: "🦌" }
+    ],
+    "ع": [
+        { word: "عين", emoji: "👁️" },
+        { word: "عصفور", emoji: "🐦" }
+    ],
+    "غ": [
+        { word: "غيمة", emoji: "☁️" },
+        { word: "غزال", emoji: "🦌" }
+    ],
+    "ف": [
+        { word: "فيل", emoji: "🐘" },
+        { word: "فراشة", emoji: "🦋" }
+    ],
+    "ق": [
+        { word: "قمر", emoji: "🌙" },
+        { word: "قطة", emoji: "🐱" }
+    ],
+    "ك": [
+        { word: "كتاب", emoji: "📘" },
+        { word: "كلب", emoji: "🐶" }
+    ],
+    "ل": [
+        { word: "ليمون", emoji: "🍋" },
+        { word: "لبن", emoji: "🥛" }
+    ],
+    "م": [
+        { word: "مسجد", emoji: "🕌" },
+        { word: "مدرسة", emoji: "🏫" },
+        { word: "مفتاح", emoji: "🔑" },
+        { word: "موز", emoji: "🍌" },
+        { word: "مطر", emoji: "🌧️" }
+    ],
+    "ن": [
+        { word: "نجم", emoji: "⭐" },
+        { word: "نمر", emoji: "🐯" }
+    ],
+    "ه": [
+        { word: "هلال", emoji: "🌙" },
+        { word: "هدية", emoji: "🎁" }
+    ],
+    "و": [
+        { word: "وردة", emoji: "🌹" }
+    ],
+    "ي": [
+        { word: "يد", emoji: "✋" },
+        { word: "يوسفي", emoji: "🍊" }
+    ]
+};
+
+function getLetterExtraWordCandidates(letterChar) {
+    return (
+        letterExtraWordBank[letterChar] || [
+            {
+                word: letters[currentLetterIndex]?.word || "",
+                emoji: letters[currentLetterIndex]?.emoji || ""
+            }
+        ]
+    );
+}
+
+function pickRandomLetterWordCandidate(letterChar) {
+    const list = getLetterExtraWordCandidates(letterChar);
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+/* =========================================================
+   🔡 أمثلة حقيقية موثّقة لموضع كل حرف داخل كلمات فعلية
+   (أول/وسط/آخر/منفصل) — تم التحقق برمجيًا من صحة كل إدخال
+   حسب قواعد الاتصال الفعلية، وليس تخمينًا.
+   تغطي جميع الحروف الـ٢٨.
+========================================================= */
+
+const letterFormWordExamples = [
+    { letter: "ب", posKey: "initial", word: "بطة" },
+    { letter: "ب", posKey: "medial", word: "سبع" },
+    { letter: "ب", posKey: "final", word: "حليب" },
+
+    { letter: "ت", posKey: "initial", word: "تفاح" },
+    { letter: "ت", posKey: "medial", word: "كتاب" },
+    { letter: "ت", posKey: "final", word: "بيت" },
+
+    { letter: "ث", posKey: "initial", word: "ثعلب" },
+    { letter: "ث", posKey: "medial", word: "مثل" },
+    { letter: "ث", posKey: "final", word: "حديث" },
+
+    { letter: "ج", posKey: "initial", word: "جمل" },
+    { letter: "ج", posKey: "medial", word: "نجم" },
+    { letter: "ج", posKey: "final", word: "نضج" },
+
+    { letter: "ح", posKey: "initial", word: "حصان" },
+    { letter: "ح", posKey: "medial", word: "بحر" },
+    { letter: "ح", posKey: "final", word: "فتح" },
+
+    { letter: "خ", posKey: "initial", word: "خروف" },
+    { letter: "خ", posKey: "medial", word: "بخيل" },
+    { letter: "خ", posKey: "final", word: "طبخ" },
+
+    { letter: "د", posKey: "isolated", word: "دب" },
+    { letter: "د", posKey: "final", word: "بلد" },
+
+    { letter: "ذ", posKey: "isolated", word: "ذرة" },
+    { letter: "ذ", posKey: "final", word: "نفذ" },
+
+    { letter: "ر", posKey: "isolated", word: "رمان" },
+    { letter: "ر", posKey: "final", word: "قمر" },
+
+    { letter: "ز", posKey: "isolated", word: "زرافة" },
+    { letter: "ز", posKey: "final", word: "خبز" },
+
+    { letter: "س", posKey: "initial", word: "سمكة" },
+    { letter: "س", posKey: "medial", word: "مسجد" },
+    { letter: "س", posKey: "final", word: "جلس" },
+
+    { letter: "ش", posKey: "initial", word: "شمس" },
+    { letter: "ش", posKey: "final", word: "عطش" },
+
+    { letter: "ص", posKey: "initial", word: "صقر" },
+    { letter: "ص", posKey: "final", word: "قص" },
+
+    { letter: "ض", posKey: "initial", word: "ضفدع" },
+    { letter: "ض", posKey: "final", word: "بعض" },
+
+    { letter: "ط", posKey: "initial", word: "طائرة" },
+    { letter: "ط", posKey: "final", word: "خط" },
+
+    { letter: "ظ", posKey: "initial", word: "ظرف" },
+    { letter: "ظ", posKey: "final", word: "حفظ" },
+
+    { letter: "ع", posKey: "initial", word: "عين" },
+    { letter: "ع", posKey: "final", word: "سبع" },
+
+    { letter: "غ", posKey: "initial", word: "غيمة" },
+    { letter: "غ", posKey: "final", word: "بلغ" },
+
+    { letter: "ف", posKey: "initial", word: "فيل" },
+    { letter: "ف", posKey: "medial", word: "سفينة" },
+    { letter: "ف", posKey: "final", word: "كيف" },
+
+    { letter: "ق", posKey: "initial", word: "قمر" },
+    { letter: "ق", posKey: "final", word: "حق" },
+
+    { letter: "ك", posKey: "initial", word: "كتاب" },
+    { letter: "ك", posKey: "medial", word: "مكتب" },
+    { letter: "ك", posKey: "final", word: "ملك" },
+
+    { letter: "ل", posKey: "initial", word: "ليمون" },
+    { letter: "ل", posKey: "medial", word: "قلم" },
+    { letter: "ل", posKey: "final", word: "جمل" },
+
+    { letter: "م", posKey: "initial", word: "موز" },
+    { letter: "م", posKey: "medial", word: "قمر" },
+    { letter: "م", posKey: "final", word: "اسم" },
+
+    { letter: "ن", posKey: "initial", word: "نجم" },
+    { letter: "ن", posKey: "medial", word: "بنت" },
+    { letter: "ن", posKey: "final", word: "لبن" },
+
+    { letter: "ه", posKey: "initial", word: "هلال" },
+    { letter: "ه", posKey: "final", word: "وجه" },
+
+    { letter: "و", posKey: "isolated", word: "وردة" },
+    { letter: "و", posKey: "final", word: "جو" },
+
+    { letter: "ي", posKey: "initial", word: "يد" },
+    { letter: "ي", posKey: "medial", word: "بيت" },
+    { letter: "ي", posKey: "final", word: "نبي" },
+
+    { letter: "أ", posKey: "isolated", word: "أسد" },
+    { letter: "أ", posKey: "final", word: "لجأ" }
+];
+
+function getLetterFormWordExamples(letterChar) {
+    return letterFormWordExamples.filter(
+        entry => entry.letter === letterChar
+    );
+}
+
+function pickLetterFormWordExample(letterChar) {
+    const list = getLetterFormWordExamples(letterChar);
+    if (!list.length) return null;
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+/* ملاحظة: نعيد استخدام arabicFormPositionLabels الموجودة مسبقًا
+   بالمشروع (منفصل/أول الكلمة/وسط الكلمة/آخر الكلمة) بدل إنشاء
+   نظام تسميات مكرر. */
+
+/* =========================================================
+   🧠 النظام التكيفي وتتبع التقدم (معزول تمامًا في مفتاح
+   localStorage خاص به) — لا يستبدل نظام النجوم/المستوى
+   الحالي، بل يضيف طبقة بيانات تربوية فوقه لأغراض التلميح
+   والتدرج والتعلم بلا أخطاء (Errorless Learning).
+========================================================= */
+
+const LETTER_ADAPTIVE_STORAGE_KEY = "taha_letters_adaptive_v1";
+
+function loadLettersAdaptiveData() {
+    try {
+        return JSON.parse(
+            localStorage.getItem(LETTER_ADAPTIVE_STORAGE_KEY) || "{}"
+        );
+    } catch (error) {
+        return {};
+    }
+}
+
+function saveLettersAdaptiveData(data) {
+    try {
+        localStorage.setItem(
+            LETTER_ADAPTIVE_STORAGE_KEY,
+            JSON.stringify(data)
+        );
+    } catch (error) {}
+}
+
+function getLetterAdaptiveEntry(letterChar) {
+
+    const data = loadLettersAdaptiveData();
+
+    if (!data[letterChar]) {
+        data[letterChar] = {
+            lastPos: 0,
+            completedOnce: false,
+            correctCount: 0,
+            wrongCount: 0,
+            hintCount: 0,
+            activityStats: {}
+        };
+        saveLettersAdaptiveData(data);
+    }
+
+    return data[letterChar];
+}
+
+function updateLetterAdaptiveEntry(letterChar, patchFn) {
+
+    const data = loadLettersAdaptiveData();
+
+    if (!data[letterChar]) {
+        data[letterChar] = {
+            lastPos: 0,
+            completedOnce: false,
+            correctCount: 0,
+            wrongCount: 0,
+            hintCount: 0,
+            activityStats: {}
+        };
+    }
+
+    patchFn(data[letterChar]);
+
+    saveLettersAdaptiveData(data);
+
+    return data[letterChar];
+}
+
+function recordLetterActivityOutcome(letterChar, activityKey, correct, usedHint) {
+
+    updateLetterAdaptiveEntry(letterChar, entry => {
+
+        if (correct) {
+            entry.correctCount = (entry.correctCount || 0) + 1;
+        } else {
+            entry.wrongCount = (entry.wrongCount || 0) + 1;
+        }
+
+        if (usedHint) {
+            entry.hintCount = (entry.hintCount || 0) + 1;
+        }
+
+        if (!entry.activityStats[activityKey]) {
+            entry.activityStats[activityKey] = {
+                correct: 0,
+                wrong: 0,
+                hints: 0
+            };
+        }
+
+        const stat = entry.activityStats[activityKey];
+
+        if (correct) stat.correct++;
+        else stat.wrong++;
+
+        if (usedHint) stat.hints++;
+    });
+}
+
+function saveLetterLastPosition(letterChar, pos) {
+    updateLetterAdaptiveEntry(letterChar, entry => {
+        entry.lastPos = pos;
+        if (pos >= TOTAL_LETTER_SEQUENCE) {
+            entry.completedOnce = true;
+        }
+    });
+}
+
+function getLetterHubBadgeInfo(letterChar) {
+
+    const entry = getLetterAdaptiveEntry(letterChar);
+
+    if (entry.completedOnce) {
+        return { show: true, icon: "🏆" };
+    }
+
+    if (entry.lastPos > 0) {
+        return { show: true, icon: "⭐" };
+    }
+
+    return { show: false, icon: "" };
+}
+
+/* =========================================================
+   🏠 شبكة اختيار الحروف (نقطة الدخول الجديدة لقسم الحروف)
+========================================================= */
+
+function renderLettersHub() {
+
+    const grid = $("lettersHubGrid");
+
+    if (!grid) return;
+
+    grid.innerHTML = letters.map((item, index) => {
+
+        const badge = getLetterHubBadgeInfo(item.letter);
+
+        return `
+            <button
+                class="letters-hub-card-btn ${badge.show ? "has-progress" : ""}"
+                onclick="openLetterActivities(${index})"
+                type="button"
+                aria-label="حرف ${item.letter}"
+            >
+                ${badge.show ? `<span class="letters-hub-badge">${badge.icon}</span>` : ""}
+                ${letterWithFatha(item.letter)}
+            </button>
+        `;
+    }).join("");
+}
+
+/* =========================================================
+   ➡️⬅️ التنقل بين شبكة الحروف وواجهة الأنشطة
+========================================================= */
+
+const TOTAL_NEW_LETTER_ACTIVITIES = 8;
+const TOTAL_LETTER_SEQUENCE = TOTAL_LETTER_GAMES + TOTAL_NEW_LETTER_ACTIVITIES;
+
+let letterSequencePos = 0;
+let letterActivityWrongStreak = 0;
+let letterActivityHintTimer = null;
+let letterActivityInteracted = false;
+
+function openLetterActivities(index) {
+
+    currentLetterIndex = index;
+
+    const letterChar = letters[index].letter;
+    const adaptiveEntry = getLetterAdaptiveEntry(letterChar);
+
+    const resumePos =
+        (adaptiveEntry.lastPos > 0 &&
+            adaptiveEntry.lastPos < TOTAL_LETTER_SEQUENCE)
+            ? adaptiveEntry.lastPos
+            : 0;
+
+    const hub = $("lettersHubCard");
+    const activityCard = $("letterActivityCard");
+
+    if (hub) hub.style.display = "none";
+    if (activityCard) activityCard.style.display = "block";
+
+    renderLetterPage();
+    ensureLegacyLetterGamesBoxRelocated();
+
+    renderLetterActivityAtPos(resumePos);
+}
+
+function backToLettersHub() {
+
+    stopAllAudio();
+    invalidateLetterGameSession();
+    disarmLetterActivityHintTimer();
+
+    const hub = $("lettersHubCard");
+    const activityCard = $("letterActivityCard");
+
+    if (activityCard) activityCard.style.display = "none";
+    if (hub) hub.style.display = "block";
+
+    renderLettersHub();
+}
+
+function ensureLegacyLetterGamesBoxRelocated() {
+
+    const box = getLetterGamesBox();
+    const stage = $("letterActivityStage");
+
+    if (box && stage && box.parentElement !== stage) {
+        stage.appendChild(box);
+    }
+
+    return box;
+}
+
+function getNewLetterActivityArea() {
+
+    let area = $("letterNewActivityArea");
+
+    if (!area) {
+
+        area = document.createElement("div");
+        area.id = "letterNewActivityArea";
+
+        const stage = $("letterActivityStage");
+
+        if (stage) stage.appendChild(area);
+    }
+
+    return area;
+}
+
+function updateLetterActivityProgressUI(pos, goalText) {
+
+    const label = $("letterActivityProgressLabel");
+    const fill = $("letterActivityProgressFill");
+    const goal = $("letterActivityGoalLabel");
+
+    const humanPos = Math.min(pos + 1, TOTAL_LETTER_SEQUENCE);
+
+    if (label) {
+        label.textContent =
+            `النشاط ${arabicNumber(humanPos)} من ${arabicNumber(TOTAL_LETTER_SEQUENCE)}`;
+    }
+
+    if (fill) {
+        fill.style.width =
+            ((humanPos / TOTAL_LETTER_SEQUENCE) * 100) + "%";
+    }
+
+    if (goal) {
+        goal.textContent = goalText || "";
+    }
+
+    saveLetterLastPosition(letters[currentLetterIndex].letter, pos);
+}
+
+function showLetterToolbarNext(onClickFn) {
+
+    const btn = $("letterActivityNextBtn");
+
+    if (!btn) return;
+
+    btn.style.display = "inline-flex";
+    btn.onclick = onClickFn;
+}
+
+function hideLetterToolbarNext() {
+
+    const btn = $("letterActivityNextBtn");
+
+    if (!btn) return;
+
+    btn.style.display = "none";
+    btn.onclick = null;
+}
+
+/* =========================================================
+   🎯 أهداف الألعاب العشرين الأصلية (لعرضها في شريط التقدم
+   فقط — نص توضيحي إضافي، لا يغيّر منطق الألعاب نفسها)
+========================================================= */
+
+const LEGACY_LETTER_GAME_GOALS = [
+    "التعرف البصري على الحرف",
+    "التمييز السمعي للحرف",
+    "ربط الحرف بالصورة",
+    "اختيار كلمة تبدأ بالحرف",
+    "تحديد أول حرف في كلمة",
+    "إكمال الكلمة الناقصة",
+    "البحث عن الحرف بين حروف",
+    "مطابقة الحرف مع الصورة",
+    "مطابقة الحرف مع الكلمة",
+    "سماع صوت الحرف بالحركة",
+    "الاستماع لكلمة وتحديد حرفها",
+    "تمييز الكلمة غير المطابقة",
+    "التعرف على الحرف من الصورة",
+    "التمييز بين حروف متشابهة",
+    "تحديد الحرف داخل سياق الكلمة",
+    "الربط من الصورة إلى الحرف",
+    "البحث عن كلمة تحتوي الحرف",
+    "حل لغز الحرف",
+    "تدريب الذاكرة البصرية",
+    "تحدٍّ شامل لمهارات الحرف"
+];
+
+/* =========================================================
+   💡 نظام التلميحات التدريجية + Errorless Learning +
+   Prompt Fading (طبقة تكيفية عامة فوق كل الأنشطة)
+========================================================= */
+
+function armLetterActivityHintTimer(hintFn) {
+
+    disarmLetterActivityHintTimer();
+
+    letterActivityHintTimer = setTimeout(() => {
+        if (!letterActivityInteracted && typeof hintFn === "function") {
+            hintFn();
+        }
+    }, 4500);
+}
+
+function disarmLetterActivityHintTimer() {
+
+    if (letterActivityHintTimer) {
+        clearTimeout(letterActivityHintTimer);
+        letterActivityHintTimer = null;
+    }
+}
+
+function markLetterActivityInteracted() {
+    letterActivityInteracted = true;
+}
+
+function showLetterActivityHint(text) {
+
+    const hint = $("letterActivityHint");
+
+    if (hint) {
+        hint.textContent = text;
+        hint.style.display = "block";
+    }
+}
+
+function hideLetterActivityHint() {
+
+    const hint = $("letterActivityHint");
+
+    if (hint) {
+        hint.style.display = "none";
+        hint.textContent = "";
+    }
+}
+
+function genericLegacyHint() {
+
+    showLetterActivityHint(
+        "🌟 خذ وقتك... اضغط 🔊 لتسمع الحرف مرة أخرى، ثم اختر بهدوء"
+    );
+
+    recordLetterActivityOutcome(
+        letters[currentLetterIndex].letter,
+        "legacy-" + currentLetterGame,
+        false,
+        true
+    );
+}
+
+/* =========================================================
+   🔗 دمج آمن مع محرك الألعاب العشرين الأصلي (تغليف فقط،
+   بدون أي تعديل لمنطق الدوال الأصلية)
+========================================================= */
+
+const originalFinishLetterGameForEngine = finishLetterGame;
+
+finishLetterGame = function (isCorrect, button) {
+
+    originalFinishLetterGameForEngine(isCorrect, button);
+    onLegacyLetterActivityResult(isCorrect);
+};
+
+function onLegacyLetterActivityResult(isCorrect) {
+
+    disarmLetterActivityHintTimer();
+
+    const letterChar = letters[currentLetterIndex].letter;
+
+    if (isCorrect) {
+
+        letterActivityWrongStreak = 0;
+
+        recordLetterActivityOutcome(
+            letterChar,
+            "legacy-" + currentLetterGame,
+            true,
+            false
+        );
+
+        showLetterToolbarNext(advanceLetterSequence);
+
+    } else {
+
+        letterActivityWrongStreak++;
+
+        recordLetterActivityOutcome(
+            letterChar,
+            "legacy-" + currentLetterGame,
+            false,
+            false
+        );
+
+        if (letterActivityWrongStreak >= 2) {
+
+            showLetterActivityHint(
+                "🌟 لا بأس أبدًا، هذه محاولة رائعة! سنحاول معًا مرة أخرى بهدوء"
+            );
+
+        } else {
+
+            armLetterActivityHintTimer(genericLegacyHint);
+        }
+    }
+}
+
+const originalNextLetterGameForEngine = nextLetterGame;
+
+nextLetterGame = function () {
+
+    originalNextLetterGameForEngine();
+
+    if (currentLetterGame >= TOTAL_LETTER_GAMES) {
+        redirectLegacyCelebrationContinueButton();
+    }
+};
+
+function redirectLegacyCelebrationContinueButton() {
+
+    const content = $("letterGameContent");
+
+    if (!content) return;
+
+    const btn = content.querySelector(".game-next-btn");
+
+    if (btn) {
+
+        btn.onclick = () => {
+            renderLetterActivityAtPos(TOTAL_LETTER_GAMES);
+        };
+
+        btn.textContent = "أنشطة جديدة ومتنوعة ➜";
+    }
+}
+
+/* =========================================================
+   🚦 موزّع الأنشطة الرئيسي (Sequence Controller)
+========================================================= */
+
+function renderLetterActivityAtPos(pos) {
+
+    letterSequencePos = pos;
+    letterActivityWrongStreak = 0;
+    letterActivityInteracted = false;
+
+    hideLetterToolbarNext();
+    hideLetterActivityHint();
+    disarmLetterActivityHintTimer();
+
+    const box = ensureLegacyLetterGamesBoxRelocated();
+    const newArea = getNewLetterActivityArea();
+
+    if (pos < TOTAL_LETTER_GAMES) {
+
+        if (box) box.style.display = "block";
+        newArea.style.display = "none";
+
+        currentLetterGame = pos;
+        letterGameAnswered = false;
+
+        renderLetterGamesBox();
+
+        updateLetterActivityProgressUI(
+            pos,
+            LEGACY_LETTER_GAME_GOALS[pos] || ""
+        );
+
+        armLetterActivityHintTimer(genericLegacyHint);
+
+    } else {
+
+        if (box) box.style.display = "none";
+        newArea.style.display = "block";
+
+        const newIndex = pos - TOTAL_LETTER_GAMES;
+        const activity = NEW_LETTER_ACTIVITIES[newIndex];
+
+        if (activity) {
+
+            updateLetterActivityProgressUI(pos, activity.goal);
+
+            activity.render(
+                newArea,
+                letters[currentLetterIndex]
+            );
+        }
+    }
+}
+
+function advanceLetterSequence() {
+
+    hideLetterToolbarNext();
+
+    if (letterSequencePos < TOTAL_LETTER_GAMES) {
+
+        nextLetterGame();
+
+        letterSequencePos = currentLetterGame;
+
+        if (letterSequencePos < TOTAL_LETTER_GAMES) {
+
+            updateLetterActivityProgressUI(
+                letterSequencePos,
+                LEGACY_LETTER_GAME_GOALS[letterSequencePos] || ""
+            );
+
+            armLetterActivityHintTimer(genericLegacyHint);
+        }
+
+        return;
+    }
+
+    const nextPos = letterSequencePos + 1;
+
+    if (nextPos >= TOTAL_LETTER_SEQUENCE) {
+        celebrateFullLetterCompletion();
+        return;
+    }
+
+    renderLetterActivityAtPos(nextPos);
+}
+
+function retryCurrentLetterActivity() {
+    renderLetterActivityAtPos(letterSequencePos);
+}
+
+/* اسم بديل يطابق onclick الثابت في HTML، يوجّه لنفس المنطق */
+function goToNextLetterActivity() {
+    advanceLetterSequence();
+}
+
+function celebrateFullLetterCompletion() {
+
+    disarmLetterActivityHintTimer();
+    hideLetterToolbarNext();
+
+    addStars(15);
+
+    saveLetterLastPosition(
+        letters[currentLetterIndex].letter,
+        TOTAL_LETTER_SEQUENCE
+    );
+
+    const newArea = getNewLetterActivityArea();
+    const box = $("letterGamesBox");
+
+    if (box) box.style.display = "none";
+    newArea.style.display = "block";
+
+    newArea.innerHTML = `
+        <div class="letter-game-card">
+
+            <div class="game-category">
+                🏆 أحسنت جدًا!
+            </div>
+
+            <div class="game-big-letter">
+                ${letterWithFatha(letters[currentLetterIndex].letter)}
+            </div>
+
+            <div class="game-question">
+                أتممت كل أنشطة هذا الحرف الـ ${arabicNumber(TOTAL_LETTER_SEQUENCE)} بنجاح 🎉
+            </div>
+
+            <div style="font-size:22px">
+                ⭐ مكافأة إضافية: ١٥ نجمة
+            </div>
+
+            <button
+                class="game-next-btn"
+                onclick="goToNextLetterFromCompletion()"
+                type="button"
+            >
+                الحرف التالي ➜
+            </button>
+
+            <button
+                class="game-next-btn"
+                style="background:#78909c;"
+                onclick="backToLettersHub()"
+                type="button"
+            >
+                🏠 كل الحروف
+            </button>
+
+        </div>
+    `;
+
+    updateLetterActivityProgressUI(
+        TOTAL_LETTER_SEQUENCE - 1,
+        "أحسنت! اكتمل هذا الحرف"
+    );
+
+    speak("ممتاز! أكملت جميع أنشطة هذا الحرف");
+}
+
+function goToNextLetterFromCompletion() {
+
+    nextLetter();
+
+    ensureLegacyLetterGamesBoxRelocated();
+
+    renderLetterActivityAtPos(0);
+}
+
+/* =========================================================
+   🧲 محرك سحب وإفلات عام (Drag & Drop Engine)
+   يدعم: الماوس + اللمس + الانجذاب المغناطيسي + Tap كبديل
+   مصمم خصيصًا ليكون سهلًا لذوي الاحتياجات الخاصة (بدون
+   عقوبة عند الخطأ، ومناطق إسقاط كبيرة).
+========================================================= */
+
+const LetterDragEngine = (function () {
+
+    let activeTile = null;
+    let activeTileData = null;
+    let startX = 0;
+    let startY = 0;
+    let offsetX = 0;
+    let offsetY = 0;
+    let tapSelectedTile = null;
+
+    function distance(x1, y1, x2, y2) {
+        return Math.hypot(x2 - x1, y2 - y1);
+    }
+
+    function findNearestZone(zones, clientX, clientY) {
+
+        let nearest = null;
+        let nearestDist = Infinity;
+
+        zones.forEach(zone => {
+
+            const rect = zone.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const d = distance(clientX, clientY, cx, cy);
+
+            const threshold =
+                Math.max(rect.width, rect.height) * 0.9;
+
+            if (d < threshold && d < nearestDist) {
+                nearestDist = d;
+                nearest = zone;
+            }
+        });
+
+        return nearest;
+    }
+
+    function clearDragOverStyles(zones) {
+        zones.forEach(z => z.classList.remove("drag-over"));
+    }
+
+    function makeDraggable(tile, zonesProvider, onDrop) {
+
+        tile.addEventListener("pointerdown", event => {
+
+            markLetterActivityInteracted();
+
+            if (tile.classList.contains("placed")) return;
+
+            activeTile = tile;
+            activeTileData = tile.dataset;
+
+            const rect = tile.getBoundingClientRect();
+
+            startX = event.clientX;
+            startY = event.clientY;
+            offsetX = event.clientX - rect.left;
+            offsetY = event.clientY - rect.top;
+
+            tile.classList.add("dragging");
+            tile.style.position = "fixed";
+            tile.style.zIndex = "999";
+            tile.style.left = rect.left + "px";
+            tile.style.top = rect.top + "px";
+            tile.style.width = rect.width + "px";
+
+            try {
+                tile.setPointerCapture(event.pointerId);
+            } catch (error) {}
+        });
+
+        tile.addEventListener("pointermove", event => {
+
+            if (activeTile !== tile) return;
+
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+
+            tile.style.left = (event.clientX - offsetX) + "px";
+            tile.style.top = (event.clientY - offsetY) + "px";
+
+            const zones = zonesProvider();
+            clearDragOverStyles(zones);
+
+            const nearest = findNearestZone(zones, event.clientX, event.clientY);
+
+            if (nearest) {
+                nearest.classList.add("drag-over");
+            }
+        });
+
+        function endDrag(event) {
+
+            if (activeTile !== tile) return;
+
+            const zones = zonesProvider();
+            clearDragOverStyles(zones);
+
+            const nearest = findNearestZone(
+                zones,
+                event.clientX,
+                event.clientY
+            );
+
+            tile.classList.remove("dragging");
+            tile.style.position = "";
+            tile.style.zIndex = "";
+            tile.style.left = "";
+            tile.style.top = "";
+            tile.style.width = "";
+
+            activeTile = null;
+
+            if (nearest) {
+                onDrop(tile, nearest);
+            }
+        }
+
+        tile.addEventListener("pointerup", endDrag);
+        tile.addEventListener("pointercancel", endDrag);
+
+        /* -------- بديل النقر (Tap) لمن يصعب عليه السحب -------- */
+
+        tile.addEventListener("click", () => {
+
+            if (tile.classList.contains("placed")) return;
+
+            markLetterActivityInteracted();
+
+            if (tapSelectedTile === tile) {
+                tile.classList.remove("selected-for-tap");
+                tapSelectedTile = null;
+                return;
+            }
+
+            document
+                .querySelectorAll(".letters-drag-tile.selected-for-tap")
+                .forEach(t => t.classList.remove("selected-for-tap"));
+
+            tile.classList.add("selected-for-tap");
+            tapSelectedTile = tile;
+        });
+    }
+
+    function makeDropTarget(zone, onTapDrop) {
+
+        zone.addEventListener("click", () => {
+
+            if (!tapSelectedTile) return;
+            if (zone.classList.contains("filled")) return;
+
+            const tile = tapSelectedTile;
+
+            tapSelectedTile.classList.remove("selected-for-tap");
+            tapSelectedTile = null;
+
+            onTapDrop(tile, zone);
+        });
+    }
+
+    return { makeDraggable, makeDropTarget };
+
+})();
+
+/* =========================================================
+   ✍️ محرك التتبع والكتابة (Canvas) — تفاعل حر بدون تصحيح
+   صارم، يركّز على الحركة والمشاركة الحسية للطفل
+========================================================= */
+
+function setupLetterTraceCanvas(canvas) {
+
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        ctx.lineWidth = 10;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "#1976d2";
+    }
+
+    resizeCanvas();
+
+    let drawing = false;
+
+    function getPos(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+    }
+
+    canvas.addEventListener("pointerdown", event => {
+        markLetterActivityInteracted();
+        drawing = true;
+        const pos = getPos(event);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        try { canvas.setPointerCapture(event.pointerId); } catch (e) {}
+    });
+
+    canvas.addEventListener("pointermove", event => {
+        if (!drawing) return;
+        const pos = getPos(event);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    });
+
+    function stopDrawing() {
+        drawing = false;
+    }
+
+    canvas.addEventListener("pointerup", stopDrawing);
+    canvas.addEventListener("pointercancel", stopDrawing);
+
+    return {
+        clear() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    };
+}
+
+/* =========================================================
+   🏆 معالج نتيجة موحّد للأنشطة الثمانية الجديدة
+   (يستخدم نفس نظام النجوم والتقدم الحالي بالضبط: addStars,
+   correctLetters, saveCounters — بلا أي نظام مكافآت منفصل)
+========================================================= */
+
+function finishNewLetterActivity(isCorrect, activityKey, button) {
+
+    const letterChar = letters[currentLetterIndex].letter;
+    const messageEl = $("newActivityMessage");
+
+    if (isCorrect) {
+
+        disarmLetterActivityHintTimer();
+
+        if (button) button.classList.add("correct");
+
+        correctLetters++;
+        saveCounters();
+        addStars(5);
+
+        if (messageEl) {
+            messageEl.textContent = "🎉 أحسنت! حصلت على ⭐ ٥ نجوم";
+        }
+
+        speak("أحسنت، إجابة صحيحة", { rate: 0.8, pitch: 1.1 });
+
+        document
+            .querySelectorAll(
+                "#letterNewActivityArea .letter-game-option, " +
+                "#letterNewActivityArea .letters-haraka-btn"
+            )
+            .forEach(el => { el.disabled = true; });
+
+        letterActivityWrongStreak = 0;
+
+        recordLetterActivityOutcome(letterChar, activityKey, true, false);
+
+        showLetterToolbarNext(advanceLetterSequence);
+
+    } else {
+
+        if (button) button.classList.add("wrong");
+
+        if (messageEl) {
+            messageEl.textContent = "😊 حاول مرة أخرى";
+        }
+
+        speak("حاول مرة أخرى", { rate: 0.8 });
+
+        letterActivityWrongStreak++;
+
+        recordLetterActivityOutcome(letterChar, activityKey, false, false);
+
+        if (letterActivityWrongStreak >= 2) {
+
+            showLetterActivityHint(
+                "🌟 لا بأس أبدًا! هذه محاولة رائعة، سنحاول معًا مرة أخرى بهدوء"
+            );
+
+        } else {
+
+            armLetterActivityHintTimer(() => {
+                showLetterActivityHint(
+                    "🌟 خذ وقتك، وحاول التركيز جيدًا 🙂"
+                );
+                recordLetterActivityOutcome(
+                    letterChar, activityKey, false, true
+                );
+            });
+        }
+    }
+}
+
+/* =========================================================
+   🧱 قالب عام لعرض خيارات نشاط جديد (Activity Template
+   قابل لإعادة الاستخدام في عدة أنشطة)
+========================================================= */
+
+function renderNewActivityOptions(container, choices, formatter, onSelect) {
+
+    const grid = document.createElement("div");
+    grid.className = "letter-options-grid";
+
+    choices.forEach(choice => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "letter-game-option";
+        btn.innerHTML = formatter(choice);
+
+        btn.onclick = () => {
+            markLetterActivityInteracted();
+            onSelect(choice, btn);
+        };
+
+        grid.appendChild(btn);
+    });
+
+    container.appendChild(grid);
+
+    const msg = document.createElement("div");
+    msg.id = "newActivityMessage";
+    msg.className = "game-message";
+    container.appendChild(msg);
+}
+
+/* =========================================================
+   1️⃣ (٢١) نشاط: أشكال الحرف (المعرض والتمييز)
+========================================================= */
+
+function activityLetterFormsGallery(container, item) {
+
+    const forms = (typeof arabicLetterForms !== "undefined" && arabicLetterForms[item.letter]) || {};
+    const availableKeys = Object.keys(forms);
+
+    const galleryHtml = availableKeys.map(key => `
+        <div class="letters-forms-card">
+            <div class="letters-forms-glyph">${formatLetterFormGlyph(forms[key], key)}</div>
+            <div class="letters-forms-label">${arabicFormPositionLabels[key] || key}</div>
+        </div>
+    `).join("");
+
+    const correctKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+
+    let choiceKeys = shuffle(availableKeys.filter(k => k !== correctKey)).slice(0, 2);
+    choiceKeys.push(correctKey);
+    choiceKeys = shuffle(unique(choiceKeys));
+
+    container.innerHTML = `
+        ${gameHeader("أشكال الحرف 🔤", "تعرّف على أشكال هذا الحرف المختلفة")}
+        <div class="letters-forms-gallery">${galleryHtml}</div>
+        <div class="game-question">
+            أين شكل الحرف عندما يكون في <strong>${arabicFormPositionLabels[correctKey] || correctKey}</strong>؟
+        </div>
+    `;
+
+    renderNewActivityOptions(
+        container,
+        choiceKeys,
+        key => formatLetterFormGlyph(forms[key], key),
+        (key, btn) => {
+            finishNewLetterActivity(key === correctKey, "forms-gallery", btn);
+        }
+    );
+}
+
+/* =========================================================
+   2️⃣ (٢٢) نشاط: تحديد موضع الحرف داخل كلمة حقيقية
+========================================================= */
+
+function activityLetterPosition(container, item) {
+
+    const example =
+        pickLetterFormWordExample(item.letter) || {
+            letter: item.letter,
+            posKey: getRealLetterFormKeyAtIndex(
+                item.word,
+                Math.max(item.word.indexOf(item.letter), 0)
+            ),
+            word: item.word
+        };
+
+    container.innerHTML = `
+        ${gameHeader("أين يوجد الحرف؟ 📍", "حدد موضع الحرف داخل الكلمة")}
+        <div class="game-word">${example.word}</div>
+        <div class="game-question">
+            أين يوجد حرف <strong>${letterWithFatha(item.letter)}</strong> في هذه الكلمة؟
+        </div>
+    `;
+
+    const allPosKeys = ["initial", "medial", "final", "isolated"];
+
+    let choiceKeys =
+        shuffle(allPosKeys.filter(k => k !== example.posKey)).slice(0, 2);
+
+    choiceKeys.push(example.posKey);
+    choiceKeys = shuffle(unique(choiceKeys));
+
+    renderNewActivityOptions(
+        container,
+        choiceKeys,
+        key => arabicFormPositionLabels[key] || key,
+        (key, btn) => {
+            finishNewLetterActivity(key === example.posKey, "letter-position", btn);
+        }
+    );
+}
+
+/* =========================================================
+   3️⃣ (٢٣) نشاط: أشكال الحرف داخل الكلمة (سحب وإفلات)
+   النشاط الأهم — يعتمد بالكامل على قواعد الاتصال الحقيقية
+========================================================= */
+
+function activityFormDragDrop(container, item) {
+
+    const example =
+        pickLetterFormWordExample(item.letter) || {
+            letter: item.letter,
+            posKey: "initial",
+            word: item.word
+        };
+
+    const chars = Array.from(example.word);
+
+    let targetIndex = -1;
+
+    for (let i = 0; i < chars.length; i++) {
+        if (
+            chars[i] === example.letter &&
+            getRealLetterFormKeyAtIndex(example.word, i) === example.posKey
+        ) {
+            targetIndex = i;
+            break;
+        }
+    }
+
+    if (targetIndex === -1) {
+        targetIndex = chars.indexOf(example.letter);
+    }
+
+    if (targetIndex === -1) targetIndex = 0;
+
+    const glyphInfo = getRealLetterGlyphAtIndex(example.word, targetIndex);
+    const correctGlyph = formatLetterFormGlyph(glyphInfo.glyph, glyphInfo.posKey);
+
+    const forms =
+        (typeof arabicLetterForms !== "undefined" &&
+            arabicLetterForms[example.letter]) || {};
+
+    const otherKeys = Object.keys(forms).filter(k => k !== glyphInfo.posKey);
+
+    const distractorGlyphs = [];
+
+    if (otherKeys.length) {
+        const pickedKey = shuffle(otherKeys)[0];
+        distractorGlyphs.push(
+            formatLetterFormGlyph(forms[pickedKey], pickedKey)
+        );
+    }
+
+    const otherLetterPool =
+        letters.map(l => l.letter).filter(l => l !== example.letter);
+
+    const randomOtherLetter = shuffle(otherLetterPool)[0];
+
+    const otherForms =
+        (typeof arabicLetterForms !== "undefined" &&
+            arabicLetterForms[randomOtherLetter]) || {};
+
+    const fallbackKey =
+        otherForms[glyphInfo.posKey] ? glyphInfo.posKey : Object.keys(otherForms)[0];
+
+    if (fallbackKey) {
+        distractorGlyphs.push(
+            formatLetterFormGlyph(otherForms[fallbackKey], fallbackKey)
+        );
+    }
+
+    let tileGlyphs = unique([correctGlyph, ...distractorGlyphs]);
+
+    while (tileGlyphs.length < 2) {
+        tileGlyphs.push(correctGlyph + "‌");
+    }
+
+    tileGlyphs = shuffle(tileGlyphs).slice(0, 3);
+
+    if (!tileGlyphs.includes(correctGlyph)) {
+        tileGlyphs[0] = correctGlyph;
+    }
+
+    container.innerHTML = `
+        ${gameHeader("أشكال الحرف داخل الكلمة 🧩", "اسحب الشكل الصحيح إلى مكانه في الكلمة")}
+        <div class="letters-dragdrop-wrapper">
+            <div class="letters-dragdrop-word-row" id="dragWordRow"></div>
+            <div class="letters-drag-tiles-row" id="dragTilesRow"></div>
+            <div class="letters-dragdrop-tip">
+                💡 اسحب القطعة بإصبعك أو بالماوس، أو اضغط عليها ثم اضغط على المكان الفارغ
+            </div>
+            <div id="newActivityMessage" class="game-message"></div>
+        </div>
+    `;
+
+    const wordRow = container.querySelector("#dragWordRow");
+    let dropZone = null;
+
+    chars.forEach((c, i) => {
+
+        if (i === targetIndex) {
+
+            const zone = document.createElement("div");
+            zone.className = "letters-drop-zone";
+            wordRow.appendChild(zone);
+            dropZone = zone;
+
+        } else {
+
+            const span = document.createElement("span");
+            span.textContent = c;
+            wordRow.appendChild(span);
+        }
+    });
+
+    const tilesRow = container.querySelector("#dragTilesRow");
+
+    function handleFormDrop(tile, zone, isCorrectGlyph) {
+
+        if (zone.classList.contains("filled")) return;
+
+        if (isCorrectGlyph) {
+
+            zone.textContent = tile.dataset.glyph;
+            zone.classList.add("filled");
+            tile.classList.add("placed");
+
+            finishNewLetterActivity(true, "form-drag-drop", null);
+
+        } else {
+
+            zone.classList.add("drag-over");
+
+            setTimeout(() => {
+                zone.classList.remove("drag-over");
+            }, 350);
+
+            finishNewLetterActivity(false, "form-drag-drop", null);
+        }
+    }
+
+    tileGlyphs.forEach((glyph, idx) => {
+
+        const tile = document.createElement("div");
+        tile.className = "letters-drag-tile";
+        tile.textContent = glyph;
+        tile.dataset.glyph = glyph;
+        tile.id = "dragTile" + idx;
+
+        tilesRow.appendChild(tile);
+
+        LetterDragEngine.makeDraggable(
+            tile,
+            () => [dropZone],
+            (droppedTile, zone) => {
+                handleFormDrop(droppedTile, zone, droppedTile.dataset.glyph === correctGlyph);
+            }
+        );
+    });
+
+    if (dropZone) {
+        LetterDragEngine.makeDropTarget(dropZone, (tile, zone) => {
+            handleFormDrop(tile, zone, tile.dataset.glyph === correctGlyph);
+        });
+    }
+}
+
+/* =========================================================
+   4️⃣ (٢٤) نشاط: التمييز بين الحركات (فتحة/ضمة/كسرة)
+   الصوت هنا يستخدم صوت الحرف بالحركة فعليًا (بَ/بُ/بِ)
+   وليس اسم الحرف، عبر نفس نظام speak() الحالي بالمشروع.
+========================================================= */
+
+function activityHarakatDiscrimination(container, item) {
+
+    const harakatOptions = [
+        { key: "fatha", label: "فتحة", build: letterWithFatha },
+        { key: "damma", label: "ضمة", build: letterWithDamma },
+        { key: "kasra", label: "كسرة", build: letterWithKasra }
+    ];
+
+    const correct =
+        harakatOptions[Math.floor(Math.random() * harakatOptions.length)];
+
+    const soundText = correct.build(item.letter);
+
+    container.innerHTML = `
+        ${gameHeader("استمع واختر الحركة 🔊", "استمع للصوت ثم اختر الحركة الصحيحة")}
+        <div class="game-question">
+            🔊 اضغط لتسمع صوت الحرف، ثم اختر الحركة التي سمعتها
+        </div>
+        <button
+            class="game-next-btn"
+            type="button"
+            id="harakaSpeakBtn"
+        >
+            🔊 اسمع الصوت
+        </button>
+        <div class="letters-haraka-grid" id="harakaGrid"></div>
+        <div id="newActivityMessage" class="game-message"></div>
+    `;
+
+    container.querySelector("#harakaSpeakBtn").onclick = () => {
+        markLetterActivityInteracted();
+        speak(soundText, { rate: 0.75 });
+    };
+
+    const grid = container.querySelector("#harakaGrid");
+
+    shuffle(harakatOptions).forEach(opt => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "letters-haraka-btn";
+        btn.textContent = opt.build(item.letter);
+
+        btn.onclick = () => {
+            markLetterActivityInteracted();
+            const isCorrect = opt.key === correct.key;
+            finishNewLetterActivity(isCorrect, "haraka-discrimination", btn);
+        };
+
+        grid.appendChild(btn);
+    });
+
+    setTimeout(() => speak(soundText, { rate: 0.75 }), 500);
+}
+
+/* =========================================================
+   5️⃣ (٢٥) نشاط: ترتيب حروف الكلمة (تسلسل)
+========================================================= */
+
+function activityLetterOrdering(container, item) {
+
+    const chars = Array.from(item.word);
+
+    container.innerHTML = `
+        ${gameHeader("رتّب حروف الكلمة 🔡", "اضغط على الحروف بالترتيب الصحيح لتكوين الكلمة")}
+        <div class="game-picture">${item.emoji}</div>
+        <div class="letters-order-target-row" id="orderTargetRow"></div>
+        <div class="letters-order-tiles-row" id="orderTilesRow"></div>
+        <div id="newActivityMessage" class="game-message"></div>
+    `;
+
+    const targetRow = container.querySelector("#orderTargetRow");
+
+    chars.forEach((c, i) => {
+        const slot = document.createElement("div");
+        slot.className = "letters-order-slot";
+        slot.dataset.index = i;
+        targetRow.appendChild(slot);
+    });
+
+    const tilesRow = container.querySelector("#orderTilesRow");
+
+    const shuffledChars = shuffle(
+        chars.map((c, i) => ({ c, i }))
+    );
+
+    let nextExpected = 0;
+
+    shuffledChars.forEach(({ c, i }) => {
+
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "letters-order-tile";
+        tile.textContent = c;
+
+        tile.onclick = () => {
+
+            markLetterActivityInteracted();
+
+            if (i === nextExpected) {
+
+                const slot = targetRow.children[nextExpected];
+
+                if (slot) slot.textContent = c;
+
+                tile.disabled = true;
+                nextExpected++;
+
+                if (nextExpected >= chars.length) {
+                    finishNewLetterActivity(true, "letter-ordering", null);
+                }
+
+            } else {
+
+                tile.classList.add("wrong");
+
+                speak("حاول مرة أخرى", { rate: 0.85 });
+
+                setTimeout(() => {
+                    tile.classList.remove("wrong");
+                }, 400);
+            }
+        };
+
+        tilesRow.appendChild(tile);
+    });
+}
+
+/* =========================================================
+   6️⃣ (٢٦) نشاط: السحب والإفلات (الحرف ← الصورة الصحيحة)
+========================================================= */
+
+function activityDragLetterToPicture(container, item) {
+
+    const choices = getUniqueItems(item, 3);
+
+    container.innerHTML = `
+        ${gameHeader("اسحب الحرف إلى الصورة الصحيحة 🧲", "اسحب بطاقة الحرف إلى الصورة التي تبدأ به")}
+        <div class="letters-dragdrop-wrapper">
+            <div class="letters-drag-tiles-row" id="letterTileRow"></div>
+            <div class="letters-drag-tiles-row" id="pictureZonesRow"></div>
+            <div class="letters-dragdrop-tip">
+                💡 اسحب الحرف أو اضغط عليه ثم اضغط على الصورة الصحيحة
+            </div>
+            <div id="newActivityMessage" class="game-message"></div>
+        </div>
+    `;
+
+    const tileRow = container.querySelector("#letterTileRow");
+
+    const tile = document.createElement("div");
+    tile.className = "letters-drag-tile";
+    tile.textContent = letterWithFatha(item.letter);
+    tileRow.appendChild(tile);
+
+    const zonesRow = container.querySelector("#pictureZonesRow");
+    const zones = [];
+
+    shuffle(choices).forEach(choice => {
+
+        const zone = document.createElement("div");
+        zone.className = "letters-drop-zone";
+        zone.style.fontSize = "46px";
+        zone.textContent = choice.emoji;
+
+        zone.dataset.correct =
+            wordStartsWithLetter(choice.word, item.letter) ? "1" : "0";
+
+        zonesRow.appendChild(zone);
+        zones.push(zone);
+    });
+
+    function handleDrop(draggedTile, zone) {
+
+        if (zone.classList.contains("filled")) return;
+
+        const isCorrect = zone.dataset.correct === "1";
+
+        if (isCorrect) {
+
+            zone.classList.add("filled");
+            draggedTile.classList.add("placed");
+
+            finishNewLetterActivity(true, "drag-letter-to-picture", null);
+
+        } else {
+
+            zone.classList.add("drag-over");
+
+            setTimeout(() => {
+                zone.classList.remove("drag-over");
+            }, 350);
+
+            finishNewLetterActivity(false, "drag-letter-to-picture", null);
+        }
+    }
+
+    LetterDragEngine.makeDraggable(tile, () => zones, handleDrop);
+
+    zones.forEach(zone => {
+        LetterDragEngine.makeDropTarget(zone, handleDrop);
+    });
+}
+
+/* =========================================================
+   7️⃣ (٢٧) نشاط: التتبع والكتابة
+========================================================= */
+
+function activityTracing(container, item) {
+
+    container.innerHTML = `
+        ${gameHeader("تتبّع الحرف بإصبعك ✍️", "تتبع شكل الحرف بحرية ثم اضغط تم")}
+        <div class="letters-trace-wrapper">
+            <div class="letters-trace-canvas-box">
+                <div class="letters-trace-guide">${letterWithFatha(item.letter)}</div>
+                <canvas class="letters-trace-canvas" id="letterTraceCanvas"></canvas>
+            </div>
+            <div>
+                <button class="secondary" type="button" id="traceClearBtn">
+                    🧹 مسح والمحاولة مرة أخرى
+                </button>
+                <button class="primary" type="button" id="traceDoneBtn">
+                    ✅ تم
+                </button>
+            </div>
+            <div id="newActivityMessage" class="game-message"></div>
+        </div>
+    `;
+
+    const canvas = container.querySelector("#letterTraceCanvas");
+    const traceControls = setupLetterTraceCanvas(canvas);
+
+    container.querySelector("#traceClearBtn").onclick = () => {
+        markLetterActivityInteracted();
+        traceControls.clear();
+    };
+
+    container.querySelector("#traceDoneBtn").onclick = () => {
+        markLetterActivityInteracted();
+        finishNewLetterActivity(true, "tracing", null);
+    };
+}
+
+/* =========================================================
+   8️⃣ (٢٨) نشاط: التعميم (كلمات وصور جديدة تمامًا)
+========================================================= */
+
+function activityGeneralization(container, item) {
+
+    const candidate = pickRandomLetterWordCandidate(item.letter);
+
+    const distractorLetters = shuffle(
+        letters.filter(l => l.letter !== item.letter)
+    ).slice(0, 2);
+
+    const distractors = distractorLetters.map(
+        l => pickRandomLetterWordCandidate(l.letter)
+    );
+
+    const allChoices = shuffle([
+        { word: candidate.word, emoji: candidate.emoji, isCorrect: true },
+        ...distractors.map(d => ({
+            word: d.word,
+            emoji: d.emoji,
+            isCorrect: false
+        }))
+    ]);
+
+    container.innerHTML = `
+        ${gameHeader("كلمات وصور جديدة 🌟", "لنرَ إن كنت تعرف الحرف مع أمثلة جديدة تمامًا")}
+        <div class="game-question">
+            أي صورة تبدأ بحرف <strong>${letterWithFatha(item.letter)}</strong>؟
+        </div>
+    `;
+
+    renderNewActivityOptions(
+        container,
+        allChoices,
+        choice => `<div class="game-picture">${choice.emoji}</div>`,
+        (choice, btn) => {
+            finishNewLetterActivity(choice.isCorrect, "generalization", btn);
+        }
+    );
+}
+
+/* =========================================================
+   📋 سجل الأنشطة الجديدة الثمانية (الأنشطة ٢١ - ٢٨)
+========================================================= */
+
+const NEW_LETTER_ACTIVITIES = [
+    {
+        id: "forms-gallery",
+        title: "أشكال الحرف",
+        goal: "التعرف على أشكال الحرف المختلفة",
+        render: activityLetterFormsGallery
+    },
+    {
+        id: "letter-position",
+        title: "موضع الحرف",
+        goal: "تحديد موضع الحرف داخل كلمة حقيقية",
+        render: activityLetterPosition
+    },
+    {
+        id: "form-drag-drop",
+        title: "أشكال الحرف داخل الكلمة",
+        goal: "سحب الشكل الصحيح إلى مكانه في الكلمة",
+        render: activityFormDragDrop
+    },
+    {
+        id: "haraka-discrimination",
+        title: "الحركات",
+        goal: "تمييز الفتحة والضمة والكسرة سمعيًا",
+        render: activityHarakatDiscrimination
+    },
+    {
+        id: "letter-ordering",
+        title: "ترتيب الحروف",
+        goal: "ترتيب حروف الكلمة بالتسلسل الصحيح",
+        render: activityLetterOrdering
+    },
+    {
+        id: "drag-letter-to-picture",
+        title: "السحب والإفلات",
+        goal: "سحب الحرف إلى الصورة الصحيحة",
+        render: activityDragLetterToPicture
+    },
+    {
+        id: "tracing",
+        title: "التتبع والكتابة",
+        goal: "تتبع شكل الحرف بإصبعك",
+        render: activityTracing
+    },
+    {
+        id: "generalization",
+        title: "التعميم",
+        goal: "التعرف على الحرف مع كلمات وصور جديدة",
+        render: activityGeneralization
+    }
+];
+
+/* =========================================================
+   🚪 نقطة الدخول: عرض شبكة الحروف دائمًا أولًا عند الدخول
+   لقسم الحروف (تغليف إضافي فوق showScreen الحالية بدون
+   المساس بمنطقها أو بأي قسم آخر تتعامل معه)
+========================================================= */
+
+const showScreenBeforeLettersEngine = showScreen;
+
+showScreen = function (screenId) {
+
+    showScreenBeforeLettersEngine(screenId);
+
+    if (screenId === "letters") {
+
+        disarmLetterActivityHintTimer();
+
+        const hub = $("lettersHubCard");
+        const activityCard = $("letterActivityCard");
+
+        if (activityCard) activityCard.style.display = "none";
+        if (hub) hub.style.display = "block";
+
+        renderLettersHub();
+    }
+};
+
+/* تهيئة أولية بعد تحميل الصفحة (بدون التأثير على أي تهيئة
+   أخرى موجودة مسبقًا في المشروع) */
+
+document.addEventListener("DOMContentLoaded", () => {
+    if ($("lettersHubGrid")) {
+        renderLettersHub();
+    }
+});
+
+/* =========================================================
+   🔚 نهاية قسم تطوير "الحروف" الجديد بالكامل
 ========================================================= */
