@@ -226,12 +226,99 @@
     class="screen"
 >
 
-<div class="card">
+<!-- ============================================================
+     🆕 شبكة اختيار الحروف (نقطة الدخول لقسم الحروف)
+============================================================ -->
 
+<div
+    class="card"
+    id="lettersHubCard"
+>
 
     <h2>
         🔤 تعلم الحروف
     </h2>
+
+    <p class="letters-hub-subtitle">
+        اختر حرفًا لتبدأ رحلة التعلم 🌟
+    </p>
+
+    <div
+        id="lettersHubGrid"
+        class="letters-hub-grid"
+        role="list"
+    ></div>
+
+</div>
+
+
+<!-- ============================================================
+     🆕 واجهة أنشطة الحرف المختار
+============================================================ -->
+
+<div
+    class="card"
+    id="letterActivityCard"
+    style="display:none;"
+>
+
+    <div class="letters-activity-toolbar">
+
+        <button
+            class="letters-toolbar-btn"
+            onclick="showScreen('home')"
+            aria-label="الرئيسية"
+            type="button"
+        >
+            🏠
+            <span>الرئيسية</span>
+        </button>
+
+        <button
+            class="letters-toolbar-btn"
+            onclick="backToLettersHub()"
+            aria-label="رجوع لكل الحروف"
+            type="button"
+        >
+            ⬅️
+            <span>رجوع</span>
+        </button>
+
+        <button
+            class="letters-toolbar-btn"
+            id="letterActivitySpeakBtn"
+            onclick="speakCurrentLetter()"
+            aria-label="استمع للحرف"
+            type="button"
+        >
+            🔊
+            <span>الصوت</span>
+        </button>
+
+        <button
+            class="letters-toolbar-btn"
+            id="letterActivityRetryBtn"
+            onclick="retryCurrentLetterActivity()"
+            aria-label="إعادة النشاط"
+            type="button"
+        >
+            🔁
+            <span>إعادة</span>
+        </button>
+
+        <button
+            class="letters-toolbar-btn letters-toolbar-next"
+            id="letterActivityNextBtn"
+            onclick="goToNextLetterActivity()"
+            aria-label="النشاط التالي"
+            type="button"
+            style="display:none;"
+        >
+            ⏭️
+            <span>التالي</span>
+        </button>
+
+    </div>
 
 
     <div
@@ -259,52 +346,45 @@
     </div>
 
 
-    <button
-        class="primary"
-        onclick="speakCurrentLetter()"
+    <div
+        class="letters-activity-progress-label"
+        id="letterActivityProgressLabel"
     >
-        🔊 اسمع
-    </button>
+        النشاط ١ من ٢٨
+    </div>
 
-
-    <h3>
-        اختر الحرف الصحيح
-    </h3>
-
+    <div class="letters-activity-progress-bar">
+        <div
+            class="letters-activity-progress-fill"
+            id="letterActivityProgressFill"
+        ></div>
+    </div>
 
     <div
-        id="letterOptions"
-        class="options"
+        class="letters-activity-goal"
+        id="letterActivityGoalLabel"
     ></div>
 
 
     <div
-        id="letterMessage"
-        class="message"
+        id="letterActivityStage"
+        class="letters-activity-stage"
+    ></div>
+
+
+    <div
+        id="letterActivityHint"
+        class="letters-activity-hint"
+        style="display:none;"
         role="status"
         aria-live="polite"
     ></div>
 
 
-    <button
-        class="primary"
-        onclick="nextLetter()"
-    >
-        التالي ➡️
-    </button>
-
-
-    <button
-        class="secondary"
-        onclick="showScreen('home')"
-    >
-        🏠 الرئيسية
-    </button>
-
-
 </div>
 
 </section>
+
 
 <!-- ==========================================
      الكلمات
