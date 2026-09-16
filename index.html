@@ -636,56 +636,173 @@
     class="screen"
 >
 
-<div class="card">
+<!-- ============================================================
+     🆕 شبكة اختيار مستويات الجمع (نقطة الدخول)
+============================================================ -->
 
+<div
+    class="card"
+    id="additionLevelsHub"
+>
 
     <h2>
         ➕ الجمع
     </h2>
 
+    <p class="addition-hub-subtitle">
+        اختر مستوى لتبدأ التدريب 🌟
+    </p>
 
     <div
-        id="addPictures"
-        class="count-items"
-        aria-hidden="true"
-    >
-        🍎 + 🍎
+        id="additionLevelsGrid"
+        class="addition-levels-grid"
+        role="list"
+    ></div>
+
+</div>
+
+
+<!-- ============================================================
+     🆕 واجهة أداء مهام المستوى
+============================================================ -->
+
+<div
+    class="card"
+    id="additionLevelCard"
+    style="display:none;"
+>
+
+    <div class="addition-toolbar">
+
+        <button
+            class="addition-toolbar-btn"
+            onclick="showScreen('home')"
+            aria-label="الرئيسية"
+            type="button"
+        >
+            🏠
+            <span>الرئيسية</span>
+        </button>
+
+        <button
+            class="addition-toolbar-btn"
+            onclick="backToAdditionLevels()"
+            aria-label="رجوع للمستويات"
+            type="button"
+        >
+            ⬅️
+            <span>رجوع</span>
+        </button>
+
+        <button
+            class="addition-toolbar-btn"
+            id="additionSpeakBtn"
+            onclick="speakCurrentAdditionTask()"
+            aria-label="استمع للسؤال"
+            type="button"
+        >
+            🔊
+            <span>الصوت</span>
+        </button>
+
+        <button
+            class="addition-toolbar-btn"
+            onclick="retryCurrentAdditionTask()"
+            aria-label="إعادة المحاولة"
+            type="button"
+        >
+            🔁
+            <span>إعادة</span>
+        </button>
+
     </div>
 
 
     <div
-        id="addQuestion"
-        class="operation"
+        class="addition-level-title"
+        id="additionLevelTitle"
+    ></div>
+
+
+    <div
+        class="addition-progress-label"
+        id="additionProgressLabel"
     >
-        ١ + ١ = ؟
+        المهمة ١ من ١٠
+    </div>
+
+    <div class="addition-progress-bar">
+        <div
+            class="addition-progress-fill"
+            id="additionProgressFill"
+        ></div>
+    </div>
+
+    <div
+        class="addition-score-label"
+        id="additionScoreLabel"
+    >
+        ✅ ٠ / ١٠
     </div>
 
 
-    <input
-        id="addAnswer"
-        type="number"
-        inputmode="numeric"
-        aria-label="اكتب ناتج الجمع"
+    <div
+        id="additionTaskStage"
+        class="addition-task-stage"
+    ></div>
+
+
+    <!-- عناصر محرك الجمع الأصلي (تُستخدم فعليًا داخل بعض
+         المستويات: الأفقي، الرأسي، ضمن ١٠/٢٠/٥٠/١٠٠) -->
+
+    <div
+        id="additionFreePlayLegacy"
+        class="addition-legacy-wrapper"
+        style="display:none;"
     >
 
-
-    <br>
-
-
-    <button
-        class="success"
-        onclick="checkAddition()"
-    >
-        ✅ تحقق
-    </button>
+        <div
+            id="addPictures"
+            class="count-items"
+            aria-hidden="true"
+        ></div>
 
 
-    <button
-        class="primary"
-        onclick="newAddition()"
-    >
-        سؤال جديد
-    </button>
+        <div
+            id="addQuestion"
+            class="operation"
+        >
+            ١ + ١ = ؟
+        </div>
+
+
+        <input
+            id="addAnswer"
+            type="number"
+            inputmode="numeric"
+            aria-label="اكتب ناتج الجمع"
+            readonly
+        >
+
+
+        <div
+            id="additionDigitPad"
+            class="addition-digit-pad"
+        ></div>
+
+
+        <br>
+
+
+        <button
+            class="success"
+            onclick="checkAddition()"
+        >
+            ✅ تحقق
+        </button>
+
+
+    </div>
 
 
     <div
@@ -694,14 +811,6 @@
         role="status"
         aria-live="polite"
     ></div>
-
-
-    <button
-        class="secondary"
-        onclick="showScreen('home')"
-    >
-        🏠 الرئيسية
-    </button>
 
 
 </div>
