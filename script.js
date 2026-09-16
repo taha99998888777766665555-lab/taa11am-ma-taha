@@ -18215,3 +18215,1391 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =========================================================
    🔚 نهاية قسم تطوير "الجمع" الجديد بالكامل
 ========================================================= */
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   ➖🎓 تطوير قسم "الطرح" فقط — نظام مستويات متدرجة ومقفولة
+   يعتمد منهج CPA (محسوس ← بصري ← مجرد) ومبادئ ABA
+   (تحليل المهارة، Prompting → Fading، تصحيح بدون عقوبة،
+   تعزيز إيجابي، تكرار ذكي، تسجيل الأداء ونوع المساعدة)
+   =====================================================================
+   هذا القسم بالكامل إضافي ومعزول. لا يحذف أو يعدّل newSubtraction/
+   checkSubtraction الأصليتين (يُعاد استخدامهما فعليًا داخل عدة
+   مستويات عبر التغليف الآمن)، ولا يمس أي قسم آخر بالتطبيق (الجمع
+   تحديدًا يشارك بعض الأصناف البصرية العامة مثل .count-items
+   و .operation ولم يُمس إطلاقًا).
+========================================================================= */
+
+/* =========================================================
+   📋 تعريف المستويات العشرة
+========================================================= */
+
+const SUBTRACTION_LEVELS = [
+    { id: 1, title: "طرح ضمن ٥", icon: "🥕", max: 5, mode: "concrete-removal" },
+    { id: 2, title: "طرح ضمن ١٠ + إطار العشرة", icon: "🔟", max: 10, mode: "ten-frame" },
+    { id: 3, title: "طرح ضمن ٢٠", icon: "🔢", max: 20, mode: "digit-pad" },
+    { id: 4, title: "العدد المفقود", icon: "❓", max: 10, mode: "missing-number" },
+    { id: 5, title: "طرح أفقي", icon: "➡️", max: 20, mode: "digit-pad" },
+    { id: 6, title: "طرح رأسي", icon: "⬇️", max: 20, mode: "vertical" },
+    { id: 7, title: "خط الأعداد", icon: "🐇", max: 10, mode: "number-line" },
+    { id: 8, title: "مسائل متنوعة", icon: "📖", max: 15, mode: "word-problem" },
+    { id: 9, title: "طرح ضمن ٥٠", icon: "5️⃣0️⃣", max: 50, mode: "digit-pad" },
+    { id: 10, title: "طرح ضمن ١٠٠", icon: "💯", max: 100, mode: "digit-pad" }
+];
+
+/* =========================================================
+   🥕🎈🚌 مسرحيات المرحلة المحسوسة (Concrete) — تُستخدم في
+   المستوى الأول بتدوير الموضوع لتجنّب التكرار الممل
+========================================================= */
+
+const CONCRETE_REMOVAL_THEMES = [
+    {
+        id: "carrot",
+        itemEmoji: "🥕",
+        instructionRemove: b => `🐰 أطعم الأرنب وأزل ${arabicNumber(b)} من الجزر`,
+        instructionRemain: "كم جزرة بقيت؟"
+    },
+    {
+        id: "balloon",
+        itemEmoji: "🎈",
+        instructionRemove: b => `فرقع ${arabicNumber(b)} من البالونات`,
+        instructionRemain: "كم بالونة بقيت؟"
+    },
+    {
+        id: "bus",
+        itemEmoji: "🧑",
+        instructionRemove: b => `🚌 أنزل ${arabicNumber(b)} من الركاب من الحافلة`,
+        instructionRemain: "كم راكبًا بقي في الحافلة؟"
+    },
+    {
+        id: "bird",
+        itemEmoji: "🐦",
+        instructionRemove: b => `اضغط على ${arabicNumber(b)} من العصافير لتطير بعيدًا`,
+        instructionRemain: "كم عصفورًا بقي؟"
+    }
+];
+
+/* =========================================================
+   📖 مسائل الطرح اللفظية — بلغة بسيطة (أخذنا/اختفى/طار/بقي)
+========================================================= */
+
+const SUBTRACTION_WORD_PROBLEM_TEMPLATES = [
+    {
+        emoji: "🐦",
+        text: (a, b) =>
+            `كان في الشجرة ${arabicNumber(a)} عصافير، طار منها ${arabicNumber(b)}. كم عصفورًا بقي؟`
+    },
+    {
+        emoji: "🍎",
+        text: (a, b) =>
+            `عند سارة ${arabicNumber(a)} تفاحات، أخذت منها أختها ${arabicNumber(b)}. كم تفاحة بقيت معها؟`
+    },
+    {
+        emoji: "🎈",
+        text: (a, b) =>
+            `كان مع أحمد ${arabicNumber(a)} بالونات، اختفت منها ${arabicNumber(b)}. كم بالونة بقيت؟`
+    },
+    {
+        emoji: "🍬",
+        text: (a, b) =>
+            `عند خالد ${arabicNumber(a)} حلويات، أكل منها ${arabicNumber(b)}. كم حلوى بقيت؟`
+    },
+    {
+        emoji: "🚗",
+        text: (a, b) =>
+            `كانت في الموقف ${arabicNumber(a)} سيارات، غادرت منها ${arabicNumber(b)}. كم سيارة بقيت؟`
+    }
+];
+
+/* =========================================================
+   💾 حفظ التقدم وفتح المستويات (localStorage معزول)
+========================================================= */
+
+function loadSubtractionUnlockedLevel() {
+    return Number(
+        localStorage.getItem("taha_subtraction_unlocked_level") || 1
+    );
+}
+
+function saveSubtractionUnlockedLevel(n) {
+    localStorage.setItem("taha_subtraction_unlocked_level", String(n));
+}
+
+function unlockSubtractionLevel(n) {
+    if (n > loadSubtractionUnlockedLevel()) {
+        saveSubtractionUnlockedLevel(n);
+    }
+}
+
+function loadSubtractionLevelBest() {
+    try {
+        return JSON.parse(
+            localStorage.getItem("taha_subtraction_level_best") || "{}"
+        );
+    } catch (error) {
+        return {};
+    }
+}
+
+function saveSubtractionLevelBest(levelId, score) {
+    const data = loadSubtractionLevelBest();
+
+    if (!data[levelId] || score > data[levelId]) {
+        data[levelId] = score;
+        localStorage.setItem(
+            "taha_subtraction_level_best",
+            JSON.stringify(data)
+        );
+    }
+}
+
+/* =========================================================
+   🧠 تسجيل الأداء ونوع المساعدة (ABA) — لكل مستوى:
+   عدد الصحيح/الخطأ، عدد مرات كل مستوى مساعدة (Prompting)،
+   والأزواج (a,b) التي أخطأ فيها الطفل لأغراض التكرار الذكي
+========================================================= */
+
+function loadSubtractionAdaptive() {
+    try {
+        return JSON.parse(
+            localStorage.getItem("taha_subtraction_adaptive_v1") || "{}"
+        );
+    } catch (error) {
+        return {};
+    }
+}
+
+function saveSubtractionAdaptive(data) {
+    localStorage.setItem(
+        "taha_subtraction_adaptive_v1",
+        JSON.stringify(data)
+    );
+}
+
+function recordSubtractionOutcome(levelId, a, b, correct, promptLevel) {
+
+    const data = loadSubtractionAdaptive();
+
+    if (!data[levelId]) {
+        data[levelId] = {
+            correctCount: 0,
+            wrongCount: 0,
+            promptUsage: { 0: 0, 1: 0, 2: 0, 3: 0 },
+            difficultPairs: []
+        };
+    }
+
+    const entry = data[levelId];
+
+    if (correct) entry.correctCount++;
+    else entry.wrongCount++;
+
+    entry.promptUsage[promptLevel] =
+        (entry.promptUsage[promptLevel] || 0) + 1;
+
+    if (!correct) {
+
+        const key = `${a}-${b}`;
+
+        if (!entry.difficultPairs.includes(key)) {
+            entry.difficultPairs.push(key);
+
+            if (entry.difficultPairs.length > 10) {
+                entry.difficultPairs.shift();
+            }
+        }
+
+    } else {
+
+        const key = `${a}-${b}`;
+        const idx = entry.difficultPairs.indexOf(key);
+
+        if (idx !== -1) {
+            entry.difficultPairs.splice(idx, 1);
+        }
+    }
+
+    saveSubtractionAdaptive(data);
+}
+
+/* =========================================================
+   🎯 مستويات المساعدة (ABA Prompting Hierarchy)
+   ٠: مستقل — ١: تلميح بصري — ٢: نموذج جزئي — ٣: نموذج كامل
+   (Errorless Learning) — تُستخدم Fading تلقائيًا لأن العدّاد
+   يُصفَّر بمجرد الإجابة الصحيحة
+========================================================= */
+
+let subtractionWrongStreak = 0;
+
+function getSubtractionPromptLevel(wrongStreak) {
+    if (wrongStreak <= 0) return 0;
+    if (wrongStreak === 1) return 1;
+    if (wrongStreak === 2) return 2;
+    return 3;
+}
+
+function showSubtractionHint(text) {
+    const box = $("subtractionHintBox");
+    if (box) {
+        box.textContent = text;
+        box.classList.add("visible");
+    }
+}
+
+function hideSubtractionHint() {
+    const box = $("subtractionHintBox");
+    if (box) {
+        box.classList.remove("visible");
+        box.textContent = "";
+    }
+}
+
+function highlightCorrectSubtractionChoice() {
+
+    const task = subtractionLevelState.currentTask;
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+
+    if (!task) return;
+
+    let correctValue = task.correct;
+
+    if (level.mode === "missing-number") {
+        correctValue = task.missingSide === "a" ? task.a : task.b;
+    }
+
+    document
+        .querySelectorAll(
+            "#subtractionTaskStage .subtraction-choice-btn, " +
+            "#subConcreteChoiceGrid .subtraction-choice-btn"
+        )
+        .forEach(btn => {
+            if (btn.textContent === arabicNumber(correctValue)) {
+                btn.classList.add("hinted");
+            }
+        });
+}
+
+function applySubtractionPrompting() {
+
+    const level = getSubtractionPromptLevel(subtractionWrongStreak);
+
+    if (level === 1) {
+
+        showSubtractionHint(
+            "🌟 خذ وقتك، فكّر جيدًا: كم بقي بعد أن أخذنا هذا العدد؟"
+        );
+
+    } else if (level === 2) {
+
+        showSubtractionHint(
+            "🌟 لنعدّ معًا ببطء... أنت قريب جدًا، حاول مرة أخرى!"
+        );
+
+        highlightCorrectSubtractionChoice();
+
+    } else if (level >= 3) {
+
+        showSubtractionHint(
+            "🌟 لا بأس أبدًا! سأساعدك: هذه هي الإجابة الصحيحة ✅"
+        );
+
+        highlightCorrectSubtractionChoice();
+    }
+}
+
+/* =========================================================
+   🎲 توليد مهام كل مستوى (تكرار ذكي: إعادة إدراج الأزواج
+   التي أخطأ فيها الطفل سابقًا ضمن الجولة الجديدة)
+========================================================= */
+
+function generateSubtractionPairForLevel(level) {
+
+    const max = Math.max(level.max, 2);
+
+    const a = 2 + Math.floor(Math.random() * (max - 1));
+    const b = 1 + Math.floor(Math.random() * a);
+
+    return { a, b };
+}
+
+function buildSubtractionChoices(correctValue, max) {
+
+    const choices = new Set([correctValue]);
+    let guard = 0;
+
+    while (choices.size < 3 && guard < 30) {
+
+        guard++;
+
+        const delta =
+            (Math.floor(Math.random() * 4) + 1) *
+            (Math.random() < 0.5 ? -1 : 1);
+
+        let candidate = correctValue + delta;
+
+        if (candidate < 0) candidate = correctValue + Math.abs(delta);
+        if (candidate < 0) candidate = correctValue + 1;
+
+        choices.add(candidate);
+    }
+
+    let filler = correctValue + 1;
+
+    while (choices.size < 3) {
+        choices.add(filler);
+        filler++;
+    }
+
+    return shuffle([...choices]);
+}
+
+function pickSubtractionWordProblem(a, b) {
+
+    const template =
+        SUBTRACTION_WORD_PROBLEM_TEMPLATES[
+            Math.floor(Math.random() * SUBTRACTION_WORD_PROBLEM_TEMPLATES.length)
+        ];
+
+    return {
+        emoji: template.emoji,
+        text: template.text(a, b)
+    };
+}
+
+function buildSubtractionTaskObject(level, a, b) {
+
+    const correct = a - b;
+    const task = { a, b, correct };
+
+    if (level.mode === "concrete-removal") {
+        task.theme =
+            CONCRETE_REMOVAL_THEMES[
+                Math.floor(Math.random() * CONCRETE_REMOVAL_THEMES.length)
+            ];
+        task.choices = buildSubtractionChoices(correct, level.max);
+    }
+
+    if (level.mode === "ten-frame") {
+        task.choices = buildSubtractionChoices(correct, level.max);
+    }
+
+    if (level.mode === "missing-number") {
+        task.missingSide = Math.random() < 0.5 ? "a" : "b";
+        const missingValue = task.missingSide === "a" ? a : b;
+        task.choices = buildSubtractionChoices(missingValue, level.max);
+    }
+
+    if (level.mode === "word-problem") {
+        const problem = pickSubtractionWordProblem(a, b);
+        task.story = problem.text;
+        task.storyEmoji = problem.emoji;
+        task.choices = buildSubtractionChoices(correct, level.max);
+    }
+
+    return task;
+}
+
+function generateSubtractionTasksForLevel(level) {
+
+    const tasks = [];
+    let lastPair = null;
+
+    const adaptive = loadSubtractionAdaptive();
+    const entry = adaptive[level.id];
+    const difficultPairs = (entry && entry.difficultPairs) || [];
+
+    const injectCount = Math.min(2, difficultPairs.length);
+    const injectedIndexes = new Set();
+
+    if (injectCount > 0) {
+        shuffle([...Array(10).keys()])
+            .slice(0, injectCount)
+            .forEach(i => injectedIndexes.add(i));
+    }
+
+    const chosenDifficult = shuffle(difficultPairs).slice(0, injectCount);
+
+    for (let i = 0; i < 10; i++) {
+
+        let a, b;
+
+        if (injectedIndexes.has(i) && chosenDifficult.length) {
+
+            const pairStr = chosenDifficult.pop();
+            const parts = pairStr.split("-").map(Number);
+
+            a = parts[0];
+            b = parts[1];
+
+        } else {
+
+            let pair;
+            let attempts = 0;
+
+            do {
+                pair = generateSubtractionPairForLevel(level);
+                attempts++;
+            } while (
+                lastPair &&
+                pair.a === lastPair.a &&
+                pair.b === lastPair.b &&
+                attempts < 8
+            );
+
+            a = pair.a;
+            b = pair.b;
+        }
+
+        lastPair = { a, b };
+        tasks.push(buildSubtractionTaskObject(level, a, b));
+    }
+
+    return tasks;
+}
+
+/* =========================================================
+   🧮 حالة الجلسة الحالية للمستوى
+========================================================= */
+
+let subtractionLevelModeActive = false;
+
+let subtractionLevelState = {
+    levelId: 1,
+    taskIndex: 0,
+    correctCount: 0,
+    currentTask: null,
+    tasks: []
+};
+
+/* =========================================================
+   🏠 شبكة اختيار المستويات
+========================================================= */
+
+function renderSubtractionLevelsHub() {
+
+    const grid = $("subtractionLevelsGrid");
+
+    if (!grid) return;
+
+    const unlocked = loadSubtractionUnlockedLevel();
+    const bestScores = loadSubtractionLevelBest();
+
+    grid.innerHTML = SUBTRACTION_LEVELS.map(level => {
+
+        const isUnlocked = level.id <= unlocked;
+        const isCompleted = (bestScores[level.id] || 0) >= 8;
+
+        const classes = ["subtraction-level-card-btn"];
+        if (!isUnlocked) classes.push("locked");
+        if (isCompleted) classes.push("completed");
+
+        const lockIcon = isCompleted ? "✅" : (isUnlocked ? "🔓" : "🔒");
+
+        const bestText = bestScores[level.id]
+            ? `أفضل نتيجة: ${arabicNumber(bestScores[level.id])}/١٠`
+            : "";
+
+        return `
+            <button
+                class="${classes.join(" ")}"
+                type="button"
+                ${isUnlocked
+                    ? `onclick="openSubtractionLevel(${level.id})"`
+                    : `onclick="showSubtractionLockedMessage()"`}
+            >
+                <span class="subtraction-level-lock-icon">${lockIcon}</span>
+                <span class="subtraction-level-icon">${level.icon}</span>
+                <span class="subtraction-level-name">
+                    ${arabicNumber(level.id)}. ${level.title}
+                </span>
+                ${bestText ? `<span class="subtraction-level-best">${bestText}</span>` : ""}
+            </button>
+        `;
+    }).join("");
+}
+
+function showSubtractionLockedMessage() {
+    speak(
+        "أكمل المستوى السابق أولًا لتفتح هذا المستوى",
+        { rate: 0.85 }
+    );
+}
+
+/* =========================================================
+   🚪 التنقل: فتح مستوى / الرجوع للمستويات
+========================================================= */
+
+function openSubtractionLevel(levelId) {
+
+    const unlocked = loadSubtractionUnlockedLevel();
+
+    if (levelId > unlocked) {
+        showSubtractionLockedMessage();
+        return;
+    }
+
+    const level = SUBTRACTION_LEVELS[levelId - 1];
+
+    if (!level) return;
+
+    subtractionLevelModeActive = true;
+    subtractionWrongStreak = 0;
+
+    subtractionLevelState = {
+        levelId,
+        taskIndex: 0,
+        correctCount: 0,
+        currentTask: null,
+        tasks: generateSubtractionTasksForLevel(level)
+    };
+
+    const hub = $("subtractionLevelsHub");
+    const levelCard = $("subtractionLevelCard");
+    const titleEl = $("subtractionLevelTitle");
+
+    if (hub) hub.style.display = "none";
+    if (levelCard) levelCard.style.display = "block";
+
+    if (titleEl) {
+        titleEl.textContent = `${level.icon} ${level.title}`;
+    }
+
+    renderCurrentSubtractionTask();
+}
+
+function backToSubtractionLevels() {
+
+    subtractionLevelModeActive = false;
+
+    if (subtractionTimer) {
+        clearTimeout(subtractionTimer);
+        subtractionTimer = null;
+    }
+
+    stopAllAudio();
+    hideSubtractionHint();
+
+    const hub = $("subtractionLevelsHub");
+    const levelCard = $("subtractionLevelCard");
+
+    if (levelCard) levelCard.style.display = "none";
+    if (hub) hub.style.display = "block";
+
+    renderSubtractionLevelsHub();
+}
+
+/* =========================================================
+   📊 عرض التقدم والنتيجة الحالية
+========================================================= */
+
+function updateSubtractionScoreLabel() {
+
+    const scoreEl = $("subtractionScoreLabel");
+
+    if (scoreEl) {
+        scoreEl.textContent =
+            `✅ ${arabicNumber(subtractionLevelState.correctCount)} / ١٠`;
+    }
+}
+
+function updateSubtractionProgressUI() {
+
+    const label = $("subtractionProgressLabel");
+    const fill = $("subtractionProgressFill");
+
+    const humanPos = subtractionLevelState.taskIndex + 1;
+
+    if (label) {
+        label.textContent =
+            `المهمة ${arabicNumber(humanPos)} من ١٠`;
+    }
+
+    if (fill) {
+        fill.style.width = ((humanPos / 10) * 100) + "%";
+    }
+
+    updateSubtractionScoreLabel();
+}
+
+/* =========================================================
+   🎛️ لوحة الأرقام (Digit Pad)
+========================================================= */
+
+function setupSubtractionDigitPad() {
+
+    const pad = $("subtractionDigitPad");
+
+    if (!pad) return;
+
+    pad.innerHTML = "";
+
+    const order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+
+    order.forEach(d => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "subtraction-digit-btn";
+        btn.textContent = arabicNumber(d);
+
+        btn.onclick = () => appendSubtractionDigit(d);
+
+        pad.appendChild(btn);
+    });
+
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "subtraction-digit-btn subtraction-digit-clear";
+    clearBtn.textContent = "⌫";
+    clearBtn.onclick = clearSubtractionDigit;
+
+    pad.appendChild(clearBtn);
+}
+
+function appendSubtractionDigit(d) {
+
+    const input = $("subAnswer");
+
+    if (!input) return;
+
+    const current = input.value || "";
+
+    if (current.length >= 3) return;
+
+    input.value = current + String(d);
+}
+
+function clearSubtractionDigit() {
+
+    const input = $("subAnswer");
+
+    if (!input) return;
+
+    input.value = input.value.slice(0, -1);
+}
+
+/* =========================================================
+   🖼️ قوالب عرض المهام (Activity Templates)
+========================================================= */
+
+function renderSubtractionChoiceButtons(grid, choices, correctValue, onResult) {
+
+    grid.innerHTML = "";
+
+    choices.forEach(value => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "subtraction-choice-btn";
+        btn.textContent = arabicNumber(value);
+
+        btn.onclick = () => {
+            onResult(value === correctValue, btn);
+        };
+
+        grid.appendChild(btn);
+    });
+}
+
+function renderLegacySubtractionDisplay(level, task) {
+
+    const question = $("subQuestion");
+    const pictures = $("subPictures");
+    const answer = $("subAnswer");
+
+    if (answer) answer.value = "";
+    if (pictures) pictures.textContent = "";
+
+    if (level.mode === "vertical") {
+
+        if (question) {
+            question.innerHTML = `
+                <div class="subtraction-vertical-box">
+                    <div class="subtraction-vertical-row">${arabicNumber(task.a)}</div>
+                    <div class="subtraction-vertical-row subtraction-vertical-minus">${arabicNumber(task.b)}</div>
+                    <div class="subtraction-vertical-line"></div>
+                </div>
+            `;
+        }
+
+    } else {
+
+        if (question) {
+            question.textContent =
+                `${arabicNumber(task.a)} - ${arabicNumber(task.b)} = ؟`;
+        }
+    }
+}
+
+function renderConcreteRemovalTask(stage, task) {
+
+    const theme = task.theme;
+
+    stage.innerHTML = `
+        <div class="subtraction-concrete-instruction">${theme.instructionRemove(task.b)}</div>
+        <div class="subtraction-concrete-progress" id="subConcreteProgress">
+            ${arabicNumber(0)} / ${arabicNumber(task.b)}
+        </div>
+        <div class="subtraction-items-row" id="subItemsRow"></div>
+        <div class="subtraction-remaining-question" id="subRemainingQuestion" style="display:none;">
+            ${theme.instructionRemain}
+        </div>
+        <div class="subtraction-choice-grid" id="subConcreteChoiceGrid" style="display:none;"></div>
+    `;
+
+    const row = stage.querySelector("#subItemsRow");
+    let removedCount = 0;
+
+    for (let i = 0; i < task.a; i++) {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "subtraction-item-btn";
+        btn.textContent = theme.itemEmoji;
+
+        btn.onclick = () => {
+
+            if (btn.classList.contains("removed")) return;
+            if (removedCount >= task.b) return;
+
+            btn.classList.add("removed");
+            removedCount++;
+
+            const progressEl = stage.querySelector("#subConcreteProgress");
+
+            if (progressEl) {
+                progressEl.textContent =
+                    `${arabicNumber(removedCount)} / ${arabicNumber(task.b)}`;
+            }
+
+            if (removedCount >= task.b) {
+                revealConcreteRemaining();
+            }
+        };
+
+        row.appendChild(btn);
+    }
+
+    function revealConcreteRemaining() {
+
+        const qEl = stage.querySelector("#subRemainingQuestion");
+        const grid = stage.querySelector("#subConcreteChoiceGrid");
+
+        if (qEl) qEl.style.display = "block";
+        if (grid) grid.style.display = "grid";
+
+        renderSubtractionChoiceButtons(
+            grid, task.choices, task.correct, finishSubtractionChoiceTask
+        );
+
+        speak(theme.instructionRemain, { rate: 0.8 });
+    }
+
+    speak(theme.instructionRemove(task.b), { rate: 0.8 });
+}
+
+function renderTenFrameTask(stage, task) {
+
+    stage.innerHTML = `
+        <div class="subtraction-concrete-instruction">
+            إطار العشرة: أزل ${arabicNumber(task.b)} من الأقراص
+        </div>
+        <div class="subtraction-concrete-progress" id="subConcreteProgress">
+            ${arabicNumber(0)} / ${arabicNumber(task.b)}
+        </div>
+        <div class="subtraction-ten-frame" id="subTenFrame"></div>
+        <div class="subtraction-remaining-question" id="subRemainingQuestion" style="display:none;">
+            كم قرصًا بقي؟
+        </div>
+        <div class="subtraction-choice-grid" id="subConcreteChoiceGrid" style="display:none;"></div>
+    `;
+
+    const frame = stage.querySelector("#subTenFrame");
+    let removedCount = 0;
+
+    for (let i = 0; i < 10; i++) {
+
+        const cell = document.createElement("div");
+        cell.className = "subtraction-ten-frame-cell";
+
+        if (i < task.a) {
+            cell.classList.add("filled", "tappable");
+            cell.textContent = "🔵";
+            cell.dataset.filled = "1";
+        } else {
+            cell.dataset.filled = "0";
+        }
+
+        cell.onclick = () => {
+
+            if (cell.dataset.filled !== "1") return;
+            if (removedCount >= task.b) return;
+
+            cell.classList.remove("filled");
+            cell.classList.add("removed-cell");
+            cell.dataset.filled = "0";
+            cell.textContent = "";
+
+            removedCount++;
+
+            const progressEl = stage.querySelector("#subConcreteProgress");
+
+            if (progressEl) {
+                progressEl.textContent =
+                    `${arabicNumber(removedCount)} / ${arabicNumber(task.b)}`;
+            }
+
+            if (removedCount >= task.b) {
+                revealTenFrameRemaining();
+            }
+        };
+
+        frame.appendChild(cell);
+    }
+
+    function revealTenFrameRemaining() {
+
+        const qEl = stage.querySelector("#subRemainingQuestion");
+        const grid = stage.querySelector("#subConcreteChoiceGrid");
+
+        if (qEl) qEl.style.display = "block";
+        if (grid) grid.style.display = "grid";
+
+        renderSubtractionChoiceButtons(
+            grid, task.choices, task.correct, finishSubtractionChoiceTask
+        );
+
+        speak("كم قرصًا بقي؟", { rate: 0.8 });
+    }
+
+    speak(
+        `إطار العشرة: أزل ${task.b} من الأقراص الممتلئة`,
+        { rate: 0.8 }
+    );
+}
+
+function renderNumberLineTask(stage, task) {
+
+    stage.innerHTML = `
+        <div class="subtraction-number-line-instruction">
+            ابدأ من ${arabicNumber(task.a)} وارجع للخلف خطوة بخطوة
+        </div>
+        <div class="subtraction-number-line-steps-label" id="subNumberLineSteps">
+            الخطوات: ${arabicNumber(0)} / ${arabicNumber(task.b)}
+        </div>
+        <div class="subtraction-number-line-wrapper">
+            <div class="subtraction-number-line" id="subNumberLine"></div>
+        </div>
+        <div class="subtraction-remaining-question" id="subNumberLineQuestion" style="display:none;">
+            🎉 وصلنا! هذا هو ناتج الطرح
+        </div>
+    `;
+
+    const line = stage.querySelector("#subNumberLine");
+    let currentPos = task.a;
+    let stepsUsed = 0;
+
+    for (let n = 0; n <= task.a; n++) {
+
+        const point = document.createElement("div");
+        point.className = "subtraction-number-line-point";
+        point.dataset.value = n;
+
+        const tick = document.createElement("div");
+        tick.className = "subtraction-number-line-tick";
+        point.appendChild(tick);
+
+        const label = document.createElement("div");
+        label.className = "subtraction-number-line-label";
+        label.textContent = arabicNumber(n);
+        point.appendChild(label);
+
+        if (n === task.a) {
+
+            const marker = document.createElement("div");
+            marker.className = "subtraction-number-line-marker";
+            marker.id = "subNumberLineMarker";
+            marker.textContent = "🐇";
+            point.appendChild(marker);
+        }
+
+        if (n < task.a) {
+            point.classList.add("active-step");
+            point.onclick = () => handleNumberLineStep(n);
+        }
+
+        line.appendChild(point);
+    }
+
+    function handleNumberLineStep(targetValue) {
+
+        if (targetValue !== currentPos - 1) return;
+
+        currentPos = targetValue;
+        stepsUsed++;
+
+        const marker = $("subNumberLineMarker");
+        const newPoint = line.querySelector(`[data-value="${currentPos}"]`);
+
+        if (marker && newPoint) {
+            newPoint.appendChild(marker);
+        }
+
+        if (newPoint) newPoint.classList.add("landed");
+
+        const stepsLabel = stage.querySelector("#subNumberLineSteps");
+
+        if (stepsLabel) {
+            stepsLabel.textContent =
+                `الخطوات: ${arabicNumber(stepsUsed)} / ${arabicNumber(task.b)}`;
+        }
+
+        if (stepsUsed >= task.b) {
+
+            const qEl = stage.querySelector("#subNumberLineQuestion");
+            if (qEl) qEl.style.display = "block";
+
+            speak(`وصلنا إلى ${currentPos}`, { rate: 0.8 });
+
+            setTimeout(() => {
+                finishSubtractionChoiceTask(currentPos === task.correct, null);
+            }, 900);
+        }
+    }
+
+    speak(
+        `ابدأ من ${task.a} وارجع للخلف ${task.b} خطوات`,
+        { rate: 0.78 }
+    );
+}
+
+function renderSubtractionMissingNumberTask(stage, task) {
+
+    const displayA = task.missingSide === "a" ? "؟" : arabicNumber(task.a);
+    const displayB = task.missingSide === "b" ? "؟" : arabicNumber(task.b);
+
+    stage.innerHTML = `
+        <div class="operation">${displayA} - ${displayB} = ${arabicNumber(task.correct)}</div>
+        <div class="subtraction-level-title" style="font-size:18px;">
+            ما هو العدد المفقود؟
+        </div>
+        <div class="subtraction-choice-grid" id="subChoiceGrid"></div>
+    `;
+
+    const missingValue = task.missingSide === "a" ? task.a : task.b;
+
+    renderSubtractionChoiceButtons(
+        stage.querySelector("#subChoiceGrid"),
+        task.choices,
+        missingValue,
+        finishSubtractionChoiceTask
+    );
+}
+
+function renderSubtractionWordProblemTask(stage, task) {
+
+    stage.innerHTML = `
+        <div class="subtraction-word-problem-box">
+            <span class="subtraction-word-problem-emoji">${task.storyEmoji || "📖"}</span>
+            ${task.story}
+        </div>
+        <div class="subtraction-choice-grid" id="subChoiceGrid"></div>
+    `;
+
+    renderSubtractionChoiceButtons(
+        stage.querySelector("#subChoiceGrid"),
+        task.choices,
+        task.correct,
+        finishSubtractionChoiceTask
+    );
+}
+
+/* =========================================================
+   🚦 موزّع عرض المهمة الحالية
+========================================================= */
+
+function renderCurrentSubtractionTask() {
+
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+    const task = subtractionLevelState.tasks[subtractionLevelState.taskIndex];
+
+    subtractionLevelState.currentTask = task;
+    subtractionWrongStreak = 0;
+
+    hideSubtractionHint();
+    updateSubtractionProgressUI();
+
+    const legacyWrapper = $("subtractionFreePlayLegacy");
+    const stage = $("subtractionTaskStage");
+    const messageEl = $("subMessage");
+
+    if (messageEl) {
+        messageEl.textContent = "";
+        messageEl.className = "message";
+    }
+
+    if (level.mode === "digit-pad" || level.mode === "vertical") {
+
+        if (stage) stage.style.display = "none";
+        if (legacyWrapper) legacyWrapper.style.display = "block";
+
+        currentSubA = task.a;
+        currentSubB = task.b;
+
+        renderLegacySubtractionDisplay(level, task);
+        setupSubtractionDigitPad();
+
+        speakCurrentSubtractionTask();
+
+    } else {
+
+        if (legacyWrapper) legacyWrapper.style.display = "none";
+        if (stage) stage.style.display = "block";
+
+        if (level.mode === "concrete-removal") {
+            renderConcreteRemovalTask(stage, task);
+        } else if (level.mode === "ten-frame") {
+            renderTenFrameTask(stage, task);
+        } else if (level.mode === "number-line") {
+            renderNumberLineTask(stage, task);
+        } else if (level.mode === "missing-number") {
+            renderSubtractionMissingNumberTask(stage, task);
+            speakCurrentSubtractionTask();
+        } else if (level.mode === "word-problem") {
+            renderSubtractionWordProblemTask(stage, task);
+            speakCurrentSubtractionTask();
+        }
+    }
+}
+
+function speakCurrentSubtractionTask() {
+
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+    const task = subtractionLevelState.currentTask;
+
+    if (!task) return;
+
+    if (level.mode === "missing-number") {
+        speak("ما هو العدد المفقود؟", { rate: 0.8 });
+    } else if (level.mode === "word-problem") {
+        speak(task.story, { rate: 0.78 });
+    } else if (level.mode === "concrete-removal") {
+        speak(task.theme.instructionRemove(task.b), { rate: 0.8 });
+    } else if (level.mode === "ten-frame") {
+        speak(`أزل ${task.b} من الأقراص الممتلئة`, { rate: 0.8 });
+    } else if (level.mode === "number-line") {
+        speak(`ابدأ من ${task.a} وارجع للخلف ${task.b} خطوات`, { rate: 0.78 });
+    } else {
+        speak(
+            `${task.a} ناقص ${task.b} يساوي كم؟`,
+            { rate: 0.8 }
+        );
+    }
+}
+
+function retryCurrentSubtractionTask() {
+
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+
+    if (!level) return;
+
+    const pair = generateSubtractionPairForLevel(level);
+    const task = buildSubtractionTaskObject(level, pair.a, pair.b);
+
+    subtractionLevelState.tasks[subtractionLevelState.taskIndex] = task;
+
+    renderCurrentSubtractionTask();
+}
+
+/* =========================================================
+   🏆 معالج نتيجة المهام القائمة على الاختيار/المحسوسة
+   (يستخدم نفس نظام النجوم والتقدم بالضبط — لا نظام منفصل)
+========================================================= */
+
+function finishSubtractionChoiceTask(isCorrect, button) {
+
+    const messageEl = $("subMessage");
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+    const task = subtractionLevelState.currentTask;
+
+    if (isCorrect) {
+
+        if (button) button.classList.add("correct");
+
+        correctSubtraction++;
+        saveCounters();
+        addStars(5);
+
+        if (messageEl) {
+            messageEl.textContent = "🎉 أحسنت! إجابة صحيحة ⭐";
+            messageEl.className = "message correct";
+        }
+
+        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+
+        document
+            .querySelectorAll(
+                "#subtractionTaskStage .subtraction-choice-btn, " +
+                "#subConcreteChoiceGrid .subtraction-choice-btn"
+            )
+            .forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove("hinted");
+            });
+
+        hideSubtractionHint();
+
+        recordSubtractionOutcome(
+            level.id, task.a, task.b, true,
+            getSubtractionPromptLevel(subtractionWrongStreak)
+        );
+
+        subtractionWrongStreak = 0;
+
+        onSubtractionLevelTaskCorrect();
+
+        setTimeout(() => {
+            advanceSubtractionLevelTask();
+        }, 1200);
+
+    } else {
+
+        if (button) button.classList.add("wrong");
+
+        if (messageEl) {
+            messageEl.textContent = "😊 حاول مرة أخرى";
+            messageEl.className = "message wrong";
+        }
+
+        speak("حاول مرة أخرى", { rate: 0.8 });
+
+        subtractionWrongStreak++;
+
+        recordSubtractionOutcome(
+            level.id, task.a, task.b, false,
+            getSubtractionPromptLevel(subtractionWrongStreak)
+        );
+
+        applySubtractionPrompting();
+    }
+}
+
+function onSubtractionLevelTaskCorrect() {
+    subtractionLevelState.correctCount++;
+    updateSubtractionScoreLabel();
+}
+
+/* =========================================================
+   🔗 دمج آمن مع newSubtraction / checkSubtraction الأصليتين
+   (تغليف فقط، بدون أي تعديل لمنطقهما الأصلي — تُستخدمان فعليًا
+   في مستويات: ضمن ٢٠/٥٠/١٠٠، الأفقي، والرأسي)
+========================================================= */
+
+const originalNewSubtractionForLevels = newSubtraction;
+
+newSubtraction = function () {
+
+    if (subtractionLevelModeActive) {
+        advanceSubtractionLevelTask();
+    } else {
+        originalNewSubtractionForLevels();
+    }
+};
+
+const originalCheckSubtractionForLevels = checkSubtraction;
+
+checkSubtraction = function () {
+
+    if (!subtractionLevelModeActive) {
+        originalCheckSubtractionForLevels();
+        return;
+    }
+
+    const answerEl = $("subAnswer");
+
+    const answer = parseNumber(
+        answerEl ? answerEl.value : ""
+    );
+
+    const correct = currentSubA - currentSubB;
+    const wasAnswered = Number.isFinite(answer);
+
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+    const task = subtractionLevelState.currentTask;
+
+    originalCheckSubtractionForLevels();
+
+    if (wasAnswered) {
+
+        if (answer === correct) {
+
+            hideSubtractionHint();
+
+            recordSubtractionOutcome(
+                level.id, task.a, task.b, true,
+                getSubtractionPromptLevel(subtractionWrongStreak)
+            );
+
+            subtractionWrongStreak = 0;
+
+            onSubtractionLevelTaskCorrect();
+
+        } else {
+
+            subtractionWrongStreak++;
+
+            recordSubtractionOutcome(
+                level.id, task.a, task.b, false,
+                getSubtractionPromptLevel(subtractionWrongStreak)
+            );
+
+            applySubtractionPrompting();
+        }
+    }
+};
+
+function advanceSubtractionLevelTask() {
+
+    subtractionLevelState.taskIndex++;
+
+    if (subtractionLevelState.taskIndex >= 10) {
+        finishSubtractionLevel();
+        return;
+    }
+
+    renderCurrentSubtractionTask();
+}
+
+/* =========================================================
+   🎉 إنهاء المستوى: فتح التالي عند ٨/١٠ فأكثر
+========================================================= */
+
+function finishSubtractionLevel() {
+
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+    const score = subtractionLevelState.correctCount;
+    const passed = score >= 8;
+
+    subtractionLevelModeActive = false;
+
+    saveSubtractionLevelBest(level.id, score);
+
+    if (passed) {
+        addStars(10);
+        unlockSubtractionLevel(level.id + 1);
+    }
+
+    renderSubtractionLevelResultScreen(level, score, passed);
+}
+
+function renderSubtractionLevelResultScreen(level, score, passed) {
+
+    const legacyWrapper = $("subtractionFreePlayLegacy");
+    const stage = $("subtractionTaskStage");
+    const messageEl = $("subMessage");
+
+    if (legacyWrapper) legacyWrapper.style.display = "none";
+
+    if (messageEl) {
+        messageEl.textContent = "";
+        messageEl.className = "message";
+    }
+
+    hideSubtractionHint();
+
+    const nextLevel = SUBTRACTION_LEVELS[level.id];
+
+    if (stage) {
+
+        stage.style.display = "block";
+
+        stage.innerHTML = `
+            <div class="subtraction-level-result-card">
+
+                <div class="subtraction-level-result-emoji">
+                    ${passed ? "🏆" : "🌟"}
+                </div>
+
+                <div class="subtraction-level-result-title">
+                    ${passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة!"}
+                </div>
+
+                <div class="subtraction-level-result-score">
+                    النتيجة: ${arabicNumber(score)} / ١٠
+                </div>
+
+                ${passed && nextLevel ? `
+                    <button class="success" type="button" onclick="openSubtractionLevel(${nextLevel.id})">
+                        ➡️ المستوى التالي: ${nextLevel.title}
+                    </button>
+                ` : ""}
+
+                ${!passed ? `
+                    <button class="success" type="button" onclick="openSubtractionLevel(${level.id})">
+                        🔁 إعادة المحاولة
+                    </button>
+                ` : ""}
+
+                <button class="secondary" type="button" onclick="backToSubtractionLevels()">
+                    🏠 كل المستويات
+                </button>
+
+            </div>
+        `;
+    }
+
+    updateSubtractionProgressUI();
+
+    speak(
+        passed
+            ? "أحسنت! أتممت المستوى بنجاح"
+            : "محاولة رائعة، لنحاول مرة أخرى",
+        { rate: 0.8 }
+    );
+}
+
+/* =========================================================
+   🚪 نقطة الدخول: عرض شبكة المستويات دائمًا أولًا عند الدخول
+   لقسم الطرح (تغليف إضافي فوق showScreen الحالية بدون
+   المساس بمنطقها أو بأي قسم آخر تتعامل معه)
+========================================================= */
+
+const showScreenBeforeSubtractionEngine = showScreen;
+
+showScreen = function (screenId) {
+
+    if (screenId === "subtraction") {
+        subtractionLevelModeActive = false;
+    }
+
+    showScreenBeforeSubtractionEngine(screenId);
+
+    if (screenId === "subtraction") {
+
+        if (subtractionTimer) {
+            clearTimeout(subtractionTimer);
+            subtractionTimer = null;
+        }
+
+        const hub = $("subtractionLevelsHub");
+        const levelCard = $("subtractionLevelCard");
+
+        if (levelCard) levelCard.style.display = "none";
+        if (hub) hub.style.display = "block";
+
+        renderSubtractionLevelsHub();
+    }
+};
+
+/* تهيئة أولية بعد تحميل الصفحة */
+
+document.addEventListener("DOMContentLoaded", () => {
+    if ($("subtractionLevelsGrid")) {
+        renderSubtractionLevelsHub();
+    }
+});
+
+/* =========================================================
+   🔚 نهاية قسم تطوير "الطرح" الجديد بالكامل
+========================================================= */
