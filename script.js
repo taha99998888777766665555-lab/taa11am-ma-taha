@@ -17308,3 +17308,910 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =========================================================
    🔚 نهاية قسم تطوير "الحروف" الجديد بالكامل
 ========================================================= */
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   ➕🎓 تطوير قسم "الجمع" فقط — نظام مستويات متدرجة ومقفولة
+   =====================================================================
+   هذا القسم بالكامل إضافي ومعزول. لا يحذف أو يعدّل newAddition/
+   checkAddition الأصليتين (يُعاد استخدامهما فعليًا داخل عدة مستويات
+   عبر التغليف الآمن)، ولا يمس أي قسم آخر بالتطبيق (الطرح تحديدًا
+   يشارك بعض الأصناف البصرية العامة مثل .count-items و .operation
+   ولم تُمس إطلاقًا).
+========================================================================= */
+
+/* =========================================================
+   📋 تعريف المستويات العشرة
+========================================================= */
+
+const ADDITION_LEVELS = [
+    { id: 1, title: "جمع ضمن ٥", icon: "🍎", max: 5, mode: "choice-result" },
+    { id: 2, title: "جمع ضمن ١٠", icon: "🔟", max: 10, mode: "digit-pad" },
+    { id: 3, title: "جمع ضمن ٢٠", icon: "🔢", max: 20, mode: "digit-pad" },
+    { id: 4, title: "العدد المفقود", icon: "❓", max: 10, mode: "missing-number" },
+    { id: 5, title: "جمع أفقي", icon: "➡️", max: 20, mode: "digit-pad" },
+    { id: 6, title: "جمع رأسي", icon: "⬇️", max: 20, mode: "vertical" },
+    { id: 7, title: "جمع بالصور", icon: "🖼️", max: 10, mode: "picture-choice" },
+    { id: 8, title: "مسائل متنوعة", icon: "📖", max: 15, mode: "word-problem" },
+    { id: 9, title: "جمع ضمن ٥٠", icon: "5️⃣0️⃣", max: 50, mode: "digit-pad" },
+    { id: 10, title: "جمع ضمن ١٠٠", icon: "💯", max: 100, mode: "digit-pad" }
+];
+
+const ADDITION_PICTURE_EMOJIS = [
+    "🍎", "⭐", "🎈", "🌸", "🐟", "🍬", "🧸", "🍇"
+];
+
+const ADDITION_WORD_PROBLEM_TEMPLATES = [
+    {
+        emoji: "🍎",
+        text: (a, b) =>
+            `عند أحمد ${arabicNumber(a)} تفاحات، وأعطته أمه ${arabicNumber(b)} تفاحات أخرى. كم تفاحة أصبحت معه؟`
+    },
+    {
+        emoji: "🐦",
+        text: (a, b) =>
+            `في الحديقة ${arabicNumber(a)} عصفور، وجاء ${arabicNumber(b)} عصفور آخر. كم عصفورًا في الحديقة الآن؟`
+    },
+    {
+        emoji: "🎈",
+        text: (a, b) =>
+            `مع سارة ${arabicNumber(a)} بالونات، واشترت ${arabicNumber(b)} بالونات جديدة. كم بالونة أصبح معها؟`
+    },
+    {
+        emoji: "📘",
+        text: (a, b) =>
+            `عند البائع ${arabicNumber(a)} كتب، وأحضر ${arabicNumber(b)} كتب أخرى. كم كتابًا أصبح عنده؟`
+    },
+    {
+        emoji: "🐟",
+        text: (a, b) =>
+            `في الحوض ${arabicNumber(a)} سمكة، وأضاف خالد ${arabicNumber(b)} سمكات. كم سمكة في الحوض الآن؟`
+    }
+];
+
+/* =========================================================
+   💾 حفظ التقدم وفتح المستويات (localStorage معزول)
+========================================================= */
+
+function loadAdditionUnlockedLevel() {
+    return Number(
+        localStorage.getItem("taha_addition_unlocked_level") || 1
+    );
+}
+
+function saveAdditionUnlockedLevel(n) {
+    localStorage.setItem("taha_addition_unlocked_level", String(n));
+}
+
+function unlockAdditionLevel(n) {
+    if (n > loadAdditionUnlockedLevel()) {
+        saveAdditionUnlockedLevel(n);
+    }
+}
+
+function loadAdditionLevelBest() {
+    try {
+        return JSON.parse(
+            localStorage.getItem("taha_addition_level_best") || "{}"
+        );
+    } catch (error) {
+        return {};
+    }
+}
+
+function saveAdditionLevelBest(levelId, score) {
+    const data = loadAdditionLevelBest();
+
+    if (!data[levelId] || score > data[levelId]) {
+        data[levelId] = score;
+        localStorage.setItem(
+            "taha_addition_level_best",
+            JSON.stringify(data)
+        );
+    }
+}
+
+/* =========================================================
+   🎲 توليد مهام كل مستوى (تكرار ذكي: تجنّب نفس السؤال مرتين
+   على التوالي)
+========================================================= */
+
+function generateAdditionPairForLevel(level) {
+
+    const max = Math.max(level.max, 2);
+
+    const a = 1 + Math.floor(Math.random() * (max - 1));
+    const remaining = Math.max(max - a, 1);
+    const b = 1 + Math.floor(Math.random() * remaining);
+
+    return { a, b };
+}
+
+function buildAdditionChoices(correctValue, max) {
+
+    const choices = new Set([correctValue]);
+    let guard = 0;
+
+    while (choices.size < 3 && guard < 30) {
+
+        guard++;
+
+        const delta =
+            (Math.floor(Math.random() * 4) + 1) *
+            (Math.random() < 0.5 ? -1 : 1);
+
+        let candidate = correctValue + delta;
+
+        if (candidate < 0) candidate = correctValue + Math.abs(delta);
+        if (candidate < 0) candidate = correctValue + 1;
+
+        choices.add(candidate);
+    }
+
+    let filler = correctValue + 1;
+
+    while (choices.size < 3) {
+        choices.add(filler);
+        filler++;
+    }
+
+    return shuffle([...choices]);
+}
+
+function pickAdditionWordProblem(a, b) {
+    const template =
+        ADDITION_WORD_PROBLEM_TEMPLATES[
+            Math.floor(Math.random() * ADDITION_WORD_PROBLEM_TEMPLATES.length)
+        ];
+
+    return {
+        emoji: template.emoji,
+        text: template.text(a, b)
+    };
+}
+
+function buildAdditionTaskObject(level, a, b) {
+
+    const correct = a + b;
+    const task = { a, b, correct };
+
+    if (level.mode === "choice-result") {
+        task.choices = buildAdditionChoices(correct, level.max);
+    }
+
+    if (level.mode === "picture-choice") {
+        task.choices = buildAdditionChoices(correct, level.max);
+        task.emoji =
+            ADDITION_PICTURE_EMOJIS[
+                Math.floor(Math.random() * ADDITION_PICTURE_EMOJIS.length)
+            ];
+    }
+
+    if (level.mode === "missing-number") {
+        task.missingSide = Math.random() < 0.5 ? "a" : "b";
+        const missingValue = task.missingSide === "a" ? a : b;
+        task.choices = buildAdditionChoices(missingValue, level.max);
+    }
+
+    if (level.mode === "word-problem") {
+        const problem = pickAdditionWordProblem(a, b);
+        task.story = problem.text;
+        task.storyEmoji = problem.emoji;
+        task.choices = buildAdditionChoices(correct, level.max);
+    }
+
+    return task;
+}
+
+function generateAdditionTasksForLevel(level) {
+
+    const tasks = [];
+    let lastPair = null;
+
+    for (let i = 0; i < 10; i++) {
+
+        let pair;
+        let attempts = 0;
+
+        do {
+            pair = generateAdditionPairForLevel(level);
+            attempts++;
+        } while (
+            lastPair &&
+            pair.a === lastPair.a &&
+            pair.b === lastPair.b &&
+            attempts < 8
+        );
+
+        lastPair = pair;
+        tasks.push(buildAdditionTaskObject(level, pair.a, pair.b));
+    }
+
+    return tasks;
+}
+
+/* =========================================================
+   🧮 حالة الجلسة الحالية للمستوى
+========================================================= */
+
+let additionLevelModeActive = false;
+
+let additionLevelState = {
+    levelId: 1,
+    taskIndex: 0,
+    correctCount: 0,
+    currentTask: null,
+    tasks: []
+};
+
+/* =========================================================
+   🏠 شبكة اختيار المستويات
+========================================================= */
+
+function renderAdditionLevelsHub() {
+
+    const grid = $("additionLevelsGrid");
+
+    if (!grid) return;
+
+    const unlocked = loadAdditionUnlockedLevel();
+    const bestScores = loadAdditionLevelBest();
+
+    grid.innerHTML = ADDITION_LEVELS.map(level => {
+
+        const isUnlocked = level.id <= unlocked;
+        const isCompleted = (bestScores[level.id] || 0) >= 8;
+
+        const classes = ["addition-level-card-btn"];
+        if (!isUnlocked) classes.push("locked");
+        if (isCompleted) classes.push("completed");
+
+        const lockIcon = isCompleted ? "✅" : (isUnlocked ? "🔓" : "🔒");
+
+        const bestText = bestScores[level.id]
+            ? `أفضل نتيجة: ${arabicNumber(bestScores[level.id])}/١٠`
+            : "";
+
+        return `
+            <button
+                class="${classes.join(" ")}"
+                type="button"
+                ${isUnlocked
+                    ? `onclick="openAdditionLevel(${level.id})"`
+                    : `onclick="showAdditionLockedMessage()"`}
+            >
+                <span class="addition-level-lock-icon">${lockIcon}</span>
+                <span class="addition-level-icon">${level.icon}</span>
+                <span class="addition-level-name">
+                    ${arabicNumber(level.id)}. ${level.title}
+                </span>
+                ${bestText ? `<span class="addition-level-best">${bestText}</span>` : ""}
+            </button>
+        `;
+    }).join("");
+}
+
+function showAdditionLockedMessage() {
+    speak(
+        "أكمل المستوى السابق أولًا لتفتح هذا المستوى",
+        { rate: 0.85 }
+    );
+}
+
+/* =========================================================
+   🚪 التنقل: فتح مستوى / الرجوع للمستويات
+========================================================= */
+
+function openAdditionLevel(levelId) {
+
+    const unlocked = loadAdditionUnlockedLevel();
+
+    if (levelId > unlocked) {
+        showAdditionLockedMessage();
+        return;
+    }
+
+    const level = ADDITION_LEVELS[levelId - 1];
+
+    if (!level) return;
+
+    additionLevelModeActive = true;
+
+    additionLevelState = {
+        levelId,
+        taskIndex: 0,
+        correctCount: 0,
+        currentTask: null,
+        tasks: generateAdditionTasksForLevel(level)
+    };
+
+    const hub = $("additionLevelsHub");
+    const levelCard = $("additionLevelCard");
+    const titleEl = $("additionLevelTitle");
+
+    if (hub) hub.style.display = "none";
+    if (levelCard) levelCard.style.display = "block";
+
+    if (titleEl) {
+        titleEl.textContent = `${level.icon} ${level.title}`;
+    }
+
+    renderCurrentAdditionTask();
+}
+
+function backToAdditionLevels() {
+
+    additionLevelModeActive = false;
+
+    if (additionTimer) {
+        clearTimeout(additionTimer);
+        additionTimer = null;
+    }
+
+    stopAllAudio();
+
+    const hub = $("additionLevelsHub");
+    const levelCard = $("additionLevelCard");
+
+    if (levelCard) levelCard.style.display = "none";
+    if (hub) hub.style.display = "block";
+
+    renderAdditionLevelsHub();
+}
+
+/* =========================================================
+   📊 عرض التقدم والنتيجة الحالية
+========================================================= */
+
+function updateAdditionScoreLabel() {
+
+    const scoreEl = $("additionScoreLabel");
+
+    if (scoreEl) {
+        scoreEl.textContent =
+            `✅ ${arabicNumber(additionLevelState.correctCount)} / ١٠`;
+    }
+}
+
+function updateAdditionProgressUI() {
+
+    const label = $("additionProgressLabel");
+    const fill = $("additionProgressFill");
+
+    const humanPos = additionLevelState.taskIndex + 1;
+
+    if (label) {
+        label.textContent =
+            `المهمة ${arabicNumber(humanPos)} من ١٠`;
+    }
+
+    if (fill) {
+        fill.style.width = ((humanPos / 10) * 100) + "%";
+    }
+
+    updateAdditionScoreLabel();
+}
+
+/* =========================================================
+   🎛️ لوحة الأرقام (Digit Pad) — إدخال محدد ومتوقّع
+========================================================= */
+
+function setupAdditionDigitPad() {
+
+    const pad = $("additionDigitPad");
+
+    if (!pad) return;
+
+    pad.innerHTML = "";
+
+    const order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+
+    order.forEach(d => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "addition-digit-btn";
+        btn.textContent = arabicNumber(d);
+
+        btn.onclick = () => appendAdditionDigit(d);
+
+        pad.appendChild(btn);
+    });
+
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "addition-digit-btn addition-digit-clear";
+    clearBtn.textContent = "⌫";
+    clearBtn.onclick = clearAdditionDigit;
+
+    pad.appendChild(clearBtn);
+}
+
+function appendAdditionDigit(d) {
+
+    const input = $("addAnswer");
+
+    if (!input) return;
+
+    const current = input.value || "";
+
+    if (current.length >= 3) return;
+
+    input.value = current + String(d);
+}
+
+function clearAdditionDigit() {
+
+    const input = $("addAnswer");
+
+    if (!input) return;
+
+    input.value = input.value.slice(0, -1);
+}
+
+/* =========================================================
+   🖼️ قوالب عرض المهام المختلفة (Activity Templates)
+========================================================= */
+
+function renderAdditionChoiceButtons(grid, choices, correctValue, onResult) {
+
+    grid.innerHTML = "";
+
+    choices.forEach(value => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "addition-choice-btn";
+        btn.textContent = arabicNumber(value);
+
+        btn.onclick = () => {
+            onResult(value === correctValue, btn);
+        };
+
+        grid.appendChild(btn);
+    });
+}
+
+function renderLegacyAdditionDisplay(level, task) {
+
+    const question = $("addQuestion");
+    const pictures = $("addPictures");
+    const answer = $("addAnswer");
+
+    if (answer) answer.value = "";
+    if (pictures) pictures.textContent = "";
+
+    if (level.mode === "vertical") {
+
+        if (question) {
+            question.innerHTML = `
+                <div class="addition-vertical-box">
+                    <div class="addition-vertical-row">${arabicNumber(task.a)}</div>
+                    <div class="addition-vertical-row addition-vertical-plus">${arabicNumber(task.b)}</div>
+                    <div class="addition-vertical-line"></div>
+                </div>
+            `;
+        }
+
+    } else {
+
+        if (question) {
+            question.textContent =
+                `${arabicNumber(task.a)} + ${arabicNumber(task.b)} = ؟`;
+        }
+    }
+}
+
+function renderPictureChoiceTask(stage, task) {
+
+    stage.innerHTML = `
+        <div class="addition-picture-groups">
+            <div class="addition-picture-group">${task.emoji.repeat(task.a)}</div>
+            <div class="addition-plus-sign">+</div>
+            <div class="addition-picture-group">${task.emoji.repeat(task.b)}</div>
+        </div>
+        <div class="addition-level-title" style="font-size:18px;">
+            كم المجموع؟
+        </div>
+        <div class="addition-choice-grid" id="additionChoiceGrid"></div>
+    `;
+
+    renderAdditionChoiceButtons(
+        stage.querySelector("#additionChoiceGrid"),
+        task.choices,
+        task.correct,
+        finishAdditionChoiceTask
+    );
+}
+
+function renderMissingNumberTask(stage, task) {
+
+    const displayA = task.missingSide === "a" ? "؟" : arabicNumber(task.a);
+    const displayB = task.missingSide === "b" ? "؟" : arabicNumber(task.b);
+
+    stage.innerHTML = `
+        <div class="operation">${displayA} + ${displayB} = ${arabicNumber(task.correct)}</div>
+        <div class="addition-level-title" style="font-size:18px;">
+            ما هو العدد المفقود؟
+        </div>
+        <div class="addition-choice-grid" id="additionChoiceGrid"></div>
+    `;
+
+    const missingValue = task.missingSide === "a" ? task.a : task.b;
+
+    renderAdditionChoiceButtons(
+        stage.querySelector("#additionChoiceGrid"),
+        task.choices,
+        missingValue,
+        finishAdditionChoiceTask
+    );
+}
+
+function renderWordProblemTask(stage, task) {
+
+    stage.innerHTML = `
+        <div class="addition-word-problem-box">
+            <span class="addition-word-problem-emoji">${task.storyEmoji || "📖"}</span>
+            ${task.story}
+        </div>
+        <div class="addition-choice-grid" id="additionChoiceGrid"></div>
+    `;
+
+    renderAdditionChoiceButtons(
+        stage.querySelector("#additionChoiceGrid"),
+        task.choices,
+        task.correct,
+        finishAdditionChoiceTask
+    );
+}
+
+function renderChoiceResultTask(stage, task) {
+
+    stage.innerHTML = `
+        <div class="operation">${arabicNumber(task.a)} + ${arabicNumber(task.b)} = ؟</div>
+        <div class="addition-choice-grid" id="additionChoiceGrid"></div>
+    `;
+
+    renderAdditionChoiceButtons(
+        stage.querySelector("#additionChoiceGrid"),
+        task.choices,
+        task.correct,
+        finishAdditionChoiceTask
+    );
+}
+
+/* =========================================================
+   🚦 موزّع عرض المهمة الحالية
+========================================================= */
+
+function renderCurrentAdditionTask() {
+
+    const level = ADDITION_LEVELS[additionLevelState.levelId - 1];
+    const task = additionLevelState.tasks[additionLevelState.taskIndex];
+
+    additionLevelState.currentTask = task;
+
+    updateAdditionProgressUI();
+
+    const legacyWrapper = $("additionFreePlayLegacy");
+    const stage = $("additionTaskStage");
+    const messageEl = $("addMessage");
+
+    if (messageEl) {
+        messageEl.textContent = "";
+        messageEl.className = "message";
+    }
+
+    if (level.mode === "digit-pad" || level.mode === "vertical") {
+
+        if (stage) stage.style.display = "none";
+        if (legacyWrapper) legacyWrapper.style.display = "block";
+
+        currentAddA = task.a;
+        currentAddB = task.b;
+
+        renderLegacyAdditionDisplay(level, task);
+        setupAdditionDigitPad();
+
+    } else {
+
+        if (legacyWrapper) legacyWrapper.style.display = "none";
+        if (stage) stage.style.display = "block";
+
+        if (level.mode === "picture-choice") {
+            renderPictureChoiceTask(stage, task);
+        } else if (level.mode === "missing-number") {
+            renderMissingNumberTask(stage, task);
+        } else if (level.mode === "word-problem") {
+            renderWordProblemTask(stage, task);
+        } else {
+            renderChoiceResultTask(stage, task);
+        }
+    }
+
+    speakCurrentAdditionTask();
+}
+
+function speakCurrentAdditionTask() {
+
+    const level = ADDITION_LEVELS[additionLevelState.levelId - 1];
+    const task = additionLevelState.currentTask;
+
+    if (!task) return;
+
+    if (level.mode === "missing-number") {
+        speak("ما هو العدد المفقود؟", { rate: 0.8 });
+    } else if (level.mode === "word-problem") {
+        speak(task.story, { rate: 0.78 });
+    } else if (level.mode === "picture-choice") {
+        speak("كم مجموع هذه الصور؟", { rate: 0.8 });
+    } else {
+        speak(
+            `${task.a} زائد ${task.b} يساوي كم؟`,
+            { rate: 0.8 }
+        );
+    }
+}
+
+function retryCurrentAdditionTask() {
+
+    const level = ADDITION_LEVELS[additionLevelState.levelId - 1];
+
+    if (!level) return;
+
+    const pair = generateAdditionPairForLevel(level);
+    const task = buildAdditionTaskObject(level, pair.a, pair.b);
+
+    additionLevelState.tasks[additionLevelState.taskIndex] = task;
+
+    renderCurrentAdditionTask();
+}
+
+/* =========================================================
+   🏆 معالج نتيجة المهام القائمة على الاختيار (غير محرك
+   الجمع/الطرح النصي — يستخدم نفس نظام النجوم والتقدم بالضبط)
+========================================================= */
+
+function finishAdditionChoiceTask(isCorrect, button) {
+
+    const messageEl = $("addMessage");
+
+    if (isCorrect) {
+
+        if (button) button.classList.add("correct");
+
+        correctAddition++;
+        saveCounters();
+        addStars(5);
+
+        if (messageEl) {
+            messageEl.textContent = "🎉 أحسنت! إجابة صحيحة ⭐";
+            messageEl.className = "message correct";
+        }
+
+        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+
+        document
+            .querySelectorAll("#additionTaskStage .addition-choice-btn")
+            .forEach(btn => { btn.disabled = true; });
+
+        onAdditionLevelTaskCorrect();
+
+        setTimeout(() => {
+            advanceAdditionLevelTask();
+        }, 1200);
+
+    } else {
+
+        if (button) button.classList.add("wrong");
+
+        if (messageEl) {
+            messageEl.textContent = "😊 حاول مرة أخرى";
+            messageEl.className = "message wrong";
+        }
+
+        speak("حاول مرة أخرى", { rate: 0.8 });
+    }
+}
+
+function onAdditionLevelTaskCorrect() {
+    additionLevelState.correctCount++;
+    updateAdditionScoreLabel();
+}
+
+/* =========================================================
+   🔗 دمج آمن مع newAddition / checkAddition الأصليتين
+   (تغليف فقط، بدون أي تعديل لمنطقهما الأصلي — تُستخدمان فعليًا
+   في مستويات: ضمن ١٠/٢٠/٥٠/١٠٠، الأفقي، والرأسي)
+========================================================= */
+
+const originalNewAdditionForLevels = newAddition;
+
+newAddition = function () {
+
+    if (additionLevelModeActive) {
+        advanceAdditionLevelTask();
+    } else {
+        originalNewAdditionForLevels();
+    }
+};
+
+const originalCheckAdditionForLevels = checkAddition;
+
+checkAddition = function () {
+
+    if (!additionLevelModeActive) {
+        originalCheckAdditionForLevels();
+        return;
+    }
+
+    const answerEl = $("addAnswer");
+
+    const answer = parseNumber(
+        answerEl ? answerEl.value : ""
+    );
+
+    const correct = currentAddA + currentAddB;
+
+    const wasAnswered = Number.isFinite(answer);
+
+    originalCheckAdditionForLevels();
+
+    if (wasAnswered) {
+
+        if (answer === correct) {
+            onAdditionLevelTaskCorrect();
+        }
+        /* في حال الخطأ: لا عقوبة، الرسالة والصوت تمت معالجتهما
+           بالفعل داخل الدالة الأصلية — الطفل يعيد المحاولة بنفس
+           السؤال كما في السلوك الأصلي تمامًا */
+    }
+};
+
+function advanceAdditionLevelTask() {
+
+    additionLevelState.taskIndex++;
+
+    if (additionLevelState.taskIndex >= 10) {
+        finishAdditionLevel();
+        return;
+    }
+
+    renderCurrentAdditionTask();
+}
+
+/* =========================================================
+   🎉 إنهاء المستوى: فتح التالي عند ٨/١٠ فأكثر
+========================================================= */
+
+function finishAdditionLevel() {
+
+    const level = ADDITION_LEVELS[additionLevelState.levelId - 1];
+    const score = additionLevelState.correctCount;
+    const passed = score >= 8;
+
+    additionLevelModeActive = false;
+
+    saveAdditionLevelBest(level.id, score);
+
+    if (passed) {
+        addStars(10);
+        unlockAdditionLevel(level.id + 1);
+    }
+
+    renderAdditionLevelResultScreen(level, score, passed);
+}
+
+function renderAdditionLevelResultScreen(level, score, passed) {
+
+    const legacyWrapper = $("additionFreePlayLegacy");
+    const stage = $("additionTaskStage");
+    const messageEl = $("addMessage");
+
+    if (legacyWrapper) legacyWrapper.style.display = "none";
+
+    if (messageEl) {
+        messageEl.textContent = "";
+        messageEl.className = "message";
+    }
+
+    const nextLevel = ADDITION_LEVELS[level.id];
+
+    if (stage) {
+
+        stage.style.display = "block";
+
+        stage.innerHTML = `
+            <div class="addition-level-result-card">
+
+                <div class="addition-level-result-emoji">
+                    ${passed ? "🏆" : "🌟"}
+                </div>
+
+                <div class="addition-level-result-title">
+                    ${passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة!"}
+                </div>
+
+                <div class="addition-level-result-score">
+                    النتيجة: ${arabicNumber(score)} / ١٠
+                </div>
+
+                ${passed && nextLevel ? `
+                    <button class="success" type="button" onclick="openAdditionLevel(${nextLevel.id})">
+                        ➡️ المستوى التالي: ${nextLevel.title}
+                    </button>
+                ` : ""}
+
+                ${!passed ? `
+                    <button class="success" type="button" onclick="openAdditionLevel(${level.id})">
+                        🔁 إعادة المحاولة
+                    </button>
+                ` : ""}
+
+                <button class="secondary" type="button" onclick="backToAdditionLevels()">
+                    🏠 كل المستويات
+                </button>
+
+            </div>
+        `;
+    }
+
+    updateAdditionProgressUI();
+
+    speak(
+        passed
+            ? "أحسنت! أتممت المستوى بنجاح"
+            : "محاولة رائعة، لنحاول مرة أخرى",
+        { rate: 0.8 }
+    );
+}
+
+/* =========================================================
+   🚪 نقطة الدخول: عرض شبكة المستويات دائمًا أولًا عند الدخول
+   لقسم الجمع (تغليف إضافي فوق showScreen الحالية بدون
+   المساس بمنطقها أو بأي قسم آخر تتعامل معه)
+========================================================= */
+
+const showScreenBeforeAdditionEngine = showScreen;
+
+showScreen = function (screenId) {
+
+    if (screenId === "addition") {
+        /* نُصفّر الحالة قبل تشغيل السلسلة الأصلية حتى لا يتسبب
+           استدعاء newAddition() الداخلي القديم (ضمن showScreen
+           الأصلية) في أي تعارض؛ سيمر بأمان إلى النسخة الحرة
+           المخفية أصلًا خلف شبكة المستويات */
+        additionLevelModeActive = false;
+    }
+
+    showScreenBeforeAdditionEngine(screenId);
+
+    if (screenId === "addition") {
+
+        if (additionTimer) {
+            clearTimeout(additionTimer);
+            additionTimer = null;
+        }
+
+        const hub = $("additionLevelsHub");
+        const levelCard = $("additionLevelCard");
+
+        if (levelCard) levelCard.style.display = "none";
+        if (hub) hub.style.display = "block";
+
+        renderAdditionLevelsHub();
+    }
+};
+
+/* تهيئة أولية بعد تحميل الصفحة */
+
+document.addEventListener("DOMContentLoaded", () => {
+    if ($("additionLevelsGrid")) {
+        renderAdditionLevelsHub();
+    }
+});
+
+/* =========================================================
+   🔚 نهاية قسم تطوير "الجمع" الجديد بالكامل
+========================================================= */
