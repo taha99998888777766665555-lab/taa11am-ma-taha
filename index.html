@@ -826,56 +826,181 @@
     class="screen"
 >
 
-<div class="card">
+<!-- ============================================================
+     🆕 شبكة اختيار مستويات الطرح (نقطة الدخول)
+============================================================ -->
 
+<div
+    class="card"
+    id="subtractionLevelsHub"
+>
 
     <h2>
         ➖ الطرح
     </h2>
 
+    <p class="subtraction-hub-subtitle">
+        اختر مستوى لتبدأ التدريب 🌟
+    </p>
 
     <div
-        id="subPictures"
-        class="count-items"
-        aria-hidden="true"
-    >
-        🍎🍎🍎
+        id="subtractionLevelsGrid"
+        class="subtraction-levels-grid"
+        role="list"
+    ></div>
+
+</div>
+
+
+<!-- ============================================================
+     🆕 واجهة أداء مهام المستوى
+============================================================ -->
+
+<div
+    class="card"
+    id="subtractionLevelCard"
+    style="display:none;"
+>
+
+    <div class="subtraction-toolbar">
+
+        <button
+            class="subtraction-toolbar-btn"
+            onclick="showScreen('home')"
+            aria-label="الرئيسية"
+            type="button"
+        >
+            🏠
+            <span>الرئيسية</span>
+        </button>
+
+        <button
+            class="subtraction-toolbar-btn"
+            onclick="backToSubtractionLevels()"
+            aria-label="رجوع للمستويات"
+            type="button"
+        >
+            ⬅️
+            <span>رجوع</span>
+        </button>
+
+        <button
+            class="subtraction-toolbar-btn"
+            id="subtractionSpeakBtn"
+            onclick="speakCurrentSubtractionTask()"
+            aria-label="استمع للسؤال"
+            type="button"
+        >
+            🔊
+            <span>الصوت</span>
+        </button>
+
+        <button
+            class="subtraction-toolbar-btn"
+            onclick="retryCurrentSubtractionTask()"
+            aria-label="إعادة المحاولة"
+            type="button"
+        >
+            🔁
+            <span>إعادة</span>
+        </button>
+
     </div>
 
 
     <div
-        id="subQuestion"
-        class="operation"
+        class="subtraction-level-title"
+        id="subtractionLevelTitle"
+    ></div>
+
+
+    <div
+        class="subtraction-progress-label"
+        id="subtractionProgressLabel"
     >
-        ٣ - ١ = ؟
+        المهمة ١ من ١٠
+    </div>
+
+    <div class="subtraction-progress-bar">
+        <div
+            class="subtraction-progress-fill"
+            id="subtractionProgressFill"
+        ></div>
+    </div>
+
+    <div
+        class="subtraction-score-label"
+        id="subtractionScoreLabel"
+    >
+        ✅ ٠ / ١٠
     </div>
 
 
-    <input
-        id="subAnswer"
-        type="number"
-        inputmode="numeric"
-        aria-label="اكتب ناتج الطرح"
+    <div
+        id="subtractionTaskStage"
+        class="subtraction-task-stage"
+    ></div>
+
+
+    <div
+        id="subtractionHintBox"
+        class="subtraction-hint-box"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+
+    <!-- عناصر محرك الطرح الأصلي (تُستخدم فعليًا داخل بعض
+         المستويات: الأفقي، الرأسي، ضمن ٢٠/٥٠/١٠٠) -->
+
+    <div
+        id="subtractionFreePlayLegacy"
+        class="subtraction-legacy-wrapper"
+        style="display:none;"
     >
 
-
-    <br>
-
-
-    <button
-        class="success"
-        onclick="checkSubtraction()"
-    >
-        ✅ تحقق
-    </button>
+        <div
+            id="subPictures"
+            class="count-items"
+            aria-hidden="true"
+        ></div>
 
 
-    <button
-        class="primary"
-        onclick="newSubtraction()"
-    >
-        سؤال جديد
-    </button>
+        <div
+            id="subQuestion"
+            class="operation"
+        >
+            ٣ - ١ = ؟
+        </div>
+
+
+        <input
+            id="subAnswer"
+            type="number"
+            inputmode="numeric"
+            aria-label="اكتب ناتج الطرح"
+            readonly
+        >
+
+
+        <div
+            id="subtractionDigitPad"
+            class="subtraction-digit-pad"
+        ></div>
+
+
+        <br>
+
+
+        <button
+            class="success"
+            onclick="checkSubtraction()"
+        >
+            ✅ تحقق
+        </button>
+
+
+    </div>
 
 
     <div
@@ -884,14 +1009,6 @@
         role="status"
         aria-live="polite"
     ></div>
-
-
-    <button
-        class="secondary"
-        onclick="showScreen('home')"
-    >
-        🏠 الرئيسية
-    </button>
 
 
 </div>
