@@ -395,47 +395,127 @@
     class="screen"
 >
 
-<div class="card">
+<!-- ============================================================
+     🆕 شبكة اختيار مستويات الكلمات (نقطة الدخول)
+============================================================ -->
 
+<div
+    class="card"
+    id="wordsLevelsHub"
+>
 
     <h2>
-        📖 قراءة الكلمات
+        📖 الكلمات
     </h2>
 
+    <p class="words-hub-subtitle">
+        اختر مستوى لتبدأ القراءة 🌟
+    </p>
 
     <div
-        class="picture"
-        id="wordPicture"
-        aria-hidden="true"
-    >
-        🏠
+        id="wordsLevelsGrid"
+        class="words-levels-grid"
+        role="list"
+    ></div>
+
+</div>
+
+
+<!-- ============================================================
+     🆕 واجهة أداء مهام المستوى
+============================================================ -->
+
+<div
+    class="card"
+    id="wordsLevelCard"
+    style="display:none;"
+>
+
+    <div class="words-toolbar">
+
+        <button
+            class="words-toolbar-btn"
+            onclick="showScreen('home')"
+            aria-label="الرئيسية"
+            type="button"
+        >
+            🏠
+            <span>الرئيسية</span>
+        </button>
+
+        <button
+            class="words-toolbar-btn"
+            onclick="backToWordsLevels()"
+            aria-label="رجوع للمستويات"
+            type="button"
+        >
+            ⬅️
+            <span>رجوع</span>
+        </button>
+
+        <button
+            class="words-toolbar-btn"
+            id="wordsSpeakBtn"
+            onclick="speakCurrentWordsTask()"
+            aria-label="استمع"
+            type="button"
+        >
+            🔊
+            <span>الصوت</span>
+        </button>
+
+        <button
+            class="words-toolbar-btn"
+            onclick="retryCurrentWordsTask()"
+            aria-label="إعادة المحاولة"
+            type="button"
+        >
+            🔁
+            <span>إعادة</span>
+        </button>
+
     </div>
 
 
     <div
-        class="big-word"
-        id="currentWord"
-    >
-        بيت
-    </div>
-
-
-    <button
-        class="primary"
-        onclick="speakWord()"
-    >
-        🔊 اسمع الكلمة
-    </button>
-
-
-    <h3>
-        اختر الكلمة الصحيحة
-    </h3>
+        class="words-level-title"
+        id="wordsLevelTitle"
+    ></div>
 
 
     <div
-        id="wordOptions"
-        class="options"
+        class="words-progress-label"
+        id="wordsProgressLabel"
+    >
+        المهمة ١ من ١٠
+    </div>
+
+    <div class="words-progress-bar">
+        <div
+            class="words-progress-fill"
+            id="wordsProgressFill"
+        ></div>
+    </div>
+
+    <div
+        class="words-score-label"
+        id="wordsScoreLabel"
+    >
+        ✅ ٠ / ١٠
+    </div>
+
+
+    <div
+        id="wordsTaskStage"
+        class="words-task-stage"
+    ></div>
+
+
+    <div
+        id="wordsHintBox"
+        class="words-hint-box"
+        role="status"
+        aria-live="polite"
     ></div>
 
 
@@ -445,22 +525,6 @@
         role="status"
         aria-live="polite"
     ></div>
-
-
-    <button
-        class="primary"
-        onclick="nextWord()"
-    >
-        كلمة جديدة ➡️
-    </button>
-
-
-    <button
-        class="secondary"
-        onclick="showScreen('home')"
-    >
-        🏠 الرئيسية
-    </button>
 
 
 </div>
