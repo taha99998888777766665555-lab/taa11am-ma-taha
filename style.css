@@ -6484,3 +6484,420 @@ body.calm-mode .subtraction-choice-btn.hinted {
         max-width: 260px;
     }
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   📖 إعادة بناء قسم "الكلمات" فقط — نظام ٩ مستويات للحركات القصيرة
+   (فتحة ← ضمة ← كسرة) وفق تدرج صوتي/قرائي احترافي
+   كل الأصناف هنا جديدة ومعزولة بالكامل (words-*) ولا تُعدّل أي صنف
+   مستخدم في أقسام أخرى.
+   =====================================================================
+========================================================================= */
+
+.words-hub-subtitle {
+    color: #78909c;
+    margin-top: -8px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+/* ---------- شبكة اختيار المستويات ---------- */
+
+.words-levels-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin: 18px auto;
+    max-width: 640px;
+}
+
+@media (min-width: 560px) {
+    .words-levels-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 800px) {
+    .words-levels-grid {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 760px;
+    }
+}
+
+.words-level-card-btn {
+    position: relative;
+    background: linear-gradient(160deg, #f3e5f5, #e1bee7);
+    border: 3px solid transparent;
+    border-radius: 22px;
+    padding: 16px 8px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    min-height: 100px;
+    box-shadow: 0 4px 10px rgba(106,27,154,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.words-level-card-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(106,27,154,0.22);
+}
+
+.words-level-card-btn:active {
+    transform: scale(0.96);
+}
+
+.words-level-icon {
+    font-size: 30px;
+    font-weight: 900;
+    color: #6a1b9a;
+}
+
+.words-level-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: #4a148c;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.words-level-card-btn.completed {
+    border-color: #43a047;
+    background: linear-gradient(160deg, #e8f5e9, #c8f7d2);
+}
+
+.words-level-card-btn.locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #eceff1;
+    filter: grayscale(0.6);
+}
+
+.words-level-card-btn.locked:hover {
+    transform: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.words-level-lock-icon {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    background: #90a4ae;
+    color: white;
+    font-size: 13px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.words-level-card-btn.completed .words-level-lock-icon {
+    background: #43a047;
+}
+
+.words-level-best {
+    font-size: 12px;
+    color: #7b1fa2;
+}
+
+/* ---------- شريط تحكم واجهة المهام ---------- */
+
+.words-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.words-toolbar-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: #f3e5f5;
+    border: none;
+    border-radius: 16px;
+    padding: 10px 14px;
+    font-size: 22px;
+    cursor: pointer;
+    min-width: 64px;
+    transition: 0.15s;
+    color: #4a148c;
+}
+
+.words-toolbar-btn span {
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.words-toolbar-btn:hover {
+    transform: translateY(-2px);
+    background: #e1bee7;
+}
+
+.words-level-title {
+    font-size: 20px;
+    font-weight: 900;
+    color: #6a1b9a;
+    margin-top: 4px;
+}
+
+.words-progress-label {
+    font-size: 15px;
+    color: #7b1fa2;
+    font-weight: bold;
+    margin-top: 6px;
+}
+
+.words-progress-bar {
+    height: 12px;
+    background: #e1bee7;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 8px auto 4px;
+    max-width: 420px;
+}
+
+.words-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8e24aa, #ce93d8);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.words-score-label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #43a047;
+    margin-bottom: 6px;
+}
+
+.words-task-stage {
+    margin-top: 10px;
+}
+
+/* ---------- عرض النص الكبير (حرف/مقطع/كلمة مشكولة) ---------- */
+
+.words-display-text {
+    font-size: clamp(48px, 12vw, 90px);
+    font-weight: 900;
+    color: #4a148c;
+    margin: 20px 0;
+    direction: rtl;
+}
+
+.words-display-emoji {
+    font-size: clamp(40px, 10vw, 64px);
+    margin-bottom: 8px;
+}
+
+.words-instruction-line {
+    font-size: 18px;
+    font-weight: bold;
+    color: #37474f;
+    margin-bottom: 10px;
+}
+
+/* ---------- بطاقات الاختيار (نص) ---------- */
+
+.words-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    max-width: 500px;
+    margin: 16px auto;
+}
+
+.words-choice-btn {
+    background: #f8f9fa;
+    border: 3px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 16px 8px;
+    font-size: clamp(28px, 6vw, 40px);
+    font-weight: 900;
+    color: #37474f;
+    cursor: pointer;
+    transition: 0.15s;
+    min-height: 80px;
+}
+
+.words-choice-btn:hover {
+    transform: translateY(-2px);
+    border-color: #ce93d8;
+}
+
+.words-choice-btn.correct {
+    background: #c8f7d2 !important;
+    border-color: #43a047 !important;
+}
+
+.words-choice-btn.wrong {
+    background: #ffd0d0 !important;
+    border-color: #e53935 !important;
+}
+
+.words-choice-btn:disabled {
+    cursor: default;
+}
+
+.words-choice-btn.hinted {
+    animation: wordsHintPulse 1s ease-in-out infinite;
+}
+
+@keyframes wordsHintPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,193,7,0.6); }
+    50% { box-shadow: 0 0 0 10px rgba(255,193,7,0); }
+}
+
+/* ---------- اختيار الحركة (فتحة/ضمة/كسرة) ---------- */
+
+.words-harakat-grid {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.words-harakat-btn {
+    font-size: 40px;
+    font-weight: 900;
+    background: #f3e5f5;
+    border: 3px solid #ce93d8;
+    border-radius: 20px;
+    padding: 14px 24px;
+    cursor: pointer;
+    min-width: 90px;
+    color: #6a1b9a;
+    transition: 0.15s;
+}
+
+.words-harakat-btn:hover {
+    transform: translateY(-2px);
+}
+
+.words-harakat-btn.correct {
+    background: #c8f7d2 !important;
+    border-color: #43a047 !important;
+}
+
+.words-harakat-btn.wrong {
+    background: #ffd0d0 !important;
+    border-color: #e53935 !important;
+}
+
+.words-harakat-label {
+    font-size: 13px;
+    display: block;
+    margin-top: 4px;
+    color: #7b1fa2;
+}
+
+/* ---------- تلميح لطيف (Prompting) ---------- */
+
+.words-hint-box {
+    margin-top: 14px;
+    background: #fff8e1;
+    border: 2px dashed #ffca28;
+    border-radius: 16px;
+    padding: 12px 16px;
+    font-size: 16px;
+    color: #795548;
+    text-align: center;
+    display: none;
+}
+
+.words-hint-box.visible {
+    display: block;
+}
+
+/* ---------- شاشة نهاية المستوى ---------- */
+
+.words-level-result-card {
+    text-align: center;
+    padding: 10px;
+}
+
+.words-level-result-emoji {
+    font-size: 60px;
+}
+
+.words-level-result-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #6a1b9a;
+    margin: 10px 0;
+}
+
+.words-level-result-score {
+    font-size: 20px;
+    color: #43a047;
+    font-weight: bold;
+    margin-bottom: 14px;
+}
+
+/* ---------- توافق الوضع الليلي والهادئ ---------- */
+
+body.dark-mode .words-level-card-btn,
+body.dark-mode .words-toolbar-btn,
+body.dark-mode .words-choice-btn,
+body.dark-mode .words-harakat-btn {
+    background: #232946;
+    color: #e8eaf6;
+}
+
+body.dark-mode .words-level-card-btn.locked {
+    background: #1a1d2e;
+}
+
+body.dark-mode .words-hint-box {
+    background: #2c2740;
+    color: #ffe082;
+}
+
+body.dark-mode .words-display-text {
+    color: #ce93d8;
+}
+
+body.calm-mode .words-level-card-btn:hover,
+body.calm-mode .words-toolbar-btn:hover,
+body.calm-mode .words-choice-btn:hover,
+body.calm-mode .words-harakat-btn:hover {
+    transform: none !important;
+}
+
+body.calm-mode .words-choice-btn.hinted {
+    animation: none !important;
+    box-shadow: 0 0 0 4px rgba(255,193,7,0.6) !important;
+}
+
+/* ---------- استجابة الجوال ---------- */
+
+@media (max-width: 480px) {
+
+    .words-levels-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .words-level-card-btn {
+        min-height: 88px;
+        padding: 10px 4px;
+    }
+
+    .words-choice-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .words-toolbar-btn {
+        min-width: 54px;
+        padding: 8px 8px;
+        font-size: 18px;
+    }
+}
