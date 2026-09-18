@@ -2434,81 +2434,40 @@ function resetLetterGames() {
 📝 الكلمات
 ========================================================= */
 
-const words = [
-    { word: "أسد", emoji: "🦁" },
-    { word: "بقرة", emoji: "🐄" },
-    { word: "تفاح", emoji: "🍎" },
-    { word: "ثعلب", emoji: "🦊" },
-    { word: "جمل", emoji: "🐪" },
-    { word: "حصان", emoji: "🐎" },
-    { word: "خبز", emoji: "🍞" },
-    { word: "دب", emoji: "🐻" },
-    { word: "رمان", emoji: "🍎" },
-    { word: "زرافة", emoji: "🦒" },
-    { word: "سمكة", emoji: "🐟" },
-    { word: "شمس", emoji: "☀️" },
-    { word: "صقر", emoji: "🦅" },
-    { word: "ضفدع", emoji: "🐸" },
-    { word: "طائرة", emoji: "✈️" },
-    { word: "فيل", emoji: "🐘" },
-    { word: "قمر", emoji: "🌙" },
-    { word: "كتاب", emoji: "📘" },
-    { word: "ليمون", emoji: "🍋" },
-    { word: "موز", emoji: "🍌" }
-];
+/*
+   🆕 تمت إعادة بناء قسم الكلمات بالكامل (٩ مستويات للحركات
+   القصيرة). النظام الجديد الفعلي موجود في نهاية هذا الملف
+   ضمن قسم "تطوير الكلمات الجديد".
+
+   الدوال الأربع التالية (words, currentWordIndex,
+   renderCurrentWord, speakWord, playCurrentWordAudio, nextWord)
+   أصبحت الآن Stubs بسيطة فقط، غرضها الوحيد هو منع أي خطأ
+   JavaScript في نقاط خارجية موجودة مسبقًا بالمشروع (خارج قسم
+   الكلمات تمامًا) ما زالت تشير لهذه الأسماء بالاسم:
+   - showScreen() الأصلية (تستدعي renderCurrentWord عند الدخول
+     لشاشة "words" — أصبحت الآن لا تفعل شيئًا مرئيًا لأن الشاشة
+     الجديدة تُدار عبر renderWordsLevelsHub بدلًا من ذلك).
+   - "🌍 تصدير الدوال المطلوبة إلى HTML" (window.speakWord,
+     window.playCurrentWordAudio, window.nextWord).
+   - مستمع DOMContentLoaded الأصلي (يستدعي renderCurrentWord).
+   - المُغلِّف (wrapper) الخاص بعدّاد "correctWords" ولوحة
+     المعلم/المهمة اليومية، الذي يلتقط nextWord الأصلية.
+   النظام الجديد لا يعتمد على أي من هذه الدوال، وله عدّاده
+   ومنطقه المستقل بالكامل، لكنها تبقى موجودة (فارغة الأثر)
+   حصرًا لضمان عدم كسر تلك النقاط الخارجية.
+*/
+
+const words = [];
 
 let currentWordIndex = 0;
 
-function renderCurrentWord() {
+function renderCurrentWord() {}
 
-    const item =
-        words[currentWordIndex];
+function speakWord() {}
 
-    if ($("currentWord")) {
-        $("currentWord").textContent =
-            item.word;
-    }
+function playCurrentWordAudio() {}
 
-    if ($("wordPicture")) {
-        $("wordPicture").textContent =
-            item.emoji;
-    }
-
-    if ($("wordLetter")) {
-        $("wordLetter").textContent =
-            letterWithFatha(
-                getFirstArabicLetter(item.word)
-            );
-    }
-}
-
-function speakWord() {
-
-    const item =
-        words[currentWordIndex];
-
-    speak(item.word);
-}
-
-function playCurrentWordAudio() {
-    speakWord();
-}
-
-function nextWord() {
-
-    stopAllAudio();
-
-    currentWordIndex++;
-
-    if (
-        currentWordIndex >=
-        words.length
-    ) {
-        currentWordIndex = 0;
-    }
-
-    renderCurrentWord();
-}
+function nextWord() {}
 
 /* =========================================================
 🔢 الأرقام
@@ -19602,4 +19561,1043 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* =========================================================
    🔚 نهاية قسم تطوير "الطرح" الجديد بالكامل
+========================================================= */
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   📖🎓 إعادة بناء قسم "الكلمات" بالكامل — ٩ مستويات للحركات القصيرة
+   =====================================================================
+   الترتيب: (١) حروف بالفتح (٢) مقاطع بالفتح (٣) كلمات بالفتح
+   (٤) حروف بالضم (٥) مقاطع بالفتح والضم (٦) كلمات بالفتح والضم
+   (٧) حروف بالكسرة (٨) مقاطع بالحركات الثلاث (٩) كلمات بالحركات الثلاث
+   لا مدود، لا سكون، لا شدة، لا تنوين — حركات قصيرة فقط.
+   هذا القسم بالكامل مستقل ومعزول، ولا يمس أي قسم آخر بالتطبيق.
+   جميع الكلمات تم التحقق من تشكيلها برمجيًا (فتحة/ضمة/كسرة فقط،
+   بلا أي علامة أخرى) قبل اعتمادها.
+========================================================================= */
+
+/* =========================================================
+   🔤 مساعد كسرة الألف الصحيح إملائيًا (إِ وليس أِ) — معزول
+   بالكامل عن letterWithKasra المستخدمة في قسم الحروف
+========================================================= */
+
+function wordsLevelLetterWithKasra(letter) {
+    if (letter === "أ" || letter === "ا" || letter === "إ") {
+        return "إِ";
+    }
+    return removeArabicHarakat(letter) + "ِ";
+}
+
+/* =========================================================
+   📋 بيانات كل مستوى (مبنيّة ومُتحقَّق منها بعناية لغوية)
+========================================================= */
+
+/* المستوى ١: كل الحروف بالفتحة */
+const WORDS_L1_LETTERS = letters.map(item => item.letter);
+
+/* المستوى ٤: كل الحروف بالضمة */
+const WORDS_L4_LETTERS = letters.map(item => item.letter);
+
+/* المستوى ٧: كل الحروف بالكسرة */
+const WORDS_L7_LETTERS = letters.map(item => item.letter);
+
+/* المستوى ٢: مقاطع من حرفين بالفتحة (بادئات كلمات حقيقية) */
+const WORDS_L2_SYLLABLES = [
+    "قَرَ", "كَتَ", "نَظَ", "جَمَ", "حَمَ", "خَبَ", "دَخَ", "وَجَ",
+    "أَكَ", "هَرَ", "وَقَ", "طَلَ", "سَكَ", "فَتَ", "غَسَ", "لَبَ",
+    "رَقَ", "ضَحَ", "طَبَ"
+];
+
+/* المستوى ٣: كلمات ثلاثية بالفتحة (نمط فَعَلَ) */
+const WORDS_L3_WORDS = [
+    { word: "كَتَبَ", emoji: "✍️" },
+    { word: "ذَهَبَ", emoji: "🚶" },
+    { word: "قَرَأَ", emoji: "📖" },
+    { word: "طَلَعَ", emoji: "🌅" },
+    { word: "حَرَثَ", emoji: "🚜" },
+    { word: "أَخَذَ", emoji: "🤲" },
+    { word: "خَرَجَ", emoji: "🚪" },
+    { word: "خَبَزَ", emoji: "🍞" },
+    { word: "حَمَلَ", emoji: "📦" },
+    { word: "دَخَلَ", emoji: "🚶‍♂️" },
+    { word: "جَمَعَ", emoji: "🧺" },
+    { word: "وَجَدَ", emoji: "🔍" }
+];
+
+/* المستوى ٥: مقاطع من حرفين تجمع الفتحة والضمة */
+const WORDS_L5_SYLLABLES = [
+    "بَتُ", "مُنَ", "سَمُ", "كُتَ", "جَمُ",
+    "دُبَ", "رَمُ", "شُبَ", "نَمُ", "تُبَ", "لُمَ"
+];
+
+/* المستوى ٦: كلمات ثلاثية تجمع الفتحة والضمة (نمط فَعُلَ) */
+const WORDS_L6_WORDS = [
+    { word: "كَبُرَ", emoji: "📏" },
+    { word: "حَسُنَ", emoji: "🌟" },
+    { word: "صَغُرَ", emoji: "🤏" },
+    { word: "كَرُمَ", emoji: "🎁" },
+    { word: "بَعُدَ", emoji: "🛣️" },
+    { word: "قَرُبَ", emoji: "📍" },
+    { word: "عَظُمَ", emoji: "🏔️" },
+    { word: "سَهُلَ", emoji: "✅" },
+    { word: "صَعُبَ", emoji: "⛰️" }
+];
+
+/* المستوى ٨: مقاطع من حرفين بالحركات الثلاث */
+const WORDS_L8_SYLLABLES = [
+    "بَتِ", "مُسَ", "كِتُ", "سَمِ", "دُرِ",
+    "فِتُ", "لَمِ", "نُبَ", "رِتُ", "حَمِ"
+];
+
+/* المستوى ٩: كلمات ثلاثية بالحركات الثلاث (فَعَلَ + فَعِلَ + فَعُلَ)
+   من السهل (فَعَلَ مألوف من المستوى ٣) إلى الأصعب (فَعِلَ/فَعُلَ) */
+const WORDS_L9_FAALA_EXTRA = [
+    { word: "شَرِبَ", emoji: "🥛" },
+    { word: "فَهِمَ", emoji: "💡" },
+    { word: "عَلِمَ", emoji: "🧠" },
+    { word: "سَمِعَ", emoji: "👂" },
+    { word: "لَعِبَ", emoji: "⚽" },
+    { word: "رَكِبَ", emoji: "🚲" },
+    { word: "حَسِبَ", emoji: "🧮" },
+    { word: "عَمِلَ", emoji: "🛠️" }
+];
+
+function buildWordsLevel9Pool() {
+    /* ترتيب من السهل (فَعَلَ الذي تدرّب عليه الطفل بالفعل في
+       المستوى ٣) إلى الأصعب (فَعِلَ ثم فَعُلَ) */
+    return [
+        ...WORDS_L3_WORDS.slice(0, 4),
+        ...WORDS_L9_FAALA_EXTRA,
+        ...WORDS_L6_WORDS.slice(0, 4)
+    ];
+}
+
+/* =========================================================
+   📋 تعريف المستويات التسعة
+========================================================= */
+
+const WORDS_LEVELS = [
+    { id: 1, title: "كل الحروف بالفتح", icon: "َ", mode: "letters", haraka: "fatha" },
+    { id: 2, title: "مقاطع من حرفين بالفتح", icon: "بَتَ", mode: "syllables", pool: WORDS_L2_SYLLABLES },
+    { id: 3, title: "كلمات ثلاثية بالفتح", icon: "📖", mode: "words", pool: WORDS_L3_WORDS },
+    { id: 4, title: "جميع الحروف بالضم", icon: "ُ", mode: "letters", haraka: "damma" },
+    { id: 5, title: "مقاطع من حرفين بالفتح والضم", icon: "بَتُ", mode: "syllables", pool: WORDS_L5_SYLLABLES },
+    { id: 6, title: "كلمات ثلاثية بالفتح والضم", icon: "📗", mode: "words", pool: WORDS_L6_WORDS },
+    { id: 7, title: "الحروف بالكسرة", icon: "ِ", mode: "letters", haraka: "kasra" },
+    { id: 8, title: "مقاطع بالحركات الثلاث", icon: "بَبُبِ", mode: "mixed-syllables", pool: WORDS_L8_SYLLABLES },
+    { id: 9, title: "كلمات ثلاثية بالحركات الثلاث", icon: "📚", mode: "words", pool: null }
+];
+
+/* =========================================================
+   💾 حفظ التقدم وفتح المستويات (localStorage معزول)
+========================================================= */
+
+function loadWordsUnlockedLevel() {
+    return Number(
+        localStorage.getItem("taha_words_unlocked_level") || 1
+    );
+}
+
+function saveWordsUnlockedLevel(n) {
+    localStorage.setItem("taha_words_unlocked_level", String(n));
+}
+
+function unlockWordsLevel(n) {
+    if (n > loadWordsUnlockedLevel()) {
+        saveWordsUnlockedLevel(n);
+    }
+}
+
+function loadWordsLevelBest() {
+    try {
+        return JSON.parse(
+            localStorage.getItem("taha_words_level_best") || "{}"
+        );
+    } catch (error) {
+        return {};
+    }
+}
+
+function saveWordsLevelBest(levelId, score) {
+    const data = loadWordsLevelBest();
+    if (!data[levelId] || score > data[levelId]) {
+        data[levelId] = score;
+        localStorage.setItem(
+            "taha_words_level_best", JSON.stringify(data)
+        );
+    }
+}
+
+/* =========================================================
+   🧠 تسجيل الأداء ونوع المساعدة + التكرار الذكي (معزول)
+========================================================= */
+
+function loadWordsAdaptive() {
+    try {
+        return JSON.parse(
+            localStorage.getItem("taha_words_adaptive_v1") || "{}"
+        );
+    } catch (error) {
+        return {};
+    }
+}
+
+function saveWordsAdaptive(data) {
+    localStorage.setItem("taha_words_adaptive_v1", JSON.stringify(data));
+}
+
+function recordWordsOutcome(levelId, itemKey, correct, promptLevel) {
+
+    const data = loadWordsAdaptive();
+
+    if (!data[levelId]) {
+        data[levelId] = {
+            correctCount: 0,
+            wrongCount: 0,
+            promptUsage: { 0: 0, 1: 0, 2: 0, 3: 0 },
+            difficultItems: []
+        };
+    }
+
+    const entry = data[levelId];
+
+    if (correct) entry.correctCount++;
+    else entry.wrongCount++;
+
+    entry.promptUsage[promptLevel] = (entry.promptUsage[promptLevel] || 0) + 1;
+
+    if (!correct) {
+        if (!entry.difficultItems.includes(itemKey)) {
+            entry.difficultItems.push(itemKey);
+            if (entry.difficultItems.length > 10) {
+                entry.difficultItems.shift();
+            }
+        }
+    } else {
+        const idx = entry.difficultItems.indexOf(itemKey);
+        if (idx !== -1) entry.difficultItems.splice(idx, 1);
+    }
+
+    saveWordsAdaptive(data);
+}
+
+/* =========================================================
+   🎯 مستويات المساعدة (ABA Prompting Hierarchy) — نفس مبدأ
+   قسمي الجمع والطرح، بمعزل كامل عن بياناتهما
+========================================================= */
+
+let wordsWrongStreak = 0;
+
+function getWordsPromptLevel(wrongStreak) {
+    if (wrongStreak <= 0) return 0;
+    if (wrongStreak === 1) return 1;
+    if (wrongStreak === 2) return 2;
+    return 3;
+}
+
+function showWordsHint(text) {
+    const box = $("wordsHintBox");
+    if (box) {
+        box.textContent = text;
+        box.classList.add("visible");
+    }
+}
+
+function hideWordsHint() {
+    const box = $("wordsHintBox");
+    if (box) {
+        box.classList.remove("visible");
+        box.textContent = "";
+    }
+}
+
+function highlightCorrectWordsChoice() {
+
+    const task = wordsLevelState.currentTask;
+    if (!task) return;
+
+    document
+        .querySelectorAll(
+            "#wordsTaskStage .words-choice-btn, #wordsTaskStage .words-harakat-btn"
+        )
+        .forEach(btn => {
+            if (btn.dataset.correct === "1") {
+                btn.classList.add("hinted");
+            }
+        });
+}
+
+function applyWordsPrompting() {
+
+    const level = getWordsPromptLevel(wordsWrongStreak);
+
+    if (level === 1) {
+        showWordsHint("🌟 استمع مرة أخرى بهدوء، ثم اختر بعناية");
+    } else if (level === 2) {
+        showWordsHint("🌟 أنت قريب جدًا! لنستمع معًا مرة أخرى");
+        highlightCorrectWordsChoice();
+    } else if (level >= 3) {
+        showWordsHint("🌟 لا بأس أبدًا! سأساعدك: هذه هي الإجابة الصحيحة ✅");
+        highlightCorrectWordsChoice();
+    }
+}
+
+/* =========================================================
+   🎲 توليد مهام كل مستوى
+========================================================= */
+
+function buildHarakaText(letter, haraka) {
+    if (haraka === "fatha") return letterWithFatha(letter);
+    if (haraka === "damma") return letterWithDamma(letter);
+    return wordsLevelLetterWithKasra(letter);
+}
+
+function buildWordsChoices(correctValue, pool, count) {
+
+    const others = pool.filter(v => v !== correctValue);
+    const distractors = shuffle(others).slice(0, count - 1);
+    return shuffle([correctValue, ...distractors]);
+}
+
+function generateWordsTasksForLevel(level) {
+
+    const tasks = [];
+
+    const adaptive = loadWordsAdaptive();
+    const entry = adaptive[level.id];
+    const difficultItems = (entry && entry.difficultItems) || [];
+
+    let pool = [];
+
+    if (level.mode === "letters") {
+        pool = WORDS_L1_LETTERS.map(l => buildHarakaText(l, level.haraka));
+    } else if (level.mode === "syllables" || level.mode === "mixed-syllables") {
+        pool = level.pool.slice();
+    } else if (level.mode === "words") {
+        pool = (level.id === 9 ? buildWordsLevel9Pool() : level.pool).map(w => w.word);
+    }
+
+    const poolWithMeta = level.mode === "words"
+        ? (level.id === 9 ? buildWordsLevel9Pool() : level.pool)
+        : null;
+
+    /* إدراج العناصر التي أخطأ فيها الطفل سابقًا (تكرار ذكي) */
+    const injectCount = Math.min(2, difficultItems.filter(v => pool.includes(v)).length);
+    const chosenDifficult = shuffle(difficultItems.filter(v => pool.includes(v))).slice(0, injectCount);
+
+    const injectedIndexes = new Set();
+    if (injectCount > 0) {
+        shuffle([...Array(10).keys()]).slice(0, injectCount).forEach(i => injectedIndexes.add(i));
+    }
+
+    let lastValue = null;
+
+    for (let i = 0; i < 10; i++) {
+
+        let value;
+
+        if (injectedIndexes.has(i) && chosenDifficult.length) {
+            value = chosenDifficult.pop();
+        } else {
+            let attempts = 0;
+            do {
+                value = pool[Math.floor(Math.random() * pool.length)];
+                attempts++;
+            } while (value === lastValue && attempts < 8 && pool.length > 1);
+        }
+
+        lastValue = value;
+
+        const task = { value };
+
+        /* 🎚️ تدرّج الصعوبة داخل المستوى نفسه: مهمتان فقط في
+           البداية (٢ خيار)، ثم بقية المهام (٣ خيارات) — يبقى
+           ضمن حدود "٢-٣ خيارات فقط" المطلوبة */
+        const choiceCount = i < 2 ? 2 : 3;
+
+        if (level.mode === "letters") {
+            task.choices = buildWordsChoices(value, pool, choiceCount);
+        } else if (level.mode === "syllables") {
+            task.choices = buildWordsChoices(value, pool, choiceCount);
+        } else if (level.mode === "mixed-syllables") {
+            task.choices = buildWordsChoices(value, pool, choiceCount);
+        } else if (level.mode === "words") {
+
+            const meta = poolWithMeta.find(w => w.word === value) || { word: value, emoji: "📖" };
+            task.emoji = meta.emoji;
+            task.choices = buildWordsChoices(value, pool, choiceCount);
+
+            /* بدائل تشكيل مقاربة لنفس هيكل الحروف (اختيار الكلمة الصحيحة) */
+            task.spellingChoices = buildWordsSpellingDistractors(value, choiceCount);
+
+            /* 🎚️ تدرّج نوع النشاط داخل المستوى: نبدأ بالأسهل
+               (استماع واختيار)، ثم مطابقة القراءة بالصورة،
+               ثم الأصعب (تمييز التشكيل الدقيق) في آخر المستوى */
+            if (i < 3) {
+                task.activityKind = 0; /* استماع واختيار */
+            } else if (i < 7) {
+                task.activityKind = 2; /* مطابقة: قراءة ثم اختيار الصورة */
+            } else {
+                task.activityKind = 1; /* اختيار الكلمة الصحيحة (تمييز التشكيل) */
+            }
+        }
+
+        tasks.push(task);
+    }
+
+    return tasks;
+}
+
+/* توليد بدائل تشكيل مقاربة (نفس الحروف، حركات مبدّلة) لأغراض
+   نشاط "اختيار الكلمة الصحيحة" */
+function buildWordsSpellingDistractors(correctWord, count) {
+
+    const distractorsNeeded = Math.max((count || 3) - 1, 1);
+
+    const HARAKAT_MARKS = ["\u064E", "\u064F", "\u0650"];
+    const chars = Array.from(correctWord);
+
+    const positions = [];
+    chars.forEach((ch, idx) => {
+        if (HARAKAT_MARKS.includes(ch)) positions.push(idx);
+    });
+
+    const variants = new Set();
+    let guard = 0;
+
+    while (variants.size < distractorsNeeded && guard < 20) {
+
+        guard++;
+
+        const newChars = chars.slice();
+        const posToChange = positions[Math.floor(Math.random() * positions.length)];
+        const currentMark = newChars[posToChange];
+        const otherMarks = HARAKAT_MARKS.filter(m => m !== currentMark);
+        newChars[posToChange] = otherMarks[Math.floor(Math.random() * otherMarks.length)];
+
+        const candidate = newChars.join("");
+        if (candidate !== correctWord) variants.add(candidate);
+    }
+
+    return shuffle([correctWord, ...variants]).slice(0, count || 3);
+}
+
+/* =========================================================
+   🧮 حالة الجلسة الحالية للمستوى
+========================================================= */
+
+let wordsLevelModeActive = false;
+
+let wordsLevelState = {
+    levelId: 1,
+    taskIndex: 0,
+    reviewIndex: 0,
+    correctCount: 0,
+    currentTask: null,
+    tasks: []
+};
+
+/* =========================================================
+   🏠 شبكة اختيار المستويات
+========================================================= */
+
+function renderWordsLevelsHub() {
+
+    const grid = $("wordsLevelsGrid");
+    if (!grid) return;
+
+    const unlocked = loadWordsUnlockedLevel();
+    const bestScores = loadWordsLevelBest();
+
+    grid.innerHTML = WORDS_LEVELS.map(level => {
+
+        const isUnlocked = level.id <= unlocked;
+        const isCompleted = (bestScores[level.id] || 0) >= 8;
+
+        const classes = ["words-level-card-btn"];
+        if (!isUnlocked) classes.push("locked");
+        if (isCompleted) classes.push("completed");
+
+        const lockIcon = isCompleted ? "✅" : (isUnlocked ? "🔓" : "🔒");
+        const bestText = bestScores[level.id]
+            ? `أفضل نتيجة: ${arabicNumber(bestScores[level.id])}/١٠`
+            : "";
+
+        return `
+            <button
+                class="${classes.join(" ")}"
+                type="button"
+                ${isUnlocked
+                    ? `onclick="openWordsLevel(${level.id})"`
+                    : `onclick="showWordsLockedMessage()"`}
+            >
+                <span class="words-level-lock-icon">${lockIcon}</span>
+                <span class="words-level-icon">${level.icon}</span>
+                <span class="words-level-name">
+                    ${arabicNumber(level.id)}. ${level.title}
+                </span>
+                ${bestText ? `<span class="words-level-best">${bestText}</span>` : ""}
+            </button>
+        `;
+    }).join("");
+}
+
+function showWordsLockedMessage() {
+    speak("أكمل المستوى السابق أولًا لتفتح هذا المستوى", { rate: 0.85 });
+}
+
+/* =========================================================
+   🚪 التنقل: فتح مستوى / الرجوع للمستويات
+========================================================= */
+
+function openWordsLevel(levelId) {
+
+    const unlocked = loadWordsUnlockedLevel();
+
+    if (levelId > unlocked) {
+        showWordsLockedMessage();
+        return;
+    }
+
+    const level = WORDS_LEVELS[levelId - 1];
+    if (!level) return;
+
+    wordsLevelModeActive = true;
+    wordsWrongStreak = 0;
+
+    wordsLevelState = {
+        levelId,
+        taskIndex: 0,
+        reviewIndex: 0,
+        correctCount: 0,
+        currentTask: null,
+        tasks: generateWordsTasksForLevel(level)
+    };
+
+    const hub = $("wordsLevelsHub");
+    const levelCard = $("wordsLevelCard");
+    const titleEl = $("wordsLevelTitle");
+
+    if (hub) hub.style.display = "none";
+    if (levelCard) levelCard.style.display = "block";
+    if (titleEl) titleEl.textContent = `${level.icon} ${level.title}`;
+
+    renderCurrentWordsTask();
+}
+
+function backToWordsLevels() {
+
+    wordsLevelModeActive = false;
+
+    stopAllAudio();
+    hideWordsHint();
+
+    const hub = $("wordsLevelsHub");
+    const levelCard = $("wordsLevelCard");
+
+    if (levelCard) levelCard.style.display = "none";
+    if (hub) hub.style.display = "block";
+
+    renderWordsLevelsHub();
+}
+
+/* =========================================================
+   📊 عرض التقدم والنتيجة الحالية
+========================================================= */
+
+function updateWordsScoreLabel() {
+    const scoreEl = $("wordsScoreLabel");
+    if (scoreEl) {
+        scoreEl.textContent = `✅ ${arabicNumber(wordsLevelState.correctCount)} / ١٠`;
+    }
+}
+
+function updateWordsProgressUI() {
+
+    const label = $("wordsProgressLabel");
+    const fill = $("wordsProgressFill");
+    const humanPos = wordsLevelState.taskIndex + 1;
+
+    if (label) {
+        label.textContent = `المهمة ${arabicNumber(humanPos)} من ١٠`;
+    }
+
+    if (fill) {
+        fill.style.width = ((humanPos / 10) * 100) + "%";
+    }
+
+    updateWordsScoreLabel();
+}
+
+/* =========================================================
+   🖼️ قوالب عرض المهام (استماع واختيار / اختيار الحركة /
+   اختيار الكلمة الصحيحة / مطابقة القراءة بالصورة)
+========================================================= */
+
+function renderWordsChoiceButtons(grid, choices, correctValue, onResult) {
+
+    grid.innerHTML = "";
+
+    choices.forEach(value => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "words-choice-btn";
+        btn.textContent = value;
+        btn.dataset.correct = value === correctValue ? "1" : "0";
+
+        btn.onclick = () => onResult(value === correctValue, btn);
+
+        grid.appendChild(btn);
+    });
+}
+
+function renderListenChooseTask(stage, task, level) {
+
+    stage.innerHTML = `
+        <div class="words-instruction-line">🔊 استمع ثم اختر ما سمعته</div>
+        <div class="words-choice-grid" id="wordsChoiceGrid"></div>
+    `;
+
+    renderWordsChoiceButtons(
+        stage.querySelector("#wordsChoiceGrid"),
+        task.choices,
+        task.value,
+        finishWordsChoiceTask
+    );
+}
+
+function renderWordsWordTask(stage, task, level) {
+
+    const activityKind = typeof task.activityKind === "number"
+        ? task.activityKind
+        : Math.floor(Math.random() * 3);
+
+    if (activityKind === 0) {
+
+        /* استماع واختيار الكلمة المنطوقة */
+        stage.innerHTML = `
+            <div class="words-display-emoji">${task.emoji}</div>
+            <div class="words-instruction-line">🔊 استمع ثم اختر الكلمة الصحيحة</div>
+            <div class="words-choice-grid" id="wordsChoiceGrid"></div>
+        `;
+
+        renderWordsChoiceButtons(
+            stage.querySelector("#wordsChoiceGrid"),
+            task.choices,
+            task.value,
+            finishWordsChoiceTask
+        );
+
+    } else if (activityKind === 1) {
+
+        /* اختيار الكلمة الصحيحة (تمييز التشكيل) */
+        stage.innerHTML = `
+            <div class="words-display-emoji">${task.emoji}</div>
+            <div class="words-instruction-line">اختر الكلمة المكتوبة بشكل صحيح</div>
+            <div class="words-choice-grid" id="wordsChoiceGrid"></div>
+        `;
+
+        renderWordsChoiceButtons(
+            stage.querySelector("#wordsChoiceGrid"),
+            task.spellingChoices,
+            task.value,
+            finishWordsChoiceTask
+        );
+
+    } else {
+
+        /* مطابقة: اقرأ الكلمة ثم اختر صورتها الصحيحة */
+        const distractorEmojis = shuffle(
+            (level.id === 9 ? buildWordsLevel9Pool() : level.pool)
+                .filter(w => w.word !== task.value)
+        ).slice(0, 2).map(w => w.emoji);
+
+        const emojiChoices = shuffle([task.emoji, ...distractorEmojis]);
+
+        stage.innerHTML = `
+            <div class="words-display-text">${task.value}</div>
+            <div class="words-instruction-line">اقرأ الكلمة، ثم اختر الصورة المناسبة</div>
+            <div class="words-choice-grid" id="wordsEmojiGrid"></div>
+        `;
+
+        const grid = stage.querySelector("#wordsEmojiGrid");
+
+        emojiChoices.forEach(emoji => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "words-choice-btn";
+            btn.textContent = emoji;
+            btn.dataset.correct = emoji === task.emoji ? "1" : "0";
+            btn.onclick = () => finishWordsChoiceTask(emoji === task.emoji, btn);
+            grid.appendChild(btn);
+        });
+    }
+}
+
+function renderWordsHarakatChoiceTask(stage, task) {
+
+    const HARAKA_DEFS = [
+        { mark: "\u064E", label: "فتحة" },
+        { mark: "\u064F", label: "ضمة" },
+        { mark: "\u0650", label: "كسرة" }
+    ];
+
+    const baseLetter = removeArabicHarakat(task.value);
+    const correctMark = task.value.slice(-1);
+
+    stage.innerHTML = `
+        <div class="words-instruction-line">🔊 استمع، ما الحركة التي سمعتها؟</div>
+        <div class="words-harakat-grid" id="wordsHarakatGrid"></div>
+    `;
+
+    const grid = stage.querySelector("#wordsHarakatGrid");
+
+    shuffle(HARAKA_DEFS).forEach(def => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "words-harakat-btn";
+        btn.innerHTML = `${baseLetter}${def.mark}<span class="words-harakat-label">${def.label}</span>`;
+        btn.dataset.correct = def.mark === correctMark ? "1" : "0";
+
+        btn.onclick = () => finishWordsChoiceTask(def.mark === correctMark, btn);
+
+        grid.appendChild(btn);
+    });
+}
+
+/* =========================================================
+   🚦 موزّع عرض المهمة الحالية
+========================================================= */
+
+function renderCurrentWordsTask() {
+
+    const level = WORDS_LEVELS[wordsLevelState.levelId - 1];
+    const task = wordsLevelState.tasks[wordsLevelState.taskIndex];
+
+    wordsLevelState.currentTask = task;
+    wordsWrongStreak = 0;
+
+    hideWordsHint();
+    updateWordsProgressUI();
+
+    const stage = $("wordsTaskStage");
+    const messageEl = $("wordMessage");
+
+    if (messageEl) {
+        messageEl.textContent = "";
+        messageEl.className = "message";
+    }
+
+    if (!stage) return;
+
+    /* المستوى ٨: أول ٣ مهام = مراجعة اختيار الحركة الصريحة
+       بَ ← بُ ← بِ لتعزيز التدرّج قبل مقاطع الحركات المختلطة
+       (عدّاد reviewIndex مستقل تمامًا عن taskIndex لتفادي أي
+       تصادم عند العودة لعدّاد المهام الحقيقية) */
+    if (level.mode === "mixed-syllables" && wordsLevelState.reviewIndex < 3) {
+
+        const reviewLetters = ["ب", "س", "م"];
+        const reviewLetter = reviewLetters[wordsLevelState.reviewIndex];
+        const harakaOrder = ["fatha", "damma", "kasra"];
+        const haraka = harakaOrder[wordsLevelState.reviewIndex];
+
+        const reviewValue = buildHarakaText(reviewLetter, haraka);
+        wordsLevelState.currentTask = { value: reviewValue, isHarakaReview: true };
+
+        renderWordsHarakatChoiceTask(stage, wordsLevelState.currentTask);
+
+    } else if (level.mode === "letters") {
+
+        renderListenChooseTask(stage, task, level);
+
+    } else if (level.mode === "syllables") {
+
+        renderListenChooseTask(stage, task, level);
+
+    } else if (level.mode === "mixed-syllables") {
+
+        renderListenChooseTask(stage, task, level);
+
+    } else if (level.mode === "words") {
+
+        renderWordsWordTask(stage, task, level);
+    }
+
+    speakCurrentWordsTask();
+}
+
+function speakCurrentWordsTask() {
+
+    const task = wordsLevelState.currentTask;
+    if (!task) return;
+
+    speak(task.value, { rate: 0.75 });
+}
+
+function retryCurrentWordsTask() {
+    renderCurrentWordsTask();
+}
+
+/* =========================================================
+   🏆 معالج نتيجة موحّد لكل مهام الكلمات (يستخدم نفس نظام
+   النجوم والتقدم بالضبط — لا نظام مكافآت منفصل — ويحافظ على
+   تكامل عدّاد correctWords للوحة المعلم والمهمة اليومية)
+========================================================= */
+
+function finishWordsChoiceTask(isCorrect, button) {
+
+    const messageEl = $("wordMessage");
+    const level = WORDS_LEVELS[wordsLevelState.levelId - 1];
+    const task = wordsLevelState.currentTask;
+    const itemKey = task.value;
+
+    if (isCorrect) {
+
+        if (button) button.classList.add("correct");
+
+        correctWords++;
+        saveCounters();
+        addStars(5);
+
+        if (typeof updateStats === "function") updateStats();
+        if (typeof DailyQuest !== "undefined" && DailyQuest.checkProgress) {
+            DailyQuest.checkProgress();
+        }
+
+        if (messageEl) {
+            messageEl.textContent = "🎉 أحسنت! إجابة صحيحة ⭐";
+            messageEl.className = "message correct";
+        }
+
+        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+
+        document
+            .querySelectorAll(
+                "#wordsTaskStage .words-choice-btn, #wordsTaskStage .words-harakat-btn"
+            )
+            .forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove("hinted");
+            });
+
+        hideWordsHint();
+
+        if (!task.isHarakaReview) {
+            recordWordsOutcome(
+                level.id, itemKey, true, getWordsPromptLevel(wordsWrongStreak)
+            );
+        }
+
+        wordsWrongStreak = 0;
+
+        onWordsLevelTaskCorrect();
+
+        setTimeout(() => advanceWordsLevelTask(), 1200);
+
+    } else {
+
+        if (button) button.classList.add("wrong");
+
+        if (messageEl) {
+            messageEl.textContent = "😊 حاول مرة أخرى";
+            messageEl.className = "message wrong";
+        }
+
+        speak("حاول مرة أخرى", { rate: 0.8 });
+
+        wordsWrongStreak++;
+
+        if (!task.isHarakaReview) {
+            recordWordsOutcome(
+                level.id, itemKey, false, getWordsPromptLevel(wordsWrongStreak)
+            );
+        }
+
+        applyWordsPrompting();
+
+        /* 🌟 بعد ٣ محاولات (مستوى المساعدة الكامل/Errorless)، ننتقل
+           بهدوء للمهمة التالية دون احتساب هذه كصحيحة ودون أي رسالة
+           فشل — فقط نمنح وقتًا كافيًا لرؤية الإجابة الصحيحة المُضاءة
+           قبل التقدّم. هذا يجعل عتبة ٨/١٠ ذات معنى فعلي، ويبقي
+           المبدأ "بدون عقوبة" لأن الطفل لا يُحاسَب ولا يُمنع من
+           إكمال المستوى أبدًا */
+        if (wordsWrongStreak >= 3 && !task.isHarakaReview) {
+
+            document
+                .querySelectorAll(
+                    "#wordsTaskStage .words-choice-btn, #wordsTaskStage .words-harakat-btn"
+                )
+                .forEach(btn => { btn.disabled = true; });
+
+            setTimeout(() => {
+                hideWordsHint();
+                wordsWrongStreak = 0;
+                advanceWordsLevelTask();
+            }, 3000);
+        }
+    }
+}
+
+function onWordsLevelTaskCorrect() {
+
+    /* مهام مراجعة الحركة الصريحة في بداية المستوى ٨ لا تُحتسب
+       ضمن الـ١٠ الأساسية؛ نتقدّم فقط دون زيادة العداد النهائي
+       حتى تبقى النتيجة من ١٠ متسقة */
+    const task = wordsLevelState.currentTask;
+
+    if (task && task.isHarakaReview) return;
+
+    wordsLevelState.correctCount++;
+    updateWordsScoreLabel();
+}
+
+function advanceWordsLevelTask() {
+
+    const level = WORDS_LEVELS[wordsLevelState.levelId - 1];
+    const task = wordsLevelState.currentTask;
+
+    /* التقدّم أثناء مراجعة الحركة الصريحة (أول ٣ مهام بالمستوى ٨)
+       — عدّاد reviewIndex مستقل تمامًا عن taskIndex، فلا حاجة
+       لإعادة ضبط أي عدّاد؛ بمجرد أن يصل reviewIndex إلى ٣ فإن
+       renderCurrentWordsTask ستنتقل تلقائيًا لمهام المقاطع
+       الحقيقية (taskIndex ما زال ٠ كما بدأ تمامًا) */
+    if (level.mode === "mixed-syllables" && task && task.isHarakaReview) {
+
+        wordsLevelState.reviewIndex++;
+        renderCurrentWordsTask();
+        return;
+    }
+
+    wordsLevelState.taskIndex++;
+
+    if (wordsLevelState.taskIndex >= 10) {
+        finishWordsLevel();
+        return;
+    }
+
+    renderCurrentWordsTask();
+}
+
+/* =========================================================
+   🎉 إنهاء المستوى: فتح التالي عند ٨/١٠ فأكثر
+========================================================= */
+
+function finishWordsLevel() {
+
+    const level = WORDS_LEVELS[wordsLevelState.levelId - 1];
+    const score = wordsLevelState.correctCount;
+    const passed = score >= 8;
+
+    wordsLevelModeActive = false;
+
+    saveWordsLevelBest(level.id, score);
+
+    if (passed) {
+        addStars(10);
+        unlockWordsLevel(level.id + 1);
+    }
+
+    renderWordsLevelResultScreen(level, score, passed);
+}
+
+function renderWordsLevelResultScreen(level, score, passed) {
+
+    const stage = $("wordsTaskStage");
+    const messageEl = $("wordMessage");
+
+    if (messageEl) {
+        messageEl.textContent = "";
+        messageEl.className = "message";
+    }
+
+    hideWordsHint();
+
+    const nextLevel = WORDS_LEVELS[level.id];
+
+    if (stage) {
+
+        stage.innerHTML = `
+            <div class="words-level-result-card">
+
+                <div class="words-level-result-emoji">
+                    ${passed ? "🏆" : "🌟"}
+                </div>
+
+                <div class="words-level-result-title">
+                    ${passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة!"}
+                </div>
+
+                <div class="words-level-result-score">
+                    النتيجة: ${arabicNumber(score)} / ١٠
+                </div>
+
+                ${passed && nextLevel ? `
+                    <button class="success" type="button" onclick="openWordsLevel(${nextLevel.id})">
+                        ➡️ المستوى التالي: ${nextLevel.title}
+                    </button>
+                ` : ""}
+
+                ${!passed ? `
+                    <button class="success" type="button" onclick="openWordsLevel(${level.id})">
+                        🔁 إعادة المحاولة
+                    </button>
+                ` : ""}
+
+                <button class="secondary" type="button" onclick="backToWordsLevels()">
+                    🏠 كل المستويات
+                </button>
+
+            </div>
+        `;
+    }
+
+    updateWordsProgressUI();
+
+    speak(
+        passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة، لنحاول مرة أخرى",
+        { rate: 0.8 }
+    );
+}
+
+/* =========================================================
+   🚪 نقطة الدخول: عرض شبكة المستويات دائمًا أولًا عند الدخول
+   لقسم الكلمات (تغليف إضافي فوق showScreen الحالية بدون
+   المساس بمنطقها أو بأي قسم آخر تتعامل معه)
+========================================================= */
+
+const showScreenBeforeWordsEngine = showScreen;
+
+showScreen = function (screenId) {
+
+    if (screenId === "words") {
+        wordsLevelModeActive = false;
+    }
+
+    showScreenBeforeWordsEngine(screenId);
+
+    if (screenId === "words") {
+
+        const hub = $("wordsLevelsHub");
+        const levelCard = $("wordsLevelCard");
+
+        if (levelCard) levelCard.style.display = "none";
+        if (hub) hub.style.display = "block";
+
+        renderWordsLevelsHub();
+    }
+};
+
+/* تهيئة أولية بعد تحميل الصفحة */
+
+document.addEventListener("DOMContentLoaded", () => {
+    if ($("wordsLevelsGrid")) {
+        renderWordsLevelsHub();
+    }
+});
+
+/* =========================================================
+   🔚 نهاية قسم إعادة بناء "الكلمات" الجديد بالكامل
 ========================================================= */
