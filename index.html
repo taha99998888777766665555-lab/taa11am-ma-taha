@@ -227,159 +227,101 @@
 >
 
 <!-- ============================================================
-     🆕 شبكة اختيار الحروف (نقطة الدخول لقسم الحروف)
+     🆕 قسم الحروف — إعادة بناء كاملة (Data-Driven Engine)
 ============================================================ -->
 
 <div
     class="card"
-    id="lettersHubCard"
+    id="lettersLevelsHub"
 >
 
     <h2>
         🔤 تعلم الحروف
     </h2>
 
-    <p class="letters-hub-subtitle">
-        اختر حرفًا لتبدأ رحلة التعلم 🌟
+    <p class="ltr-hub-subtitle">
+        اختر مجموعة لتبدأ 🌟
     </p>
 
     <div
-        id="lettersHubGrid"
-        class="letters-hub-grid"
+        id="lettersLevelsGrid"
+        class="ltr-levels-grid"
         role="list"
     ></div>
 
 </div>
 
 
-<!-- ============================================================
-     🆕 واجهة أنشطة الحرف المختار
-============================================================ -->
-
 <div
     class="card"
-    id="letterActivityCard"
+    id="lettersGridCard"
     style="display:none;"
 >
 
-    <div class="letters-activity-toolbar">
+    <div class="ltr-toolbar">
 
-        <button
-            class="letters-toolbar-btn"
-            onclick="showScreen('home')"
-            aria-label="الرئيسية"
-            type="button"
-        >
-            🏠
-            <span>الرئيسية</span>
+        <button class="ltr-toolbar-btn" onclick="showScreen('home')" type="button">
+            🏠<span>الرئيسية</span>
         </button>
 
-        <button
-            class="letters-toolbar-btn"
-            onclick="backToLettersHub()"
-            aria-label="رجوع لكل الحروف"
-            type="button"
-        >
-            ⬅️
-            <span>رجوع</span>
-        </button>
-
-        <button
-            class="letters-toolbar-btn"
-            id="letterActivitySpeakBtn"
-            onclick="speakCurrentLetter()"
-            aria-label="استمع للحرف"
-            type="button"
-        >
-            🔊
-            <span>الصوت</span>
-        </button>
-
-        <button
-            class="letters-toolbar-btn"
-            id="letterActivityRetryBtn"
-            onclick="retryCurrentLetterActivity()"
-            aria-label="إعادة النشاط"
-            type="button"
-        >
-            🔁
-            <span>إعادة</span>
-        </button>
-
-        <button
-            class="letters-toolbar-btn letters-toolbar-next"
-            id="letterActivityNextBtn"
-            onclick="goToNextLetterActivity()"
-            aria-label="النشاط التالي"
-            type="button"
-            style="display:none;"
-        >
-            ⏭️
-            <span>التالي</span>
+        <button class="ltr-toolbar-btn" onclick="backToLettersLevels()" type="button">
+            ⬅️<span>رجوع</span>
         </button>
 
     </div>
 
+    <div class="ltr-level-title" id="lettersGridTitle"></div>
 
     <div
-        class="letter"
-        id="currentLetter"
-    >
-        أ
-    </div>
-
-
-    <div
-        class="picture"
-        id="letterPicture"
-        aria-hidden="true"
-    >
-        🦁
-    </div>
-
-
-    <div
-        class="word-name"
-        id="letterWord"
-    >
-        أسد
-    </div>
-
-
-    <div
-        class="letters-activity-progress-label"
-        id="letterActivityProgressLabel"
-    >
-        النشاط ١ من ٢٨
-    </div>
-
-    <div class="letters-activity-progress-bar">
-        <div
-            class="letters-activity-progress-fill"
-            id="letterActivityProgressFill"
-        ></div>
-    </div>
-
-    <div
-        class="letters-activity-goal"
-        id="letterActivityGoalLabel"
+        id="lettersGrid"
+        class="ltr-letters-grid"
+        role="list"
     ></div>
 
-
-    <div
-        id="letterActivityStage"
-        class="letters-activity-stage"
-    ></div>
+</div>
 
 
-    <div
-        id="letterActivityHint"
-        class="letters-activity-hint"
-        style="display:none;"
-        role="status"
-        aria-live="polite"
-    ></div>
+<div
+    class="card"
+    id="letterDetailCard"
+    style="display:none;"
+>
 
+    <div class="ltr-toolbar">
+
+        <button class="ltr-toolbar-btn" onclick="showScreen('home')" type="button">
+            🏠<span>الرئيسية</span>
+        </button>
+
+        <button class="ltr-toolbar-btn" onclick="backToLettersGrid()" type="button">
+            ⬅️<span>رجوع</span>
+        </button>
+
+        <button class="ltr-toolbar-btn" id="ltrSpeakBtn" onclick="speakCurrentLetter()" type="button">
+            🔊<span>الصوت</span>
+        </button>
+
+        <button class="ltr-toolbar-btn" onclick="retryCurrentLetterActivity()" type="button">
+            🔁<span>إعادة</span>
+        </button>
+
+    </div>
+
+    <div class="ltr-big-letter" id="currentLetterDisplay"></div>
+
+    <div class="ltr-progress-label" id="ltrProgressLabel"></div>
+
+    <div class="ltr-progress-bar">
+        <div class="ltr-progress-fill" id="ltrProgressFill"></div>
+    </div>
+
+    <div class="ltr-activity-goal" id="ltrActivityGoal"></div>
+
+    <div id="ltrActivityStage" class="ltr-activity-stage"></div>
+
+    <div id="ltrHintBox" class="ltr-hint-box" role="status" aria-live="polite"></div>
+
+    <div id="letterMessage" class="message" role="status" aria-live="polite"></div>
 
 </div>
 
