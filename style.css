@@ -4933,497 +4933,6 @@ body.theme-forest {
 
 /* =========================================================================
    🆕 =====================================================================
-   🔤 تطوير قسم "الحروف" فقط — Activity Engine الجديد
-   كل الأصناف هنا جديدة ومعزولة بالكامل (letters-*) ولا تُعدّل أي صنف
-   مستخدم في أقسام أخرى من التطبيق.
-   =====================================================================
-========================================================================= */
-
-/* ---------- شبكة اختيار الحروف ---------- */
-
-.letters-hub-subtitle {
-    color: #78909c;
-    margin-top: -8px;
-    margin-bottom: 10px;
-    font-size: 16px;
-}
-
-.letters-hub-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin: 18px auto;
-    max-width: 700px;
-}
-
-@media (min-width: 560px) {
-    .letters-hub-grid {
-        grid-template-columns: repeat(5, 1fr);
-    }
-}
-
-@media (min-width: 800px) {
-    .letters-hub-grid {
-        grid-template-columns: repeat(7, 1fr);
-        max-width: 900px;
-    }
-}
-
-.letters-hub-card-btn {
-    position: relative;
-    background: linear-gradient(160deg, #eef6ff, #e3f2fd);
-    border: 3px solid transparent;
-    border-radius: 20px;
-    padding: 14px 4px;
-    font-size: 34px;
-    font-weight: 900;
-    color: #1e3a8a;
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
-    min-height: 76px;
-    box-shadow: 0 4px 10px rgba(30,58,138,0.12);
-}
-
-.letters-hub-card-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 18px rgba(30,58,138,0.18);
-}
-
-.letters-hub-card-btn:active {
-    transform: scale(0.96);
-}
-
-.letters-hub-card-btn.has-progress {
-    border-color: #ffca28;
-    background: linear-gradient(160deg, #fff8e1, #fff3cd);
-}
-
-.letters-hub-card-btn .letters-hub-badge {
-    position: absolute;
-    top: -6px;
-    left: -6px;
-    background: #43a047;
-    color: white;
-    font-size: 13px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
-/* ---------- شريط تحكم النشاط (ثابت الأماكن) ---------- */
-
-.letters-activity-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.letters-toolbar-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    background: #f1f5f9;
-    border: none;
-    border-radius: 16px;
-    padding: 10px 14px;
-    font-size: 22px;
-    cursor: pointer;
-    min-width: 64px;
-    transition: 0.15s;
-    color: #37474f;
-}
-
-.letters-toolbar-btn span {
-    font-size: 11px;
-    font-weight: bold;
-}
-
-.letters-toolbar-btn:hover {
-    transform: translateY(-2px);
-    background: #e3f2fd;
-}
-
-.letters-toolbar-next {
-    background: #c8f7d2;
-}
-
-.letters-toolbar-next:hover {
-    background: #a5e8b4;
-}
-
-/* ---------- شريط تقدم الأنشطة ---------- */
-
-.letters-activity-progress-label {
-    font-size: 15px;
-    color: #607d8b;
-    font-weight: bold;
-    margin-top: 6px;
-}
-
-.letters-activity-progress-bar {
-    height: 12px;
-    background: #e5e7eb;
-    border-radius: 20px;
-    overflow: hidden;
-    margin: 8px auto 4px;
-    max-width: 420px;
-}
-
-.letters-activity-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #43a047, #8bc34a);
-    transition: width 0.3s ease;
-    width: 0%;
-}
-
-.letters-activity-goal {
-    font-size: 14px;
-    color: #90a4ae;
-    margin-bottom: 6px;
-    min-height: 18px;
-}
-
-.letters-activity-stage {
-    margin-top: 10px;
-}
-
-.letters-activity-hint {
-    margin-top: 14px;
-    background: #fff8e1;
-    border: 2px dashed #ffca28;
-    border-radius: 16px;
-    padding: 12px 16px;
-    font-size: 16px;
-    color: #795548;
-}
-
-/* =========================================================
-   🧩 نشاط: أشكال الحرف داخل الكلمة (سحب وإفلات + لمس)
-========================================================= */
-
-.letters-dragdrop-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 22px;
-    margin-top: 10px;
-}
-
-.letters-dragdrop-word-row {
-    display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: clamp(32px, 8vw, 54px);
-    font-weight: 900;
-    color: #263238;
-    direction: rtl;
-}
-
-.letters-drop-zone {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: clamp(46px, 11vw, 70px);
-    min-height: clamp(56px, 13vw, 82px);
-    border: 3px dashed #90caf9;
-    border-radius: 16px;
-    background: #f5faff;
-    transition: 0.15s;
-}
-
-.letters-drop-zone.drag-over {
-    background: #bbdefb;
-    border-color: #1976d2;
-    transform: scale(1.08);
-}
-
-.letters-drop-zone.filled {
-    border-style: solid;
-    border-color: #43a047;
-    background: #e8f5e9;
-}
-
-.letters-drag-tiles-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 16px;
-}
-
-.letters-drag-tile {
-    font-size: clamp(30px, 7vw, 48px);
-    font-weight: 900;
-    background: #fff3e0;
-    border: 3px solid #ffb74d;
-    border-radius: 18px;
-    padding: 10px 18px;
-    min-width: 64px;
-    min-height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: grab;
-    touch-action: none;
-    user-select: none;
-    transition: box-shadow 0.15s, transform 0.1s;
-    color: #4e342e;
-}
-
-.letters-drag-tile.selected-for-tap {
-    box-shadow: 0 0 0 4px #ffca28;
-}
-
-.letters-drag-tile.dragging {
-    opacity: 0.55;
-    cursor: grabbing;
-    z-index: 50;
-}
-
-.letters-drag-tile.placed {
-    visibility: hidden;
-}
-
-.letters-dragdrop-tip {
-    font-size: 13px;
-    color: #90a4ae;
-}
-
-/* =========================================================
-   ✍️ نشاط التتبع والكتابة
-========================================================= */
-
-.letters-trace-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.letters-trace-canvas-box {
-    position: relative;
-    width: min(90vw, 320px);
-    height: min(90vw, 320px);
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-    overflow: hidden;
-}
-
-.letters-trace-guide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 220px;
-    color: rgba(33,150,243,0.15);
-    font-weight: 900;
-    pointer-events: none;
-}
-
-.letters-trace-canvas {
-    position: absolute;
-    inset: 0;
-    touch-action: none;
-}
-
-/* =========================================================
-   🔤 نشاط أشكال الحرف (المعرض)
-========================================================= */
-
-.letters-forms-gallery {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 16px;
-    margin: 14px 0;
-}
-
-.letters-forms-card {
-    background: #f8f9fa;
-    border-radius: 18px;
-    padding: 14px 20px;
-    text-align: center;
-    min-width: 90px;
-}
-
-.letters-forms-glyph {
-    font-size: 46px;
-    font-weight: 900;
-    color: #3949ab;
-}
-
-.letters-forms-label {
-    font-size: 13px;
-    color: #78909c;
-    margin-top: 6px;
-}
-
-/* =========================================================
-   🔊 نشاط الحركات (فتحة/ضمة/كسرة)
-========================================================= */
-
-.letters-haraka-grid {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-top: 14px;
-}
-
-.letters-haraka-btn {
-    font-size: 42px;
-    font-weight: 900;
-    background: #f1f8ff;
-    border: 3px solid #90caf9;
-    border-radius: 20px;
-    padding: 14px 26px;
-    cursor: pointer;
-    min-width: 90px;
-    color: #1565c0;
-    transition: 0.15s;
-}
-
-.letters-haraka-btn:hover {
-    transform: translateY(-2px);
-}
-
-.letters-haraka-btn.correct {
-    background: #c8f7d2 !important;
-    border-color: #43a047;
-}
-
-.letters-haraka-btn.wrong {
-    background: #ffd0d0 !important;
-    border-color: #e53935;
-}
-
-/* =========================================================
-   🔡 نشاط ترتيب حروف الكلمة
-========================================================= */
-
-.letters-order-target-row {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: center;
-    gap: 6px;
-    margin: 14px 0;
-    direction: rtl;
-}
-
-.letters-order-slot {
-    min-width: 50px;
-    min-height: 60px;
-    border-bottom: 4px solid #90a4ae;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 34px;
-    font-weight: 900;
-    color: #263238;
-}
-
-.letters-order-tiles-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 10px;
-}
-
-.letters-order-tile {
-    font-size: 30px;
-    font-weight: 900;
-    background: #ede7f6;
-    border: 3px solid #b39ddb;
-    border-radius: 14px;
-    padding: 10px 18px;
-    cursor: pointer;
-    min-width: 54px;
-    color: #4527a0;
-}
-
-.letters-order-tile:disabled {
-    opacity: 0.35;
-    cursor: default;
-}
-
-/* =========================================================
-   🌙 توافق الوضع الليلي (يقرأ من نفس متغيرات التطبيق الحالية)
-========================================================= */
-
-body.dark-mode .letters-hub-card-btn,
-body.dark-mode .letters-toolbar-btn,
-body.dark-mode .letters-forms-card,
-body.dark-mode .letters-drop-zone,
-body.dark-mode .letters-drag-tile,
-body.dark-mode .letters-order-tile,
-body.dark-mode .letters-haraka-btn,
-body.dark-mode .letters-trace-canvas-box {
-    background: #232946;
-    color: #e8eaf6;
-}
-
-body.dark-mode .letters-activity-hint {
-    background: #2c2740;
-    color: #ffe082;
-}
-
-/* =========================================================
-   🧘 توافق الوضع الهادئ
-========================================================= */
-
-body.calm-mode .letters-hub-card-btn:hover,
-body.calm-mode .letters-toolbar-btn:hover,
-body.calm-mode .letters-drag-tile,
-body.calm-mode .letters-drop-zone.drag-over {
-    transform: none !important;
-}
-
-/* =========================================================
-   📱 استجابة إضافية للجوال
-========================================================= */
-
-@media (max-width: 480px) {
-
-    .letters-hub-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-    }
-
-    .letters-hub-card-btn {
-        font-size: 26px;
-        min-height: 64px;
-        padding: 10px 2px;
-    }
-
-    .letters-toolbar-btn {
-        min-width: 54px;
-        padding: 8px 8px;
-        font-size: 18px;
-    }
-}
-
-/* ---------- إخفاء الزر الداخلي القديم "اللعبة التالية" لصالح
-   شريط التحكم الثابت الجديد (ثبات الأماكن للأطفال ذوي
-   الاحتياجات الخاصة) — هذا السطر فقط يخص هذا الزر بالتحديد
-   ولا يؤثر على أي عنصر آخر ---------- */
-
-#letterGameNext {
-    display: none !important;
-}
-
-/* =========================================================================
-   🆕 =====================================================================
    ➕ تطوير قسم "الجمع" فقط — نظام مستويات متدرجة ومقفولة
    كل الأصناف هنا جديدة ومعزولة بالكامل (addition-*) ولا تُعدّل أي
    صنف مستخدم في أقسام أخرى (بما فيها الطرح الذي يشارك بعض
@@ -6896,6 +6405,543 @@ body.calm-mode .words-choice-btn.hinted {
     }
 
     .words-toolbar-btn {
+        min-width: 54px;
+        padding: 8px 8px;
+        font-size: 18px;
+    }
+}
+
+/* =========================================================================
+   🆕 =====================================================================
+   🔤 إعادة بناء قسم "الحروف" بالكامل — محرك جديد قائم على البيانات
+   (Data-Driven Engine) — لا يعتمد على أي تصميم قديم لقسم الحروف.
+   كل الأصناف هنا جديدة ومعزولة بالكامل (ltr-*) ولا تُعدّل أي صنف
+   مستخدم في أقسام أخرى من التطبيق.
+   =====================================================================
+========================================================================= */
+
+.ltr-hub-subtitle {
+    color: #78909c;
+    margin-top: -8px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+/* ---------- شبكة اختيار المجموعات (٤ مستويات) ---------- */
+
+.ltr-levels-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin: 18px auto;
+    max-width: 480px;
+}
+
+@media (min-width: 560px) {
+    .ltr-levels-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.ltr-level-card-btn {
+    position: relative;
+    background: linear-gradient(160deg, #e8f4fd, #d3e9fb);
+    border: 3px solid transparent;
+    border-radius: 24px;
+    padding: 20px 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    min-height: 110px;
+    box-shadow: 0 4px 10px rgba(21,101,192,0.14);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.ltr-level-card-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(21,101,192,0.2);
+}
+
+.ltr-level-card-btn:active {
+    transform: scale(0.97);
+}
+
+.ltr-level-letters-preview {
+    font-size: 22px;
+    font-weight: 900;
+    color: #1565c0;
+    letter-spacing: 4px;
+}
+
+.ltr-level-name {
+    font-size: 15px;
+    font-weight: bold;
+    color: #37474f;
+}
+
+.ltr-level-card-btn.completed {
+    border-color: #43a047;
+    background: linear-gradient(160deg, #e8f5e9, #c8f7d2);
+}
+
+.ltr-level-card-btn.locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #eceff1;
+    filter: grayscale(0.6);
+}
+
+.ltr-level-card-btn.locked:hover {
+    transform: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.ltr-level-lock-icon {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    background: #90a4ae;
+    color: white;
+    font-size: 13px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.ltr-level-card-btn.completed .ltr-level-lock-icon {
+    background: #43a047;
+}
+
+/* ---------- شبكة حروف المجموعة المختارة ---------- */
+
+.ltr-letters-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 18px auto;
+    max-width: 520px;
+}
+
+@media (min-width: 560px) {
+    .ltr-letters-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@media (min-width: 800px) {
+    .ltr-letters-grid {
+        grid-template-columns: repeat(7, 1fr);
+        max-width: 700px;
+    }
+}
+
+.ltr-letter-card-btn {
+    position: relative;
+    background: #eef6ff;
+    border: 3px solid transparent;
+    border-radius: 20px;
+    padding: 14px 4px;
+    font-size: 32px;
+    font-weight: 900;
+    color: #1e3a8a;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    min-height: 74px;
+    box-shadow: 0 3px 8px rgba(30,58,138,0.12);
+}
+
+.ltr-letter-card-btn:hover {
+    transform: translateY(-3px);
+}
+
+.ltr-letter-card-btn.completed {
+    border-color: #ffca28;
+    background: linear-gradient(160deg, #fff8e1, #fff3cd);
+}
+
+.ltr-letter-badge {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    background: #43a047;
+    color: white;
+    font-size: 12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---------- شريط التحكم وواجهة النشاط ---------- */
+
+.ltr-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.ltr-toolbar-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: #eef6ff;
+    border: none;
+    border-radius: 16px;
+    padding: 10px 14px;
+    font-size: 22px;
+    cursor: pointer;
+    min-width: 64px;
+    transition: 0.15s;
+    color: #1e3a8a;
+}
+
+.ltr-toolbar-btn span {
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.ltr-toolbar-btn:hover {
+    transform: translateY(-2px);
+    background: #d3e9fb;
+}
+
+.ltr-level-title {
+    font-size: 20px;
+    font-weight: 900;
+    color: #1565c0;
+    margin: 4px 0 10px;
+}
+
+.ltr-big-letter {
+    font-size: clamp(64px, 16vw, 110px);
+    font-weight: 900;
+    color: #1e3a8a;
+    margin: 6px 0;
+    line-height: 1;
+}
+
+.ltr-progress-label {
+    font-size: 15px;
+    color: #607d8b;
+    font-weight: bold;
+}
+
+.ltr-progress-bar {
+    height: 12px;
+    background: #d3e9fb;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 8px auto 4px;
+    max-width: 420px;
+}
+
+.ltr-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1565c0, #64b5f6);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.ltr-activity-goal {
+    font-size: 14px;
+    color: #90a4ae;
+    margin-bottom: 6px;
+    min-height: 18px;
+}
+
+.ltr-activity-stage {
+    margin-top: 10px;
+}
+
+/* ---------- عرض النص/الحرف الكبير داخل الأنشطة ---------- */
+
+.ltr-display-glyph {
+    font-size: clamp(50px, 13vw, 92px);
+    font-weight: 900;
+    color: #1e3a8a;
+    margin: 16px 0;
+    direction: rtl;
+}
+
+.ltr-display-emoji {
+    font-size: clamp(44px, 11vw, 70px);
+    margin-bottom: 10px;
+}
+
+.ltr-instruction-line {
+    font-size: 18px;
+    font-weight: bold;
+    color: #37474f;
+    margin-bottom: 10px;
+}
+
+/* ---------- بطاقات الاختيار ---------- */
+
+.ltr-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    max-width: 500px;
+    margin: 16px auto;
+}
+
+.ltr-choice-btn {
+    background: #f8f9fa;
+    border: 3px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 16px 8px;
+    font-size: clamp(30px, 7vw, 44px);
+    font-weight: 900;
+    color: #37474f;
+    cursor: pointer;
+    transition: 0.15s;
+    min-height: 84px;
+}
+
+.ltr-choice-btn:hover {
+    transform: translateY(-2px);
+    border-color: #90caf9;
+}
+
+.ltr-choice-btn.correct {
+    background: #c8f7d2 !important;
+    border-color: #43a047 !important;
+}
+
+.ltr-choice-btn.wrong {
+    background: #ffd0d0 !important;
+    border-color: #e53935 !important;
+}
+
+.ltr-choice-btn:disabled {
+    cursor: default;
+}
+
+.ltr-choice-btn.hinted {
+    animation: ltrHintPulse 1s ease-in-out infinite;
+}
+
+@keyframes ltrHintPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,193,7,0.6); }
+    50% { box-shadow: 0 0 0 10px rgba(255,193,7,0); }
+}
+
+/* ---------- شبكة الكلمات التي تبدأ بالحرف (اختيار متعدد) ---------- */
+
+.ltr-multi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 520px;
+    margin: 16px auto;
+}
+
+.ltr-multi-item {
+    background: #f8f9fa;
+    border: 3px solid #e0e0e0;
+    border-radius: 18px;
+    padding: 10px 4px;
+    font-size: 36px;
+    cursor: pointer;
+    transition: 0.15s;
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ltr-multi-item.selected-correct {
+    background: #c8f7d2 !important;
+    border-color: #43a047 !important;
+}
+
+.ltr-multi-item.selected-wrong {
+    background: #ffd0d0 !important;
+    border-color: #e53935 !important;
+    animation: none;
+}
+
+/* ---------- أشكال الحرف (معرض) ---------- */
+
+.ltr-forms-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    margin: 14px 0;
+}
+
+.ltr-forms-card {
+    background: #f1f8ff;
+    border-radius: 18px;
+    padding: 14px 20px;
+    text-align: center;
+    min-width: 90px;
+}
+
+.ltr-forms-glyph {
+    font-size: 44px;
+    font-weight: 900;
+    color: #1565c0;
+}
+
+.ltr-forms-label {
+    font-size: 13px;
+    color: #78909c;
+    margin-top: 6px;
+}
+
+/* ---------- التتبع (Canvas) ---------- */
+
+.ltr-trace-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.ltr-trace-canvas-box {
+    position: relative;
+    width: min(85vw, 300px);
+    height: min(85vw, 300px);
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.ltr-trace-guide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 200px;
+    color: rgba(21,101,192,0.15);
+    font-weight: 900;
+    pointer-events: none;
+}
+
+.ltr-trace-canvas {
+    position: absolute;
+    inset: 0;
+    touch-action: none;
+}
+
+/* ---------- تلميح لطيف ---------- */
+
+.ltr-hint-box {
+    margin-top: 14px;
+    background: #fff8e1;
+    border: 2px dashed #ffca28;
+    border-radius: 16px;
+    padding: 12px 16px;
+    font-size: 16px;
+    color: #795548;
+    text-align: center;
+    display: none;
+}
+
+.ltr-hint-box.visible {
+    display: block;
+}
+
+/* ---------- شاشة نتيجة الحرف ---------- */
+
+.ltr-result-card {
+    text-align: center;
+    padding: 10px;
+}
+
+.ltr-result-emoji {
+    font-size: 60px;
+}
+
+.ltr-result-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #1565c0;
+    margin: 10px 0;
+}
+
+.ltr-result-score {
+    font-size: 20px;
+    color: #43a047;
+    font-weight: bold;
+    margin-bottom: 14px;
+}
+
+/* ---------- توافق الوضع الليلي والهادئ ---------- */
+
+body.dark-mode .ltr-level-card-btn,
+body.dark-mode .ltr-letter-card-btn,
+body.dark-mode .ltr-toolbar-btn,
+body.dark-mode .ltr-choice-btn,
+body.dark-mode .ltr-multi-item,
+body.dark-mode .ltr-forms-card,
+body.dark-mode .ltr-trace-canvas-box {
+    background: #232946;
+    color: #e8eaf6;
+}
+
+body.dark-mode .ltr-level-card-btn.locked {
+    background: #1a1d2e;
+}
+
+body.dark-mode .ltr-hint-box {
+    background: #2c2740;
+    color: #ffe082;
+}
+
+body.dark-mode .ltr-big-letter,
+body.dark-mode .ltr-display-glyph {
+    color: #90caf9;
+}
+
+body.calm-mode .ltr-level-card-btn:hover,
+body.calm-mode .ltr-letter-card-btn:hover,
+body.calm-mode .ltr-toolbar-btn:hover,
+body.calm-mode .ltr-choice-btn:hover {
+    transform: none !important;
+}
+
+body.calm-mode .ltr-choice-btn.hinted {
+    animation: none !important;
+    box-shadow: 0 0 0 4px rgba(255,193,7,0.6) !important;
+}
+
+/* ---------- استجابة الجوال ---------- */
+
+@media (max-width: 480px) {
+
+    .ltr-letters-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+
+    .ltr-letter-card-btn {
+        font-size: 26px;
+        min-height: 64px;
+        padding: 10px 2px;
+    }
+
+    .ltr-choice-grid,
+    .ltr-multi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ltr-toolbar-btn {
         min-width: 54px;
         padding: 8px 8px;
         font-size: 18px;
