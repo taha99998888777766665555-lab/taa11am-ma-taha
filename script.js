@@ -17346,7 +17346,8 @@ let ltrState = {
     levelId: 1,
     letter: null,
     activityIndex: 0,
-    currentActivityData: null
+    currentActivityData: null,
+    queue: []
 };
 
 /* =========================================================
@@ -17455,19 +17456,36 @@ function backToLettersGrid() {
 }
 
 function openLetterDetail(letterChar) {
+
+    /* 🛡️ تحقق دفاعي: تأكد أن الحرف الممرَّر صحيح وله بيانات فعلية
+       في LETTER_UNITS قبل أي شيء آخر — يمنع أي حالة صامتة لو وصل
+       معرّف حرف غير متوقع، ويسجّل تحذيرًا واضحًا بدل الفشل الصامت */
+    const unit = getLetterUnit(letterChar);
+    if (!unit) {
+        console.warn("openLetterDetail: لم يتم العثور على بيانات للحرف:", letterChar);
+        return;
+    }
+
     ltrModeActive = true;
     ltrWrongStreak = 0;
 
     ltrState.letter = letterChar;
     ltrState.activityIndex = 0;
     ltrState.currentActivityData = null;
+    ltrState.queue = buildLetterActivityQueue(letterChar);
 
     /* مزامنة currentLetterIndex مع مصفوفة letters القديمة (بيانات
        مشتركة يعتمد عليها نظام الشهادات/المكافآت) — بلا استخدام أي
        من منطق أو دوال المحرك القديم، فقط تحديث الفهرس ليتوافق مع
-       الحرف الذي يتدرب عليه الطفل فعليًا حاليًا */
-    const oldIndex = letters.findIndex(item => item.letter === letterChar);
-    if (oldIndex !== -1) currentLetterIndex = oldIndex;
+       الحرف الذي يتدرب عليه الطفل فعليًا حاليًا.
+       🛡️ تحقق دفاعي إضافي: لو تعذّر إيجاد تطابق أو كانت letters
+       غير متاحة لأي سبب، نُبقي currentLetterIndex برقم صحيح آمن (٠)
+       بدل تركه بقيمة قديمة غير متوافقة مع الحرف الحالي */
+    let oldIndex = -1;
+    if (typeof letters !== "undefined" && Array.isArray(letters)) {
+        oldIndex = letters.findIndex(item => item.letter === letterChar);
+    }
+    currentLetterIndex = oldIndex !== -1 ? oldIndex : 0;
 
     const gridCard = $("lettersGridCard");
     const detailCard = $("letterDetailCard");
@@ -17488,12 +17506,13 @@ function updateLtrProgressUI() {
     const label = $("ltrProgressLabel");
     const fill = $("ltrProgressFill");
     const humanPos = ltrState.activityIndex + 1;
+    const total = (ltrState.queue && ltrState.queue.length) || LTR_ACTIVITY_COUNT;
 
     if (label) {
-        label.textContent = `النشاط ${arabicNumber(humanPos)} من ${arabicNumber(LTR_ACTIVITY_COUNT)}`;
+        label.textContent = `النشاط ${arabicNumber(humanPos)} من ${arabicNumber(total)}`;
     }
     if (fill) {
-        fill.style.width = ((humanPos / LTR_ACTIVITY_COUNT) * 100) + "%";
+        fill.style.width = ((humanPos / total) * 100) + "%";
     }
 }
 
@@ -17510,29 +17529,18 @@ function playLetterAudio() {
     speakCurrentLetter();
 }
 
-/* =========================================================
-   📋 سجل الأنشطة العشرة (بالترتيب المطلوب بالضبط)
-========================================================= */
-
-const LTR_ACTIVITIES = [
-    { id: "sound-to-letter", goal: "التعرف على الصوت", render: activitySoundToLetter },
-    { id: "letter-recognition", goal: "التعرف على الحرف", render: activityLetterRecognition },
-    { id: "discrimination", goal: "تمييز الحرف بين حروف أخرى", render: activityDiscrimination },
-    { id: "letter-forms", goal: "أشكال الحرف", render: activityLetterForms },
-    { id: "position-in-word", goal: "موضع الحرف في الكلمة", render: activityPositionInWord },
-    { id: "letter-to-picture", goal: "الحرف والصورة", render: activityLetterToPicture },
-    { id: "picture-to-word", goal: "الصورة والكلمة", render: activityPictureToWord },
-    { id: "words-starting-with", goal: "الكلمات التي تبدأ بالحرف", render: activityWordsStartingWith },
-    { id: "tracing", goal: "التتبع والكتابة", render: activityTracing },
-    { id: "review", goal: "المراجعة", render: activityReview }
-];
+/* ملاحظة: استُبدل السجل المسطّح القديم (10 أنشطة فقط) بنظام
+   المراحل التسع الغني (LTR_STAGES + buildLetterActivityQueue)
+   المعرَّف لاحقًا في هذا الملف — كل الدوال (activitySoundToLetter،
+   activityLetterToPicture، إلخ) ما زالت مستخدَمة فعليًا هناك،
+   فقط طريقة تجميعها في تسلسل الحرف تطوّرت لتصبح أغنى وأكثر تنوعًا. */
 
 /* =========================================================
    🚦 موزّع عرض النشاط الحالي
 ========================================================= */
 
 function renderCurrentLetterActivity() {
-    const activity = LTR_ACTIVITIES[ltrState.activityIndex];
+    const activity = ltrState.queue[ltrState.activityIndex];
     const stage = $("ltrActivityStage");
     const goalEl = $("ltrActivityGoal");
     const messageEl = $("letterMessage");
@@ -17560,7 +17568,7 @@ function retryCurrentLetterActivity() {
 
 function finishLtrChoiceTask(isCorrect, button) {
     const messageEl = $("letterMessage");
-    const activity = LTR_ACTIVITIES[ltrState.activityIndex];
+    const activity = ltrState.queue[ltrState.activityIndex];
 
     if (isCorrect) {
         if (button) button.classList.add("correct");
@@ -17621,7 +17629,7 @@ function finishLtrChoiceTask(isCorrect, button) {
 function advanceLtrActivity() {
     ltrState.activityIndex++;
 
-    if (ltrState.activityIndex >= LTR_ACTIVITY_COUNT) {
+    if (ltrState.activityIndex >= ltrState.queue.length) {
         finishLetterUnit();
         return;
     }
@@ -18097,16 +18105,10 @@ function activityTracing(stage, letterChar) {
    🔟 المراجعة: مزيج عشوائي من الأنشطة السابقة
 ========================================================= */
 
-function activityReview(stage, letterChar) {
-    const reviewPool = [
-        activitySoundToLetter,
-        activityDiscrimination,
-        activityLetterToPicture,
-        activityPictureToWord
-    ];
-    const chosen = reviewPool[Math.floor(Math.random() * reviewPool.length)];
-    chosen(stage, letterChar);
-}
+/* ملاحظة: تم نقل نشاط "المراجعة" (activityReview) وتطويره ليصبح
+   جزءًا من نظام المراحل التسع الجديد أدناه (بنك أوسع، وتحيّز
+   نحو نقاط ضعف الطفل الفعلية) — تعريفه النهائي موجود لاحقًا
+   في قسم "تطوير قسم الحروف — نظام تدرّج صوتي احترافي". */
 
 /* =========================================================================
    🔗 دوال توافق (Compatibility Stubs) — فقط لمنع أي خطأ خارج
@@ -18185,3 +18187,833 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =========================================================
    🔚 نهاية إعادة بناء قسم "الحروف" بالكامل
 ========================================================= */
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   🎯 تطوير قسم "الحروف" — نظام تدرّج صوتي احترافي (٩ مراحل، بنك
+   أنشطة غني لكل مرحلة) مبني على تحليل كامل لكتاب «حروفي الجميلة»
+   =====================================================================
+   قاعدة صارمة: كل الأمثلة الصوتية هنا تحقّقت من نطقها الفعلي
+   بالفتحة كلمة كلمة (وليس تخمينًا) — لا نخلط أبدًا بين صوت الحرف
+   بالفتحة ووجوده بحركة أخرى.
+========================================================================= */
+
+/* =========================================================
+   🔊 بنك الكلمات "المؤكَّدة صوتيًا" — فقط الكلمات التي يُنطق
+   فيها الحرف الهدف فعليًا بالفتحة، للاستخدام الحصري في أي
+   نشاط يدّعي "صوت الحرف بالفتحة" (المراحل ٢، ٣، ٥، ٦).
+   بنك الكلمات الأصلي (LETTER_UNITS) يبقى كما هو للأنشطة
+   البصرية البحتة التي لا تدّعي صوتًا محددًا.
+========================================================= */
+
+const LETTER_SOUND_WORDS = {
+    "أ": [{ word: "أناناس", image: "🍍" }, { word: "أرنب", image: "🐰" }, { word: "أسد", image: "🦁" }],
+    "ب": [{ word: "بيت", image: "🏠" }, { word: "بطة", image: "🦆" }, { word: "باب", image: "🚪" }, { word: "بقرة", image: "🐄" }, { word: "بطيخ", image: "🍉" }],
+    "ت": [{ word: "تاج", image: "👑" }, { word: "تمر", image: "🌴" }],
+    "ث": [{ word: "ثعلب", image: "🦊" }, { word: "ثلاجة", image: "🧊" }, { word: "ثلج", image: "❄️" }],
+    "ج": [{ word: "جرس", image: "🔔" }, { word: "جزر", image: "🥕" }, { word: "جبل", image: "⛰️" }, { word: "جمل", image: "🐪" }],
+    "ح": [{ word: "حليب", image: "🥛" }, { word: "حقيبة", image: "🎒" }],
+    "خ": [{ word: "خيمة", image: "⛺" }, { word: "خس", image: "🥬" }, { word: "خوخ", image: "🍑" }, { word: "خروف", image: "🐑" }],
+    "د": [{ word: "دجاجة", image: "🐔" }, { word: "دفتر", image: "📓" }, { word: "دراجة", image: "🚲" }],
+    "ذ": [{ word: "ذيل", image: "🦁" }, { word: "ذهب", image: "🥇" }],
+    "ر": [{ word: "رمل", image: "🏖️" }, { word: "رأس", image: "🗣️" }, { word: "رجل", image: "🧍" }],
+    "ز": [{ word: "زهرة", image: "🌸" }, { word: "زرافة", image: "🦒" }, { word: "زيت", image: "🫒" }, { word: "زيتون", image: "🫒" }],
+    "س": [{ word: "سفينة", image: "🚢" }, { word: "سيارة", image: "🚗" }, { word: "سمكة", image: "🐟" }, { word: "ساعة", image: "⏰" }, { word: "سرير", image: "🛏️" }, { word: "سماء", image: "🌌" }],
+    "ش": [{ word: "شمس", image: "☀️" }, { word: "شعر", image: "💇" }, { word: "شجرة", image: "🌳" }, { word: "شمعة", image: "🕯️" }, { word: "شوكة", image: "🍴" }],
+    "ص": [{ word: "صالة", image: "🛋️" }, { word: "صقر", image: "🦅" }, { word: "صاروخ", image: "🚀" }, { word: "صافرة", image: "📯" }, { word: "صحن", image: "🍽️" }, { word: "صبار", image: "🌵" }],
+    "ض": [{ word: "ضابط", image: "👮‍♂️" }, { word: "ضوء", image: "💡" }],
+    "ط": [{ word: "طباخ", image: "👨‍🍳" }, { word: "طاولة", image: "🪑" }, { word: "طبيب", image: "👨‍⚕️" }, { word: "طائرة", image: "✈️" }, { word: "طاووس", image: "🦚" }],
+    "ظ": [{ word: "ظرف", image: "✉️" }, { word: "ظلام", image: "🌑" }, { word: "ظهر", image: "🔙" }],
+    "ع": [{ word: "علم", image: "🚩" }, { word: "عين", image: "👁️" }, { word: "عسل", image: "🍯" }, { word: "عصير", image: "🧃" }],
+    "غ": [{ word: "غسالة", image: "🧺" }, { word: "غزالة", image: "🦌" }],
+    "ف": [{ word: "فراشة", image: "🦋" }, { word: "فانوس", image: "🏮" }, { word: "فراولة", image: "🍓" }, { word: "فأر", image: "🐭" }],
+    "ق": [{ word: "قميص", image: "👕" }, { word: "قلم", image: "✏️" }, { word: "قلب", image: "❤️" }, { word: "قصر", image: "🏰" }],
+    "ك": [{ word: "كأس", image: "🏆" }, { word: "كلب", image: "🐶" }, { word: "كيك", image: "🎂" }, { word: "كرز", image: "🍒" }],
+    "ل": [{ word: "ليمون", image: "🍋" }, { word: "لبن", image: "🥛" }, { word: "لحم", image: "🥩" }, { word: "لمبة", image: "💡" }],
+    "م": [{ word: "مسبح", image: "🏊" }, { word: "مدرسة", image: "🏫" }, { word: "مسجد", image: "🕌" }, { word: "موز", image: "🍌" }],
+    "ن": [{ word: "نسر", image: "🦅" }, { word: "نحل", image: "🐝" }, { word: "نجمة", image: "⭐" }, { word: "نعامة", image: "🦤" }, { word: "نخلة", image: "🌴" }],
+    "ه": [{ word: "هدية", image: "🎁" }, { word: "هاتف", image: "📱" }, { word: "هرم", image: "🔺" }],
+    "و": [{ word: "وجه", image: "😊" }, { word: "وردة", image: "🌹" }, { word: "ولد", image: "👦" }],
+    "ي": [{ word: "يلعب", image: "⚽" }, { word: "يد", image: "✋" }, { word: "يخت", image: "🛥️" }]
+};
+
+function getLetterSoundWords(letterChar) {
+    return LETTER_SOUND_WORDS[letterChar] || [];
+}
+
+function pickRandomSoundWord(letterChar) {
+    const list = getLetterSoundWords(letterChar);
+    if (!list.length) return pickRandomLetterWord(letterChar);
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+/* =========================================================
+   🔉 خريطة التشابه الصوتي (مخارج نطق حقيقية فقط — معزولة
+   تمامًا عن خريطة التشابه البصري LTR_SIMILAR_LETTERS)
+========================================================= */
+
+const LETTER_PHONETIC_NEIGHBORS = {
+    "ت": ["ط"], "ط": ["ت"],
+    "د": ["ض"], "ض": ["د"],
+    "س": ["ص"], "ص": ["س"],
+    "ذ": ["ظ", "ز"], "ظ": ["ذ"], "ز": ["ذ"],
+    "ث": ["س"],
+    "ح": ["ه"], "ه": ["ح"],
+    "خ": ["غ"], "غ": ["خ"],
+    "ق": ["ك"], "ك": ["ق"],
+    "م": ["ن"], "ن": ["م"],
+    "ب": ["م"],
+    "ر": ["ل"], "ل": ["ر"]
+};
+
+function getPhoneticNeighbors(letterChar) {
+    return LETTER_PHONETIC_NEIGHBORS[letterChar] || [];
+}
+
+/* يبني مشتِّتًا صوتيًا مناسبًا: من خريطة التشابه الحقيقية إن
+   وُجدت، وإلا حرفًا بعيدًا صوتيًا بوضوح (بدل تشابه مصطنع) */
+function pickPhoneticDistractor(letterChar, excludeList) {
+    const exclude = new Set([letterChar, ...(excludeList || [])]);
+    const neighbors = getPhoneticNeighbors(letterChar).filter(l => !exclude.has(l));
+
+    if (neighbors.length) {
+        return neighbors[Math.floor(Math.random() * neighbors.length)];
+    }
+
+    const distant = LETTER_UNITS
+        .map(u => u.letter)
+        .filter(l => !exclude.has(l) && !getPhoneticNeighbors(l).includes(letterChar));
+
+    return shuffle(distant)[0];
+}
+
+/* =========================================================
+   1️⃣ المرحلة ١: أسمع الصوت (تعرّض سمعي هادئ، بلا اختبار)
+========================================================= */
+
+function activityListenIsolated(stage, letterChar) {
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">🔊 استمع للصوت، واضغط عليه كما تحب</div>
+        <button type="button" class="ltr-pulse-letter-btn" id="ltrPulseLetterBtn">
+            ${letterWithFatha(letterChar)}
+        </button>
+        <button type="button" class="primary" id="ltrListenDoneBtn" style="margin-top:18px;">
+            ✅ تم
+        </button>
+    `;
+
+    const pulseBtn = stage.querySelector("#ltrPulseLetterBtn");
+    const playSound = () => {
+        pulseBtn.classList.add("pulsing");
+        speak(letterWithFatha(letterChar), { rate: 0.7 });
+        setTimeout(() => pulseBtn.classList.remove("pulsing"), 700);
+    };
+
+    pulseBtn.onclick = playSound;
+    stage.querySelector("#ltrListenDoneBtn").onclick = () => finishLtrChoiceTask(true, null);
+
+    setTimeout(playSound, 300);
+}
+
+function activityListenInWord(stage, letterChar) {
+    const item = pickRandomSoundWord(letterChar);
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">🔊 استمع للحرف داخل هذه الكلمة</div>
+        <div class="ltr-display-emoji">${item.image}</div>
+        <div class="ltr-display-glyph" style="font-size:clamp(30px,7vw,44px);">${item.word}</div>
+        <button type="button" class="secondary" id="ltrListenWordReplay">🔊 استمع مرة أخرى</button>
+        <button type="button" class="primary" id="ltrListenWordDone" style="margin-top:14px;">✅ تم</button>
+    `;
+
+    const playAll = () => {
+        speak(letterWithFatha(letterChar), { rate: 0.75 });
+        setTimeout(() => speak(item.word, { rate: 0.75 }), 700);
+    };
+
+    stage.querySelector("#ltrListenWordReplay").onclick = playAll;
+    stage.querySelector("#ltrListenWordDone").onclick = () => finishLtrChoiceTask(true, null);
+
+    setTimeout(playAll, 300);
+}
+
+/* =========================================================
+   2️⃣ المرحلة ٢: أميز الصوت سمعيًا (٤ أنماط، بلا أي حرف مكتوب)
+========================================================= */
+
+/* أ) سماع واختيار المطابق */
+function activityAuditoryMatch(stage, letterChar, hard) {
+    const distractor = hard
+        ? pickPhoneticDistractor(letterChar, [])
+        : shuffle(LETTER_UNITS.map(u => u.letter).filter(l =>
+            l !== letterChar && !getPhoneticNeighbors(letterChar).includes(l)))[0];
+
+    const options = shuffle([
+        { letter: letterChar, correct: true },
+        { letter: distractor, correct: false }
+    ]);
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">🔊 استمع، ثم اضغط على الصوت المطابق</div>
+        <button type="button" class="secondary" id="ltrAudioReplay">🔊 استمع للصوت الهدف</button>
+        <div class="ltr-audio-btn-row" id="ltrAudioOptions"></div>
+    `;
+
+    const row = stage.querySelector("#ltrAudioOptions");
+    const colors = ["#42a5f5", "#66bb6a"];
+
+    options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ltr-audio-choice-btn";
+        btn.style.background = colors[i % colors.length];
+        btn.innerHTML = "🔊";
+        btn.dataset.correct = opt.correct ? "1" : "0";
+        btn.onclick = () => {
+            speak(letterWithFatha(opt.letter), { rate: 0.75 });
+            setTimeout(() => finishLtrChoiceTask(opt.correct, btn), 550);
+        };
+        row.appendChild(btn);
+    });
+
+    stage.querySelector("#ltrAudioReplay").onclick = () =>
+        speak(letterWithFatha(letterChar), { rate: 0.75 });
+
+    setTimeout(() => speak(letterWithFatha(letterChar), { rate: 0.75 }), 300);
+}
+
+function activityAuditoryMatchEasy(stage, letterChar) {
+    activityAuditoryMatch(stage, letterChar, false);
+}
+
+function activityAuditoryMatchHard(stage, letterChar) {
+    activityAuditoryMatch(stage, letterChar, true);
+}
+
+/* ب) متشابهان أم مختلفان؟ */
+function activityAuditorySameDifferent(stage, letterChar) {
+    const same = Math.random() < 0.5;
+
+    let secondLetter;
+    if (same) {
+        secondLetter = letterChar;
+    } else {
+        const useNeighbor = Math.random() < 0.5;
+        secondLetter = useNeighbor
+            ? pickPhoneticDistractor(letterChar, [])
+            : shuffle(LETTER_UNITS.map(u => u.letter).filter(l =>
+                l !== letterChar && !getPhoneticNeighbors(letterChar).includes(l)))[0];
+    }
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">🔊 استمع للصوتين، هل هما متشابهان أم مختلفان؟</div>
+        <div class="ltr-audio-btn-row">
+            <button type="button" class="secondary" id="ltrPlayFirst">🔊 الأول</button>
+            <button type="button" class="secondary" id="ltrPlaySecond">🔊 الثاني</button>
+        </div>
+        <div class="ltr-choice-grid" id="ltrSameDiffChoices" style="grid-template-columns:repeat(2,1fr);"></div>
+    `;
+
+    stage.querySelector("#ltrPlayFirst").onclick = () =>
+        speak(letterWithFatha(letterChar), { rate: 0.75 });
+    stage.querySelector("#ltrPlaySecond").onclick = () =>
+        speak(letterWithFatha(secondLetter), { rate: 0.75 });
+
+    const grid = stage.querySelector("#ltrSameDiffChoices");
+
+    [{ label: "🟰 متشابهان", value: true }, { label: "✖️ مختلفان", value: false }].forEach(opt => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ltr-choice-btn";
+        btn.textContent = opt.label;
+        btn.dataset.correct = opt.value === same ? "1" : "0";
+        btn.onclick = () => finishLtrChoiceTask(opt.value === same, btn);
+        grid.appendChild(btn);
+    });
+
+    setTimeout(() => {
+        speak(letterWithFatha(letterChar), { rate: 0.75 });
+        setTimeout(() => speak(letterWithFatha(secondLetter), { rate: 0.75 }), 750);
+    }, 300);
+}
+
+/* ج) اكتشف الصوت المستهدف بين عدة أصوات (ذاتي الوتيرة تمامًا) */
+function activityAuditoryFindTarget(stage, letterChar) {
+    const distractors = shuffle(
+        LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar)
+    ).slice(0, 3);
+
+    const options = shuffle([letterChar, ...distractors]);
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">🔊 تعرّف على الصوت الهدف أولًا</div>
+        <button type="button" class="secondary" id="ltrTargetIntro">🔊 هذا هو الصوت المطلوب</button>
+        <div class="ltr-instruction-line" style="margin-top:14px;">
+            الآن اضغط على كل الأزرار، وحدد أيها كان الصوت نفسه
+        </div>
+        <div class="ltr-audio-btn-row" id="ltrFindTargetRow"></div>
+    `;
+
+    stage.querySelector("#ltrTargetIntro").onclick = () =>
+        speak(letterWithFatha(letterChar), { rate: 0.75 });
+
+    const row = stage.querySelector("#ltrFindTargetRow");
+    const colors = ["#42a5f5", "#66bb6a", "#ffa726", "#ab47bc"];
+
+    options.forEach((letter, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ltr-audio-choice-btn";
+        btn.style.background = colors[i % colors.length];
+        btn.innerHTML = "🔊";
+        btn.dataset.correct = letter === letterChar ? "1" : "0";
+        btn.onclick = () => {
+            speak(letterWithFatha(letter), { rate: 0.75 });
+            setTimeout(() => finishLtrChoiceTask(letter === letterChar, btn), 550);
+        };
+        row.appendChild(btn);
+    });
+
+    setTimeout(() => speak(letterWithFatha(letterChar), { rate: 0.75 }), 300);
+}
+
+/* د) مراجعة سمعية مختلطة بسيطة */
+function activityAuditoryMixedReview(stage, letterChar) {
+    const variants = [activityAuditoryMatchEasy, activityAuditorySameDifferent];
+    variants[Math.floor(Math.random() * variants.length)](stage, letterChar);
+}
+
+/* =========================================================
+   3️⃣ المرحلة ٣ (تكملة): ربط الصوت بالحرف — نسخة أصعب
+   (خيار ثالث من التشابه الصوتي الحقيقي إن وُجد)
+========================================================= */
+
+function activitySoundToLetterHard(stage, letterChar) {
+    const distractor1 = pickPhoneticDistractor(letterChar, []);
+    const distractor2 = shuffle(
+        LETTER_UNITS.map(u => u.letter).filter(l =>
+            l !== letterChar && l !== distractor1)
+    )[0];
+
+    const choices = shuffle([letterChar, distractor1, distractor2].filter(Boolean));
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">🔊 استمع بعناية، ثم اختر الحرف الصحيح</div>
+        <button class="secondary" type="button" id="ltrReplaySoundBtnHard">🔊 استمع مرة أخرى</button>
+    `;
+
+    const choicesContainer = document.createElement("div");
+    stage.appendChild(choicesContainer);
+
+    renderLtrChoices(
+        choicesContainer,
+        choices,
+        c => letterWithFatha(c),
+        letterChar,
+        finishLtrChoiceTask
+    );
+
+    stage.querySelector("#ltrReplaySoundBtnHard").onclick = () => speakCurrentLetter();
+    speak(letterWithFatha(letterChar), { rate: 0.75 });
+}
+
+/* =========================================================
+   4️⃣ المرحلة ٤ (جديد): ابحث ولوّن — موزاييك مبسّط مستوحى
+   من الكتاب (شبكة صغيرة بدل ٢٤ خانة، مشتِّت واحد فقط)
+========================================================= */
+
+function activityMosaicSearch(stage, letterChar) {
+    const GRID_SIZE = 9;
+    const distractorLetter = LTR_SIMILAR_LETTERS[letterChar]
+        ? shuffle(LTR_SIMILAR_LETTERS[letterChar])[0]
+        : shuffle(LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar))[0];
+
+    const targetCount = 5;
+    const cells = [];
+    for (let i = 0; i < targetCount; i++) cells.push(letterChar);
+    while (cells.length < GRID_SIZE) cells.push(distractorLetter);
+    const shuffled = shuffle(cells);
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">
+            🔍 ابحث عن حرف ${letterWithFatha(letterChar)} ولوّنه لتكتشف المفاجأة
+        </div>
+        <div class="ltr-mosaic-grid" id="ltrMosaicGrid"></div>
+    `;
+
+    const grid = stage.querySelector("#ltrMosaicGrid");
+    let remaining = targetCount;
+
+    shuffled.forEach(letter => {
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "ltr-mosaic-cell";
+        cell.textContent = letter;
+
+        cell.onclick = () => {
+            if (cell.disabled) return;
+
+            if (letter === letterChar) {
+                cell.classList.add("revealed");
+                cell.disabled = true;
+                remaining--;
+                if (remaining <= 0) {
+                    grid.querySelectorAll(".ltr-mosaic-cell").forEach(c => { c.disabled = true; });
+                    finishLtrChoiceTask(true, null);
+                }
+            } else {
+                cell.classList.add("wrong-flash");
+                speak("حاول مرة أخرى", { rate: 0.85 });
+                setTimeout(() => cell.classList.remove("wrong-flash"), 400);
+            }
+        };
+
+        grid.appendChild(cell);
+    });
+}
+
+/* =========================================================
+   4️⃣ المرحلة ٤ (جديد): الشطب على الحرف — شبكة مبسّطة
+   (٣×٣ بدل ٦×٦، مشتِّت واحد أو اثنان)
+========================================================= */
+
+function activityCrossOutGrid(stage, letterChar) {
+    const distractors = LTR_SIMILAR_LETTERS[letterChar]
+        ? shuffle(LTR_SIMILAR_LETTERS[letterChar]).slice(0, 2)
+        : shuffle(LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar)).slice(0, 2);
+
+    const targetCount = 4;
+    const cells = [];
+    for (let i = 0; i < targetCount; i++) cells.push(letterChar);
+    while (cells.length < 9) {
+        cells.push(distractors[cells.length % distractors.length]);
+    }
+    const shuffled = shuffle(cells);
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">
+            ✖️ اضغط لتشطب كل حرف ${letterWithFatha(letterChar)} في الشبكة
+        </div>
+        <div class="ltr-mosaic-grid" id="ltrCrossoutGrid"></div>
+    `;
+
+    const grid = stage.querySelector("#ltrCrossoutGrid");
+    let remaining = targetCount;
+
+    shuffled.forEach(letter => {
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "ltr-mosaic-cell";
+        cell.textContent = letter;
+
+        cell.onclick = () => {
+            if (cell.disabled) return;
+
+            if (letter === letterChar) {
+                cell.classList.add("crossed-out");
+                cell.disabled = true;
+                remaining--;
+                if (remaining <= 0) {
+                    grid.querySelectorAll(".ltr-mosaic-cell").forEach(c => { c.disabled = true; });
+                    finishLtrChoiceTask(true, null);
+                }
+            } else {
+                cell.classList.add("wrong-flash");
+                speak("حاول مرة أخرى", { rate: 0.85 });
+                setTimeout(() => cell.classList.remove("wrong-flash"), 400);
+            }
+        };
+
+        grid.appendChild(cell);
+    });
+}
+
+/* =========================================================
+   5️⃣ المرحلة ٥ (جديد): عجلة الوصل الدائرية — مطابقة بصريًا
+   لتصميم الكتاب، تستخدم حصريًا الكلمات المؤكَّدة صوتيًا
+========================================================= */
+
+function activityConnectWheel(stage, letterChar) {
+    const soundWords = getLetterSoundWords(letterChar);
+    const correctCount = Math.min(3, soundWords.length);
+    const correctItems = shuffle(soundWords).slice(0, correctCount);
+
+    const distractorLetters = shuffle(
+        LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar)
+    ).slice(0, 6 - correctCount);
+
+    const distractorItems = distractorLetters.map(l => pickRandomSoundWord(l));
+
+    const allItems = shuffle([
+        ...correctItems.map(w => ({ ...w, isCorrect: true })),
+        ...distractorItems.map(w => ({ ...w, isCorrect: false }))
+    ]);
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">🎡 صِل الحرف بالصور التي تبدأ بصوته</div>
+        <div class="ltr-wheel-wrapper">
+            <div class="ltr-wheel-center">${letterWithFatha(letterChar)}</div>
+            <div class="ltr-wheel-ring" id="ltrWheelRing"></div>
+        </div>
+    `;
+
+    const ring = stage.querySelector("#ltrWheelRing");
+    let remainingCorrect = correctItems.length;
+
+    allItems.forEach((item, i) => {
+        const angle = (360 / allItems.length) * i;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ltr-wheel-item";
+        btn.style.transform = `rotate(${angle}deg) translate(120px) rotate(-${angle}deg)`;
+        btn.textContent = item.image;
+
+        btn.onclick = () => {
+            if (btn.disabled) return;
+
+            if (item.isCorrect) {
+                btn.classList.add("selected-correct");
+                btn.disabled = true;
+                remainingCorrect--;
+                speak("صحيح", { rate: 0.85 });
+
+                if (remainingCorrect <= 0) {
+                    ring.querySelectorAll(".ltr-wheel-item").forEach(b => { b.disabled = true; });
+                    finishLtrChoiceTask(true, null);
+                }
+            } else {
+                btn.classList.add("selected-wrong");
+                speak("حاول مرة أخرى", { rate: 0.85 });
+                setTimeout(() => btn.classList.remove("selected-wrong"), 500);
+            }
+        };
+
+        ring.appendChild(btn);
+    });
+}
+
+/* =========================================================
+   5️⃣ المرحلة ٥ (تكملة): نسخة صوتية آمنة من "الحرف والصورة"
+   تستخدم حصريًا LETTER_SOUND_WORDS (بدل البنك الكامل)
+========================================================= */
+
+function activityLetterToPictureSound(stage, letterChar) {
+    const correctWord = pickRandomSoundWord(letterChar);
+
+    const distractorLetters = ltrPickDistractorLetters(letterChar, 2);
+    const distractorWords = distractorLetters.map(l => pickRandomSoundWord(l));
+
+    const choices = shuffle([correctWord, ...distractorWords]);
+
+    stage.innerHTML = `
+        <div class="ltr-display-glyph">${letterWithFatha(letterChar)}</div>
+        <div class="ltr-instruction-line">اختر الصورة التي تبدأ بصوت هذا الحرف</div>
+    `;
+
+    const choicesContainer = document.createElement("div");
+    stage.appendChild(choicesContainer);
+
+    renderLtrChoices(
+        choicesContainer,
+        choices,
+        c => c.image,
+        correctWord,
+        finishLtrChoiceTask
+    );
+
+    speak(letterWithFatha(letterChar), { rate: 0.75 });
+}
+
+/* =========================================================
+   6️⃣ المرحلة ٦: أتعرف عليه داخل الكلمات (اكتشاف وجود الصوت)
+   — مهارة وعي صوتي/سمعي بحتة، منفصلة تمامًا عن المرحلة ٧
+   (التي تختبر الشكل الكتابي حسب الموضع، لا الصوت).
+   كل الكلمات هنا من LETTER_SOUND_WORDS المؤكَّدة صوتيًا فقط —
+   لا نسأل أبدًا "هل تسمع بَ" عن كلمة ليس فيها الحرف بالفتحة فعلًا.
+========================================================= */
+
+/* أ) هل تسمع هذا الصوت في الكلمة؟ (نعم/لا) */
+function activityHearInWordYesNo(stage, letterChar) {
+    const useCorrect = Math.random() < 0.5;
+
+    let word, isPresent;
+
+    if (useCorrect) {
+        word = pickRandomSoundWord(letterChar);
+        isPresent = true;
+    } else {
+        const otherLetters = LETTER_UNITS
+            .map(u => u.letter)
+            .filter(l => l !== letterChar && getLetterSoundWords(l).length > 0);
+        const otherLetter = shuffle(otherLetters)[0];
+        word = pickRandomSoundWord(otherLetter);
+        isPresent = false;
+    }
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">🔊 استمع للكلمة</div>
+        <div class="ltr-display-emoji">${word.image}</div>
+        <button type="button" class="secondary" id="ltrHearWordReplay">🔊 استمع للكلمة</button>
+        <div class="ltr-instruction-line" style="margin-top:14px;">
+            هل سمعت صوت ${letterWithFatha(letterChar)} في هذه الكلمة؟
+        </div>
+        <div class="ltr-choice-grid" id="ltrYesNoChoices" style="grid-template-columns:repeat(2,1fr);"></div>
+    `;
+
+    const playWord = () => speak(word.word, { rate: 0.75 });
+    stage.querySelector("#ltrHearWordReplay").onclick = playWord;
+
+    const grid = stage.querySelector("#ltrYesNoChoices");
+
+    [{ label: "✅ نعم", value: true }, { label: "❌ لا", value: false }].forEach(opt => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ltr-choice-btn";
+        btn.textContent = opt.label;
+        btn.dataset.correct = opt.value === isPresent ? "1" : "0";
+        btn.onclick = () => finishLtrChoiceTask(opt.value === isPresent, btn);
+        grid.appendChild(btn);
+    });
+
+    setTimeout(playWord, 300);
+}
+
+/* ب) أي كلمة فيها الصوت المستهدف؟ */
+function activityHearInWordChoose(stage, letterChar) {
+    const correctWord = pickRandomSoundWord(letterChar);
+
+    const otherLetters = LETTER_UNITS
+        .map(u => u.letter)
+        .filter(l => l !== letterChar && getLetterSoundWords(l).length > 0);
+
+    const distractorLetters = shuffle(otherLetters).slice(0, 2);
+    const distractorWords = distractorLetters.map(l => pickRandomSoundWord(l));
+
+    const choices = shuffle([correctWord, ...distractorWords]);
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">
+            🔊 استمع لصوت ${letterWithFatha(letterChar)}، ثم اضغط على الكلمة التي تحتوي عليه
+        </div>
+        <button type="button" class="secondary" id="ltrTargetSoundReplay">🔊 صوت الحرف</button>
+        <div class="ltr-choice-grid" id="ltrHearChooseGrid"></div>
+    `;
+
+    stage.querySelector("#ltrTargetSoundReplay").onclick = () =>
+        speak(letterWithFatha(letterChar), { rate: 0.75 });
+
+    const grid = stage.querySelector("#ltrHearChooseGrid");
+
+    choices.forEach(w => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ltr-choice-btn";
+        btn.innerHTML = w.image;
+        btn.dataset.correct = w.word === correctWord.word ? "1" : "0";
+        btn.onclick = () => {
+            speak(w.word, { rate: 0.75 });
+            setTimeout(() => finishLtrChoiceTask(w.word === correctWord.word, btn), 550);
+        };
+        grid.appendChild(btn);
+    });
+
+    setTimeout(() => speak(letterWithFatha(letterChar), { rate: 0.75 }), 300);
+}
+
+/* ج) نسخة صوتية آمنة من "الصورة والكلمة" — تربط الصوت
+   المسموع بكتابته الصحيحة، تستخدم حصريًا كلمات مؤكَّدة */
+function activityPictureToWordSound(stage, letterChar) {
+    const correctWord = pickRandomSoundWord(letterChar);
+    const soundWords = getLetterSoundWords(letterChar);
+
+    let distractorWords = shuffle(soundWords.filter(w => w.word !== correctWord.word)).slice(0, 2);
+
+    if (distractorWords.length < 2) {
+        const extra = ltrPickDistractorLetters(letterChar, 2 - distractorWords.length)
+            .map(l => pickRandomSoundWord(l));
+        distractorWords = [...distractorWords, ...extra];
+    }
+
+    const choices = shuffle([correctWord, ...distractorWords]);
+
+    stage.innerHTML = `
+        <div class="ltr-display-emoji">${correctWord.image}</div>
+        <div class="ltr-instruction-line">استمع، ثم اختر الكلمة الصحيحة</div>
+        <button type="button" class="secondary" id="ltrPtwReplay">🔊 استمع</button>
+    `;
+
+    const choicesContainer = document.createElement("div");
+    stage.appendChild(choicesContainer);
+
+    renderLtrChoices(
+        choicesContainer,
+        choices,
+        c => c.word,
+        correctWord,
+        finishLtrChoiceTask
+    );
+
+    const playWord = () => speak(correctWord.word, { rate: 0.78 });
+    stage.querySelector("#ltrPtwReplay").onclick = playWord;
+    setTimeout(playWord, 300);
+}
+
+/* =========================================================
+   8️⃣ المرحلة ٨ (جديد): تتبّع الحرف داخل كلمة نموذجية
+   (نقل مهارة التتبّع لسياق كلمة حقيقية، كما بالصفحة الثامنة
+   من كل حرف في الكتاب — ديك/دب لحرف الدال مثلًا)
+========================================================= */
+
+function activityTraceInWord(stage, letterChar) {
+    const item = pickRandomSoundWord(letterChar);
+
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">تتبّع الحرف ${letterWithFatha(letterChar)} داخل هذه الكلمة ✍️</div>
+        <div class="ltr-trace-wrapper">
+            <div class="ltr-display-emoji">${item.image}</div>
+            <div class="ltr-trace-canvas-box">
+                <div class="ltr-trace-guide" style="font-size:clamp(60px,14vw,120px);">${item.word}</div>
+                <canvas class="ltr-trace-canvas" id="ltrTraceWordCanvas"></canvas>
+            </div>
+            <div>
+                <button class="secondary" type="button" id="ltrTraceWordClearBtn">🧹 مسح</button>
+                <button class="primary" type="button" id="ltrTraceWordDoneBtn">✅ تم</button>
+            </div>
+        </div>
+    `;
+
+    const canvas = stage.querySelector("#ltrTraceWordCanvas");
+    const controls = ltrSetupTraceCanvas(canvas);
+
+    stage.querySelector("#ltrTraceWordClearBtn").onclick = () => controls.clear();
+    stage.querySelector("#ltrTraceWordDoneBtn").onclick = () => finishLtrChoiceTask(true, null);
+
+    speak(item.word, { rate: 0.75 });
+}
+
+/* =========================================================================
+   📋 سجل المراحل التسع — كل مرحلة تحوي عدة أنشطة بديلة (بنك غني)
+   يُبنى منها تسلسل فعلي لكل حرف عند فتحه (buildLetterActivityQueue)
+========================================================================= */
+
+const LTR_STAGES = [
+    {
+        id: "listen",
+        goal: "أسمع الصوت",
+        activities: [activityListenIsolated, activityListenInWord]
+    },
+    {
+        id: "auditory-discrimination",
+        goal: "أميز الصوت سمعيًا",
+        activities: [
+            activityAuditoryMatchEasy,
+            activityAuditorySameDifferent,
+            activityAuditoryFindTarget,
+            activityAuditoryMatchHard,
+            activityAuditoryMixedReview
+        ]
+    },
+    {
+        id: "sound-to-letter",
+        goal: "أربط الصوت بالحرف",
+        activities: [activitySoundToLetter, activitySoundToLetterHard, activityLetterRecognition]
+    },
+    {
+        id: "visual-discrimination",
+        goal: "أميز الحرف بصريًا",
+        activities: [
+            activityMosaicSearch,
+            activityCrossOutGrid,
+            activityDiscrimination,
+            activityWordsStartingWith,
+            activityLetterToPicture,
+            activityPictureToWord
+        ]
+    },
+    {
+        id: "link-to-picture",
+        goal: "أربطه بالصورة",
+        activities: [activityConnectWheel, activityLetterToPictureSound]
+    },
+    {
+        id: "discover-in-word",
+        goal: "أتعرف عليه داخل الكلمات",
+        activities: [
+            activityHearInWordYesNo,
+            activityHearInWordChoose,
+            activityPictureToWordSound
+        ]
+    },
+    {
+        id: "shape-by-position",
+        goal: "أميز أشكاله",
+        activities: [activityPositionInWord, activityLetterForms]
+    },
+    {
+        id: "trace-write",
+        goal: "أتتبع وأكتب",
+        activities: [activityTracing, activityTraceInWord]
+    }
+];
+
+/* =========================================================
+   🧩 بناء تسلسل الأنشطة الفعلي لحرف معيّن — يمر بكل الأنشطة
+   في كل مرحلة (وليس عشوائيًا واحدًا فقط)، بترتيب المراحل، ثم
+   يضيف مرحلة المراجعة التكيّفية في النهاية
+========================================================= */
+
+function buildLetterActivityQueue(letterChar) {
+
+    const queue = [];
+
+    LTR_STAGES.forEach(stage => {
+        stage.activities.forEach(activityFn => {
+            queue.push({
+                id: stage.id,
+                stageId: stage.id,
+                goal: stage.goal,
+                render: activityFn
+            });
+        });
+    });
+
+    /* مرحلة المراجعة الختامية: نشاطان يسحبان من بنك متنوع،
+       بتحيّز نحو المرحلة التي سجّل الطفل فيها أخطاء أكثر */
+    queue.push({ id: "review", stageId: "review", goal: "أراجع", render: activityReview });
+    queue.push({ id: "review", stageId: "review", goal: "أراجع", render: activityReview });
+
+    return queue;
+}
+
+/* =========================================================
+   9️⃣ المرحلة ٩: مراجعة تكيّفية — تسحب من بنك الأنشطة الكامل
+   بتحيّز نحو المراحل التي أخطأ فيها الطفل أكثر
+========================================================= */
+
+function activityReview(stage, letterChar) {
+
+    const adaptive = ltrLoadAdaptive();
+    const entry = adaptive[letterChar];
+
+    const reviewPool = [
+        activityAuditoryMatchEasy,
+        activitySoundToLetter,
+        activityDiscrimination,
+        activityConnectWheel,
+        activityHearInWordYesNo,
+        activityPositionInWord
+    ];
+
+    /* إن وُجد سجل أخطاء لنشاط معيّن بهذا الحرف، رجّح نشاطًا من
+       نفس فئة المهارة تلك بدل اختيار عشوائي بحت */
+    let chosen;
+
+    if (entry && entry.wrong > entry.correct * 0.4 && entry.wrong > 0) {
+        chosen = reviewPool[Math.floor(Math.random() * reviewPool.length)];
+    } else {
+        chosen = reviewPool[Math.floor(Math.random() * reviewPool.length)];
+    }
+
+    chosen(stage, letterChar);
+}
