@@ -6947,3 +6947,203 @@ body.calm-mode .ltr-choice-btn.hinted {
         font-size: 18px;
     }
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   🎯 تطوير قسم "الحروف" — عناصر واجهة جديدة لنظام المراحل التسع
+   (تعرّض سمعي، تمييز سمعي، موزاييك، عجلة وصل) — كل الأصناف هنا
+   جديدة ومعزولة (ltr-*) ولا تُعدّل أي صنف موجود.
+   =====================================================================
+========================================================================= */
+
+/* ---------- المرحلة ١: زر الحرف النابض ---------- */
+
+.ltr-pulse-letter-btn {
+    font-size: clamp(70px, 18vw, 120px);
+    font-weight: 900;
+    color: #1e3a8a;
+    background: #eef6ff;
+    border: 4px solid #90caf9;
+    border-radius: 30px;
+    padding: 20px 40px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.ltr-pulse-letter-btn.pulsing {
+    transform: scale(1.08);
+    background: #d3e9fb;
+}
+
+/* ---------- المرحلة ٢: أزرار الصوت الدائرية (بلا حروف) ---------- */
+
+.ltr-audio-btn-row {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.ltr-audio-choice-btn {
+    width: clamp(70px, 16vw, 100px);
+    height: clamp(70px, 16vw, 100px);
+    border-radius: 50%;
+    border: none;
+    font-size: 32px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: transform 0.15s;
+}
+
+.ltr-audio-choice-btn:hover {
+    transform: scale(1.06);
+}
+
+.ltr-audio-choice-btn.correct {
+    outline: 5px solid #43a047;
+}
+
+.ltr-audio-choice-btn.wrong {
+    outline: 5px solid #e53935;
+}
+
+/* ---------- المرحلة ٤: الموزاييك والشطب (شبكة مبسّطة) ---------- */
+
+.ltr-mosaic-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 320px;
+    margin: 16px auto;
+}
+
+.ltr-mosaic-cell {
+    aspect-ratio: 1;
+    font-size: clamp(28px, 7vw, 40px);
+    font-weight: 900;
+    background: #f8f9fa;
+    border: 3px solid #e0e0e0;
+    border-radius: 16px;
+    color: #37474f;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.ltr-mosaic-cell:hover {
+    transform: scale(1.04);
+}
+
+.ltr-mosaic-cell.revealed {
+    background: #c8f7d2;
+    border-color: #43a047;
+    color: #2e7d32;
+}
+
+.ltr-mosaic-cell.crossed-out {
+    background: #ffe0b2;
+    border-color: #fb8c00;
+    color: #e65100;
+    text-decoration: line-through;
+}
+
+.ltr-mosaic-cell.wrong-flash {
+    background: #ffd0d0 !important;
+    border-color: #e53935 !important;
+}
+
+/* ---------- المرحلة ٥: عجلة الوصل الدائرية ---------- */
+
+.ltr-wheel-wrapper {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 30px auto;
+}
+
+.ltr-wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: white;
+    border: 4px solid #1565c0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    font-weight: 900;
+    color: #1565c0;
+    z-index: 2;
+}
+
+.ltr-wheel-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+}
+
+.ltr-wheel-item {
+    position: absolute;
+    top: -30px;
+    left: -30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: 3px solid #e0e0e0;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s;
+}
+
+.ltr-wheel-item.selected-correct {
+    background: #c8f7d2;
+    border-color: #43a047;
+}
+
+.ltr-wheel-item.selected-wrong {
+    background: #ffd0d0;
+    border-color: #e53935;
+}
+
+/* ---------- توافق الوضع الليلي ---------- */
+
+body.dark-mode .ltr-pulse-letter-btn,
+body.dark-mode .ltr-mosaic-cell,
+body.dark-mode .ltr-wheel-center,
+body.dark-mode .ltr-wheel-item {
+    background: #232946;
+    color: #e8eaf6;
+}
+
+/* ---------- استجابة الجوال ---------- */
+
+@media (max-width: 480px) {
+
+    .ltr-wheel-wrapper {
+        width: 250px;
+        height: 250px;
+    }
+
+    .ltr-wheel-item {
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+    }
+
+    .ltr-audio-choice-btn {
+        width: 64px;
+        height: 64px;
+        font-size: 26px;
+    }
+}
