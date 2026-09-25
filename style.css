@@ -7147,3 +7147,56 @@ body.dark-mode .ltr-wheel-item {
         font-size: 26px;
     }
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   ♿ تطوير قسم "الحروف" — دعم شامل للتوحد/فرط الحركة/صعوبات التعلم
+   إبراز الإجابة الصحيحة لكل أنواع العناصر التفاعلية الجديدة (وليس
+   فقط .ltr-choice-btn)، مع احترام الوضع الهادئ في كل حالة
+   =====================================================================
+========================================================================= */
+
+.ltr-audio-choice-btn.hinted {
+    animation: ltrHintPulse 1s ease-in-out infinite;
+    outline: 4px solid #ffca28;
+}
+
+.ltr-mosaic-cell.hinted {
+    animation: ltrHintPulse 1s ease-in-out infinite;
+    outline: 4px solid #ffca28;
+}
+
+.ltr-wheel-item.hinted {
+    animation: ltrHintPulse 1s ease-in-out infinite;
+    outline: 4px solid #ffca28;
+}
+
+.ltr-multi-item.hinted {
+    animation: ltrHintPulse 1s ease-in-out infinite;
+    outline: 4px solid #ffca28;
+}
+
+body.calm-mode .ltr-audio-choice-btn.hinted,
+body.calm-mode .ltr-mosaic-cell.hinted,
+body.calm-mode .ltr-wheel-item.hinted,
+body.calm-mode .ltr-multi-item.hinted {
+    animation: none !important;
+    box-shadow: 0 0 0 4px rgba(255,202,40,0.6) !important;
+}
+
+/* الأزرار المعطَّلة (بعد إجابة خاطئة فردية) تبقى هادئة وواضحة
+   بدل الاختفاء أو التعتيم الشديد — يحافظ على قابلية القراءة */
+.ltr-choice-btn:disabled.wrong,
+.ltr-audio-choice-btn:disabled.wrong {
+    opacity: 0.55;
+}
+
+/* لا حركات دوّارة أو قافزة مزعجة في أي مكان بقسم الحروف؛ كل
+   الحركات هنا انتقالات لطيفة فقط (شفافية/تكبير بسيط جدًا) */
+.ltr-mosaic-cell,
+.ltr-wheel-item,
+.ltr-audio-choice-btn,
+.ltr-multi-item,
+.ltr-choice-btn {
+    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
