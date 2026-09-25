@@ -17305,9 +17305,12 @@ function ltrHideHint() {
 
 function ltrHighlightCorrectChoice() {
     document
-        .querySelectorAll("#ltrActivityStage .ltr-choice-btn")
+        .querySelectorAll(
+            "#ltrActivityStage .ltr-choice-btn, " +
+            "#ltrActivityStage .ltr-audio-choice-btn"
+        )
         .forEach(btn => {
-            if (btn.dataset.correct === "1") btn.classList.add("hinted");
+            if (btn.dataset.correct === "1" && !btn.disabled) btn.classList.add("hinted");
         });
 }
 
@@ -17553,7 +17556,7 @@ function renderCurrentLetterActivity() {
     if (goalEl) goalEl.textContent = activity ? activity.goal : "";
     if (!stage || !activity) return;
 
-    activity.render(stage, ltrState.letter);
+    activity.render(stage, ltrState.letter, activity.difficulty || 2);
 }
 
 function retryCurrentLetterActivity() {
@@ -17585,7 +17588,7 @@ function finishLtrChoiceTask(isCorrect, button) {
         speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
 
         document
-            .querySelectorAll("#ltrActivityStage .ltr-choice-btn, #ltrActivityStage .ltr-multi-item")
+            .querySelectorAll("#ltrActivityStage .ltr-choice-btn, #ltrActivityStage .ltr-multi-item, #ltrActivityStage .ltr-audio-choice-btn")
             .forEach(btn => { btn.disabled = true; btn.classList.remove("hinted"); });
 
         ltrHideHint();
@@ -17595,7 +17598,17 @@ function finishLtrChoiceTask(isCorrect, button) {
         setTimeout(() => advanceLtrActivity(), 1200);
 
     } else {
-        if (button) button.classList.add("wrong");
+        /* عند الخطأ: بدون عقاب، وبدون تعطيل كل الأزرار، وبدون مؤقّت
+           خفي يتجاوز الطفل تلقائيًا. نعطّل فقط الزر الخاطئ الذي
+           ضغطه (ليتذكر أنه جرّبه)، ونقدّم مساعدة متدرّجة (تلميح ثم
+           إبراز الإجابة الصحيحة)، وتبقى كل الأزرار الأخرى — وعلى
+           رأسها الصحيحة — قابلة للضغط دائمًا ليُكمل الطفل بنفسه
+           بمجرد أن يراها، فيحصل على شعور إنجاز حقيقي بدل أن يُنقَل
+           تلقائيًا دون فعل منه */
+        if (button) {
+            button.classList.add("wrong");
+            button.disabled = true;
+        }
 
         if (messageEl) {
             messageEl.textContent = "😊 حاول مرة أخرى";
@@ -17607,22 +17620,7 @@ function finishLtrChoiceTask(isCorrect, button) {
         ltrWrongStreak++;
         ltrRecordOutcome(ltrState.letter, activity.id, false, ltrPromptLevel(ltrWrongStreak));
 
-        if (ltrWrongStreak >= 3) {
-            document
-                .querySelectorAll("#ltrActivityStage .ltr-choice-btn, #ltrActivityStage .ltr-multi-item")
-                .forEach(btn => { btn.disabled = true; });
-
-            ltrApplyPrompting();
-
-            setTimeout(() => {
-                ltrHideHint();
-                ltrWrongStreak = 0;
-                advanceLtrActivity();
-            }, 3000);
-
-        } else {
-            ltrApplyPrompting();
-        }
+        ltrApplyPrompting();
     }
 }
 
@@ -17738,8 +17736,9 @@ function ltrPickDistractorLetters(targetLetter, count) {
    1️⃣ التعرف على الصوت: استمع ثم اختر الحرف
 ========================================================= */
 
-function activitySoundToLetter(stage, letterChar) {
-    const distractors = ltrPickDistractorLetters(letterChar, 2);
+function activitySoundToLetter(stage, letterChar, difficulty) {
+    const distractorCount = (difficulty || 2) >= 2 ? 2 : 1;
+    const distractors = ltrPickDistractorLetters(letterChar, distractorCount);
     const choices = shuffle([letterChar, ...distractors]);
 
     stage.innerHTML = `
@@ -17767,8 +17766,9 @@ function activitySoundToLetter(stage, letterChar) {
    2️⃣ التعرف على الحرف: يظهر الحرف، اختر الصوت المطابق
 ========================================================= */
 
-function activityLetterRecognition(stage, letterChar) {
-    const distractors = ltrPickDistractorLetters(letterChar, 2);
+function activityLetterRecognition(stage, letterChar, difficulty) {
+    const distractorCount = (difficulty || 2) >= 2 ? 2 : 1;
+    const distractors = ltrPickDistractorLetters(letterChar, distractorCount);
     const choices = shuffle([letterChar, ...distractors]);
 
     stage.innerHTML = `
@@ -17799,9 +17799,10 @@ function activityLetterRecognition(stage, letterChar) {
    3️⃣ التمييز: ابحث عن الحرف بين حروف متشابهة
 ========================================================= */
 
-function activityDiscrimination(stage, letterChar) {
-    const similar = LTR_SIMILAR_LETTERS[letterChar] || ltrPickDistractorLetters(letterChar, 2);
-    const distractors = shuffle(similar).slice(0, 2);
+function activityDiscrimination(stage, letterChar, difficulty) {
+    const distractorCount = (difficulty || 2) >= 2 ? 2 : 1;
+    const similar = LTR_SIMILAR_LETTERS[letterChar] || ltrPickDistractorLetters(letterChar, distractorCount);
+    const distractors = shuffle(similar).slice(0, distractorCount);
     const choices = shuffle([letterChar, ...distractors]);
 
     stage.innerHTML = `
@@ -17826,9 +17827,10 @@ function activityDiscrimination(stage, letterChar) {
    4️⃣ أشكال الحرف: معرض + اختيار الشكل الصحيح للموضع
 ========================================================= */
 
-function activityLetterForms(stage, letterChar) {
+function activityLetterForms(stage, letterChar, difficulty) {
     const forms = (typeof arabicLetterForms !== "undefined" && arabicLetterForms[letterChar]) || {};
     const availableKeys = Object.keys(forms);
+    const extraCount = (difficulty || 2) >= 2 ? 2 : 1;
 
     const galleryHtml = availableKeys.map(key => `
         <div class="ltr-forms-card">
@@ -17838,14 +17840,17 @@ function activityLetterForms(stage, letterChar) {
     `).join("");
 
     const correctKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
-    let choiceKeys = shuffle(availableKeys.filter(k => k !== correctKey)).slice(0, 2);
+    let choiceKeys = shuffle(availableKeys.filter(k => k !== correctKey)).slice(0, extraCount);
     choiceKeys.push(correctKey);
     choiceKeys = shuffle([...new Set(choiceKeys)]);
 
+    const positionLabel = arabicFormPositionLabels[correctKey] || correctKey;
+
     stage.innerHTML = `
         <div class="ltr-forms-gallery">${galleryHtml}</div>
+        <button class="secondary" type="button" id="ltrFormsReplayBtn">🔊 استمع للسؤال مرة أخرى</button>
         <div class="ltr-instruction-line">
-            أين شكل الحرف عندما يكون <strong>${arabicFormPositionLabels[correctKey] || correctKey}</strong>؟
+            أين شكل الحرف عندما يكون <strong>${positionLabel}</strong>؟
         </div>
     `;
 
@@ -17859,26 +17864,35 @@ function activityLetterForms(stage, letterChar) {
         correctKey,
         finishLtrChoiceTask
     );
+
+    const playQuestion = () => {
+        speak(letterWithFatha(letterChar), { rate: 0.75 });
+        setTimeout(() => speak(positionLabel, { rate: 0.75 }), 650);
+    };
+    stage.querySelector("#ltrFormsReplayBtn").onclick = playQuestion;
+    setTimeout(playQuestion, 300);
 }
 
 /* =========================================================
    5️⃣ موضع الحرف في الكلمة (بيانات حقيقية موثّقة)
 ========================================================= */
 
-function activityPositionInWord(stage, letterChar) {
+function activityPositionInWord(stage, letterChar, difficulty) {
     const example = pickLetterPositionExample(letterChar) || {
         letter: letterChar, posKey: "initial", word: getLetterUnit(letterChar).words[0].word
     };
+    const extraCount = (difficulty || 2) >= 2 ? 2 : 1;
 
     stage.innerHTML = `
         <div class="ltr-display-glyph" style="font-size:clamp(36px,8vw,54px);">${example.word}</div>
+        <button class="secondary" type="button" id="ltrPositionReplayBtn">🔊 استمع للكلمة مرة أخرى</button>
         <div class="ltr-instruction-line">
             أين يوجد حرف ${letterWithFatha(letterChar)} في هذه الكلمة؟
         </div>
     `;
 
     const allKeys = ["initial", "medial", "final", "isolated"];
-    let choiceKeys = shuffle(allKeys.filter(k => k !== example.posKey)).slice(0, 2);
+    let choiceKeys = shuffle(allKeys.filter(k => k !== example.posKey)).slice(0, extraCount);
     choiceKeys.push(example.posKey);
     choiceKeys = shuffle([...new Set(choiceKeys)]);
 
@@ -17893,17 +17907,20 @@ function activityPositionInWord(stage, letterChar) {
         finishLtrChoiceTask
     );
 
-    speak(example.word, { rate: 0.78 });
+    const playWord = () => speak(example.word, { rate: 0.78 });
+    stage.querySelector("#ltrPositionReplayBtn").onclick = playWord;
+    setTimeout(playWord, 300);
 }
 
 /* =========================================================
    6️⃣ الحرف والصورة: اختر الصورة التي تبدأ بالحرف
 ========================================================= */
 
-function activityLetterToPicture(stage, letterChar) {
+function activityLetterToPicture(stage, letterChar, difficulty) {
     const correctWord = pickRandomLetterWord(letterChar);
 
-    const distractorLetters = ltrPickDistractorLetters(letterChar, 2);
+    const distractorCount = (difficulty || 2) >= 2 ? 2 : 1;
+    const distractorLetters = ltrPickDistractorLetters(letterChar, distractorCount);
     const distractorWords = distractorLetters.map(l => pickRandomLetterWord(l));
 
     const choices = shuffle([correctWord, ...distractorWords]);
@@ -17970,12 +17987,15 @@ function activityPictureToWord(stage, letterChar) {
    8️⃣ الكلمات التي تبدأ بالحرف (اختيار متعدد من شبكة صور)
 ========================================================= */
 
-function activityWordsStartingWith(stage, letterChar) {
+function activityWordsStartingWith(stage, letterChar, difficulty) {
     const unit = getLetterUnit(letterChar);
-    const correctCount = Math.min(3, unit.words.length);
+    const easy = (difficulty || 2) <= 1;
+
+    const correctCount = Math.min(easy ? 2 : 3, unit.words.length);
     const correctWords = shuffle(unit.words).slice(0, correctCount);
 
-    const distractorLetters = ltrPickDistractorLetters(letterChar, 3);
+    const distractorCount = easy ? 2 : 3;
+    const distractorLetters = ltrPickDistractorLetters(letterChar, distractorCount);
     const distractorWords = distractorLetters.map(l => pickRandomLetterWord(l));
 
     const allItems = shuffle([
@@ -17993,12 +18013,15 @@ function activityWordsStartingWith(stage, letterChar) {
     const grid = stage.querySelector("#ltrMultiGrid");
     let remainingCorrect = correctWords.length;
     let done = false;
+    const wrongState = {};
+    ltrHideHint();
 
     allItems.forEach(item => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ltr-multi-item";
         btn.textContent = item.image;
+        btn.dataset.correct = item.isCorrect ? "1" : "0";
 
         btn.onclick = () => {
             if (btn.disabled || done) return;
@@ -18011,6 +18034,7 @@ function activityWordsStartingWith(stage, letterChar) {
 
                 if (remainingCorrect <= 0) {
                     done = true;
+                    ltrHideHint();
                     grid.querySelectorAll(".ltr-multi-item").forEach(b => { b.disabled = true; });
                     finishLtrChoiceTask(true, null);
                 }
@@ -18021,6 +18045,7 @@ function activityWordsStartingWith(stage, letterChar) {
                     btn.classList.remove("selected-wrong");
                     btn.disabled = false;
                 }, 500);
+                ltrMultiSelectWrongAttempt(wrongState, grid, ".ltr-multi-item");
             }
         };
 
@@ -18343,15 +18368,27 @@ function activityListenInWord(stage, letterChar) {
 ========================================================= */
 
 /* أ) سماع واختيار المطابق */
-function activityAuditoryMatch(stage, letterChar, hard) {
-    const distractor = hard
-        ? pickPhoneticDistractor(letterChar, [])
-        : shuffle(LETTER_UNITS.map(u => u.letter).filter(l =>
-            l !== letterChar && !getPhoneticNeighbors(letterChar).includes(l)))[0];
+function activityAuditoryMatch(stage, letterChar, difficulty) {
+    const useHardDistractor = (difficulty || 2) >= 3;
+    const optionCount = (difficulty || 2) >= 2 ? 3 : 2;
+
+    const distantPool = LETTER_UNITS.map(u => u.letter).filter(l =>
+        l !== letterChar && !getPhoneticNeighbors(letterChar).includes(l));
+
+    const distractorLetters = [];
+    if (useHardDistractor) {
+        const phonetic = pickPhoneticDistractor(letterChar, []);
+        if (phonetic) distractorLetters.push(phonetic);
+    }
+    while (distractorLetters.length < optionCount - 1) {
+        const pick = shuffle(distantPool.filter(l => !distractorLetters.includes(l)))[0];
+        if (!pick) break;
+        distractorLetters.push(pick);
+    }
 
     const options = shuffle([
         { letter: letterChar, correct: true },
-        { letter: distractor, correct: false }
+        ...distractorLetters.map(l => ({ letter: l, correct: false }))
     ]);
 
     stage.innerHTML = `
@@ -18383,12 +18420,12 @@ function activityAuditoryMatch(stage, letterChar, hard) {
     setTimeout(() => speak(letterWithFatha(letterChar), { rate: 0.75 }), 300);
 }
 
-function activityAuditoryMatchEasy(stage, letterChar) {
-    activityAuditoryMatch(stage, letterChar, false);
+function activityAuditoryMatchEasy(stage, letterChar, difficulty) {
+    activityAuditoryMatch(stage, letterChar, difficulty || 1);
 }
 
-function activityAuditoryMatchHard(stage, letterChar) {
-    activityAuditoryMatch(stage, letterChar, true);
+function activityAuditoryMatchHard(stage, letterChar, difficulty) {
+    activityAuditoryMatch(stage, letterChar, Math.max(difficulty || 3, 3));
 }
 
 /* ب) متشابهان أم مختلفان؟ */
@@ -18442,7 +18479,7 @@ function activityAuditorySameDifferent(stage, letterChar) {
 function activityAuditoryFindTarget(stage, letterChar) {
     const distractors = shuffle(
         LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar)
-    ).slice(0, 3);
+    ).slice(0, 2);
 
     const options = shuffle([letterChar, ...distractors]);
 
@@ -18450,7 +18487,7 @@ function activityAuditoryFindTarget(stage, letterChar) {
         <div class="ltr-instruction-line">🔊 تعرّف على الصوت الهدف أولًا</div>
         <button type="button" class="secondary" id="ltrTargetIntro">🔊 هذا هو الصوت المطلوب</button>
         <div class="ltr-instruction-line" style="margin-top:14px;">
-            الآن اضغط على كل الأزرار، وحدد أيها كان الصوت نفسه
+            🔊 اضغط على الزر الذي فيه الصوت نفسه
         </div>
         <div class="ltr-audio-btn-row" id="ltrFindTargetRow"></div>
     `;
@@ -18459,7 +18496,7 @@ function activityAuditoryFindTarget(stage, letterChar) {
         speak(letterWithFatha(letterChar), { rate: 0.75 });
 
     const row = stage.querySelector("#ltrFindTargetRow");
-    const colors = ["#42a5f5", "#66bb6a", "#ffa726", "#ab47bc"];
+    const colors = ["#42a5f5", "#66bb6a"];
 
     options.forEach((letter, i) => {
         const btn = document.createElement("button");
@@ -18479,9 +18516,9 @@ function activityAuditoryFindTarget(stage, letterChar) {
 }
 
 /* د) مراجعة سمعية مختلطة بسيطة */
-function activityAuditoryMixedReview(stage, letterChar) {
+function activityAuditoryMixedReview(stage, letterChar, difficulty) {
     const variants = [activityAuditoryMatchEasy, activityAuditorySameDifferent];
-    variants[Math.floor(Math.random() * variants.length)](stage, letterChar);
+    variants[Math.floor(Math.random() * variants.length)](stage, letterChar, difficulty);
 }
 
 /* =========================================================
@@ -18523,13 +18560,34 @@ function activitySoundToLetterHard(stage, letterChar) {
    من الكتاب (شبكة صغيرة بدل ٢٤ خانة، مشتِّت واحد فقط)
 ========================================================= */
 
-function activityMosaicSearch(stage, letterChar) {
-    const GRID_SIZE = 9;
+/* =========================================================
+   🆘 مساعدة متدرّجة مشتركة لأنشطة الاختيار المتعدد (موزاييك/
+   شطب/عجلة/شبكة الكلمات) — بدون عقاب وبدون تعطيل شامل، فقط
+   تلميح هادئ ثم إضاءة العناصر الصحيحة المتبقية بعد عدة محاولات
+   خاطئة (نفس فلسفة المساعدة التدريجية في بقية الأنشطة)
+========================================================= */
+
+function ltrMultiSelectWrongAttempt(state, container, itemSelector) {
+    state.wrongCount = (state.wrongCount || 0) + 1;
+
+    if (state.wrongCount === 2) {
+        ltrShowHint("🌟 خذ وقتك، وابحث بعناية");
+    } else if (state.wrongCount >= 4) {
+        ltrShowHint("🌟 لا بأس أبدًا! العناصر المضيئة هي الصحيحة ✅");
+        container.querySelectorAll(itemSelector).forEach(el => {
+            if (!el.disabled && el.dataset.correct === "1") el.classList.add("hinted");
+        });
+    }
+}
+
+function activityMosaicSearch(stage, letterChar, difficulty) {
+    const easy = (difficulty || 2) <= 1;
+    const GRID_SIZE = easy ? 6 : 9;
     const distractorLetter = LTR_SIMILAR_LETTERS[letterChar]
         ? shuffle(LTR_SIMILAR_LETTERS[letterChar])[0]
         : shuffle(LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar))[0];
 
-    const targetCount = 5;
+    const targetCount = easy ? 4 : 5;
     const cells = [];
     for (let i = 0; i < targetCount; i++) cells.push(letterChar);
     while (cells.length < GRID_SIZE) cells.push(distractorLetter);
@@ -18544,12 +18602,15 @@ function activityMosaicSearch(stage, letterChar) {
 
     const grid = stage.querySelector("#ltrMosaicGrid");
     let remaining = targetCount;
+    const wrongState = {};
+    ltrHideHint();
 
     shuffled.forEach(letter => {
         const cell = document.createElement("button");
         cell.type = "button";
         cell.className = "ltr-mosaic-cell";
         cell.textContent = letter;
+        cell.dataset.correct = letter === letterChar ? "1" : "0";
 
         cell.onclick = () => {
             if (cell.disabled) return;
@@ -18559,6 +18620,7 @@ function activityMosaicSearch(stage, letterChar) {
                 cell.disabled = true;
                 remaining--;
                 if (remaining <= 0) {
+                    ltrHideHint();
                     grid.querySelectorAll(".ltr-mosaic-cell").forEach(c => { c.disabled = true; });
                     finishLtrChoiceTask(true, null);
                 }
@@ -18566,6 +18628,7 @@ function activityMosaicSearch(stage, letterChar) {
                 cell.classList.add("wrong-flash");
                 speak("حاول مرة أخرى", { rate: 0.85 });
                 setTimeout(() => cell.classList.remove("wrong-flash"), 400);
+                ltrMultiSelectWrongAttempt(wrongState, grid, ".ltr-mosaic-cell");
             }
         };
 
@@ -18578,15 +18641,19 @@ function activityMosaicSearch(stage, letterChar) {
    (٣×٣ بدل ٦×٦، مشتِّت واحد أو اثنان)
 ========================================================= */
 
-function activityCrossOutGrid(stage, letterChar) {
-    const distractors = LTR_SIMILAR_LETTERS[letterChar]
-        ? shuffle(LTR_SIMILAR_LETTERS[letterChar]).slice(0, 2)
-        : shuffle(LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar)).slice(0, 2);
+function activityCrossOutGrid(stage, letterChar, difficulty) {
+    const easy = (difficulty || 2) <= 1;
+    const distractorTypeCount = easy ? 1 : 2;
+    const gridSize = easy ? 6 : 9;
 
-    const targetCount = 4;
+    const distractors = LTR_SIMILAR_LETTERS[letterChar]
+        ? shuffle(LTR_SIMILAR_LETTERS[letterChar]).slice(0, distractorTypeCount)
+        : shuffle(LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar)).slice(0, distractorTypeCount);
+
+    const targetCount = easy ? 3 : 4;
     const cells = [];
     for (let i = 0; i < targetCount; i++) cells.push(letterChar);
-    while (cells.length < 9) {
+    while (cells.length < gridSize) {
         cells.push(distractors[cells.length % distractors.length]);
     }
     const shuffled = shuffle(cells);
@@ -18600,12 +18667,15 @@ function activityCrossOutGrid(stage, letterChar) {
 
     const grid = stage.querySelector("#ltrCrossoutGrid");
     let remaining = targetCount;
+    const wrongState = {};
+    ltrHideHint();
 
     shuffled.forEach(letter => {
         const cell = document.createElement("button");
         cell.type = "button";
         cell.className = "ltr-mosaic-cell";
         cell.textContent = letter;
+        cell.dataset.correct = letter === letterChar ? "1" : "0";
 
         cell.onclick = () => {
             if (cell.disabled) return;
@@ -18615,6 +18685,7 @@ function activityCrossOutGrid(stage, letterChar) {
                 cell.disabled = true;
                 remaining--;
                 if (remaining <= 0) {
+                    ltrHideHint();
                     grid.querySelectorAll(".ltr-mosaic-cell").forEach(c => { c.disabled = true; });
                     finishLtrChoiceTask(true, null);
                 }
@@ -18622,6 +18693,7 @@ function activityCrossOutGrid(stage, letterChar) {
                 cell.classList.add("wrong-flash");
                 speak("حاول مرة أخرى", { rate: 0.85 });
                 setTimeout(() => cell.classList.remove("wrong-flash"), 400);
+                ltrMultiSelectWrongAttempt(wrongState, grid, ".ltr-mosaic-cell");
             }
         };
 
@@ -18634,14 +18706,15 @@ function activityCrossOutGrid(stage, letterChar) {
    لتصميم الكتاب، تستخدم حصريًا الكلمات المؤكَّدة صوتيًا
 ========================================================= */
 
-function activityConnectWheel(stage, letterChar) {
+function activityConnectWheel(stage, letterChar, difficulty) {
+    const totalItems = (difficulty || 2) <= 1 ? 4 : 6;
     const soundWords = getLetterSoundWords(letterChar);
-    const correctCount = Math.min(3, soundWords.length);
+    const correctCount = Math.min(Math.ceil(totalItems / 2), soundWords.length);
     const correctItems = shuffle(soundWords).slice(0, correctCount);
 
     const distractorLetters = shuffle(
         LETTER_UNITS.map(u => u.letter).filter(l => l !== letterChar)
-    ).slice(0, 6 - correctCount);
+    ).slice(0, totalItems - correctCount);
 
     const distractorItems = distractorLetters.map(l => pickRandomSoundWord(l));
 
@@ -18660,6 +18733,8 @@ function activityConnectWheel(stage, letterChar) {
 
     const ring = stage.querySelector("#ltrWheelRing");
     let remainingCorrect = correctItems.length;
+    const wrongState = {};
+    ltrHideHint();
 
     allItems.forEach((item, i) => {
         const angle = (360 / allItems.length) * i;
@@ -18668,6 +18743,7 @@ function activityConnectWheel(stage, letterChar) {
         btn.className = "ltr-wheel-item";
         btn.style.transform = `rotate(${angle}deg) translate(120px) rotate(-${angle}deg)`;
         btn.textContent = item.image;
+        btn.dataset.correct = item.isCorrect ? "1" : "0";
 
         btn.onclick = () => {
             if (btn.disabled) return;
@@ -18679,6 +18755,7 @@ function activityConnectWheel(stage, letterChar) {
                 speak("صحيح", { rate: 0.85 });
 
                 if (remainingCorrect <= 0) {
+                    ltrHideHint();
                     ring.querySelectorAll(".ltr-wheel-item").forEach(b => { b.disabled = true; });
                     finishLtrChoiceTask(true, null);
                 }
@@ -18686,6 +18763,7 @@ function activityConnectWheel(stage, letterChar) {
                 btn.classList.add("selected-wrong");
                 speak("حاول مرة أخرى", { rate: 0.85 });
                 setTimeout(() => btn.classList.remove("selected-wrong"), 500);
+                ltrMultiSelectWrongAttempt(wrongState, ring, ".ltr-wheel-item");
             }
         };
 
@@ -18698,10 +18776,11 @@ function activityConnectWheel(stage, letterChar) {
    تستخدم حصريًا LETTER_SOUND_WORDS (بدل البنك الكامل)
 ========================================================= */
 
-function activityLetterToPictureSound(stage, letterChar) {
+function activityLetterToPictureSound(stage, letterChar, difficulty) {
     const correctWord = pickRandomSoundWord(letterChar);
 
-    const distractorLetters = ltrPickDistractorLetters(letterChar, 2);
+    const distractorCount = (difficulty || 2) >= 2 ? 2 : 1;
+    const distractorLetters = ltrPickDistractorLetters(letterChar, distractorCount);
     const distractorWords = distractorLetters.map(l => pickRandomSoundWord(l));
 
     const choices = shuffle([correctWord, ...distractorWords]);
@@ -18780,14 +18859,15 @@ function activityHearInWordYesNo(stage, letterChar) {
 }
 
 /* ب) أي كلمة فيها الصوت المستهدف؟ */
-function activityHearInWordChoose(stage, letterChar) {
+function activityHearInWordChoose(stage, letterChar, difficulty) {
     const correctWord = pickRandomSoundWord(letterChar);
 
     const otherLetters = LETTER_UNITS
         .map(u => u.letter)
         .filter(l => l !== letterChar && getLetterSoundWords(l).length > 0);
 
-    const distractorLetters = shuffle(otherLetters).slice(0, 2);
+    const distractorCount = (difficulty || 2) >= 2 ? 2 : 1;
+    const distractorLetters = shuffle(otherLetters).slice(0, distractorCount);
     const distractorWords = distractorLetters.map(l => pickRandomSoundWord(l));
 
     const choices = shuffle([correctWord, ...distractorWords]);
@@ -18927,8 +19007,7 @@ const LTR_STAGES = [
             activityCrossOutGrid,
             activityDiscrimination,
             activityWordsStartingWith,
-            activityLetterToPicture,
-            activityPictureToWord
+            activityLetterToPicture
         ]
     },
     {
@@ -18941,8 +19020,7 @@ const LTR_STAGES = [
         goal: "أتعرف عليه داخل الكلمات",
         activities: [
             activityHearInWordYesNo,
-            activityHearInWordChoose,
-            activityPictureToWordSound
+            activityHearInWordChoose
         ]
     },
     {
@@ -18968,11 +19046,17 @@ function buildLetterActivityQueue(letterChar) {
     const queue = [];
 
     LTR_STAGES.forEach(stage => {
-        stage.activities.forEach(activityFn => {
+        stage.activities.forEach((activityFn, posInStage) => {
+            /* 🎚️ تدرّج صعوبة حقيقي داخل كل مرحلة: أول نشاط سهل
+               (خيارات أقل)، ثم متوسط، ثم متقدم (خيارات/مشتتات
+               أكثر تدريجيًا) — وليس نفس الصعوبة دائمًا */
+            const difficulty = posInStage === 0 ? 1 : (posInStage === 1 ? 2 : 3);
+
             queue.push({
                 id: stage.id,
                 stageId: stage.id,
                 goal: stage.goal,
+                difficulty,
                 render: activityFn
             });
         });
@@ -18980,8 +19064,8 @@ function buildLetterActivityQueue(letterChar) {
 
     /* مرحلة المراجعة الختامية: نشاطان يسحبان من بنك متنوع،
        بتحيّز نحو المرحلة التي سجّل الطفل فيها أخطاء أكثر */
-    queue.push({ id: "review", stageId: "review", goal: "أراجع", render: activityReview });
-    queue.push({ id: "review", stageId: "review", goal: "أراجع", render: activityReview });
+    queue.push({ id: "review", stageId: "review", goal: "أراجع", difficulty: 2, render: activityReview });
+    queue.push({ id: "review", stageId: "review", goal: "أراجع", difficulty: 2, render: activityReview });
 
     return queue;
 }
@@ -18991,7 +19075,7 @@ function buildLetterActivityQueue(letterChar) {
    بتحيّز نحو المراحل التي أخطأ فيها الطفل أكثر
 ========================================================= */
 
-function activityReview(stage, letterChar) {
+function activityReview(stage, letterChar, difficulty) {
 
     const adaptive = ltrLoadAdaptive();
     const entry = adaptive[letterChar];
@@ -19005,15 +19089,12 @@ function activityReview(stage, letterChar) {
         activityPositionInWord
     ];
 
-    /* إن وُجد سجل أخطاء لنشاط معيّن بهذا الحرف، رجّح نشاطًا من
-       نفس فئة المهارة تلك بدل اختيار عشوائي بحت */
-    let chosen;
+    const chosen = reviewPool[Math.floor(Math.random() * reviewPool.length)];
 
-    if (entry && entry.wrong > entry.correct * 0.4 && entry.wrong > 0) {
-        chosen = reviewPool[Math.floor(Math.random() * reviewPool.length)];
-    } else {
-        chosen = reviewPool[Math.floor(Math.random() * reviewPool.length)];
-    }
+    /* إن كان الطفل قد أخطأ كثيرًا في هذا الحرف، نراجع بصعوبة
+       أسهل لبناء الثقة أولًا بدل زيادة التحدي عليه */
+    const strugglingHere = entry && entry.wrong > 0 && entry.wrong > entry.correct * 0.4;
+    const effectiveDifficulty = strugglingHere ? 1 : (difficulty || 2);
 
-    chosen(stage, letterChar);
+    chosen(stage, letterChar, effectiveDifficulty);
 }
