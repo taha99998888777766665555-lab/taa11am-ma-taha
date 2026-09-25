@@ -12518,6 +12518,104 @@ function renderProfileScreen() {
 
     const msgEl = $("profileSaveMsg");
     if (msgEl) msgEl.textContent = "";
+
+    renderProfileStudentCard();
+}
+
+/* =========================================================
+   🆕 المرحلة الرابعة: بطاقة ملخّص الطالب — تُركَّب حيًّا من
+   StudentData.getProfile() (نفس مصدر لوحة المعلم بالضبط)، بلا
+   أي تخزين جديد وبلا أي نسبة أو مستوى إتقان مُخترَع
+========================================================= */
+
+function renderProfileStudentCard() {
+
+    const profile = StudentData.getProfile();
+
+    const avatarEl = $("profileCardAvatar");
+    const nameEl = $("profileCardName");
+    const idEl = $("profileCardId");
+
+    if (avatarEl) avatarEl.textContent = profile.avatar || "🦁";
+    if (nameEl) nameEl.textContent = profile.name || "لم يُحفظ اسم بعد";
+    if (idEl) idEl.textContent = profile.studentId;
+
+    if ($("profileCardStars")) {
+        $("profileCardStars").textContent = arabicNumber(profile.stars);
+    }
+    if ($("profileCardLevel")) {
+        $("profileCardLevel").textContent = arabicNumber(profile.level);
+    }
+    if ($("profileCardTimeToday")) {
+        $("profileCardTimeToday").textContent =
+            arabicNumber(Math.round(profile.timeTodaySeconds / 60)) + " دقيقة";
+    }
+    if ($("profileCardTimeTotal")) {
+        $("profileCardTimeTotal").textContent =
+            arabicNumber(Math.round(profile.timeTotalSeconds / 60)) + " دقيقة";
+    }
+
+    /* التقدّم الإجمالي — نفس البيانات الحقيقية المعروضة في لوحة
+       المعلم بالضبط (عدد صحيح + مستوى مفتوح/مكتمل حيث يوجد) */
+    const progressContainer = $("profileCardProgress");
+    if (progressContainer) {
+        progressContainer.innerHTML = `
+            <div class="teacher-progress-row">
+                <span>🔤 الحروف</span>
+                <b>${arabicNumber(profile.counters.letters)}</b>
+                <small class="teacher-progress-sub">مستوى مفتوح ${arabicNumber(profile.lettersEngine.unlockedLevel)}/٤ — حروف مكتملة ${arabicNumber(profile.lettersEngine.completedLetters.length)}/٢٨</small>
+            </div>
+            <div class="teacher-progress-row">
+                <span>📖 الكلمات</span>
+                <b>${arabicNumber(profile.counters.words)}</b>
+                <small class="teacher-progress-sub">مستوى مفتوح ${arabicNumber(profile.unlockedLevels.words)}/٩</small>
+            </div>
+            <div class="teacher-progress-row">
+                <span>🔢 الأرقام</span>
+                <b>${arabicNumber(profile.counters.numbers)}</b>
+                <small class="teacher-progress-sub">متعلَّم ${arabicNumber(profile.numbersLearned.length)}/٤٠</small>
+            </div>
+            <div class="teacher-progress-row">
+                <span>➕ الجمع</span>
+                <b>${arabicNumber(profile.counters.addition)}</b>
+                <small class="teacher-progress-sub">مستوى مفتوح ${arabicNumber(profile.unlockedLevels.addition)}/١٠</small>
+            </div>
+            <div class="teacher-progress-row">
+                <span>➖ الطرح</span>
+                <b>${arabicNumber(profile.counters.subtraction)}</b>
+                <small class="teacher-progress-sub">مستوى مفتوح ${arabicNumber(profile.unlockedLevels.subtraction)}/١٠</small>
+            </div>
+        `;
+    }
+
+    /* ملخّص المهارات المتدرَّب عليها — من سجل الأحداث بالكامل
+       (كل الأوقات، وليس أسبوعًا محددًا كلوحة المعلم)؛ يظهر فقط
+       إن وُجدت بيانات فعلية مسجَّلة منذ تفعيل السجل */
+    const skillsContainer = $("profileCardSkills");
+    if (skillsContainer) {
+
+        const log = StudentData.loadEventLog();
+        const skillEvents = log.filter(e =>
+            (e.type === "activity_answer" || e.type === "activity_complete") && e.skill
+        );
+
+        if (skillEvents.length === 0) {
+            skillsContainer.innerHTML =
+                '<p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>';
+        } else {
+
+            const skillsBySubject = {};
+            skillEvents.forEach(e => {
+                if (!skillsBySubject[e.subject]) skillsBySubject[e.subject] = new Set();
+                skillsBySubject[e.subject].add(e.skill);
+            });
+
+            skillsContainer.innerHTML = Object.keys(skillsBySubject).map(subj => {
+                const label = TEACHER_SUBJECT_LABELS[subj] || subj;
+                return `<div class="weekly-summary-item"><span>${label}</span><b>${arabicNumber(skillsBySubject[subj].size)} مهارة</b></div>`;
+            }).join("");
+        }
+    }
 }
 
 function selectAvatarOption(button) {
@@ -12692,6 +12790,21 @@ function renderTeacherStats() {
 
     updateStats();
 
+    /* 🆕 المرحلة الثانية: بيانات الطالب الموحّدة (هوية + تفاصيل تقدّم
+       إضافية) — StudentData.getProfile() يُركِّب هذا حيًّا من نفس
+       المفاتيح القديمة + مفاتيح محرك الحروف الجديد، دون أي تكرار */
+    const profile = StudentData.getProfile();
+
+    const identityAvatar = $("teacherStudentAvatar");
+    const identityName = $("teacherStudentName");
+    const identityId = $("teacherStudentId");
+
+    if (identityAvatar) identityAvatar.textContent = profile.avatar || "🦁";
+    if (identityName) {
+        identityName.textContent = profile.name || "لم يُحفظ اسم بعد";
+    }
+    if (identityId) identityId.textContent = profile.studentId;
+
     const wrongTotal = Analytics.getWrongTotal();
 
     const correctSum =
@@ -12734,6 +12847,37 @@ function renderTeacherStats() {
             arabicNumber(Badges.getEarned().length) + " وسام";
     }
 
+    /* 🆕 تفاصيل إضافية تحت كل صف تقدّم — بيانات حقيقية موجودة فعلًا
+       (مستوى مفتوح / عدد مكتمل)، وليست نسبًا مخترَعة */
+    const lettersSub = $("teacherLettersSub");
+    if (lettersSub) {
+        lettersSub.textContent =
+            "مستوى مفتوح " + arabicNumber(profile.lettersEngine.unlockedLevel) + "/٤" +
+            " — حروف مكتملة " + arabicNumber(profile.lettersEngine.completedLetters.length) + "/٢٨";
+    }
+
+    const wordsSub = $("teacherWordsSub");
+    if (wordsSub) {
+        wordsSub.textContent = "مستوى مفتوح " + arabicNumber(profile.unlockedLevels.words) + "/٩";
+    }
+
+    const numbersSub = $("teacherNumbersSub");
+    if (numbersSub) {
+        numbersSub.textContent = "متعلَّم " + arabicNumber(profile.numbersLearned.length) + "/٤٠";
+    }
+
+    const additionSub = $("teacherAdditionSub");
+    if (additionSub) {
+        additionSub.textContent = "مستوى مفتوح " + arabicNumber(profile.unlockedLevels.addition) + "/١٠";
+    }
+
+    const subtractionSub = $("teacherSubtractionSub");
+    if (subtractionSub) {
+        subtractionSub.textContent = "مستوى مفتوح " + arabicNumber(profile.unlockedLevels.subtraction) + "/١٠";
+    }
+
+    renderTeacherWeeklySummary();
+    renderTeacherRecentActivity();
     renderSkillsReview();
 }
 
@@ -12742,16 +12886,56 @@ function renderSkillsReview() {
     const container = $("teacherSkillsReview");
     if (!container) return;
 
-    const attempts = Analytics.getLetterAttempts();
+    /* 🆕 المرحلة الثانية: دمج مصدرين — محرك الحروف الجديد
+       (taha_ltr2_adaptive، أدق لأنه لكل نشاط) يُفضَّل عند توفر
+       بيانات كافية له، مع الحفاظ الكامل على النظام القديم
+       (Analytics.getLetterAttempts) كاحتياط لأي حرف لا يملك
+       بيانات جديدة كافية بعد — لا يُستبدل النظام القديم، يُستخدم
+       كمصدر احتياطي فقط */
+    const oldAttempts = Analytics.getLetterAttempts();
 
-    const rows = Object.keys(attempts)
+    let ltr2Adaptive = {};
+    try {
+        ltr2Adaptive = JSON.parse(localStorage.getItem("taha_ltr2_adaptive") || "{}");
+    } catch (error) {
+        ltr2Adaptive = {};
+    }
+
+    const allLetters = new Set([
+        ...Object.keys(oldAttempts),
+        ...Object.keys(ltr2Adaptive)
+    ]);
+
+    const rows = [...allLetters]
         .map(letter => {
-            const a = attempts[letter];
-            const total = a.correct + a.wrong;
-            const accuracy = total > 0 ? a.correct / total : 1;
-            return { letter, total, accuracy };
+
+            const ltr2 = ltr2Adaptive[letter];
+            const ltr2Total = ltr2 ? (ltr2.correct + ltr2.wrong) : 0;
+
+            if (ltr2Total >= 2) {
+                return {
+                    letter,
+                    total: ltr2Total,
+                    accuracy: ltr2.correct / ltr2Total,
+                    source: "ltr2"
+                };
+            }
+
+            const old = oldAttempts[letter];
+            const oldTotal = old ? (old.correct + old.wrong) : 0;
+
+            if (oldTotal >= 2) {
+                return {
+                    letter,
+                    total: oldTotal,
+                    accuracy: old.correct / oldTotal,
+                    source: "old"
+                };
+            }
+
+            return null;
         })
-        .filter(r => r.total >= 2 && r.accuracy < 0.7)
+        .filter(r => r && r.accuracy < 0.7)
         .sort((a, b) => a.accuracy - b.accuracy)
         .slice(0, 6);
 
@@ -12767,6 +12951,180 @@ function renderSkillsReview() {
             <span>${arabicNumber(Math.round(r.accuracy * 100))}٪ صحيح</span>
         </div>
     `).join("");
+}
+
+/* =========================================================
+   🆕 المرحلة الثانية: ملخّص هذا الأسبوع (من taha_event_log
+   وtaha_time_by_date فقط) — لا يظهر إلا بيانات حقيقية مسجَّلة
+   فعلًا منذ تفعيل سجل الأحداث؛ بلا أي نسبة أو رقم مُخترَع
+========================================================= */
+
+function getTeacherEventsInLastDays(days) {
+    const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+
+    return StudentData.loadEventLog().filter(e => {
+        const t = Date.parse(e.ts);
+        return !isNaN(t) && t >= cutoff;
+    });
+}
+
+const TEACHER_SUBJECT_LABELS = {
+    letters: "🔤 الحروف",
+    words: "📖 الكلمات",
+    numbers: "🔢 الأرقام",
+    addition: "➕ الجمع",
+    subtraction: "➖ الطرح",
+    writing: "✏️ الكتابة",
+    quran: "📖 القرآن",
+    hadith: "🕌 الحديث",
+    duas: "🤲 الأدعية والأذكار"
+};
+
+function renderTeacherWeeklySummary() {
+
+    const container = $("teacherWeeklySummary");
+    if (!container) return;
+
+    const weekEvents = getTeacherEventsInLastDays(7);
+    const answerEvents = weekEvents.filter(e => e.type === "activity_answer");
+    const completeEvents = weekEvents.filter(e => e.type === "activity_complete");
+    const questEvents = weekEvents.filter(e => e.type === "quest_completed");
+
+    let byDate = {};
+    try {
+        byDate = JSON.parse(localStorage.getItem("taha_time_by_date") || "{}");
+    } catch (error) {
+        byDate = {};
+    }
+
+    const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    let weeklySeconds = 0;
+
+    Object.keys(byDate).forEach(dateKey => {
+        const d = new Date(dateKey);
+        if (!isNaN(d) && d >= cutoffDate) {
+            weeklySeconds += byDate[dateKey];
+        }
+    });
+
+    if (answerEvents.length === 0 && completeEvents.length === 0 && questEvents.length === 0 && weeklySeconds === 0) {
+        container.innerHTML =
+            '<p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>';
+        return;
+    }
+
+    const weeklyMinutes = Math.round(weeklySeconds / 60);
+    const correctCount = answerEvents.filter(e => e.correct).length;
+    const wrongCount = answerEvents.length - correctCount;
+    const totalActivities = answerEvents.length + completeEvents.length;
+
+    /* 🆕 المهارات تُجمَع من نوعي الحدث معًا (إجابة أو إكمال عرض
+       محتوى) — كلاهما "تدرّب على مهارة" بمعنى حقيقي، فقط الصح/
+       الخطأ يبقى محصورًا في أنشطة الإجابة التي تملك حكمًا فعليًا */
+    const skillsBySubject = {};
+    [...answerEvents, ...completeEvents].forEach(e => {
+        if (!e.skill) return;
+        if (!skillsBySubject[e.subject]) skillsBySubject[e.subject] = new Set();
+        skillsBySubject[e.subject].add(e.skill);
+    });
+
+    let html = "";
+
+    html += `<div class="weekly-summary-item"><span>⏱️ وقت التعلم</span><b>${arabicNumber(weeklyMinutes)} دقيقة</b></div>`;
+    html += `<div class="weekly-summary-item"><span>📝 عدد الأنشطة</span><b>${arabicNumber(totalActivities)}</b></div>`;
+
+    if (answerEvents.length > 0) {
+        html += `<div class="weekly-summary-item"><span>✅ صحيح / ❌ خطأ</span><b>${arabicNumber(correctCount)} / ${arabicNumber(wrongCount)}</b></div>`;
+    }
+
+    Object.keys(skillsBySubject).forEach(subj => {
+        const label = TEACHER_SUBJECT_LABELS[subj] || subj;
+        html += `<div class="weekly-summary-item"><span>${label}</span><b>${arabicNumber(skillsBySubject[subj].size)} مهارة</b></div>`;
+    });
+
+    html += `<div class="weekly-summary-item"><span>🗓️ مهام يومية مكتملة</span><b>${arabicNumber(questEvents.length)}</b></div>`;
+
+    container.innerHTML = html;
+
+    const subjKeys = Object.keys(skillsBySubject);
+    if (subjKeys.length > 0) {
+        const noteText = subjKeys.map(subj => {
+            const label = TEACHER_SUBJECT_LABELS[subj] || subj;
+            return label + ": " + [...skillsBySubject[subj]].join("، ");
+        }).join(" — ");
+
+        container.innerHTML += `<p class="weekly-summary-note">${noteText}</p>`;
+    }
+}
+
+/* =========================================================
+   🆕 المرحلة الثانية: آخر الأنشطة (من taha_event_log فقط)
+========================================================= */
+
+function teacherFormatRelativeTime(isoString) {
+
+    const t = Date.parse(isoString);
+    if (isNaN(t)) return "";
+
+    const diffMin = Math.round((Date.now() - t) / 60000);
+
+    if (diffMin < 1) return "الآن";
+    if (diffMin < 60) return "منذ " + arabicNumber(diffMin) + " د";
+
+    const diffHours = Math.round(diffMin / 60);
+    if (diffHours < 24) return "منذ " + arabicNumber(diffHours) + " س";
+
+    const diffDays = Math.round(diffHours / 24);
+    if (diffDays === 1) return "أمس";
+
+    return "منذ " + arabicNumber(diffDays) + " يوم";
+}
+
+function renderTeacherRecentActivity() {
+
+    const container = $("teacherRecentActivity");
+    if (!container) return;
+
+    const log = StudentData.loadEventLog();
+
+    if (log.length === 0) {
+        container.innerHTML =
+            '<p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>';
+        return;
+    }
+
+    const recent = log.slice(-10).reverse();
+
+    container.innerHTML = recent.map(e => {
+
+        const icon = e.type === "quest_completed"
+            ? "🗓️"
+            : (TEACHER_SUBJECT_LABELS[e.subject] || "📌").split(" ")[0];
+
+        const isQuest = e.type === "quest_completed";
+        const isNeutralComplete = e.type === "activity_complete";
+
+        const statusClass = isQuest
+            ? "correct"
+            : (isNeutralComplete ? "neutral" : (e.correct ? "correct" : "wrong"));
+
+        const statusIcon = isQuest
+            ? "🎉"
+            : (isNeutralComplete ? "▫️" : (e.correct ? "✅" : "❌"));
+
+        const subjectFull = (TEACHER_SUBJECT_LABELS[e.subject] || e.subject || "").replace(/^\S+\s/, "");
+
+        const label = isQuest
+            ? ("أكمل مهمة: " + (e.activity || e.skill || ""))
+            : ((e.skill ? e.skill + " — " : "") + subjectFull);
+
+        return `
+            <div class="recent-activity-item ${statusClass}">
+                <span class="ra-label">${icon} ${statusIcon} ${label}</span>
+                <span class="ra-time">${teacherFormatRelativeTime(e.ts)}</span>
+            </div>
+        `;
+    }).join("");
 }
 
 /* =========================================================
@@ -19098,3 +19456,445 @@ function activityReview(stage, letterChar, difficulty) {
 
     chosen(stage, letterChar, effectiveDifficulty);
 }
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   🧑‍🎓 طبقة بيانات الطالب الموحّدة — المرحلة الأولى
+   =====================================================================
+   لا تُعدّل ولا تحذف ولا تُعيد تسمية أي مفتاح localStorage قديم.
+   تُضيف فقط: معرّف طالب ثابت (studentId) + سجل أحداث زمني جديد،
+   وتُركّب "عرضًا موحّدًا" (getProfile) حيًّا من البيانات الموجودة
+   فعليًا في كل مرة يُطلب فيها — لا تُخزَّن نسخة مكرَّرة أبدًا، لذا
+   يستحيل أن تتعارض هذه الطبقة مع أي بيانات قديمة أو تُفقدها.
+========================================================================= */
+
+const StudentData = (function () {
+
+    const STUDENT_ID_KEY = "taha_student_id";
+    const EVENT_LOG_KEY = "taha_event_log";
+    const EVENT_LOG_MAX_ENTRIES = 500;
+
+    /* -----------------------------------------------------------
+       🆔 معرّف الطالب الثابت — يُنشأ مرة واحدة فقط عند أول تشغيل
+       بعد هذا التحديث، ثم يبقى كما هو إلى الأبد على هذا الجهاز
+    ----------------------------------------------------------- */
+
+    function generateId() {
+        if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+            return "stu_" + crypto.randomUUID();
+        }
+        return "stu_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
+    }
+
+    function getStudentId() {
+        let id = localStorage.getItem(STUDENT_ID_KEY);
+        if (!id) {
+            id = generateId();
+            localStorage.setItem(STUDENT_ID_KEY, id);
+        }
+        return id;
+    }
+
+    /* -----------------------------------------------------------
+       📜 سجل الأحداث الزمني — يبدأ التسجيل من هذه اللحظة فصاعدًا
+       فقط. لا يُحوَّل أي تاريخ قديم (العدّادات القديمة لا تحمل
+       طابعًا زمنيًا فعليًا، فتحويلها سيكون تخمينًا لا حقيقة)
+    ----------------------------------------------------------- */
+
+    function loadEventLog() {
+        try {
+            return JSON.parse(localStorage.getItem(EVENT_LOG_KEY) || "[]");
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function saveEventLog(log) {
+        localStorage.setItem(EVENT_LOG_KEY, JSON.stringify(log));
+    }
+
+    function logEvent(event) {
+        try {
+            const log = loadEventLog();
+
+            log.push(Object.assign(
+                { ts: new Date().toISOString(), studentId: getStudentId() },
+                event
+            ));
+
+            /* سقف بسيط لمنع نمو غير محدود لحجم localStorage؛ يحتفظ
+               بأحدث الأحداث فقط عند تجاوز السقف */
+            if (log.length > EVENT_LOG_MAX_ENTRIES) {
+                log.splice(0, log.length - EVENT_LOG_MAX_ENTRIES);
+            }
+
+            saveEventLog(log);
+        } catch (error) {
+            /* فشل التسجيل لا يجب أبدًا أن يوقف أي نشاط تعليمي حالي */
+        }
+    }
+
+    function safeParseArray(key) {
+        try {
+            const val = JSON.parse(localStorage.getItem(key) || "[]");
+            return Array.isArray(val) ? val : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function safeParseObject(key) {
+        try {
+            const val = JSON.parse(localStorage.getItem(key) || "{}");
+            return (val && typeof val === "object") ? val : {};
+        } catch (error) {
+            return {};
+        }
+    }
+
+    /* -----------------------------------------------------------
+       🧩 العرض الموحّد — يُركَّب حيًّا من كل البيانات الموجودة
+       فعليًا (القديمة والجديدة معًا) في كل استدعاء، دون تخزين
+       نسخة منفصلة قد تفقد تزامنها مع المصدر الأصلي
+    ----------------------------------------------------------- */
+
+    function getProfile() {
+        return {
+            studentId: getStudentId(),
+
+            /* من قسم "ملفي الشخصي" — كما هي بلا أي تغيير */
+            name: localStorage.getItem("taha_child_name") || null,
+            avatar: localStorage.getItem("taha_child_avatar") || null,
+
+            /* من النظام العام للنجوم والمستوى */
+            stars: Number(localStorage.getItem("taha_app_stars") || 0),
+            level: Number(localStorage.getItem("taha_app_level") || 1),
+
+            /* عدّادات الإجابات الصحيحة الحالية لكل قسم (كما هي) */
+            counters: {
+                letters: Number(localStorage.getItem("taha_correct_letters") || 0),
+                words: Number(localStorage.getItem("taha_correct_words") || 0),
+                numbers: Number(localStorage.getItem("taha_correct_numbers") || 0),
+                addition: Number(localStorage.getItem("taha_correct_addition") || 0),
+                subtraction: Number(localStorage.getItem("taha_correct_subtraction") || 0)
+            },
+
+            wrongTotal: Number(localStorage.getItem("taha_wrong_total") || 0),
+
+            timeTodaySeconds: (typeof TimeTracker !== "undefined") ? TimeTracker.getTodaySeconds() : 0,
+            timeTotalSeconds: Number(localStorage.getItem("taha_time_total_seconds") || 0),
+
+            lettersLearned: safeParseArray("taha_letters_learned"),
+            numbersLearned: safeParseArray("taha_numbers_learned"),
+            badges: safeParseArray("taha_badges"),
+
+            /* 🆕 ربط محرك الحروف الجديد — يجعل بياناته الأدق (دقة كل
+               نشاط لكل حرف، الحروف المكتملة فعليًا، المستوى المفتوح)
+               قابلة للقراءة كجزء من العرض الموحّد لأول مرة */
+            lettersEngine: {
+                unlockedLevel: Number(localStorage.getItem("taha_ltr2_unlocked_level") || 1),
+                completedLetters: safeParseArray("taha_ltr2_completed_letters"),
+                adaptiveAccuracy: safeParseObject("taha_ltr2_adaptive")
+            },
+
+            /* مستويات الأقسام الأخرى المفتوحة حاليًا (قراءة فقط) */
+            unlockedLevels: {
+                words: Number(localStorage.getItem("taha_words_unlocked_level") || 1),
+                addition: Number(localStorage.getItem("taha_addition_unlocked_level") || 1),
+                subtraction: Number(localStorage.getItem("taha_subtraction_unlocked_level") || 1)
+            },
+
+            questsCompletedTotal: Number(localStorage.getItem("taha_quests_completed_total") || 0),
+
+            /* 🆕 سجل الأحداث الجديد (فارغ حتى الآن ما لم تُسجَّل أحداث بعد) */
+            eventLogCount: loadEventLog().length
+        };
+    }
+
+    return {
+        getStudentId,
+        logEvent,
+        loadEventLog,
+        getProfile
+    };
+
+})();
+
+/* تأكيد إنشاء معرّف الطالب من أول تحميل للصفحة بعد هذا التحديث */
+StudentData.getStudentId();
+
+/* =========================================================================
+   🆕 =====================================================================
+   📝 ربط سجل الأحداث بنقاط النتيجة الحالية — بتغليف غير جراحي
+   (نفس أسلوب التغليف المستخدم في كل التطبيق سابقًا: استدعاء
+   الدالة الأصلية أولًا دون أي تغيير في سلوكها، ثم تسجيل الحدث)
+   =====================================================================
+========================================================================= */
+
+/* --- الحروف --- */
+
+const originalFinishLtrChoiceTaskForLog = finishLtrChoiceTask;
+
+finishLtrChoiceTask = function (isCorrect, button) {
+
+    const activityEntry = (typeof ltrState !== "undefined" && ltrState.queue)
+        ? ltrState.queue[ltrState.activityIndex]
+        : null;
+    const letterBefore = (typeof ltrState !== "undefined") ? ltrState.letter : null;
+
+    originalFinishLtrChoiceTaskForLog(isCorrect, button);
+
+    StudentData.logEvent({
+        type: "activity_answer",
+        subject: "letters",
+        skill: letterBefore,
+        activity: activityEntry ? activityEntry.id : null,
+        correct: !!isCorrect
+    });
+};
+
+/* --- الكلمات --- */
+
+const originalFinishWordsChoiceTaskForLog = finishWordsChoiceTask;
+
+finishWordsChoiceTask = function (isCorrect, button) {
+
+    const level = (typeof wordsLevelState !== "undefined" && typeof WORDS_LEVELS !== "undefined")
+        ? WORDS_LEVELS[wordsLevelState.levelId - 1]
+        : null;
+
+    originalFinishWordsChoiceTaskForLog(isCorrect, button);
+
+    StudentData.logEvent({
+        type: "activity_answer",
+        subject: "words",
+        skill: level ? level.title : null,
+        activity: level ? String(level.id) : null,
+        correct: !!isCorrect
+    });
+};
+
+/* --- الجمع --- */
+
+const originalFinishAdditionChoiceTaskForLog = finishAdditionChoiceTask;
+
+finishAdditionChoiceTask = function (isCorrect, button) {
+
+    const level = (typeof additionLevelState !== "undefined" && typeof ADDITION_LEVELS !== "undefined")
+        ? ADDITION_LEVELS[additionLevelState.levelId - 1]
+        : null;
+
+    originalFinishAdditionChoiceTaskForLog(isCorrect, button);
+
+    StudentData.logEvent({
+        type: "activity_answer",
+        subject: "addition",
+        skill: level ? level.title : null,
+        activity: level ? String(level.id) : null,
+        correct: !!isCorrect
+    });
+};
+
+/* --- الطرح --- */
+
+const originalFinishSubtractionChoiceTaskForLog = finishSubtractionChoiceTask;
+
+finishSubtractionChoiceTask = function (isCorrect, button) {
+
+    const level = (typeof subtractionLevelState !== "undefined" && typeof SUBTRACTION_LEVELS !== "undefined")
+        ? SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1]
+        : null;
+
+    originalFinishSubtractionChoiceTaskForLog(isCorrect, button);
+
+    StudentData.logEvent({
+        type: "activity_answer",
+        subject: "subtraction",
+        skill: level ? level.title : null,
+        activity: level ? String(level.id) : null,
+        correct: !!isCorrect
+    });
+};
+
+/* --- إكمال مهمة اليوم --- */
+
+/* 🛡️ حارس عدم التداخل: addStars() الحالية (من جلسة سابقة) تستدعي
+   DailyQuest.checkProgress() كأثر جانبي عند منح النجوم — وبما أن
+   checkProgress() الأصلية تستدعي addStars() أثناء منح مكافأة إكمال
+   المهمة (قبل حفظ الحالة)، يحدث استدعاء متداخل يُعيد معالجة نفس
+   الإكمال مرتين (مما كان يُضاعف النجوم الممنوحة فعليًا قبل هذا
+   الإصلاح، بصمت، دون أي علاقة بسجل الأحداث). هذا الحارس يمنع
+   إعادة المعالجة أثناء التداخل فيضمن معالجة كل إكمال مرة واحدة
+   فقط فعليًا — يستعيد السلوك الصحيح المقصود، ولا "يغيّر" نظام
+   المكافآت (١٠ نجوم لكل مهمة هو المقصود أصلًا حسب reward: 10). */
+
+let dailyQuestCheckProgressReentrant = false;
+
+const originalDailyQuestCheckProgressForLog = DailyQuest.checkProgress;
+
+DailyQuest.checkProgress = function () {
+
+    if (dailyQuestCheckProgressReentrant) {
+        return DailyQuest.getToday();
+    }
+
+    dailyQuestCheckProgressReentrant = true;
+
+    try {
+
+        const beforeData = DailyQuest.getToday();
+        const beforeDoneIds = beforeData.quests.filter(q => q.doneAwarded).map(q => q.id);
+
+        const result = originalDailyQuestCheckProgressForLog();
+
+        const afterDoneIds = result.quests.filter(q => q.doneAwarded).map(q => q.id);
+        const newlyCompleted = afterDoneIds.filter(id => !beforeDoneIds.includes(id));
+
+        newlyCompleted.forEach(id => {
+            const quest = result.quests.find(q => q.id === id);
+            StudentData.logEvent({
+                type: "quest_completed",
+                subject: "daily_quest",
+                skill: id,
+                activity: quest ? quest.label : null,
+                correct: true
+            });
+        });
+
+        return result;
+
+    } finally {
+        dailyQuestCheckProgressReentrant = false;
+    }
+};
+
+/* =========================================================
+   🔚 نهاية طبقة بيانات الطالب الموحّدة — المرحلة الأولى
+========================================================= */
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   📝 المرحلة الثالثة: ربط سجل الأحداث بالأقسام المتبقية
+   (الأرقام، الكتابة، القرآن، الحديث، الأدعية والأذكار)
+   =====================================================================
+   نفس أسلوب التغليف غير الجراحي المستخدم سابقًا: استدعاء الدالة
+   الحالية (وهي نفسها قد تكون ملفوفة من قبل) أولًا دون أي تغيير في
+   سلوكها، ثم تسجيل حدث "إكمال" فقط — هذه الأقسام كلها استعراض
+   محتوى بلا اختيار صح/خطأ، فالحدث المناسب الوحيد هو "أكمل/انتقل
+   للتالي"، وليس نجاحًا أو فشلًا مُختلَقًا لا وجود له فعليًا.
+========================================================================= */
+
+/* --- الأرقام: "رقم جديد" يعني أن الطفل أنهى النظر في هذا الرقم --- */
+
+const originalNextNumberForLog = nextNumber;
+
+nextNumber = function () {
+
+    const numberBefore = currentNumber;
+
+    originalNextNumberForLog();
+
+    StudentData.logEvent({
+        type: "activity_complete",
+        subject: "numbers",
+        skill: String(numberBefore),
+        activity: "flashcard",
+        correct: null
+    });
+};
+
+/* --- الكتابة: زر "انتهيت" هو إشارة الإكمال الفعلية --- */
+
+const originalFinishWritingForLog = finishWriting;
+
+finishWriting = function () {
+
+    const letterBefore =
+        (typeof writingLetters !== "undefined" && typeof writingIndex !== "undefined")
+            ? writingLetters[writingIndex]
+            : null;
+
+    originalFinishWritingForLog();
+
+    StudentData.logEvent({
+        type: "activity_complete",
+        subject: "writing",
+        skill: letterBefore,
+        activity: "trace",
+        correct: null
+    });
+};
+
+/* --- القرآن: "سورة أخرى" يعني إكمال الاستماع/العرض الحالي --- */
+
+const originalNextSurahForLog = nextSurah;
+
+nextSurah = function () {
+
+    const surahBefore =
+        (typeof quranSurahs !== "undefined" && typeof currentSurahIndex !== "undefined")
+            ? (quranSurahs[currentSurahIndex] && quranSurahs[currentSurahIndex].name)
+            : null;
+
+    originalNextSurahForLog();
+
+    StudentData.logEvent({
+        type: "activity_complete",
+        subject: "quran",
+        skill: surahBefore,
+        activity: "surah",
+        correct: null
+    });
+};
+
+/* --- الحديث: "حديث آخر" يعني إكمال عرض الحديث الحالي --- */
+
+const originalNextHadithForLog = nextHadith;
+
+nextHadith = function () {
+
+    const hadithBefore =
+        (typeof hadiths !== "undefined" && typeof currentHadithIndex !== "undefined")
+            ? (hadiths[currentHadithIndex] && hadiths[currentHadithIndex].title)
+            : null;
+
+    originalNextHadithForLog();
+
+    StudentData.logEvent({
+        type: "activity_complete",
+        subject: "hadith",
+        skill: hadithBefore,
+        activity: "hadith",
+        correct: null
+    });
+};
+
+/* --- الأدعية والأذكار: "دعاء آخر" يعني إكمال القسم الحالي --- */
+
+const originalNextDuaForLog = nextDua;
+
+nextDua = function () {
+
+    let duaCategoryTitle = null;
+
+    if (typeof duaCategories !== "undefined" && typeof duaCategory !== "undefined") {
+        const cat = duaCategories.find(c => c.id === duaCategory);
+        duaCategoryTitle = cat ? cat.title : duaCategory;
+    }
+
+    originalNextDuaForLog();
+
+    StudentData.logEvent({
+        type: "activity_complete",
+        subject: "duas",
+        skill: duaCategoryTitle,
+        activity: "dua",
+        correct: null
+    });
+};
+
+/* =========================================================
+   🔚 نهاية المرحلة الثالثة — ربط بقية الأقسام بسجل الأحداث
+========================================================= */
