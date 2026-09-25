@@ -2683,6 +2683,52 @@
 
     <h2>👤 ملفي الشخصي</h2>
 
+    <div id="profileStudentCard" class="profile-student-card">
+
+        <div class="teacher-student-identity">
+            <span id="profileCardAvatar" class="teacher-student-avatar">🦁</span>
+            <span id="profileCardName" class="teacher-student-name">--</span>
+            <span id="profileCardId" class="teacher-student-id">--</span>
+        </div>
+
+        <div class="teacher-stats-grid">
+
+            <div class="teacher-stat-box">
+                <span>⭐ النجوم</span>
+                <b id="profileCardStars">٠</b>
+            </div>
+
+            <div class="teacher-stat-box">
+                <span>🎯 المستوى</span>
+                <b id="profileCardLevel">١</b>
+            </div>
+
+            <div class="teacher-stat-box">
+                <span>⏱️ وقت اليوم</span>
+                <b id="profileCardTimeToday">٠ دقيقة</b>
+            </div>
+
+            <div class="teacher-stat-box">
+                <span>⏳ إجمالي وقت التعلم</span>
+                <b id="profileCardTimeTotal">٠ دقيقة</b>
+            </div>
+
+        </div>
+
+        <h3>📚 التقدّم الإجمالي</h3>
+
+        <div id="profileCardProgress" class="teacher-progress-grid"></div>
+
+        <h3>🧩 مهارات تم التدريب عليها</h3>
+
+        <div id="profileCardSkills" class="teacher-weekly-summary">
+            <p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>
+        </div>
+
+    </div>
+
+    <h3>✏️ تعديل اسمي وصورتي</h3>
+
     <p>اختر اسمك وصورتك المفضلة 😊</p>
 
     <label class="profile-label" for="profileNameInput">اسمي هو:</label>
@@ -2760,6 +2806,12 @@
     <!-- 📊 محتوى اللوحة (يظهر بعد فتح القفل) -->
     <div id="teacherContent" class="teacher-content" style="display:none;">
 
+        <div id="teacherStudentIdentity" class="teacher-student-identity">
+            <span id="teacherStudentAvatar" class="teacher-student-avatar">🦁</span>
+            <span id="teacherStudentName" class="teacher-student-name">--</span>
+            <span id="teacherStudentId" class="teacher-student-id">--</span>
+        </div>
+
         <div class="teacher-stats-grid">
 
             <div class="teacher-stat-box">
@@ -2801,28 +2853,45 @@
             <div class="teacher-progress-row">
                 <span>🔤 الحروف</span>
                 <b id="teacherLetters">٠</b>
+                <small id="teacherLettersSub" class="teacher-progress-sub"></small>
             </div>
 
             <div class="teacher-progress-row">
                 <span>📖 الكلمات</span>
                 <b id="teacherWords">٠</b>
+                <small id="teacherWordsSub" class="teacher-progress-sub"></small>
             </div>
 
             <div class="teacher-progress-row">
                 <span>🔢 الأرقام</span>
                 <b id="teacherNumbers">٠</b>
+                <small id="teacherNumbersSub" class="teacher-progress-sub"></small>
             </div>
 
             <div class="teacher-progress-row">
                 <span>➕ الجمع</span>
                 <b id="teacherAddition">٠</b>
+                <small id="teacherAdditionSub" class="teacher-progress-sub"></small>
             </div>
 
             <div class="teacher-progress-row">
                 <span>➖ الطرح</span>
                 <b id="teacherSubtraction">٠</b>
+                <small id="teacherSubtractionSub" class="teacher-progress-sub"></small>
             </div>
 
+        </div>
+
+        <h3>📅 هذا الأسبوع</h3>
+
+        <div id="teacherWeeklySummary" class="teacher-weekly-summary">
+            <p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>
+        </div>
+
+        <h3>🕓 آخر الأنشطة</h3>
+
+        <div id="teacherRecentActivity" class="teacher-recent-activity">
+            <p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>
         </div>
 
         <h3>🔍 مهارات تحتاج مراجعة</h3>
