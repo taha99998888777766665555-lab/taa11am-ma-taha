@@ -112,23 +112,55 @@ function matchAnswer(value, correct, valueType = "letter", targetLetter = null) 
 
 let arabicVoice = null;
 
+/* =========================================================
+   🆕 تحسين اختيار الصوت العربي: بدل أخذ أول صوت عربي متاح
+   بلا تمييز، نُقيِّم كل الأصوات العربية المعروضة من المتصفح
+   ونُفضِّل أكثرها طبيعية (Neural/Natural/Premium/Enhanced/
+   Wavenet/Studio)، ثم الأصوات السحابية (غالبًا أعلى جودة من
+   الأصوات المحلية الأساسية)، ثم لهجة قريبة من تسجيلات التطبيق.
+   النتيجة تُخزَّن في نفس المتغيّر arabicVoice وتُستخدم من كل
+   نداءات speak() الحالية في كل أقسام التطبيق التعليمية دون أي
+   تغيير في أماكن استدعائها — فيبقى صوتًا واحدًا ثابتًا ومتناسقًا
+   تلقائيًا في كل مكان.
+========================================================= */
+
+function scoreArabicVoice(voice) {
+    const name = (voice.name || "").toLowerCase();
+    let score = 0;
+
+    if (name.includes("neural")) score += 100;
+    if (name.includes("natural")) score += 90;
+    if (name.includes("premium")) score += 70;
+    if (name.includes("enhanced")) score += 70;
+    if (name.includes("wavenet")) score += 70;
+    if (name.includes("studio")) score += 60;
+    if (name.includes("online")) score += 40;
+
+    if (voice.localService === false) score += 20;
+
+    if (voice.lang && voice.lang.toLowerCase() === "ar-sa") score += 10;
+    else if (voice.lang && voice.lang.toLowerCase().startsWith("ar")) score += 5;
+
+    return score;
+}
+
 function findArabicVoice() {
     if (!("speechSynthesis" in window)) return null;
 
     const voices = speechSynthesis.getVoices();
 
-    arabicVoice =
-        voices.find(
-            voice =>
-                voice.lang &&
-                voice.lang.toLowerCase() === "ar-sa"
-        ) ||
-        voices.find(
-            voice =>
-                voice.lang &&
-                voice.lang.toLowerCase().startsWith("ar")
-        ) ||
-        null;
+    const arabicVoices = voices.filter(
+        voice => voice.lang && voice.lang.toLowerCase().startsWith("ar")
+    );
+
+    if (arabicVoices.length === 0) {
+        arabicVoice = null;
+        return null;
+    }
+
+    arabicVoices.sort((a, b) => scoreArabicVoice(b) - scoreArabicVoice(a));
+
+    arabicVoice = arabicVoices[0];
 
     return arabicVoice;
 }
