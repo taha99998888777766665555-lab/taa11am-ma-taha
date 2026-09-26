@@ -12573,7 +12573,7 @@ function renderProfileStudentCard() {
             <div class="teacher-progress-row">
                 <span>🔢 الأرقام</span>
                 <b>${arabicNumber(profile.counters.numbers)}</b>
-                <small class="teacher-progress-sub">متعلَّم ${arabicNumber(profile.numbersLearned.length)}/٤٠</small>
+                <small class="teacher-progress-sub">تم عرضها ${arabicNumber(profile.numbersLearned.length)}/٤٠</small>
             </div>
             <div class="teacher-progress-row">
                 <span>➕ الجمع</span>
@@ -12863,7 +12863,7 @@ function renderTeacherStats() {
 
     const numbersSub = $("teacherNumbersSub");
     if (numbersSub) {
-        numbersSub.textContent = "متعلَّم " + arabicNumber(profile.numbersLearned.length) + "/٤٠";
+        numbersSub.textContent = "تم عرضها " + arabicNumber(profile.numbersLearned.length) + "/٤٠";
     }
 
     const additionSub = $("teacherAdditionSub");
@@ -18144,6 +18144,8 @@ function activityLetterRecognition(stage, letterChar, difficulty) {
         btn.innerHTML = "🔊";
         btn.dataset.correct = c === letterChar ? "1" : "0";
         btn.onclick = () => {
+            if (btn.disabled) return;
+            btn.disabled = true;
             speak(letterWithFatha(c), { rate: 0.75 });
             setTimeout(() => finishLtrChoiceTask(c === letterChar, btn), 500);
         };
@@ -18481,7 +18483,13 @@ function activityTracing(stage, letterChar) {
     const controls = ltrSetupTraceCanvas(canvas);
 
     stage.querySelector("#ltrTraceClearBtn").onclick = () => controls.clear();
-    stage.querySelector("#ltrTraceDoneBtn").onclick = () => finishLtrChoiceTask(true, null);
+
+    const traceDoneBtn = stage.querySelector("#ltrTraceDoneBtn");
+    traceDoneBtn.onclick = () => {
+        if (traceDoneBtn.disabled) return;
+        traceDoneBtn.disabled = true;
+        finishLtrChoiceTask(true, null);
+    };
 }
 
 /* =========================================================
@@ -18694,7 +18702,13 @@ function activityListenIsolated(stage, letterChar) {
     };
 
     pulseBtn.onclick = playSound;
-    stage.querySelector("#ltrListenDoneBtn").onclick = () => finishLtrChoiceTask(true, null);
+
+    const listenDoneBtn = stage.querySelector("#ltrListenDoneBtn");
+    listenDoneBtn.onclick = () => {
+        if (listenDoneBtn.disabled) return;
+        listenDoneBtn.disabled = true;
+        finishLtrChoiceTask(true, null);
+    };
 
     setTimeout(playSound, 300);
 }
@@ -18716,7 +18730,13 @@ function activityListenInWord(stage, letterChar) {
     };
 
     stage.querySelector("#ltrListenWordReplay").onclick = playAll;
-    stage.querySelector("#ltrListenWordDone").onclick = () => finishLtrChoiceTask(true, null);
+
+    const listenWordDoneBtn = stage.querySelector("#ltrListenWordDone");
+    listenWordDoneBtn.onclick = () => {
+        if (listenWordDoneBtn.disabled) return;
+        listenWordDoneBtn.disabled = true;
+        finishLtrChoiceTask(true, null);
+    };
 
     setTimeout(playAll, 300);
 }
@@ -18766,6 +18786,8 @@ function activityAuditoryMatch(stage, letterChar, difficulty) {
         btn.innerHTML = "🔊";
         btn.dataset.correct = opt.correct ? "1" : "0";
         btn.onclick = () => {
+            if (btn.disabled) return;
+            btn.disabled = true;
             speak(letterWithFatha(opt.letter), { rate: 0.75 });
             setTimeout(() => finishLtrChoiceTask(opt.correct, btn), 550);
         };
@@ -18864,6 +18886,8 @@ function activityAuditoryFindTarget(stage, letterChar) {
         btn.innerHTML = "🔊";
         btn.dataset.correct = letter === letterChar ? "1" : "0";
         btn.onclick = () => {
+            if (btn.disabled) return;
+            btn.disabled = true;
             speak(letterWithFatha(letter), { rate: 0.75 });
             setTimeout(() => finishLtrChoiceTask(letter === letterChar, btn), 550);
         };
@@ -19250,6 +19274,8 @@ function activityHearInWordChoose(stage, letterChar, difficulty) {
         btn.innerHTML = w.image;
         btn.dataset.correct = w.word === correctWord.word ? "1" : "0";
         btn.onclick = () => {
+            if (btn.disabled) return;
+            btn.disabled = true;
             speak(w.word, { rate: 0.75 });
             setTimeout(() => finishLtrChoiceTask(w.word === correctWord.word, btn), 550);
         };
@@ -19325,7 +19351,13 @@ function activityTraceInWord(stage, letterChar) {
     const controls = ltrSetupTraceCanvas(canvas);
 
     stage.querySelector("#ltrTraceWordClearBtn").onclick = () => controls.clear();
-    stage.querySelector("#ltrTraceWordDoneBtn").onclick = () => finishLtrChoiceTask(true, null);
+
+    const traceWordDoneBtn = stage.querySelector("#ltrTraceWordDoneBtn");
+    traceWordDoneBtn.onclick = () => {
+        if (traceWordDoneBtn.disabled) return;
+        traceWordDoneBtn.disabled = true;
+        finishLtrChoiceTask(true, null);
+    };
 
     speak(item.word, { rate: 0.75 });
 }
@@ -19897,4 +19929,41 @@ nextDua = function () {
 
 /* =========================================================
    🔚 نهاية المرحلة الثالثة — ربط بقية الأقسام بسجل الأحداث
+========================================================= */
+
+
+/* =========================================================================
+   🆕 =====================================================================
+   🛡️ إصلاح أولوية عالية: منع تكرار إكمال نفس مهمة الكتابة
+   =====================================================================
+   finishWriting() لم تكن محمية إطلاقًا من الضغط المتكرر (حتى ببطء،
+   بلا أي نافذة زمنية) — كل ضغطة على "✅ انتهيت" كانت تمنح نجومًا
+   وتُسجِّل حدثًا جديدًا لنفس الحرف دون أي تتبّع إضافي فعلي. هذا
+   الحارس يمنع ذلك: يُعاد ضبطه فقط عند عرض حرف جديد فعليًا للكتابة
+   (بداية التطبيق أو الانتقال لحرف تالٍ)، ولا يمسّ منطق النجاح أو
+   المكافآت نفسها إطلاقًا — فقط يمنع إعادة معالجة نفس الإكمال.
+========================================================================= */
+
+let writingCompletedForCurrentLetter = false;
+
+const originalRenderWritingLetterForGuard = renderWritingLetter;
+
+renderWritingLetter = function () {
+    writingCompletedForCurrentLetter = false;
+    originalRenderWritingLetterForGuard();
+};
+
+const originalFinishWritingForGuard = finishWriting;
+
+finishWriting = function () {
+
+    if (writingCompletedForCurrentLetter) return;
+
+    writingCompletedForCurrentLetter = true;
+
+    originalFinishWritingForGuard();
+};
+
+/* =========================================================
+   🔚 نهاية إصلاحات الأولوية العالية (منع تكرار الإكمال)
 ========================================================= */
