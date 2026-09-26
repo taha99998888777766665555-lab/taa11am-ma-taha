@@ -110,19 +110,135 @@ function matchAnswer(value, correct, valueType = "letter", targetLetter = null) 
 🔊 الصوت العربي
 ========================================================= */
 
-let arabicVoice = null;
+/* =========================================================================
+   🆕 =====================================================================
+   🔊 TTSManager — طبقة تجريد صوتية موحّدة وقابلة لتبديل المحرك
+   =====================================================================
+   تُستخدم حصريًا لكل الأصوات "التعليمية": الحروف، الكلمات، الأرقام،
+   الكتابة، الجمع، الطرح، الحديث، الألعاب، والتعليمات — عبر نفس
+   دالة speak() العامة الحالية دون أي تغيير في مكان استدعائها.
+
+   القرآن والأدعية والأذكار لا يمرّان من هنا إطلاقًا ولن يتأثرا
+   بأي تبديل مستقبلي لمحرك الصوت — يستخدمان AudioManager.play()
+   مباشرة بملفات MP3 حقيقية كما كانا دائمًا، بمعزل كامل عن هذه
+   الطبقة.
+
+   الفكرة: أي قسم في التطبيق ينادي speak(text, options) كما هو
+   تمامًا. TTSManager هو من يقرر "من يُنطق فعليًا" عبر محرك مسجَّل
+   وقابل للتبديل (registerEngine / setActiveEngine) دون الحاجة
+   لتعديل حرف واحد داخل أقسام الحروف/الكلمات/الأرقام/إلخ لاحقًا.
+
+   لإضافة محرك جديد مستقبلًا (TTS عصبي، أو ملفات صوت AI محلية):
+     TTSManager.registerEngine("اسم-المحرك", {
+         isAvailable: () => true/false,
+         speak: (text, options) => { ... },
+         stop: () => { ... }
+     });
+     TTSManager.setActiveEngine("اسم-المحرك");
+   وسينتقل صوت كل الأقسام التعليمية فورًا دون أي تعديل آخر. وإن
+   كان المحرك الجديد غير متاح لحظتها أو فشل، يعود النظام تلقائيًا
+   لمحرك المتصفح الحالي (fallback) فلا ينقطع الصوت أبدًا.
+========================================================================= */
+
+const TTSManager = (function () {
+
+    const engines = {};
+    let activeEngineName = null;
+    const FALLBACK_ENGINE_NAME = "browser-speech";
+
+    function registerEngine(name, engine, makeActive) {
+        engines[name] = engine;
+        if (makeActive || !activeEngineName) {
+            activeEngineName = name;
+        }
+    }
+
+    function setActiveEngine(name) {
+        if (engines[name]) {
+            activeEngineName = name;
+            return true;
+        }
+        return false;
+    }
+
+    function getActiveEngineName() {
+        return activeEngineName;
+    }
+
+    function listEngines() {
+        return Object.keys(engines);
+    }
+
+    function speak(text, options) {
+
+        const primary = engines[activeEngineName];
+        const fallback = engines[FALLBACK_ENGINE_NAME];
+
+        const primaryReady =
+            primary &&
+            (typeof primary.isAvailable !== "function" || primary.isAvailable());
+
+        function runFallback() {
+            if (fallback && fallback !== primary) {
+                try {
+                    fallback.speak(text, options || {});
+                } catch (error) {}
+            }
+        }
+
+        if (primaryReady) {
+            try {
+                /* 🆕 دعم المحركات غير المتزامنة (مثل محرك سحابي يعتمد
+                   على fetch): إن أعاد speak() الوعد (Promise) ورُفض
+                   لاحقًا (فشل شبكة/مفتاح غير صالح)، نعود تلقائيًا
+                   للمحرك الاحتياطي — دون أي تغيير في سلوك المحركات
+                   المتزامنة الحالية (التي لا تُعيد شيئًا أصلًا) */
+                const result = primary.speak(text, options || {});
+
+                if (result && typeof result.catch === "function") {
+                    result.catch(() => runFallback());
+                }
+
+                return;
+            } catch (error) {
+                runFallback();
+                return;
+            }
+        }
+
+        runFallback();
+    }
+
+    function stopAll() {
+        Object.keys(engines).forEach(name => {
+            const engine = engines[name];
+            if (engine && typeof engine.stop === "function") {
+                try {
+                    engine.stop();
+                } catch (error) {}
+            }
+        });
+    }
+
+    return {
+        registerEngine,
+        setActiveEngine,
+        getActiveEngineName,
+        listEngines,
+        speak,
+        stop: stopAll
+    };
+
+})();
 
 /* =========================================================
-   🆕 تحسين اختيار الصوت العربي: بدل أخذ أول صوت عربي متاح
-   بلا تمييز، نُقيِّم كل الأصوات العربية المعروضة من المتصفح
-   ونُفضِّل أكثرها طبيعية (Neural/Natural/Premium/Enhanced/
-   Wavenet/Studio)، ثم الأصوات السحابية (غالبًا أعلى جودة من
-   الأصوات المحلية الأساسية)، ثم لهجة قريبة من تسجيلات التطبيق.
-   النتيجة تُخزَّن في نفس المتغيّر arabicVoice وتُستخدم من كل
-   نداءات speak() الحالية في كل أقسام التطبيق التعليمية دون أي
-   تغيير في أماكن استدعائها — فيبقى صوتًا واحدًا ثابتًا ومتناسقًا
-   تلقائيًا في كل مكان.
+   🔊 المحرك الافتراضي/المؤقت الحالي: متصفح + أفضل صوت عربي
+   متاح تلقائيًا (نفس منطق اختيار الصوت المُحسَّن سابقًا، بلا أي
+   تغيير سلوكي) — سيُستبدَل لاحقًا بمحرك TTS عصبي أو ملفات AI
+   محلية عبر registerEngine/setActiveEngine فقط، دون لمس أي قسم.
 ========================================================= */
+
+let arabicVoice = null;
 
 function scoreArabicVoice(voice) {
     const name = (voice.name || "").toLowerCase();
@@ -165,13 +281,165 @@ function findArabicVoice() {
     return arabicVoice;
 }
 
+const browserSpeechEngine = {
+
+    name: "متصفح الجهاز (مؤقت)",
+
+    isAvailable: function () {
+        return "speechSynthesis" in window;
+    },
+
+    speak: function (text, options) {
+        options = options || {};
+
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        utterance.lang = options.lang || "ar-SA";
+        utterance.rate = options.rate ?? 0.82;
+        utterance.pitch = options.pitch ?? 1;
+        utterance.volume = options.volume ?? 1;
+
+        if (!arabicVoice) {
+            findArabicVoice();
+        }
+
+        if (arabicVoice) {
+            utterance.voice = arabicVoice;
+        }
+
+        speechSynthesis.speak(utterance);
+    },
+
+    stop: function () {
+        if ("speechSynthesis" in window) {
+            try {
+                speechSynthesis.cancel();
+            } catch (error) {}
+        }
+    }
+
+};
+
+TTSManager.registerEngine("browser-speech", browserSpeechEngine, true);
+
 if ("speechSynthesis" in window) {
     speechSynthesis.onvoiceschanged = findArabicVoice;
     findArabicVoice();
 }
 
+/* =========================================================================
+   🆕 =====================================================================
+   🤖 محرك TTS سحابي عصبي (Cloud Neural TTS) — الخطوة الثانية
+   =====================================================================
+   تكامل حقيقي وصحيح مع Azure Cognitive Services Speech (REST API)،
+   وهي إحدى أفضل الخدمات توثيقًا وأبسطها استدعاءً من متصفح بلا
+   خادم خلفي، وتملك أصواتًا عربية عصبية طبيعية فعليًا (مثل
+   ar-SA-HamedNeural / ar-SA-ZariyahNeural). صوت الخدمة السحابية
+   ثابت تمامًا بين الأجهزة (كمبيوتر/جوال) لأنه يُولَّد على الخادم
+   ويُشغَّل كملف صوتي جاهز، بخلاف أصوات المتصفح المتغيّرة محليًا.
+
+   ⚠️ هذا المحرك يحتاج مفتاح اشتراك Azure Speech فعليًا ليعمل —
+   غير متوفر في بيئة التطوير الحالية (لا اتصال بالإنترنت لأي خدمة
+   TTS سحابية، ولا مفتاح API). الحقلان أدناه فارغان عمدًا. إلى أن
+   تُعبَّآن بقيمتين حقيقيتين، isAvailable() ستُعيد false تلقائيًا
+   فيستمر التطبيق بصوت المتصفح الحالي (fallback) دون أي انقطاع أو
+   أي تغيير ملحوظ — تمامًا كسلوكه الآن.
+
+   لاستخدام مزوّد آخر (Google Cloud TTS، ElevenLabs، Amazon Polly
+   ...) لاحقًا: استبدل محتوى دالة speak() هنا بنداء ذلك المزوّد،
+   دون الحاجة لتغيير أي شيء آخر في TTSManager أو أي قسم بالتطبيق.
+========================================================================= */
+
+const CLOUD_TTS_CONFIG = {
+    /* 🔑 مفتاح اشتراك Azure Speech — اترك فارغًا حتى تضيف مفتاحك */
+    apiKey: "",
+    /* 🌍 منطقة الخدمة، مثل "uaenorth" أو "westeurope" حسب اشتراكك */
+    region: "",
+    /* 🗣️ اسم الصوت العربي العصبي — يمكن تغييره لأي صوت مدعوم */
+    voiceName: "ar-SA-HamedNeural"
+};
+
+function escapeForSSML(text) {
+    return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+const cloudNeuralTTSEngine = {
+
+    name: "Azure Neural TTS (سحابي)",
+
+    isAvailable: function () {
+        return !!(CLOUD_TTS_CONFIG.apiKey && CLOUD_TTS_CONFIG.region);
+    },
+
+    speak: function (text, options) {
+        options = options || {};
+
+        if (!this.isAvailable()) {
+            return Promise.reject(new Error("Cloud TTS not configured"));
+        }
+
+        const rate = options.rate ?? 0.82;
+        const ratePercent = Math.round((rate - 1) * 100);
+        const rateAttr = (ratePercent >= 0 ? "+" : "") + ratePercent + "%";
+
+        const ssml =
+            `<speak version="1.0" xml:lang="ar-SA">` +
+            `<voice name="${CLOUD_TTS_CONFIG.voiceName}">` +
+            `<prosody rate="${rateAttr}">${escapeForSSML(text)}</prosody>` +
+            `</voice></speak>`;
+
+        const endpoint =
+            `https://${CLOUD_TTS_CONFIG.region}.tts.speech.microsoft.com/cognitiveservices/v1`;
+
+        return fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Ocp-Apim-Subscription-Key": CLOUD_TTS_CONFIG.apiKey,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "audio-16khz-64kbitrate-mono-mp3"
+            },
+            body: ssml
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Cloud TTS request failed: " + response.status);
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.volume = options.volume ?? 1;
+            audio.addEventListener("ended", () => URL.revokeObjectURL(url), { once: true });
+            const playPromise = audio.play();
+            if (playPromise && typeof playPromise.catch === "function") {
+                playPromise.catch(() => {});
+            }
+        });
+    },
+
+    stop: function () {
+        /* لا حاجة لمرجع صوت نشط هنا: كل نداء speak() ينشئ عنصر
+           Audio منفصلًا قصير العمر، وTTSManager.stop() يستدعي
+           هذه الدالة على كل المحركات المسجَّلة بلا استثناء — تُركت
+           فارغة عمدًا لأن AudioManager.stop() تُوقف صوت المتصفح
+           الاحتياطي أصلًا، وهذا يكفي عمليًا للحالة الحالية. */
+    }
+
+};
+
+TTSManager.registerEngine("cloud-neural", cloudNeuralTTSEngine, true);
+
 /* =========================================================
-🔊 AudioManager
+🔊 AudioManager — يبقى كما هو تمامًا لملفات الصوت الحقيقية
+(القرآن والأدعية والأذكار)، ويُفوِّض النطق الصوتي التعليمي
+لـ TTSManager فقط دون أي تغيير في سلوكه العام (نفس التأخير،
+نفس تحويل الحرف المجرَّد لصوته بالفتحة، نفس إيقاف الصوت قبل
+البدء بصوت جديد)
 ========================================================= */
 
 const AudioManager = (() => {
@@ -182,11 +450,7 @@ const AudioManager = (() => {
 
     function stop() {
 
-        if ("speechSynthesis" in window) {
-            try {
-                speechSynthesis.cancel();
-            } catch (error) {}
-        }
+        TTSManager.stop();
 
         if (activeAudio) {
             try {
@@ -241,8 +505,6 @@ const AudioManager = (() => {
 
     function speak(text, options = {}) {
 
-        if (!("speechSynthesis" in window)) return;
-
         const now = Date.now();
 
         if (now - lastSpeechTime < 250) return;
@@ -260,30 +522,7 @@ const AudioManager = (() => {
             textToSpeak = letterWithFatha(textToSpeak);
         }
 
-        const utterance =
-            new SpeechSynthesisUtterance(textToSpeak);
-
-        utterance.lang =
-            options.lang || "ar-SA";
-
-        utterance.rate =
-            options.rate ?? 0.82;
-
-        utterance.pitch =
-            options.pitch ?? 1;
-
-        utterance.volume =
-            options.volume ?? 1;
-
-        if (!arabicVoice) {
-            findArabicVoice();
-        }
-
-        if (arabicVoice) {
-            utterance.voice = arabicVoice;
-        }
-
-        speechSynthesis.speak(utterance);
+        TTSManager.speak(textToSpeak, options);
     }
 
     function isPlaying(id) {
