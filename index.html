@@ -1038,38 +1038,72 @@
         🕌
     </div>
 
-    <h3
-        id="surahName"
-        class="surah-name"
-    >
-        سورة الفاتحة
-    </h3>
+    <!-- 🏠 قائمة السور (٣٧ سورة — جزء عمّ) -->
+    <div id="quranSurahListView">
 
-    <button
-        class="primary"
-        onclick="speakSurah()"
-    >
-        🔊 استمع للسورة كاملة
-    </button>
+        <div id="quranSurahGrid" class="quran-surah-grid"></div>
 
-    <div
-        id="surahAyahs"
-        class="surah-ayahs"
-    ></div>
+        <button
+            class="secondary"
+            onclick="showScreen('home')"
+        >
+            🏠 الرئيسية
+        </button>
 
-    <button
-        class="success"
-        onclick="nextSurah()"
-    >
-        📖 سورة أخرى
-    </button>
+    </div>
 
-    <button
-        class="secondary"
-        onclick="showScreen('home')"
-    >
-        🏠 الرئيسية
-    </button>
+    <!-- 📖 تفاصيل السورة المفتوحة -->
+    <div id="quranSurahDetailView" style="display:none;">
+
+        <h3
+            id="surahName"
+            class="surah-name"
+        >
+            سورة الناس
+        </h3>
+
+        <button
+            class="secondary"
+            onclick="showQuranSurahList()"
+        >
+            ⬅️ رجوع لقائمة السور
+        </button>
+
+        <div id="quranAudioMessage"></div>
+
+        <button
+            id="quranStopBtn"
+            class="danger"
+            type="button"
+            style="display:none;"
+            onclick="stopQuranPlayback()"
+        >
+            ⏹ إيقاف الصوت
+        </button>
+
+        <button
+            class="quran-play-all-button"
+            type="button"
+            onclick="speakSurah()"
+        >
+            🔊 استمع للسورة كاملة
+        </button>
+
+        <button
+            id="quranBismillahBtn"
+            class="quran-bismillah-button"
+            type="button"
+            onclick="speakBismillah()"
+        >
+            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+        </button>
+
+        <div
+            id="surahAyahs"
+            class="surah-ayahs"
+        ></div>
+
+    </div>
 
 </div>
 
