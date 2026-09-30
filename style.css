@@ -7348,3 +7348,150 @@ body.dark-mode .recent-activity-item {
 body.dark-mode .profile-student-card {
     border-bottom-color: #3a3a5a;
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   📖 تطوير قسم القرآن — جزء عمّ الكامل (٣٧ سورة)
+   كل الأصناف هنا جديدة ومعزولة (quran-*)، بلا أي زخارف أو حركات
+   مزعجة — فصل بصري هادئ وتمييز واضح فقط.
+   =====================================================================
+========================================================================= */
+
+/* ---------- شبكة اختيار السورة ---------- */
+
+.quran-surah-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    max-width: 500px;
+    margin: 16px auto;
+}
+
+.quran-surah-card {
+    background: #f1f8e9;
+    border: 2px solid #81c784;
+    border-radius: 14px;
+    padding: 14px 8px;
+    font-size: 17px;
+    font-weight: bold;
+    color: #1b5e20;
+    cursor: pointer;
+    transition: transform 0.15s, background-color 0.15s;
+}
+
+.quran-surah-card:hover {
+    background: #dcedc8;
+    transform: scale(1.03);
+}
+
+/* ---------- تفعيل الخط القرآني الموجود أصلًا (.surah-text) على
+   نص الآية الفعلي المعروض، مع الحفاظ على وضوح تام ---------- */
+
+.quran-ayah-text {
+    font-family: "Traditional Arabic", "Amiri", "Tahoma", serif;
+    font-size: 26px;
+    line-height: 2.2;
+    color: #1b5e20;
+    padding: 4px 6px;
+}
+
+/* ---------- فصل بصري بسيط بين الآيات (بلا زخارف) ---------- */
+
+.quran-ayah {
+    padding: 12px 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #dcedc8;
+}
+
+.quran-ayah:last-child {
+    border-bottom: none;
+}
+
+/* ---------- تمييز الآية/البسملة الجاري تشغيلها (هادئ، بلا وميض) ---------- */
+
+.quran-ayah.playing {
+    background: #e8f5e9;
+    border-radius: 12px;
+    border-bottom-color: transparent;
+}
+
+.quran-ayah.playing .quran-ayah-text {
+    color: #2e7d32;
+}
+
+.quran-bismillah-button.playing {
+    background: #2e7d32 !important;
+}
+
+/* ---------- زر البسملة: مميَّز عن أزرار الآيات ---------- */
+
+.quran-bismillah-button {
+    display: block;
+    margin: 14px auto;
+    padding: 14px 20px;
+    background: #fff8e1;
+    border: 2px solid #ffb300;
+    border-radius: 14px;
+    color: #8d5a00;
+    font-family: "Traditional Arabic", "Amiri", "Tahoma", serif;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* ---------- زر تشغيل السورة كاملة: مميَّز بصريًا عن أزرار الآيات ---------- */
+
+.quran-play-all-button {
+    display: block;
+    margin: 10px auto;
+    padding: 14px 22px;
+    background: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.quran-play-all-button:hover,
+.quran-bismillah-button:hover {
+    filter: brightness(1.05);
+}
+
+body.dark-mode .quran-surah-card {
+    background: #1b3a1e;
+    color: #a5d6a7;
+    border-color: #4caf50;
+}
+
+body.dark-mode .quran-ayah-text {
+    color: #a5d6a7;
+}
+
+body.dark-mode .quran-ayah {
+    border-bottom-color: #2e4d2e;
+}
+
+body.dark-mode .quran-ayah.playing {
+    background: #204525;
+}
+
+body.dark-mode .quran-bismillah-button {
+    background: #3a3320;
+    color: #ffd54f;
+}
+
+@media (max-width: 480px) {
+    .quran-surah-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quran-ayah-text {
+        font-size: 22px;
+    }
+
+    .quran-bismillah-button {
+        font-size: 19px;
+    }
+}
