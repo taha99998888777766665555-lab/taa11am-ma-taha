@@ -7495,3 +7495,115 @@ body.dark-mode .quran-bismillah-button {
         font-size: 19px;
     }
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   🎈 تطوير لعبة "فرقع الحروف" — نسخة هادئة مناسبة للتوحد/ADHD
+   بلا مؤقت أو أرواح. بالونات ثابتة تطفو بهدوء بدل السقوط السريع.
+   كل الأصناف هنا جديدة ومعزولة، لا تمسّ أي صنف تستخدمه لعبة
+   فرقع الأرقام (منفصلة بالكامل في كودها الخاص).
+   =====================================================================
+========================================================================= */
+
+/* حركة طفو هادئة جدًا — بطيئة ومسافة بسيطة، بلا اهتزاز أو دوران */
+@keyframes balloonFloatCalm {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.balloon-floating {
+    animation: balloonFloatCalm 3.4s ease-in-out infinite;
+}
+
+/* سلة التجميع المرئية أسفل الشاشة */
+
+.balloon-basket-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border-radius: 16px;
+    padding: 10px 16px;
+    margin: 12px 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,.06);
+    flex-wrap: wrap;
+}
+
+.balloon-basket-label {
+    font-weight: bold;
+    font-size: 15px;
+    color: #475569;
+}
+
+.balloon-basket {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.balloon-basket-item {
+    font-size: 24px;
+    animation: none;
+}
+
+/* شاشة إكمال المستوى — هادئة، بلا أي وميض */
+
+.balloon-level-complete-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.97);
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 60;
+}
+
+.balloon-level-complete-card {
+    text-align: center;
+    padding: 30px;
+    max-width: 320px;
+}
+
+.balloon-level-complete-card h3 {
+    font-size: 26px;
+    margin-bottom: 10px;
+    color: #15803d;
+}
+
+.balloon-level-complete-card p {
+    font-size: 16px;
+    color: #64748b;
+    margin-bottom: 18px;
+}
+
+/* الساحة تحتاج موضعًا نسبيًا ليستقر الـoverlay بداخلها بشكل صحيح */
+.balloon-arena {
+    position: relative;
+}
+
+body.dark-mode .balloon-basket-row {
+    background: #232946;
+}
+
+body.dark-mode .balloon-basket-label {
+    color: #cbd5e1;
+}
+
+body.dark-mode .balloon-level-complete-overlay {
+    background: rgba(30,30,46,0.97);
+}
+
+body.dark-mode .balloon-level-complete-card p {
+    color: #94a3b8;
+}
+
+@media (max-width: 480px) {
+    .balloon-basket-item {
+        font-size: 20px;
+    }
+
+    .balloon-level-complete-card h3 {
+        font-size: 22px;
+    }
+}
