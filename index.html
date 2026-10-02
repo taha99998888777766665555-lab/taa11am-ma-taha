@@ -1431,7 +1431,7 @@
 
     <div class="balloon-game-wrapper">
 
-        <div class="game-hud">
+        <div class="game-hud balloon-hud-simple">
 
             <div class="hud-item">
 
@@ -1448,7 +1448,7 @@
 
                 <div class="hud-level">
 
-                    المرحلة
+                    المستوى
 
                     <span id="balloonLevel">
                         ١
@@ -1465,17 +1465,6 @@
                     ></div>
 
                 </div>
-
-            </div>
-
-
-            <div class="hud-item streak-box">
-
-                🔥
-
-                <strong id="balloonStreak">
-                    ٠
-                </strong>
 
             </div>
 
@@ -1525,6 +1514,49 @@
             id="balloonMessage"
             class="balloon-message"
         ></div>
+
+
+        <div class="balloon-basket-row">
+
+            <span class="balloon-basket-label">
+                🧺 جمعت:
+            </span>
+
+            <div
+                id="balloonBasket"
+                class="balloon-basket"
+            ></div>
+
+        </div>
+
+
+        <div
+            id="balloonLevelComplete"
+            class="balloon-level-complete-overlay"
+            style="display:none;"
+        >
+
+            <div class="balloon-level-complete-card">
+
+                <h3 id="balloonLevelCompleteTitle">
+                    🌟 أحسنت! أكملت المستوى
+                </h3>
+
+                <p id="balloonLevelCompleteBody">
+                    المستوى التالي بانتظارك
+                </p>
+
+                <button
+                    id="balloonLevelCompleteNextBtn"
+                    class="primary"
+                    type="button"
+                >
+                    ▶ المستوى التالي
+                </button>
+
+            </div>
+
+        </div>
 
 
         <button
