@@ -546,6 +546,337 @@ function speak(text, options = {}) {
     AudioManager.speak(text, options);
 }
 
+const EDUCATIONAL_AUDIO_MANIFEST = {
+    "أَ": "assets/audio/educational/letters/letter_01_alef.mp3",
+    "بَ": "assets/audio/educational/letters/letter_02_ba.mp3",
+    "تَ": "assets/audio/educational/letters/letter_03_ta.mp3",
+    "ثَ": "assets/audio/educational/letters/letter_04_tha.mp3",
+    "جَ": "assets/audio/educational/letters/letter_05_jeem.mp3",
+    "حَ": "assets/audio/educational/letters/letter_06_haa.mp3",
+    "خَ": "assets/audio/educational/letters/letter_07_khaa.mp3",
+    "دَ": "assets/audio/educational/letters/letter_08_dal.mp3",
+    "ذَ": "assets/audio/educational/letters/letter_09_thal.mp3",
+    "رَ": "assets/audio/educational/letters/letter_10_raa.mp3",
+    "زَ": "assets/audio/educational/letters/letter_11_zay.mp3",
+    "سَ": "assets/audio/educational/letters/letter_12_seen.mp3",
+    "شَ": "assets/audio/educational/letters/letter_13_sheen.mp3",
+    "صَ": "assets/audio/educational/letters/letter_14_sad.mp3",
+    "ضَ": "assets/audio/educational/letters/letter_15_dad.mp3",
+    "طَ": "assets/audio/educational/letters/letter_16_taa.mp3",
+    "ظَ": "assets/audio/educational/letters/letter_17_zaa.mp3",
+    "عَ": "assets/audio/educational/letters/letter_18_ain.mp3",
+    "غَ": "assets/audio/educational/letters/letter_19_ghain.mp3",
+    "فَ": "assets/audio/educational/letters/letter_20_faa.mp3",
+    "قَ": "assets/audio/educational/letters/letter_21_qaf.mp3",
+    "كَ": "assets/audio/educational/letters/letter_22_kaf.mp3",
+    "لَ": "assets/audio/educational/letters/letter_23_lam.mp3",
+    "مَ": "assets/audio/educational/letters/letter_24_meem.mp3",
+    "نَ": "assets/audio/educational/letters/letter_25_noon.mp3",
+    "هَ": "assets/audio/educational/letters/letter_26_ha.mp3",
+    "وَ": "assets/audio/educational/letters/letter_27_waw.mp3",
+    "يَ": "assets/audio/educational/letters/letter_28_yaa.mp3",
+    "واحد": "assets/audio/educational/numbers/number_01.mp3",
+    "اثنان": "assets/audio/educational/numbers/number_02.mp3",
+    "ثلاثة": "assets/audio/educational/numbers/number_03.mp3",
+    "أربعة": "assets/audio/educational/numbers/number_04.mp3",
+    "خمسة": "assets/audio/educational/numbers/number_05.mp3",
+    "ستة": "assets/audio/educational/numbers/number_06.mp3",
+    "سبعة": "assets/audio/educational/numbers/number_07.mp3",
+    "ثمانية": "assets/audio/educational/numbers/number_08.mp3",
+    "تسعة": "assets/audio/educational/numbers/number_09.mp3",
+    "عشرة": "assets/audio/educational/numbers/number_10.mp3",
+    "أحد عشر": "assets/audio/educational/numbers/number_11.mp3",
+    "اثنا عشر": "assets/audio/educational/numbers/number_12.mp3",
+    "ثلاثة عشر": "assets/audio/educational/numbers/number_13.mp3",
+    "أربعة عشر": "assets/audio/educational/numbers/number_14.mp3",
+    "خمسة عشر": "assets/audio/educational/numbers/number_15.mp3",
+    "ستة عشر": "assets/audio/educational/numbers/number_16.mp3",
+    "سبعة عشر": "assets/audio/educational/numbers/number_17.mp3",
+    "ثمانية عشر": "assets/audio/educational/numbers/number_18.mp3",
+    "تسعة عشر": "assets/audio/educational/numbers/number_19.mp3",
+    "عشرون": "assets/audio/educational/numbers/number_20.mp3",
+    "واحد وعشرون": "assets/audio/educational/numbers/number_21.mp3",
+    "اثنان وعشرون": "assets/audio/educational/numbers/number_22.mp3",
+    "ثلاثة وعشرون": "assets/audio/educational/numbers/number_23.mp3",
+    "أربعة وعشرون": "assets/audio/educational/numbers/number_24.mp3",
+    "خمسة وعشرون": "assets/audio/educational/numbers/number_25.mp3",
+    "ستة وعشرون": "assets/audio/educational/numbers/number_26.mp3",
+    "سبعة وعشرون": "assets/audio/educational/numbers/number_27.mp3",
+    "ثمانية وعشرون": "assets/audio/educational/numbers/number_28.mp3",
+    "تسعة وعشرون": "assets/audio/educational/numbers/number_29.mp3",
+    "ثلاثون": "assets/audio/educational/numbers/number_30.mp3",
+    "واحد وثلاثون": "assets/audio/educational/numbers/number_31.mp3",
+    "اثنان وثلاثون": "assets/audio/educational/numbers/number_32.mp3",
+    "ثلاثة وثلاثون": "assets/audio/educational/numbers/number_33.mp3",
+    "أربعة وثلاثون": "assets/audio/educational/numbers/number_34.mp3",
+    "خمسة وثلاثون": "assets/audio/educational/numbers/number_35.mp3",
+    "ستة وثلاثون": "assets/audio/educational/numbers/number_36.mp3",
+    "سبعة وثلاثون": "assets/audio/educational/numbers/number_37.mp3",
+    "ثمانية وثلاثون": "assets/audio/educational/numbers/number_38.mp3",
+    "تسعة وثلاثون": "assets/audio/educational/numbers/number_39.mp3",
+    "أربعون": "assets/audio/educational/numbers/number_40.mp3",
+    "أناناس": "assets/audio/educational/words/word_01_01.mp3",
+    "أرنب": "assets/audio/educational/words/word_01_02.mp3",
+    "أسد": "assets/audio/educational/words/word_01_03.mp3",
+    "أم": "assets/audio/educational/words/word_01_04.mp3",
+    "أذن": "assets/audio/educational/words/word_01_05.mp3",
+    "أخطبوط": "assets/audio/educational/words/word_01_06.mp3",
+    "بيت": "assets/audio/educational/words/word_02_01.mp3",
+    "بنت": "assets/audio/educational/words/word_02_02.mp3",
+    "بطة": "assets/audio/educational/words/word_02_03.mp3",
+    "باب": "assets/audio/educational/words/word_02_04.mp3",
+    "برتقال": "assets/audio/educational/words/word_02_05.mp3",
+    "بقرة": "assets/audio/educational/words/word_02_06.mp3",
+    "بطيخ": "assets/audio/educational/words/word_02_07.mp3",
+    "تفاح": "assets/audio/educational/words/word_03_01.mp3",
+    "تاج": "assets/audio/educational/words/word_03_02.mp3",
+    "تمر": "assets/audio/educational/words/word_03_03.mp3",
+    "تين": "assets/audio/educational/words/word_03_04.mp3",
+    "تمساح": "assets/audio/educational/words/word_03_05.mp3",
+    "توت": "assets/audio/educational/words/word_03_06.mp3",
+    "ثعلب": "assets/audio/educational/words/word_04_01.mp3",
+    "ثوم": "assets/audio/educational/words/word_04_02.mp3",
+    "ثعبان": "assets/audio/educational/words/word_04_03.mp3",
+    "ثلاجة": "assets/audio/educational/words/word_04_04.mp3",
+    "ثلج": "assets/audio/educational/words/word_04_05.mp3",
+    "جسر": "assets/audio/educational/words/word_05_01.mp3",
+    "جبنة": "assets/audio/educational/words/word_05_02.mp3",
+    "جرس": "assets/audio/educational/words/word_05_03.mp3",
+    "جزر": "assets/audio/educational/words/word_05_04.mp3",
+    "جبل": "assets/audio/educational/words/word_05_05.mp3",
+    "جمل": "assets/audio/educational/words/word_05_06.mp3",
+    "حصان": "assets/audio/educational/words/word_06_01.mp3",
+    "حليب": "assets/audio/educational/words/word_06_02.mp3",
+    "حذاء": "assets/audio/educational/words/word_06_03.mp3",
+    "حوت": "assets/audio/educational/words/word_06_04.mp3",
+    "حقيبة": "assets/audio/educational/words/word_06_05.mp3",
+    "خيمة": "assets/audio/educational/words/word_07_01.mp3",
+    "خيار": "assets/audio/educational/words/word_07_02.mp3",
+    "خس": "assets/audio/educational/words/word_07_03.mp3",
+    "خوخ": "assets/audio/educational/words/word_07_04.mp3",
+    "خبز": "assets/audio/educational/words/word_07_05.mp3",
+    "خروف": "assets/audio/educational/words/word_07_06.mp3",
+    "دجاجة": "assets/audio/educational/words/word_08_01.mp3",
+    "دب": "assets/audio/educational/words/word_08_02.mp3",
+    "ديك": "assets/audio/educational/words/word_08_03.mp3",
+    "دلفين": "assets/audio/educational/words/word_08_04.mp3",
+    "دفتر": "assets/audio/educational/words/word_08_05.mp3",
+    "دراجة": "assets/audio/educational/words/word_08_06.mp3",
+    "ذيل": "assets/audio/educational/words/word_09_01.mp3",
+    "ذهب": "assets/audio/educational/words/word_09_02.mp3",
+    "ذراع": "assets/audio/educational/words/word_09_03.mp3",
+    "ذبابة": "assets/audio/educational/words/word_09_04.mp3",
+    "ذئب": "assets/audio/educational/words/word_09_05.mp3",
+    "رمل": "assets/audio/educational/words/word_10_01.mp3",
+    "ريشة": "assets/audio/educational/words/word_10_02.mp3",
+    "رأس": "assets/audio/educational/words/word_10_03.mp3",
+    "رجل": "assets/audio/educational/words/word_10_04.mp3",
+    "زهرة": "assets/audio/educational/words/word_11_01.mp3",
+    "زينة": "assets/audio/educational/words/word_11_02.mp3",
+    "زرافة": "assets/audio/educational/words/word_11_03.mp3",
+    "زيت": "assets/audio/educational/words/word_11_04.mp3",
+    "زيتون": "assets/audio/educational/words/word_11_05.mp3",
+    "سفينة": "assets/audio/educational/words/word_12_01.mp3",
+    "سيارة": "assets/audio/educational/words/word_12_02.mp3",
+    "سمكة": "assets/audio/educational/words/word_12_03.mp3",
+    "ساعة": "assets/audio/educational/words/word_12_04.mp3",
+    "سرير": "assets/audio/educational/words/word_12_05.mp3",
+    "سماء": "assets/audio/educational/words/word_12_06.mp3",
+    "شمس": "assets/audio/educational/words/word_13_01.mp3",
+    "شعر": "assets/audio/educational/words/word_13_02.mp3",
+    "شجرة": "assets/audio/educational/words/word_13_03.mp3",
+    "شمعة": "assets/audio/educational/words/word_13_04.mp3",
+    "شوكة": "assets/audio/educational/words/word_13_05.mp3",
+    "شباك": "assets/audio/educational/words/word_13_06.mp3",
+    "صندوق": "assets/audio/educational/words/word_14_01.mp3",
+    "صالة": "assets/audio/educational/words/word_14_02.mp3",
+    "صقر": "assets/audio/educational/words/word_14_03.mp3",
+    "صاروخ": "assets/audio/educational/words/word_14_04.mp3",
+    "صافرة": "assets/audio/educational/words/word_14_05.mp3",
+    "صحن": "assets/audio/educational/words/word_14_06.mp3",
+    "صبار": "assets/audio/educational/words/word_14_07.mp3",
+    "ضرس": "assets/audio/educational/words/word_15_01.mp3",
+    "ضفدع": "assets/audio/educational/words/word_15_02.mp3",
+    "ضابط": "assets/audio/educational/words/word_15_03.mp3",
+    "ضوء": "assets/audio/educational/words/word_15_04.mp3",
+    "طباخ": "assets/audio/educational/words/word_16_01.mp3",
+    "طاولة": "assets/audio/educational/words/word_16_02.mp3",
+    "طبيب": "assets/audio/educational/words/word_16_03.mp3",
+    "طائرة": "assets/audio/educational/words/word_16_04.mp3",
+    "طاووس": "assets/audio/educational/words/word_16_05.mp3",
+    "طفل": "assets/audio/educational/words/word_16_06.mp3",
+    "ظرف": "assets/audio/educational/words/word_17_01.mp3",
+    "ظفر": "assets/audio/educational/words/word_17_02.mp3",
+    "ظل": "assets/audio/educational/words/word_17_03.mp3",
+    "علم": "assets/audio/educational/words/word_18_01.mp3",
+    "عصفور": "assets/audio/educational/words/word_18_02.mp3",
+    "عين": "assets/audio/educational/words/word_18_03.mp3",
+    "عنب": "assets/audio/educational/words/word_18_04.mp3",
+    "عسل": "assets/audio/educational/words/word_18_05.mp3",
+    "عصير": "assets/audio/educational/words/word_18_06.mp3",
+    "غسالة": "assets/audio/educational/words/word_19_01.mp3",
+    "غيوم": "assets/audio/educational/words/word_19_02.mp3",
+    "غراب": "assets/audio/educational/words/word_19_03.mp3",
+    "غوريلا": "assets/audio/educational/words/word_19_04.mp3",
+    "غزالة": "assets/audio/educational/words/word_19_05.mp3",
+    "فراشة": "assets/audio/educational/words/word_20_01.mp3",
+    "فستان": "assets/audio/educational/words/word_20_02.mp3",
+    "فانوس": "assets/audio/educational/words/word_20_03.mp3",
+    "فراولة": "assets/audio/educational/words/word_20_04.mp3",
+    "فيل": "assets/audio/educational/words/word_20_05.mp3",
+    "فأر": "assets/audio/educational/words/word_20_06.mp3",
+    "قميص": "assets/audio/educational/words/word_21_01.mp3",
+    "قلم": "assets/audio/educational/words/word_21_02.mp3",
+    "قرد": "assets/audio/educational/words/word_21_03.mp3",
+    "قلب": "assets/audio/educational/words/word_21_04.mp3",
+    "قفاز": "assets/audio/educational/words/word_21_05.mp3",
+    "قصر": "assets/audio/educational/words/word_21_06.mp3",
+    "كرة": "assets/audio/educational/words/word_22_01.mp3",
+    "كأس": "assets/audio/educational/words/word_22_02.mp3",
+    "كلب": "assets/audio/educational/words/word_22_03.mp3",
+    "كرسي": "assets/audio/educational/words/word_22_04.mp3",
+    "كيك": "assets/audio/educational/words/word_22_05.mp3",
+    "كرز": "assets/audio/educational/words/word_22_06.mp3",
+    "كتاب": "assets/audio/educational/words/word_22_07.mp3",
+    "ليمون": "assets/audio/educational/words/word_23_01.mp3",
+    "لبن": "assets/audio/educational/words/word_23_02.mp3",
+    "لحم": "assets/audio/educational/words/word_23_03.mp3",
+    "لمبة": "assets/audio/educational/words/word_23_04.mp3",
+    "لعبة": "assets/audio/educational/words/word_23_05.mp3",
+    "لسان": "assets/audio/educational/words/word_23_06.mp3",
+    "مسبح": "assets/audio/educational/words/word_24_01.mp3",
+    "مدرسة": "assets/audio/educational/words/word_24_02.mp3",
+    "مسجد": "assets/audio/educational/words/word_24_03.mp3",
+    "مقص": "assets/audio/educational/words/word_24_04.mp3",
+    "مفتاح": "assets/audio/educational/words/word_24_05.mp3",
+    "موز": "assets/audio/educational/words/word_24_06.mp3",
+    "نسر": "assets/audio/educational/words/word_25_01.mp3",
+    "نحل": "assets/audio/educational/words/word_25_02.mp3",
+    "نجمة": "assets/audio/educational/words/word_25_03.mp3",
+    "نمر": "assets/audio/educational/words/word_25_04.mp3",
+    "نعامة": "assets/audio/educational/words/word_25_05.mp3",
+    "نخلة": "assets/audio/educational/words/word_25_06.mp3",
+    "هلال": "assets/audio/educational/words/word_26_01.mp3",
+    "هدهد": "assets/audio/educational/words/word_26_02.mp3",
+    "هدية": "assets/audio/educational/words/word_26_03.mp3",
+    "هاتف": "assets/audio/educational/words/word_26_04.mp3",
+    "هرم": "assets/audio/educational/words/word_26_05.mp3",
+    "وجه": "assets/audio/educational/words/word_27_01.mp3",
+    "وردة": "assets/audio/educational/words/word_27_02.mp3",
+    "ولد": "assets/audio/educational/words/word_27_03.mp3",
+    "وسادة": "assets/audio/educational/words/word_27_04.mp3",
+    "يلعب": "assets/audio/educational/words/word_28_01.mp3",
+    "يوسفي": "assets/audio/educational/words/word_28_02.mp3",
+    "يد": "assets/audio/educational/words/word_28_03.mp3",
+    "يخت": "assets/audio/educational/words/word_28_04.mp3",
+    "يويو": "assets/audio/educational/words/word_28_05.mp3",
+    "حاول مرة أخرى": "assets/audio/educational/phrases/try_again.mp3",
+    "أحسنت! إجابة صحيحة": "assets/audio/educational/phrases/correct_answer.mp3",
+    "صحيح": "assets/audio/educational/phrases/correct_short.mp3",
+    "انتهى الوقت": "assets/audio/educational/phrases/time_up.mp3",
+    "أحسنت! أتممت هذا الحرف بنجاح": "assets/audio/educational/phrases/letter_completed.mp3",
+    "أحسنت يا بطل": "assets/audio/educational/phrases/ahsant_ya_batal.mp3",
+    "أحسنت! أتممت المستوى بنجاح": "assets/audio/educational/phrases/level_completed.mp3",
+    "محاولة رائعة، لنحاول مرة أخرى": "assets/audio/educational/phrases/great_attempt_retry.mp3",
+    "أكمل المستوى السابق أولًا لتفتح هذا المستوى": "assets/audio/educational/phrases/level_locked.mp3",
+    "أكمل المجموعة السابقة أولًا لتفتح هذه المجموعة": "assets/audio/educational/phrases/group_locked.mp3",
+    "تم تصفير المكافآت والإحصائيات": "assets/audio/educational/phrases/progress_reset.mp3",
+    "أحسنت، عمل رائع": "assets/audio/educational/phrases/writing_done.mp3",
+    "اِنْتَهَى الوَقْت": "assets/audio/educational/phrases/balloon_time_up.mp3",
+    "حَاوِلْ مَرَّةً أُخْرَى": "assets/audio/educational/phrases/balloon_try_again.mp3",
+    "لَا بَأْسَ. حَاوِلْ مَرَّةً أُخْرَى": "assets/audio/educational/phrases/balloon_no_worries_retry.mp3",
+    "مُمْتَاز! أَنْهَيْتَ لُعْبَة الأَرْقَام": "assets/audio/educational/phrases/balloon_number_game_done.mp3",
+    "إنما الأعمال بالنيات، وإنما لكل امرئ ما نوى.": "assets/audio/educational/hadith/hadith_01.mp3",
+    "من لا يرحم لا يُرحم.": "assets/audio/educational/hadith/hadith_02.mp3",
+    "تبسمك في وجه أخيك لك صدقة.": "assets/audio/educational/hadith/hadith_03.mp3",
+    "المسلم من سلم المسلمون من لسانه ويده.": "assets/audio/educational/hadith/hadith_04.mp3",
+    "خيركم من تعلم القرآن وعلمه.": "assets/audio/educational/hadith/hadith_05.mp3",
+};
+/* =========================================================================
+   🆕 =====================================================================
+   🔊 speakEducational() — نطق محلي بملفات MP3 (صوت NAMAA Saudi TTS)
+   =====================================================================
+   مخصَّصة حصريًا للأقسام التعليمية (الحروف/الكلمات/الأرقام/الكتابة/
+   الجمع/الطرح/الألعاب/الحديث الشريف). لا علاقة لها إطلاقًا بـ
+   speak() العامة، ولا بـ AudioManager، ولا بأي كود خاص بالقرآن أو
+   الأدعية والأذكار — تلك كلها تبقى تمامًا كما هي بلا أي تعديل.
+
+   الآلية: تبحث في EDUCATIONAL_AUDIO_MANIFEST عن تطابق حرفي تام مع
+   النص المطلوب؛ إن وُجد، تُشغِّل الملف المحلي المقابل مباشرة. إن لم
+   يوجد (نص ديناميكي مثل أسئلة الجمع/الطرح، أو أي نص غير مُسجَّل)،
+   تتراجع تلقائيًا لاستدعاء speak() الحالية بلا أي تغيير فيها —
+   فيستمر الصوت بالعمل دائمًا، ولا يتعطَّل أبدًا.
+========================================================================= */
+
+let educationalAudioInstance = null;
+
+function stopEducationalAudio() {
+    if (educationalAudioInstance) {
+        try {
+            educationalAudioInstance.pause();
+            educationalAudioInstance.currentTime = 0;
+        } catch (error) {}
+    }
+    educationalAudioInstance = null;
+}
+
+function speakEducational(text, options) {
+    options = options || {};
+
+    stopEducationalAudio();
+
+    const localPath = EDUCATIONAL_AUDIO_MANIFEST[text];
+
+    if (!localPath) {
+        /* نص ديناميكي أو غير مُسجَّل — الرجوع التلقائي للصوت الحالي
+           بلا أي تغيير في speak() نفسها */
+        speak(text, options);
+        return;
+    }
+
+    try {
+        const audio = new Audio(localPath);
+        educationalAudioInstance = audio;
+
+        audio.addEventListener("ended", () => {
+            if (educationalAudioInstance === audio) {
+                educationalAudioInstance = null;
+            }
+        }, { once: true });
+
+        const playPromise = audio.play();
+
+        if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(() => {
+                if (educationalAudioInstance === audio) {
+                    educationalAudioInstance = null;
+                }
+                /* فشل تشغيل الملف المحلي لأي سبب — رجوع فوري للصوت
+                   الحالي بدل تعطيل الصوت كليًا */
+                speak(text, options);
+            });
+        }
+    } catch (error) {
+        educationalAudioInstance = null;
+        speak(text, options);
+    }
+}
+
+/* إيقاف الصوت التعليمي المحلي عند تغيير الشاشة — تغليف غير جراحي
+   لـ showScreen نفسها (دالة تنقّل عامة، لا علاقة لها بالقرآن أو
+   الأدعية تحديدًا)، بلا أي لمس لـ AudioManager أو stopAllAudio */
+const originalShowScreenForEducationalAudio = showScreen;
+
+showScreen = function (screenId) {
+    stopEducationalAudio();
+    originalShowScreenForEducationalAudio(screenId);
+};
+
+/* =========================================================
+   🔚 نهاية بنية speakEducational المحلية
+========================================================= */
+
+
 /* =========================================================
 ⭐ النجوم والمستوى والإحصائيات
 ========================================================= */
@@ -971,7 +1302,7 @@ function renderCurrentNumber() {
 
 function speakNumber() {
 
-    speak(
+    speakEducational(
         numberWords[currentNumber] ||
         arabicNumber(currentNumber)
     );
@@ -1182,7 +1513,7 @@ function finishWriting() {
 
     addStars(5);
 
-    speak(
+    speakEducational(
         "أحسنت، عمل رائع",
         {
             rate: 0.8,
@@ -1287,7 +1618,7 @@ function newAddition() {
         message.className = "message";
     }
 
-    speak(
+    speakEducational(
         `${currentAddA} زائد ${currentAddB} يساوي كم؟`,
         {
             rate: 0.8
@@ -1347,7 +1678,7 @@ function checkAddition() {
 
         addStars(5);
 
-        speak(
+        speakEducational(
             "أحسنت! إجابة صحيحة",
             {
                 rate: 0.8
@@ -1373,7 +1704,7 @@ function checkAddition() {
                 "message wrong";
         }
 
-        speak(
+        speakEducational(
             "حاول مرة أخرى",
             {
                 rate: 0.8
@@ -1439,7 +1770,7 @@ function newSubtraction() {
         message.className = "message";
     }
 
-    speak(
+    speakEducational(
         `${currentSubA} ناقص ${currentSubB} يساوي كم؟`,
         {
             rate: 0.8
@@ -1498,7 +1829,7 @@ function checkSubtraction() {
 
         addStars(5);
 
-        speak(
+        speakEducational(
             "أحسنت! إجابة صحيحة",
             {
                 rate: 0.8
@@ -1524,7 +1855,7 @@ function checkSubtraction() {
                 "message wrong";
         }
 
-        speak(
+        speakEducational(
             "حاول مرة أخرى",
             {
                 rate: 0.8
@@ -3114,7 +3445,7 @@ function renderHadith() {
 
 function speakHadith() {
 
-    speak(
+    speakEducational(
         hadiths[currentHadithIndex].text,
         {
             rate: 0.72
@@ -4390,7 +4721,7 @@ function resetProgress() {
 
     updateStats();
 
-    speak(
+    speakEducational(
         "تم تصفير المكافآت والإحصائيات"
     );
 }
@@ -5456,7 +5787,7 @@ const speech =
 if (
     typeof speak === "function"
 ) {
-    speak(speech, {
+    speakEducational(speech, {
         rate: 0.65,
         pitch: 1.05,
         volume: 1
@@ -5539,7 +5870,7 @@ function handleBalloonMistake(
         typeof speak === "function"
     ) {
 
-        speak("حاول مرة أخرى");
+        speakEducational("حاول مرة أخرى");
 
     }
 
@@ -5672,7 +6003,7 @@ function handleBalloonTimeout() {
         typeof speak === "function"
     ) {
 
-        speak("انتهى الوقت");
+        speakEducational("انتهى الوقت");
 
     }
 
@@ -6360,8 +6691,8 @@ function speakBalloonTarget(
 
     /*
        مهم جدًا:
-       لا نستخدم speak() هنا.
-       لأن speak() العامة في التطبيق
+       لا نستخدم speakEducational() هنا.
+       لأن speakEducational() العامة في التطبيق
        قد تحتوي على منطق خاص بنطق
        أسماء الحروف أو التعليمات.
 
@@ -6679,7 +7010,7 @@ function finishBalloonGame() {
         typeof speak === "function"
     ) {
 
-        speak("أحسنت يا بطل");
+        speakEducational("أحسنت يا بطل");
 
     }
 
@@ -7572,7 +7903,7 @@ function handleNumberBalloonMistake(
         false
     );
 
-    speak(
+    speakEducational(
         "حَاوِلْ مَرَّةً أُخْرَى"
     );
 
@@ -7698,7 +8029,7 @@ function handleNumberBalloonTimeout() {
         false
     );
 
-    speak(
+    speakEducational(
         "اِنْتَهَى الوَقْت"
     );
 
@@ -7869,7 +8200,7 @@ function speakNumberBalloonTarget(
         typeof speak === "function"
     ) {
 
-        speak(
+        speakEducational(
             word,
             {
                 rate: 0.68,
@@ -7948,7 +8279,7 @@ function speakNumberBalloonSuccess() {
         "شَاطِر"
     ];
 
-    speak(
+    speakEducational(
         messages[
             Math.floor(
                 Math.random() *
@@ -8575,7 +8906,7 @@ function finishNumberBalloonGame(
         );
     }
 
-    speak(
+    speakEducational(
         completed
             ? "مُمْتَاز! أَنْهَيْتَ لُعْبَة الأَرْقَام"
             : "لَا بَأْسَ. حَاوِلْ مَرَّةً أُخْرَى"
@@ -8741,7 +9072,7 @@ function speakLetterRace(text) {
 
     if (typeof speak === "function") {
 
-        speak(text, {
+        speakEducational(text, {
             rate: 0.68,
             pitch: 1.05,
             volume: 1
@@ -11081,7 +11412,7 @@ function getMatchingSuccessMessage() {
 function speakMatchingLabel(text) {
 
     if (typeof speak === "function") {
-        speak(text);
+        speakEducational(text);
     }
 }
 
@@ -15241,7 +15572,7 @@ function renderAdditionLevelsHub() {
 }
 
 function showAdditionLockedMessage() {
-    speak(
+    speakEducational(
         "أكمل المستوى السابق أولًا لتفتح هذا المستوى",
         { rate: 0.85 }
     );
@@ -15589,13 +15920,13 @@ function speakCurrentAdditionTask() {
     if (!task) return;
 
     if (level.mode === "missing-number") {
-        speak("ما هو العدد المفقود؟", { rate: 0.8 });
+        speakEducational("ما هو العدد المفقود؟", { rate: 0.8 });
     } else if (level.mode === "word-problem") {
-        speak(task.story, { rate: 0.78 });
+        speakEducational(task.story, { rate: 0.78 });
     } else if (level.mode === "picture-choice") {
-        speak("كم مجموع هذه الصور؟", { rate: 0.8 });
+        speakEducational("كم مجموع هذه الصور؟", { rate: 0.8 });
     } else {
-        speak(
+        speakEducational(
             `${task.a} زائد ${task.b} يساوي كم؟`,
             { rate: 0.8 }
         );
@@ -15638,7 +15969,7 @@ function finishAdditionChoiceTask(isCorrect, button) {
             messageEl.className = "message correct";
         }
 
-        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+        speakEducational("أحسنت! إجابة صحيحة", { rate: 0.8 });
 
         document
             .querySelectorAll("#additionTaskStage .addition-choice-btn")
@@ -15659,7 +15990,7 @@ function finishAdditionChoiceTask(isCorrect, button) {
             messageEl.className = "message wrong";
         }
 
-        speak("حاول مرة أخرى", { rate: 0.8 });
+        speakEducational("حاول مرة أخرى", { rate: 0.8 });
     }
 }
 
@@ -15807,7 +16138,7 @@ function renderAdditionLevelResultScreen(level, score, passed) {
 
     updateAdditionProgressUI();
 
-    speak(
+    speakEducational(
         passed
             ? "أحسنت! أتممت المستوى بنجاح"
             : "محاولة رائعة، لنحاول مرة أخرى",
@@ -16368,7 +16699,7 @@ function renderSubtractionLevelsHub() {
 }
 
 function showSubtractionLockedMessage() {
-    speak(
+    speakEducational(
         "أكمل المستوى السابق أولًا لتفتح هذا المستوى",
         { rate: 0.85 }
     );
@@ -16641,10 +16972,10 @@ function renderConcreteRemovalTask(stage, task) {
             grid, task.choices, task.correct, finishSubtractionChoiceTask
         );
 
-        speak(theme.instructionRemain, { rate: 0.8 });
+        speakEducational(theme.instructionRemain, { rate: 0.8 });
     }
 
-    speak(theme.instructionRemove(task.b), { rate: 0.8 });
+    speakEducational(theme.instructionRemove(task.b), { rate: 0.8 });
 }
 
 function renderTenFrameTask(stage, task) {
@@ -16718,10 +17049,10 @@ function renderTenFrameTask(stage, task) {
             grid, task.choices, task.correct, finishSubtractionChoiceTask
         );
 
-        speak("كم قرصًا بقي؟", { rate: 0.8 });
+        speakEducational("كم قرصًا بقي؟", { rate: 0.8 });
     }
 
-    speak(
+    speakEducational(
         `إطار العشرة: أزل ${task.b} من الأقراص الممتلئة`,
         { rate: 0.8 }
     );
@@ -16808,7 +17139,7 @@ function renderNumberLineTask(stage, task) {
             const qEl = stage.querySelector("#subNumberLineQuestion");
             if (qEl) qEl.style.display = "block";
 
-            speak(`وصلنا إلى ${currentPos}`, { rate: 0.8 });
+            speakEducational(`وصلنا إلى ${currentPos}`, { rate: 0.8 });
 
             setTimeout(() => {
                 finishSubtractionChoiceTask(currentPos === task.correct, null);
@@ -16816,7 +17147,7 @@ function renderNumberLineTask(stage, task) {
         }
     }
 
-    speak(
+    speakEducational(
         `ابدأ من ${task.a} وارجع للخلف ${task.b} خطوات`,
         { rate: 0.78 }
     );
@@ -16929,17 +17260,17 @@ function speakCurrentSubtractionTask() {
     if (!task) return;
 
     if (level.mode === "missing-number") {
-        speak("ما هو العدد المفقود؟", { rate: 0.8 });
+        speakEducational("ما هو العدد المفقود؟", { rate: 0.8 });
     } else if (level.mode === "word-problem") {
-        speak(task.story, { rate: 0.78 });
+        speakEducational(task.story, { rate: 0.78 });
     } else if (level.mode === "concrete-removal") {
-        speak(task.theme.instructionRemove(task.b), { rate: 0.8 });
+        speakEducational(task.theme.instructionRemove(task.b), { rate: 0.8 });
     } else if (level.mode === "ten-frame") {
-        speak(`أزل ${task.b} من الأقراص الممتلئة`, { rate: 0.8 });
+        speakEducational(`أزل ${task.b} من الأقراص الممتلئة`, { rate: 0.8 });
     } else if (level.mode === "number-line") {
-        speak(`ابدأ من ${task.a} وارجع للخلف ${task.b} خطوات`, { rate: 0.78 });
+        speakEducational(`ابدأ من ${task.a} وارجع للخلف ${task.b} خطوات`, { rate: 0.78 });
     } else {
-        speak(
+        speakEducational(
             `${task.a} ناقص ${task.b} يساوي كم؟`,
             { rate: 0.8 }
         );
@@ -16984,7 +17315,7 @@ function finishSubtractionChoiceTask(isCorrect, button) {
             messageEl.className = "message correct";
         }
 
-        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+        speakEducational("أحسنت! إجابة صحيحة", { rate: 0.8 });
 
         document
             .querySelectorAll(
@@ -17020,7 +17351,7 @@ function finishSubtractionChoiceTask(isCorrect, button) {
             messageEl.className = "message wrong";
         }
 
-        speak("حاول مرة أخرى", { rate: 0.8 });
+        speakEducational("حاول مرة أخرى", { rate: 0.8 });
 
         subtractionWrongStreak++;
 
@@ -17199,7 +17530,7 @@ function renderSubtractionLevelResultScreen(level, score, passed) {
 
     updateSubtractionProgressUI();
 
-    speak(
+    speakEducational(
         passed
             ? "أحسنت! أتممت المستوى بنجاح"
             : "محاولة رائعة، لنحاول مرة أخرى",
@@ -17733,7 +18064,7 @@ function renderWordsLevelsHub() {
 }
 
 function showWordsLockedMessage() {
-    speak("أكمل المستوى السابق أولًا لتفتح هذا المستوى", { rate: 0.85 });
+    speakEducational("أكمل المستوى السابق أولًا لتفتح هذا المستوى", { rate: 0.85 });
 }
 
 /* =========================================================
@@ -18023,7 +18354,7 @@ function speakCurrentWordsTask() {
     const task = wordsLevelState.currentTask;
     if (!task) return;
 
-    speak(task.value, { rate: 0.75 });
+    speakEducational(task.value, { rate: 0.75 });
 }
 
 function retryCurrentWordsTask() {
@@ -18061,7 +18392,7 @@ function finishWordsChoiceTask(isCorrect, button) {
             messageEl.className = "message correct";
         }
 
-        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+        speakEducational("أحسنت! إجابة صحيحة", { rate: 0.8 });
 
         document
             .querySelectorAll(
@@ -18095,7 +18426,7 @@ function finishWordsChoiceTask(isCorrect, button) {
             messageEl.className = "message wrong";
         }
 
-        speak("حاول مرة أخرى", { rate: 0.8 });
+        speakEducational("حاول مرة أخرى", { rate: 0.8 });
 
         wordsWrongStreak++;
 
@@ -18245,7 +18576,7 @@ function renderWordsLevelResultScreen(level, score, passed) {
 
     updateWordsProgressUI();
 
-    speak(
+    speakEducational(
         passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة، لنحاول مرة أخرى",
         { rate: 0.8 }
     );
@@ -18856,7 +19187,7 @@ function renderLettersLevelsHub() {
 }
 
 function ltrShowLockedMessage() {
-    speak("أكمل المجموعة السابقة أولًا لتفتح هذه المجموعة", { rate: 0.85 });
+    speakEducational("أكمل المجموعة السابقة أولًا لتفتح هذه المجموعة", { rate: 0.85 });
 }
 
 /* =========================================================
@@ -18993,7 +19324,7 @@ function updateLtrProgressUI() {
 
 function speakCurrentLetter() {
     if (!ltrState.letter) return;
-    speak(letterWithFatha(ltrState.letter), { rate: 0.75 });
+    speakEducational(letterWithFatha(ltrState.letter), { rate: 0.75 });
 }
 
 function playLetterAudio() {
@@ -19053,7 +19384,7 @@ function finishLtrChoiceTask(isCorrect, button) {
             messageEl.className = "message correct";
         }
 
-        speak("أحسنت! إجابة صحيحة", { rate: 0.8 });
+        speakEducational("أحسنت! إجابة صحيحة", { rate: 0.8 });
 
         document
             .querySelectorAll("#ltrActivityStage .ltr-choice-btn, #ltrActivityStage .ltr-multi-item, #ltrActivityStage .ltr-audio-choice-btn")
@@ -19083,7 +19414,7 @@ function finishLtrChoiceTask(isCorrect, button) {
             messageEl.className = "message wrong";
         }
 
-        speak("حاول مرة أخرى", { rate: 0.8 });
+        speakEducational("حاول مرة أخرى", { rate: 0.8 });
 
         ltrWrongStreak++;
         ltrRecordOutcome(ltrState.letter, activity.id, false, ltrPromptLevel(ltrWrongStreak));
@@ -19156,7 +19487,7 @@ function renderLtrResultScreen(levelJustCompleted) {
         </div>
     `;
 
-    speak("أحسنت! أتممت هذا الحرف بنجاح", { rate: 0.8 });
+    speakEducational("أحسنت! أتممت هذا الحرف بنجاح", { rate: 0.8 });
 }
 
 /* =========================================================
@@ -19227,7 +19558,7 @@ function activitySoundToLetter(stage, letterChar, difficulty) {
 
     stage.querySelector("#ltrReplaySoundBtn").onclick = () => speakCurrentLetter();
 
-    speak(letterWithFatha(letterChar), { rate: 0.75 });
+    speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
 }
 
 /* =========================================================
@@ -19256,7 +19587,7 @@ function activityLetterRecognition(stage, letterChar, difficulty) {
         btn.onclick = () => {
             if (btn.disabled) return;
             btn.disabled = true;
-            speak(letterWithFatha(c), { rate: 0.75 });
+            speakEducational(letterWithFatha(c), { rate: 0.75 });
             setTimeout(() => finishLtrChoiceTask(c === letterChar, btn), 500);
         };
         grid.appendChild(btn);
@@ -19290,7 +19621,7 @@ function activityDiscrimination(stage, letterChar, difficulty) {
         finishLtrChoiceTask
     );
 
-    speak(letterWithFatha(letterChar), { rate: 0.75 });
+    speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
 }
 
 /* =========================================================
@@ -19336,8 +19667,8 @@ function activityLetterForms(stage, letterChar, difficulty) {
     );
 
     const playQuestion = () => {
-        speak(letterWithFatha(letterChar), { rate: 0.75 });
-        setTimeout(() => speak(positionLabel, { rate: 0.75 }), 650);
+        speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+        setTimeout(() => speakEducational(positionLabel, { rate: 0.75 }), 650);
     };
     stage.querySelector("#ltrFormsReplayBtn").onclick = playQuestion;
     setTimeout(playQuestion, 300);
@@ -19377,7 +19708,7 @@ function activityPositionInWord(stage, letterChar, difficulty) {
         finishLtrChoiceTask
     );
 
-    const playWord = () => speak(example.word, { rate: 0.78 });
+    const playWord = () => speakEducational(example.word, { rate: 0.78 });
     stage.querySelector("#ltrPositionReplayBtn").onclick = playWord;
     setTimeout(playWord, 300);
 }
@@ -19450,7 +19781,7 @@ function activityPictureToWord(stage, letterChar) {
         finishLtrChoiceTask
     );
 
-    speak(correctWord.word, { rate: 0.78 });
+    speakEducational(correctWord.word, { rate: 0.78 });
 }
 
 /* =========================================================
@@ -19500,7 +19831,7 @@ function activityWordsStartingWith(stage, letterChar, difficulty) {
             if (item.isCorrect) {
                 btn.classList.add("selected-correct");
                 remainingCorrect--;
-                speak("صحيح", { rate: 0.85 });
+                speakEducational("صحيح", { rate: 0.85 });
 
                 if (remainingCorrect <= 0) {
                     done = true;
@@ -19510,7 +19841,7 @@ function activityWordsStartingWith(stage, letterChar, difficulty) {
                 }
             } else {
                 btn.classList.add("selected-wrong");
-                speak("حاول مرة أخرى", { rate: 0.85 });
+                speakEducational("حاول مرة أخرى", { rate: 0.85 });
                 setTimeout(() => {
                     btn.classList.remove("selected-wrong");
                     btn.disabled = false;
@@ -19807,7 +20138,7 @@ function activityListenIsolated(stage, letterChar) {
     const pulseBtn = stage.querySelector("#ltrPulseLetterBtn");
     const playSound = () => {
         pulseBtn.classList.add("pulsing");
-        speak(letterWithFatha(letterChar), { rate: 0.7 });
+        speakEducational(letterWithFatha(letterChar), { rate: 0.7 });
         setTimeout(() => pulseBtn.classList.remove("pulsing"), 700);
     };
 
@@ -19835,8 +20166,8 @@ function activityListenInWord(stage, letterChar) {
     `;
 
     const playAll = () => {
-        speak(letterWithFatha(letterChar), { rate: 0.75 });
-        setTimeout(() => speak(item.word, { rate: 0.75 }), 700);
+        speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+        setTimeout(() => speakEducational(item.word, { rate: 0.75 }), 700);
     };
 
     stage.querySelector("#ltrListenWordReplay").onclick = playAll;
@@ -19898,16 +20229,16 @@ function activityAuditoryMatch(stage, letterChar, difficulty) {
         btn.onclick = () => {
             if (btn.disabled) return;
             btn.disabled = true;
-            speak(letterWithFatha(opt.letter), { rate: 0.75 });
+            speakEducational(letterWithFatha(opt.letter), { rate: 0.75 });
             setTimeout(() => finishLtrChoiceTask(opt.correct, btn), 550);
         };
         row.appendChild(btn);
     });
 
     stage.querySelector("#ltrAudioReplay").onclick = () =>
-        speak(letterWithFatha(letterChar), { rate: 0.75 });
+        speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
 
-    setTimeout(() => speak(letterWithFatha(letterChar), { rate: 0.75 }), 300);
+    setTimeout(() => speakEducational(letterWithFatha(letterChar), { rate: 0.75 }), 300);
 }
 
 function activityAuditoryMatchEasy(stage, letterChar, difficulty) {
@@ -19943,9 +20274,9 @@ function activityAuditorySameDifferent(stage, letterChar) {
     `;
 
     stage.querySelector("#ltrPlayFirst").onclick = () =>
-        speak(letterWithFatha(letterChar), { rate: 0.75 });
+        speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
     stage.querySelector("#ltrPlaySecond").onclick = () =>
-        speak(letterWithFatha(secondLetter), { rate: 0.75 });
+        speakEducational(letterWithFatha(secondLetter), { rate: 0.75 });
 
     const grid = stage.querySelector("#ltrSameDiffChoices");
 
@@ -19960,8 +20291,8 @@ function activityAuditorySameDifferent(stage, letterChar) {
     });
 
     setTimeout(() => {
-        speak(letterWithFatha(letterChar), { rate: 0.75 });
-        setTimeout(() => speak(letterWithFatha(secondLetter), { rate: 0.75 }), 750);
+        speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+        setTimeout(() => speakEducational(letterWithFatha(secondLetter), { rate: 0.75 }), 750);
     }, 300);
 }
 
@@ -19983,7 +20314,7 @@ function activityAuditoryFindTarget(stage, letterChar) {
     `;
 
     stage.querySelector("#ltrTargetIntro").onclick = () =>
-        speak(letterWithFatha(letterChar), { rate: 0.75 });
+        speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
 
     const row = stage.querySelector("#ltrFindTargetRow");
     const colors = ["#42a5f5", "#66bb6a"];
@@ -19998,13 +20329,13 @@ function activityAuditoryFindTarget(stage, letterChar) {
         btn.onclick = () => {
             if (btn.disabled) return;
             btn.disabled = true;
-            speak(letterWithFatha(letter), { rate: 0.75 });
+            speakEducational(letterWithFatha(letter), { rate: 0.75 });
             setTimeout(() => finishLtrChoiceTask(letter === letterChar, btn), 550);
         };
         row.appendChild(btn);
     });
 
-    setTimeout(() => speak(letterWithFatha(letterChar), { rate: 0.75 }), 300);
+    setTimeout(() => speakEducational(letterWithFatha(letterChar), { rate: 0.75 }), 300);
 }
 
 /* د) مراجعة سمعية مختلطة بسيطة */
@@ -20044,7 +20375,7 @@ function activitySoundToLetterHard(stage, letterChar) {
     );
 
     stage.querySelector("#ltrReplaySoundBtnHard").onclick = () => speakCurrentLetter();
-    speak(letterWithFatha(letterChar), { rate: 0.75 });
+    speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
 }
 
 /* =========================================================
@@ -20118,7 +20449,7 @@ function activityMosaicSearch(stage, letterChar, difficulty) {
                 }
             } else {
                 cell.classList.add("wrong-flash");
-                speak("حاول مرة أخرى", { rate: 0.85 });
+                speakEducational("حاول مرة أخرى", { rate: 0.85 });
                 setTimeout(() => cell.classList.remove("wrong-flash"), 400);
                 ltrMultiSelectWrongAttempt(wrongState, grid, ".ltr-mosaic-cell");
             }
@@ -20183,7 +20514,7 @@ function activityCrossOutGrid(stage, letterChar, difficulty) {
                 }
             } else {
                 cell.classList.add("wrong-flash");
-                speak("حاول مرة أخرى", { rate: 0.85 });
+                speakEducational("حاول مرة أخرى", { rate: 0.85 });
                 setTimeout(() => cell.classList.remove("wrong-flash"), 400);
                 ltrMultiSelectWrongAttempt(wrongState, grid, ".ltr-mosaic-cell");
             }
@@ -20244,7 +20575,7 @@ function activityConnectWheel(stage, letterChar, difficulty) {
                 btn.classList.add("selected-correct");
                 btn.disabled = true;
                 remainingCorrect--;
-                speak("صحيح", { rate: 0.85 });
+                speakEducational("صحيح", { rate: 0.85 });
 
                 if (remainingCorrect <= 0) {
                     ltrHideHint();
@@ -20253,7 +20584,7 @@ function activityConnectWheel(stage, letterChar, difficulty) {
                 }
             } else {
                 btn.classList.add("selected-wrong");
-                speak("حاول مرة أخرى", { rate: 0.85 });
+                speakEducational("حاول مرة أخرى", { rate: 0.85 });
                 setTimeout(() => btn.classList.remove("selected-wrong"), 500);
                 ltrMultiSelectWrongAttempt(wrongState, ring, ".ltr-wheel-item");
             }
@@ -20293,7 +20624,7 @@ function activityLetterToPictureSound(stage, letterChar, difficulty) {
         finishLtrChoiceTask
     );
 
-    speak(letterWithFatha(letterChar), { rate: 0.75 });
+    speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
 }
 
 /* =========================================================
@@ -20332,7 +20663,7 @@ function activityHearInWordYesNo(stage, letterChar) {
         <div class="ltr-choice-grid" id="ltrYesNoChoices" style="grid-template-columns:repeat(2,1fr);"></div>
     `;
 
-    const playWord = () => speak(word.word, { rate: 0.75 });
+    const playWord = () => speakEducational(word.word, { rate: 0.75 });
     stage.querySelector("#ltrHearWordReplay").onclick = playWord;
 
     const grid = stage.querySelector("#ltrYesNoChoices");
@@ -20373,7 +20704,7 @@ function activityHearInWordChoose(stage, letterChar, difficulty) {
     `;
 
     stage.querySelector("#ltrTargetSoundReplay").onclick = () =>
-        speak(letterWithFatha(letterChar), { rate: 0.75 });
+        speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
 
     const grid = stage.querySelector("#ltrHearChooseGrid");
 
@@ -20386,13 +20717,13 @@ function activityHearInWordChoose(stage, letterChar, difficulty) {
         btn.onclick = () => {
             if (btn.disabled) return;
             btn.disabled = true;
-            speak(w.word, { rate: 0.75 });
+            speakEducational(w.word, { rate: 0.75 });
             setTimeout(() => finishLtrChoiceTask(w.word === correctWord.word, btn), 550);
         };
         grid.appendChild(btn);
     });
 
-    setTimeout(() => speak(letterWithFatha(letterChar), { rate: 0.75 }), 300);
+    setTimeout(() => speakEducational(letterWithFatha(letterChar), { rate: 0.75 }), 300);
 }
 
 /* ج) نسخة صوتية آمنة من "الصورة والكلمة" — تربط الصوت
@@ -20428,7 +20759,7 @@ function activityPictureToWordSound(stage, letterChar) {
         finishLtrChoiceTask
     );
 
-    const playWord = () => speak(correctWord.word, { rate: 0.78 });
+    const playWord = () => speakEducational(correctWord.word, { rate: 0.78 });
     stage.querySelector("#ltrPtwReplay").onclick = playWord;
     setTimeout(playWord, 300);
 }
@@ -20469,7 +20800,7 @@ function activityTraceInWord(stage, letterChar) {
         finishLtrChoiceTask(true, null);
     };
 
-    speak(item.word, { rate: 0.75 });
+    speakEducational(item.word, { rate: 0.75 });
 }
 
 /* =========================================================================
