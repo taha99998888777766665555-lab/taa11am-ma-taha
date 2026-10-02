@@ -808,7 +808,27 @@ const EDUCATIONAL_AUDIO_MANIFEST = {
    فيستمر الصوت بالعمل دائمًا، ولا يتعطَّل أبدًا.
 ========================================================================= */
 
+/* =========================================================================
+   🆕 إصلاح: سرعة أبطأ + منع تداخل الأصوات التعليمية تمامًا
+   =========================================================================
+   - EDUCATIONAL_AUDIO_PLAYBACK_RATE: تُبطئ تشغيل ملفات MP3 المحلية
+     (NAMAA) عبر خاصية playbackRate القياسية في المتصفح — بلا أي
+     تعديل على الملفات الصوتية الـ244 نفسها إطلاقًا، مع الحفاظ على
+     طبقة الصوت (pitch) عبر preservesPitch لصوت طبيعي غير مشوَّه.
+   - EDUCATIONAL_TTS_FALLBACK_RATE: تُبطئ أيضًا أي نص يتراجع لاستخدام
+     speak() الحالية (نصوص ديناميكية كالجمع والطرح)، عبر تعديل خيار
+     rate المُمرَّر فقط — بلا أي تعديل على speak()/TTSManager نفسهما.
+   - قفل تشغيل (busy lock) + "فتحة انتظار" واحدة فقط لأحدث طلب: أي
+     صوت تعليمي جديد أثناء تشغيل صوت تعزيزي حالي لا يقاطعه إطلاقًا؛
+     يُحفَظ فقط آخر طلب ويُشغَّل تلقائيًا بعد اكتمال الصوت الحالي.
+========================================================================= */
+
+const EDUCATIONAL_AUDIO_PLAYBACK_RATE = 0.8;
+const EDUCATIONAL_TTS_FALLBACK_RATE = 0.72;
+
 let educationalAudioInstance = null;
+let educationalAudioBusy = false;
+let educationalPendingRequest = null;
 
 function stopEducationalAudio() {
     if (educationalAudioInstance) {
@@ -818,30 +838,91 @@ function stopEducationalAudio() {
         } catch (error) {}
     }
     educationalAudioInstance = null;
+    educationalAudioBusy = false;
+    educationalPendingRequest = null;
+}
+
+function educationalPlaybackFinished() {
+    educationalAudioBusy = false;
+    educationalAudioInstance = null;
+
+    if (educationalPendingRequest) {
+        const next = educationalPendingRequest;
+        educationalPendingRequest = null;
+        speakEducational(next.text, next.options);
+    }
+}
+
+function watchEducationalTTSFallbackCompletion() {
+    /* لا يوجد خطاف مباشر لنهاية speak() دون تعديلها؛ نتحقق دوريًا من
+       الخاصية العامة speechSynthesis.speaking (قراءة فقط، بلا أي
+       تعديل على أي دالة مشتركة) حتى تنتهي، ثم نُحرِّر القفل */
+    if (!("speechSynthesis" in window)) {
+        educationalPlaybackFinished();
+        return;
+    }
+
+    const check = () => {
+        if (!speechSynthesis.speaking) {
+            educationalPlaybackFinished();
+            return;
+        }
+        setTimeout(check, 150);
+    };
+
+    setTimeout(check, 150);
 }
 
 function speakEducational(text, options) {
     options = options || {};
 
-    stopEducationalAudio();
+    if (educationalAudioBusy) {
+        /* صوت تعليمي قيد التشغيل الآن — لا نقاطعه أبدًا؛ نحتفظ فقط
+           بأحدث طلب لتشغيله تلقائيًا بعد اكتماله */
+        educationalPendingRequest = { text: text, options: options };
+        return;
+    }
+
+    educationalAudioBusy = true;
 
     const localPath = EDUCATIONAL_AUDIO_MANIFEST[text];
 
     if (!localPath) {
         /* نص ديناميكي أو غير مُسجَّل — الرجوع التلقائي للصوت الحالي
-           بلا أي تغيير في speak() نفسها */
-        speak(text, options);
+           بلا أي تغيير في speak() نفسها، بسرعة أبطأ مناسبة للأطفال */
+        const slowerOptions = Object.assign({}, options, { rate: EDUCATIONAL_TTS_FALLBACK_RATE });
+        speak(text, slowerOptions);
+        watchEducationalTTSFallbackCompletion();
         return;
     }
 
     try {
         const audio = new Audio(localPath);
+        audio.playbackRate = EDUCATIONAL_AUDIO_PLAYBACK_RATE;
+
+        try {
+            audio.preservesPitch = true;
+            audio.mozPreservesPitch = true;
+            audio.webkitPreservesPitch = true;
+        } catch (error) {}
+
         educationalAudioInstance = audio;
 
         audio.addEventListener("ended", () => {
             if (educationalAudioInstance === audio) {
+                educationalPlaybackFinished();
+            }
+        }, { once: true });
+
+        audio.addEventListener("error", () => {
+            if (educationalAudioInstance === audio) {
                 educationalAudioInstance = null;
             }
+            /* فشل تشغيل الملف المحلي لأي سبب — رجوع فوري للصوت
+               الحالي بدل تعطيل الصوت كليًا */
+            const slowerOptions = Object.assign({}, options, { rate: EDUCATIONAL_TTS_FALLBACK_RATE });
+            speak(text, slowerOptions);
+            watchEducationalTTSFallbackCompletion();
         }, { once: true });
 
         const playPromise = audio.play();
@@ -851,14 +932,16 @@ function speakEducational(text, options) {
                 if (educationalAudioInstance === audio) {
                     educationalAudioInstance = null;
                 }
-                /* فشل تشغيل الملف المحلي لأي سبب — رجوع فوري للصوت
-                   الحالي بدل تعطيل الصوت كليًا */
-                speak(text, options);
+                const slowerOptions = Object.assign({}, options, { rate: EDUCATIONAL_TTS_FALLBACK_RATE });
+                speak(text, slowerOptions);
+                watchEducationalTTSFallbackCompletion();
             });
         }
     } catch (error) {
         educationalAudioInstance = null;
-        speak(text, options);
+        const slowerOptions = Object.assign({}, options, { rate: EDUCATIONAL_TTS_FALLBACK_RATE });
+        speak(text, slowerOptions);
+        watchEducationalTTSFallbackCompletion();
     }
 }
 
