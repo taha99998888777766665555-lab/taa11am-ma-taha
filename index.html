@@ -2170,199 +2170,7 @@
         <div class="games-grid matching-modes-grid">
 
 
-            <button
-                class="game-launch-card matching-mode-card matching-mode-letters"
-                onclick="startMatchingGame('letters-letters')"
-            >
-
-                <div class="game-card-icon">
-                    🔤🔤
-                </div>
-
-                <h3>
-                    حرف ↔ حرف
-                </h3>
-
-                <p>
-                    ابحث عن الحرف المطابق لنفس الحرف
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <button
-                class="game-launch-card matching-mode-card matching-mode-picpic"
-                onclick="startMatchingGame('pictures-pictures')"
-            >
-
-                <div class="game-card-icon">
-                    🖼️🖼️
-                </div>
-
-                <h3>
-                    صورة ↔ صورة
-                </h3>
-
-                <p>
-                    اربط كل صورة بنفس الصورة المطابقة لها
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <button
-                class="game-launch-card matching-mode-card matching-mode-pictures"
-                onclick="startMatchingGame('letters-pictures')"
-            >
-
-                <div class="game-card-icon">
-                    🔤🖼️
-                </div>
-
-                <h3>
-                    حرف ↔ صورة
-                </h3>
-
-                <p>
-                    اربط كل حرف بالصورة المناسبة له
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <button
-                class="game-launch-card matching-mode-card matching-mode-picword"
-                onclick="startMatchingGame('pictures-words')"
-            >
-
-                <div class="game-card-icon">
-                    🖼️📖
-                </div>
-
-                <h3>
-                    صورة ↔ كلمة
-                </h3>
-
-                <p>
-                    اربط كل صورة بالكلمة الصحيحة لها
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <button
-                class="game-launch-card matching-mode-card matching-mode-wordpic"
-                onclick="startMatchingGame('words-pictures')"
-            >
-
-                <div class="game-card-icon">
-                    📖🖼️
-                </div>
-
-                <h3>
-                    كلمة ↔ صورة
-                </h3>
-
-                <p>
-                    اقرأ الكلمة واربطها بصورتها
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <button
-                class="game-launch-card matching-mode-card matching-mode-words"
-                onclick="startMatchingGame('letters-words')"
-            >
-
-                <div class="game-card-icon">
-                    🔤📖
-                </div>
-
-                <h3>
-                    حرف ↔ كلمة
-                </h3>
-
-                <p>
-                    اربط كل حرف بالكلمة التي تبدأ به
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <button
-                class="game-launch-card matching-mode-card matching-mode-soundletter"
-                onclick="startMatchingGame('letter-sound-letters')"
-            >
-
-                <div class="game-card-icon">
-                    🔊🔤
-                </div>
-
-                <h3>
-                    صوت الحرف ↔ الحرف
-                </h3>
-
-                <p>
-                    استمع لصوت الحرف (أَ، بَ، تَ) واختر الحرف
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <button
-                class="game-launch-card matching-mode-card matching-mode-soundword"
-                onclick="startMatchingGame('word-sound-pictures')"
-            >
-
-                <div class="game-card-icon">
-                    🔊🖼️
-                </div>
-
-                <h3>
-                    صوت الكلمة ↔ الصورة
-                </h3>
-
-                <p>
-                    استمع للكلمة واختر الصورة المناسبة
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <button
+                                                                                                            <button
                 class="game-launch-card matching-mode-card matching-mode-numbers"
                 onclick="startMatchingGame('numbers-quantities')"
             >
@@ -2386,35 +2194,11 @@
             </button>
 
 
-            <button
-                class="game-launch-card matching-mode-card matching-mode-forms"
-                onclick="startMatchingGame('letters-forms')"
-            >
-
-                <div class="game-card-icon">
-                    🔤🧩
-                </div>
-
-                <h3>
-                    الحرف وأشكاله
-                </h3>
-
-                <p>
-                    منفصل - أول الكلمة - وسطها - آخرها
-                </p>
-
-                <span>
-                    العب الآن ▶
-                </span>
-
-            </button>
-
-
-            <!-- ===== 🆕 أنماط مطابقة جديدة (إضافة فقط) ===== -->
+                        <!-- ===== 🆕 أنماط مطابقة جديدة (إضافة فقط) ===== -->
 
             <button
                 class="game-launch-card matching-mode-card matching-mode-formsform"
-                onclick="startMatchingGame('forms-forms')"
+                onclick="startFormsMatchingGame()"
             >
 
                 <div class="game-card-icon">
@@ -2700,6 +2484,113 @@
             ⬅️ العودة للألعاب
         </button>
 
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     🆕 🔤 حرف ↔ حرف — نسخة احترافية مستقلة (Tap-to-Select)
+     قسم جديد كليًا، منفصل تمامًا عن #matchingGame ولا يشاركه أي
+     عنصر — لا تأثير إطلاقًا على بقية أنماط المطابقة.
+========================================================= -->
+
+<section
+    id="matchingLettersGame"
+    class="screen"
+>
+
+    <div class="mlg-wrapper">
+
+        <div class="mlg-topbar">
+
+            <button
+                class="mlg-back-btn"
+                onclick="exitFormsMatchingGame()"
+                aria-label="العودة للألعاب"
+            >
+                ⬅️
+            </button>
+
+            <h2 class="mlg-title">
+                🔤 حرف ↔ حرف
+            </h2>
+
+            <div class="mlg-stars" aria-label="عدد النجوم">
+                ⭐ <strong id="mlgStars">٠</strong>
+            </div>
+
+        </div>
+
+
+        <div
+            class="mlg-progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            id="mlgProgressTrack"
+            aria-label="تقدّم الجولة"
+        >
+            <div
+                id="mlgProgressFill"
+                class="mlg-progress-fill"
+            ></div>
+        </div>
+
+
+        <div
+            id="mlgMessage"
+            class="mlg-message"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <div
+            id="mlgGrid"
+            class="mlg-grid"
+            role="group"
+            aria-label="بطاقات مطابقة أشكال الحروف"
+        ></div>
+
+
+        <div
+            id="mlgSuccessOverlay"
+            class="mlg-success-overlay"
+            style="display:none;"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="mlgSuccessTitle"
+        >
+
+            <div class="mlg-success-card">
+
+                <div
+                    id="mlgConfetti"
+                    class="mlg-confetti"
+                    aria-hidden="true"
+                ></div>
+
+                <h3 id="mlgSuccessTitle">
+                    🌟 أحسنت! أكملت الجولة
+                </h3>
+
+                <p id="mlgSuccessBody">
+                    جولة جديدة بانتظارك
+                </p>
+
+                <button
+                    id="mlgNextBtn"
+                    class="primary"
+                    type="button"
+                >
+                    ▶ متابعة
+                </button>
+
+            </div>
+
+        </div>
 
     </div>
 
