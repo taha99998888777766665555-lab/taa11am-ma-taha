@@ -8544,7 +8544,7 @@ function generateMatchingPairs(mode, count) {
                 id: "LW" + index,
                 source: item.letter,
                 target: item.word,
-                sourceSpeak: item.letter,
+                sourceSpeak: letterWithFatha(item.letter),
                 targetSpeak: item.word,
                 sourceClass: "matching-letter-face",
                 targetClass: "matching-word-face"
@@ -8559,7 +8559,7 @@ function generateMatchingPairs(mode, count) {
                 source: letterWithFatha(item.letter),
                 target: item.letter,
                 sourceSpeak: letterWithFatha(item.letter),
-                targetSpeak: item.letter,
+                targetSpeak: letterWithFatha(item.letter),
                 sourceClass: "matching-letter-face",
                 targetClass: "matching-letter-face-alt"
             }));
@@ -8614,7 +8614,7 @@ function generateMatchingPairs(mode, count) {
                 id: "LP" + index,
                 source: item.letter,
                 target: item.emoji,
-                sourceSpeak: item.letter,
+                sourceSpeak: letterWithFatha(item.letter),
                 targetSpeak: item.word,
                 sourceClass: "matching-letter-face",
                 targetClass: "matching-emoji-face"
@@ -12051,7 +12051,7 @@ function buildObjectsLettersPool() {
             id: "OL" + index,
             source: item.letter,
             target: pick.emoji,
-            sourceSpeak: item.letter,
+            sourceSpeak: letterWithFatha(item.letter),
             targetSpeak: pick.word,
             sourceClass: "matching-letter-face",
             targetClass: "matching-emoji-face"
