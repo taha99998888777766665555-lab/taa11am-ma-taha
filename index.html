@@ -1367,7 +1367,7 @@
                 </h3>
 
                 <p>
-                    اسمع الحرف، اختر بوابته، وانطلق نحو الفوز! 🏁
+                    أكمل الكلمة باختيار شكل الحرف الصحيح وانطلق! 🏁
                 </p>
 
                 <span>
@@ -1730,15 +1730,6 @@
             </div>
 
 
-            <button
-                id="letterRacePauseBtn"
-                class="race-top-btn"
-                onclick="toggleLetterRacePause()"
-                aria-label="إيقاف مؤقت"
-            >
-                ⏸️
-            </button>
-
         </div>
 
 
@@ -1770,31 +1761,10 @@
             </div>
 
 
-            <div class="race-hud-card">
-
-                <span class="race-hud-icon">
-                    🔥
-                </span>
-
-                <div>
-
-                    <small>
-                        التتابع
-                    </small>
-
-                    <strong id="letterRaceStreak">
-                        ٠
-                    </strong>
-
-                </div>
-
-            </div>
-
-
             <div class="race-hud-card race-round-card">
 
                 <small>
-                    السباق
+                    الجولة
                 </small>
 
                 <strong>
@@ -1806,31 +1776,10 @@
                     /
 
                     <span id="letterRaceTotalRounds">
-                        ١٠
+                        ٧
                     </span>
 
                 </strong>
-
-            </div>
-
-
-            <div class="race-hud-card">
-
-                <span class="race-hud-icon">
-                    ❤️
-                </span>
-
-                <div>
-
-                    <small>
-                        المحاولات
-                    </small>
-
-                    <strong id="letterRaceLives">
-                        ❤️❤️❤️
-                    </strong>
-
-                </div>
 
             </div>
 
@@ -1868,16 +1817,34 @@
             </div>
 
 
-            <div class="race-best">
+        </div>
 
-                🥇 الأفضل:
 
-                <strong id="letterRaceBestScore">
-                    ٠
-                </strong>
+        <div
+            id="letterRaceLevelComplete"
+            class="race-level-complete-overlay"
+            style="display:none;"
+        >
+
+            <div class="race-level-complete-card">
+
+                <h3 id="letterRaceLevelCompleteTitle">
+                    🌟 أحسنت! أكملت المستوى
+                </h3>
+
+                <p id="letterRaceLevelCompleteBody">
+                    المستوى التالي بانتظارك
+                </p>
+
+                <button
+                    id="letterRaceLevelCompleteNextBtn"
+                    class="primary"
+                    type="button"
+                >
+                    ▶ المستوى التالي
+                </button>
 
             </div>
-
 
         </div>
 
@@ -1897,15 +1864,15 @@
             <div class="command-content">
 
                 <div class="command-label">
-                    الحرف المطلوب
+                    أكمل الكلمة
                 </div>
 
 
                 <div
                     id="letterRaceTarget"
-                    class="letter-race-target"
+                    class="letter-race-target race-word-display"
                 >
-                    بَ
+                    بَيت
                 </div>
 
 
@@ -1917,7 +1884,7 @@
                     🔊
 
                     <span>
-                        اسمع الحرف
+                        اسمع الكلمة
                     </span>
 
                 </button>
