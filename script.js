@@ -7588,7 +7588,7 @@ function startLetterRaceRound() {
     updateLetterRaceHUD();
     clearLetterRaceMessage();
 
-    renderRaceWordWithBlank(word, letter);
+    renderRaceWordWithBlank(word, letter, position);
     createLetterRaceGates(letter, position, tier);
 
     speakRaceRoundIntro(word);
@@ -7634,7 +7634,19 @@ function buildRaceGateOptions(letter, position, tier) {
    📝 عرض الكلمة بفراغ مكان الحرف المطلوب
    ========================================================= */
 
-function renderRaceWordWithBlank(word, letter) {
+/* 🛠️ تصحيح: الفراغ يحافظ على علامات الاتصال الصحيحة من الجانبين
+   (عبر حرف التطويل ـ Unicode، فيتولى عرض المتصفح الطبيعي للنص
+   العربي رسم الشكل المتصل الصحيح تلقائيًا)، بلا إظهار الحرف
+   المخفي نفسه إطلاقًا قبل اختيار البوابة. القاعدة مبنية على
+   targetPosition المُتحقَّق منه مسبقًا نفسه، لا تخمينًا جديدًا:
+   - medial: تطويل بعد "قبل" + تطويل قبل "بعد" (يتصل الجانبان)
+   - initial: تطويل قبل "بعد" فقط (يتصل للأمام فقط)
+   - final: تطويل بعد "قبل" فقط (يتصل للخلف فقط)
+   - isolated: بلا أي تطويل (لا يتصل بأي جانب) */
+
+const RACE_TATWEEL = "\u0640";
+
+function renderRaceWordWithBlank(word, letter, position) {
 
     const container = $("letterRaceTarget");
     if (!container) return;
@@ -7650,8 +7662,15 @@ function renderRaceWordWithBlank(word, letter) {
         return;
     }
 
-    const before = word.slice(0, index);
-    const after = word.slice(index + 1);
+    let before = word.slice(0, index);
+    let after = word.slice(index + 1);
+
+    if ((position === "medial" || position === "final") && before) {
+        before = before + RACE_TATWEEL;
+    }
+    if ((position === "medial" || position === "initial") && after) {
+        after = RACE_TATWEEL + after;
+    }
 
     container.innerHTML = "";
 
@@ -7662,7 +7681,7 @@ function renderRaceWordWithBlank(word, letter) {
     const blank = document.createElement("span");
     blank.className = "race-word-blank";
     blank.id = "raceWordBlank";
-    blank.textContent = "▢";
+    blank.textContent = "";
     container.appendChild(blank);
 
     const afterSpan = document.createElement("span");
@@ -7671,11 +7690,19 @@ function renderRaceWordWithBlank(word, letter) {
 }
 
 function fillRaceWordBlank(letter) {
-    const blank = $("raceWordBlank");
-    if (blank) {
-        blank.textContent = letter;
-        blank.classList.add("race-word-blank-filled");
+    const container = $("letterRaceTarget");
+    if (!container) return;
+
+    /* الكلمة الكاملة كنص عادي — عرض المتصفح الطبيعي للنص العربي
+       يرسم الاتصال الصحيح تلقائيًا لكلمة حقيقية كاملة، بلا حاجة
+       لأي تطويل أو تدخّل يدوي في هذه الحالة */
+    if (letterRaceGame.targetWord) {
+        container.textContent = letterRaceGame.targetWord;
+    } else {
+        container.textContent = letterWithFatha(letter);
     }
+
+    container.classList.add("race-word-blank-filled");
 }
 
 /* =========================================================
