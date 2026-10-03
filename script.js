@@ -8482,111 +8482,6 @@ function generateMatchingPairs(mode, count) {
 
     switch (mode) {
 
-        case "letters-letters":
-
-            pool = letters.map((item, index) => ({
-                id: "LL" + index,
-                source: item.letter,
-                target: item.letter,
-                sourceSpeak: letterWithFatha(item.letter),
-                targetSpeak: letterWithFatha(item.letter),
-                sourceClass: "matching-letter-face",
-                targetClass: "matching-letter-face-alt"
-            }));
-
-            break;
-
-        case "pictures-pictures":
-
-            pool = matchingObjectsPool.map((item, index) => ({
-                id: "PP" + index,
-                source: item.emoji,
-                target: item.emoji,
-                sourceSpeak: item.name,
-                targetSpeak: item.name,
-                sourceClass: "matching-emoji-face",
-                targetClass: "matching-emoji-face"
-            }));
-
-            break;
-
-        case "pictures-words":
-
-            pool = letters.map((item, index) => ({
-                id: "PW" + index,
-                source: item.emoji,
-                target: item.word,
-                sourceSpeak: item.word,
-                targetSpeak: item.word,
-                sourceClass: "matching-emoji-face",
-                targetClass: "matching-word-face"
-            }));
-
-            break;
-
-        case "words-pictures":
-
-            pool = letters.map((item, index) => ({
-                id: "WP" + index,
-                source: item.word,
-                target: item.emoji,
-                sourceSpeak: item.word,
-                targetSpeak: item.word,
-                sourceClass: "matching-word-face",
-                targetClass: "matching-emoji-face"
-            }));
-
-            break;
-
-        case "letters-words":
-
-            pool = letters.map((item, index) => ({
-                id: "LW" + index,
-                source: item.letter,
-                target: item.word,
-                sourceSpeak: letterWithFatha(item.letter),
-                targetSpeak: item.word,
-                sourceClass: "matching-letter-face",
-                targetClass: "matching-word-face"
-            }));
-
-            break;
-
-        case "letter-sound-letters":
-
-            pool = letters.map((item, index) => ({
-                id: "SL" + index,
-                source: letterWithFatha(item.letter),
-                target: item.letter,
-                sourceSpeak: letterWithFatha(item.letter),
-                targetSpeak: letterWithFatha(item.letter),
-                sourceClass: "matching-letter-face",
-                targetClass: "matching-letter-face-alt"
-            }));
-
-            break;
-
-        case "word-sound-pictures":
-
-            pool = letters.map((item, index) => ({
-                id: "WS" + index,
-                source: item.word,
-                sourceDisplay: "🔊",
-                target: item.emoji,
-                sourceSpeak: item.word,
-                targetSpeak: item.word,
-                sourceClass: "matching-sound-face",
-                targetClass: "matching-emoji-face"
-            }));
-
-            break;
-
-        case "letters-forms":
-
-            pool = buildLetterFormsPool();
-
-            break;
-
         case "numbers-quantities":
 
             pool = [];
@@ -8608,17 +8503,11 @@ function generateMatchingPairs(mode, count) {
 
             break;
 
-        default: /* "letters-pictures" وأي نمط غير معروف */
+        default: /* نمط غير معروف (بعد حذف 8 أنماط قديمة مكرَّرة
+                     أو غير مطلوبة — الأنماط الأربعة الأخرى
+                     المُبقاة مُعالَجة بالكامل عبر التغليف أدناه) */
 
-            pool = letters.map((item, index) => ({
-                id: "LP" + index,
-                source: item.letter,
-                target: item.emoji,
-                sourceSpeak: letterWithFatha(item.letter),
-                targetSpeak: item.word,
-                sourceClass: "matching-letter-face",
-                targetClass: "matching-emoji-face"
-            }));
+            pool = [];
     }
 
     const chosen =
@@ -10044,6 +9933,442 @@ function exitMatchingGame() {
 /* =========================================================
    🔚 نهاية قسم لعبة المطابقة
    ========================================================= */
+
+/* =========================================================================
+   🆕 =====================================================================
+   🔤 حرف ↔ حرف — نسخة احترافية مستقلة (Tap-to-Select)
+   =====================================================================
+   قسم جديد كليًا ومعزول تمامًا عن نظام المطابقة الأصلي (matchingGame)
+   وآلية السحب — لا يشاركه أي حالة أو عنصر DOM. يُعيد استخدام منطق
+   البيانات/الصعوبة/التقدّم/الصوت الموجود فعليًا (generateMatchingPairs،
+   getMatchingTotalRounds، getMatchingPairsCountForRound،
+   loadMatchingProgress/saveMatchingProgress، speakEducational،
+   addStars) بلا أي تغيير فيها، باستثناء إضافة حقل "letter" واحد
+   بسيط وغير جراحي إلى buildLetterFormFormPool (مُستخدَمة حصريًا من
+   هذا النمط) ليتسنى نطق صوت الحرف بالفتحة الصحيح بدل اسمه.
+========================================================================= */
+
+const mlgGame = {
+    round: 0,
+    totalRounds: 5,
+    difficultyLevel: 1,
+    pairs: [],
+    cards: [],
+    matchedCount: 0,
+    selectedCardId: null,
+    active: false,
+    session: 0
+};
+
+/* =========================================================
+   ▶️ بدء اللعبة
+   ========================================================= */
+
+function startFormsMatchingGame() {
+
+    if (!matchingGame.progress) {
+        matchingGame.progress = loadMatchingProgress();
+    }
+
+    const modeProgress = getMatchingModeProgress("forms-forms");
+
+    mlgGame.difficultyLevel = modeProgress.difficultyLevel || 1;
+    mlgGame.round = 0;
+    mlgGame.totalRounds = getMatchingTotalRounds(mlgGame.difficultyLevel);
+    mlgGame.matchedCount = 0;
+    mlgGame.selectedCardId = null;
+    mlgGame.active = true;
+    mlgGame.session++;
+
+    showScreen("matchingLettersGame");
+
+    const overlay = $("mlgSuccessOverlay");
+    if (overlay) overlay.style.display = "none";
+
+    updateMlgHUD();
+    clearMlgMessage();
+
+    setTimeout(() => {
+        if (mlgGame.active) buildMlgRound();
+    }, 150);
+}
+
+/* =========================================================
+   🧩 بناء جولة جديدة — بيانات ثابتة من generateMatchingPairs
+   نفسها، بلا أي عشوائية مضافة في المحتوى
+   ========================================================= */
+
+function buildMlgRound() {
+
+    if (!mlgGame.active) return;
+
+    mlgGame.round++;
+    mlgGame.matchedCount = 0;
+    mlgGame.selectedCardId = null;
+
+    const count = getMatchingPairsCountForRound(
+        mlgGame.round,
+        mlgGame.difficultyLevel
+    );
+
+    mlgGame.pairs = generateMatchingPairs("forms-forms", count);
+
+    const cards = [];
+
+    mlgGame.pairs.forEach(pair => {
+        cards.push({
+            cardId: pair.id + "-A",
+            pairId: pair.id,
+            display: pair.source,
+            letter: pair.letter,
+            matched: false
+        });
+        cards.push({
+            cardId: pair.id + "-B",
+            pairId: pair.id,
+            display: pair.target,
+            letter: pair.letter,
+            matched: false
+        });
+    });
+
+    mlgGame.cards = shuffle(cards);
+
+    renderMlgGrid();
+    updateMlgHUD();
+    showMlgMessage("🧩 اختر البطاقتين المتطابقتين لنفس الحرف");
+}
+
+/* =========================================================
+   🎨 رسم الشبكة — عمودان، أزرار حقيقية (تركيز لوحة مفاتيح
+   وتفعيل Enter/Space مجانًا عبر عنصر button الأصلي)
+   ========================================================= */
+
+function renderMlgGrid() {
+
+    const grid = $("mlgGrid");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    mlgGame.cards.forEach(card => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "mlg-card";
+        btn.textContent = card.display;
+        btn.dataset.cardId = card.cardId;
+        btn.setAttribute("aria-label", "بطاقة شكل حرف، اضغط للاختيار");
+        btn.setAttribute("aria-pressed", "false");
+
+        btn.addEventListener("click", () => {
+            handleMlgCardTap(card.cardId);
+        });
+
+        grid.appendChild(btn);
+    });
+}
+
+function getMlgCardButton(cardId) {
+    return document.querySelector(`.mlg-card[data-card-id="${CSS.escape(cardId)}"]`);
+}
+
+/* =========================================================
+   👆 التعامل مع اختيار بطاقة — Tap-to-Select
+   ========================================================= */
+
+function handleMlgCardTap(cardId) {
+
+    if (!mlgGame.active) return;
+
+    const card = mlgGame.cards.find(c => c.cardId === cardId);
+    if (!card || card.matched) return;
+
+    const btn = getMlgCardButton(cardId);
+
+    if (card.letter) {
+        speakEducational(letterWithFatha(card.letter));
+    }
+
+    if (mlgGame.selectedCardId === null) {
+
+        mlgGame.selectedCardId = cardId;
+
+        if (btn) {
+            btn.classList.add("mlg-selected");
+            btn.setAttribute("aria-pressed", "true");
+        }
+
+        return;
+    }
+
+    if (mlgGame.selectedCardId === cardId) {
+
+        mlgGame.selectedCardId = null;
+
+        if (btn) {
+            btn.classList.remove("mlg-selected");
+            btn.setAttribute("aria-pressed", "false");
+        }
+
+        return;
+    }
+
+    const firstCardId = mlgGame.selectedCardId;
+    const firstCard = mlgGame.cards.find(c => c.cardId === firstCardId);
+    const firstBtn = getMlgCardButton(firstCardId);
+
+    const isMatch = firstCard && firstCard.pairId === card.pairId;
+
+    if (isMatch) {
+        handleMlgCorrect(firstBtn, btn, firstCard, card);
+    } else {
+        handleMlgWrong(firstBtn, btn);
+    }
+}
+
+/* =========================================================
+   ✅ إجابة صحيحة — ✓ + نجاح هادئ + صوت + نجمة + تقدّم + انتقال
+   ========================================================= */
+
+function handleMlgCorrect(btnA, btnB, cardA, cardB) {
+
+    const session = mlgGame.session;
+
+    mlgGame.selectedCardId = null;
+    cardA.matched = true;
+    cardB.matched = true;
+    mlgGame.matchedCount++;
+
+    [btnA, btnB].forEach(btn => {
+        if (!btn) return;
+        btn.classList.remove("mlg-selected");
+        btn.classList.add("mlg-correct");
+        btn.disabled = true;
+        btn.setAttribute("aria-pressed", "false");
+        btn.setAttribute("aria-label", "بطاقة متطابقة بنجاح");
+    });
+
+    if (typeof addStars === "function") addStars(1);
+
+    const successPhrase = getMatchingSuccessMessage();
+    speakEducational(successPhrase);
+    showMlgMessage("🎉 " + successPhrase, "success");
+
+    updateMlgHUD();
+
+    if (mlgGame.matchedCount >= mlgGame.pairs.length) {
+
+        setTimeout(() => {
+            if (session !== mlgGame.session) return;
+            if (!mlgGame.active) return;
+            finishMlgRound();
+        }, 1000);
+    }
+}
+
+/* =========================================================
+   😊 إجابة خاطئة — × + اهتزاز خفيف + صوت هادئ، بلا أي عقوبة
+   ========================================================= */
+
+function handleMlgWrong(btnA, btnB) {
+
+    const session = mlgGame.session;
+
+    [btnA, btnB].forEach(btn => {
+        if (btn) btn.classList.add("mlg-wrong");
+    });
+
+    showMlgMessage("😊 حاول مرة أخرى", "wrong");
+    speakEducational("حاول مرة أخرى");
+
+    setTimeout(() => {
+
+        if (session !== mlgGame.session) return;
+
+        [btnA, btnB].forEach(btn => {
+            if (!btn) return;
+            btn.classList.remove("mlg-wrong", "mlg-selected");
+            btn.setAttribute("aria-pressed", "false");
+        });
+
+        mlgGame.selectedCardId = null;
+
+    }, 650);
+}
+
+/* =========================================================
+   🏁 إكمال الجولة — شاشة نجاح أنيقة + Confetti محدود جدًا
+   ========================================================= */
+
+function finishMlgRound() {
+
+    mlgGame.active = false;
+
+    if (!matchingGame.progress) {
+        matchingGame.progress = loadMatchingProgress();
+    }
+
+    const prev = getMatchingModeProgress("forms-forms");
+
+    const updated = {
+        bestScore: Math.max(prev.bestScore || 0, mlgGame.matchedCount),
+        bestStars: prev.bestStars || 0,
+        difficultyLevel: prev.difficultyLevel || 1,
+        plays: (prev.plays || 0) + 1
+    };
+
+    /* تدرّج صعوبة هادئ: كل جولتين مكتملتين تزيد المستوى درجة واحدة */
+    if (updated.plays % 2 === 0) {
+        updated.difficultyLevel = Math.min(updated.difficultyLevel + 1, 6);
+    }
+
+    matchingGame.progress["forms-forms"] = updated;
+    saveMatchingProgress();
+
+    const isLastRound = mlgGame.round >= mlgGame.totalRounds;
+
+    const overlay = $("mlgSuccessOverlay");
+    const title = $("mlgSuccessTitle");
+    const body = $("mlgSuccessBody");
+    const nextBtn = $("mlgNextBtn");
+
+    if (title) {
+        title.textContent = isLastRound ? "🎉 أكملت كل الجولات!" : "🌟 أحسنت! أكملت الجولة";
+    }
+    if (body) {
+        body.textContent = isLastRound
+            ? "عمل رائع في مطابقة أشكال الحروف"
+            : "الجولة التالية بانتظارك";
+    }
+    if (nextBtn) {
+        nextBtn.textContent = isLastRound ? "🏠 العودة للألعاب" : "▶ الجولة التالية";
+        nextBtn.onclick = isLastRound ? exitFormsMatchingGame : continueMlgNextRound;
+    }
+
+    renderMlgConfetti();
+
+    if (overlay) overlay.style.display = "flex";
+
+    speakEducational("أحسنت! أتممت الجولة بنجاح");
+
+    if (nextBtn) {
+        setTimeout(() => nextBtn.focus(), 50);
+    }
+}
+
+function continueMlgNextRound() {
+
+    const overlay = $("mlgSuccessOverlay");
+    if (overlay) overlay.style.display = "none";
+
+    mlgGame.active = true;
+
+    buildMlgRound();
+}
+
+/* =========================================================
+   🎊 قصاصات احتفال محدودة جدًا (8 قصاصات فقط، قصيرة)
+   ========================================================= */
+
+function renderMlgConfetti() {
+
+    const el = $("mlgConfetti");
+    if (!el) return;
+
+    el.innerHTML = "";
+
+    const colors = ["#38bdf8", "#facc15", "#4ade80", "#f472b6"];
+
+    for (let i = 0; i < 8; i++) {
+
+        const piece = document.createElement("div");
+        piece.className = "mlg-confetti-piece";
+        piece.style.left = (10 + Math.random() * 80) + "%";
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.25) + "s";
+
+        el.appendChild(piece);
+    }
+
+    setTimeout(() => {
+        if (el) el.innerHTML = "";
+    }, 1400);
+}
+
+/* =========================================================
+   🖥️ واجهة المعلومات (HUD)
+   ========================================================= */
+
+function updateMlgHUD() {
+
+    const starsEl = $("mlgStars");
+    if (starsEl && typeof stars !== "undefined") {
+        starsEl.textContent = arabicNumber(stars);
+    }
+
+    const fill = $("mlgProgressFill");
+    const track = $("mlgProgressTrack");
+
+    if (fill) {
+        const total = mlgGame.pairs.length || 1;
+        const pct = Math.round((mlgGame.matchedCount / total) * 100);
+        fill.style.width = pct + "%";
+        if (track) track.setAttribute("aria-valuenow", String(pct));
+    }
+}
+
+function showMlgMessage(text) {
+    const el = $("mlgMessage");
+    if (el) el.textContent = text;
+}
+
+function clearMlgMessage() {
+    const el = $("mlgMessage");
+    if (el) el.textContent = "";
+}
+
+/* =========================================================
+   🚪 الخروج من اللعبة
+   ========================================================= */
+
+function exitFormsMatchingGame() {
+
+    mlgGame.active = false;
+    mlgGame.session++;
+
+    const overlay = $("mlgSuccessOverlay");
+    if (overlay) overlay.style.display = "none";
+
+    showScreen("games");
+}
+
+/* إيقاف هادئ عند مغادرة الشاشة عبر أي تنقّل عام (مثل زر الرئيسية) —
+   تغليف غير جراحي لـ showScreen، بلا أي تعديل على الدالة الأصلية */
+
+const originalShowScreenForMlg = showScreen;
+
+showScreen = function (screenId) {
+
+    if (
+        typeof mlgGame !== "undefined" &&
+        mlgGame.active &&
+        screenId !== "matchingLettersGame"
+    ) {
+        mlgGame.active = false;
+        mlgGame.session++;
+
+        const overlay = $("mlgSuccessOverlay");
+        if (overlay) overlay.style.display = "none";
+    }
+
+    originalShowScreenForMlg(screenId);
+};
+
+/* =========================================================
+   🔚 نهاية قسم "حرف ↔ حرف" الاحترافي المستقل
+   ========================================================= */
+
 
 
 /* =========================================================================
@@ -11890,6 +12215,7 @@ function buildLetterFormFormPool() {
 
         pool.push({
             id: "FF" + index,
+            letter: item.letter,
             source: formatLetterFormGlyph(glyphA, posA),
             target: formatLetterFormGlyph(glyphB, posB),
             sourceSpeak:
