@@ -7709,3 +7709,302 @@ body.dark-mode .race-level-complete-card p {
         font-size: 22px;
     }
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   🔤 حرف ↔ حرف — نسخة احترافية مستقلة (Tap-to-Select)
+   =====================================================================
+   قسم جديد كليًا ومعزول تمامًا — كل الأصناف بادئة بـ mlg- (Matching
+   Letters Game) فلا تتقاطع مع أي صنف مُستخدَم في أنماط المطابقة
+   الأخرى أو أي قسم آخر في التطبيق. يعتمد على ألوان النمط الأزرق
+   السماوي نفسها المستخدمة أصلًا لبطاقة "حرف ↔ حرف" في شاشة
+   الاختيار، لاستمرارية بصرية مقصودة. الحركة تخضع تلقائيًا لقاعدة
+   prefers-reduced-motion العامة الموجودة أصلًا أعلى الملف.
+========================================================================= */
+
+.mlg-wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 14px 16px 30px;
+}
+
+/* ---------- الشريط العلوي ---------- */
+
+.mlg-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.mlg-back-btn {
+    border: 2px solid #bae6fd;
+    background: #ffffff;
+    color: #0369a1;
+    font-size: 20px;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .15s ease, background-color .15s ease;
+}
+
+.mlg-back-btn:hover {
+    background: #f0f9ff;
+}
+
+.mlg-back-btn:focus-visible {
+    outline: 3px solid #0369a1;
+    outline-offset: 2px;
+}
+
+.mlg-title {
+    font-size: 20px;
+    color: #0c4a6e;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+}
+
+.mlg-stars {
+    font-size: 17px;
+    font-weight: bold;
+    color: #0c4a6e;
+    background: #f0f9ff;
+    border: 2px solid #bae6fd;
+    border-radius: 30px;
+    padding: 6px 14px;
+    white-space: nowrap;
+}
+
+/* ---------- شريط التقدّم ---------- */
+
+.mlg-progress-track {
+    height: 14px;
+    background: #e0f2fe;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    border: 1px solid #bae6fd;
+}
+
+.mlg-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #0284c7);
+    border-radius: 20px;
+    transition: width .35s ease;
+}
+
+/* ---------- رسالة الحالة ---------- */
+
+.mlg-message {
+    min-height: 26px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    color: #0c4a6e;
+    margin-bottom: 10px;
+}
+
+/* ---------- الشبكة: عمودان، بطاقات كبيرة، مسافات مريحة ---------- */
+
+.mlg-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.mlg-card {
+    position: relative;
+    min-height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 10px;
+    background: #ffffff;
+    border: 3px solid #bae6fd;
+    border-radius: 20px;
+    font-size: clamp(30px, 8vw, 44px);
+    font-weight: 900;
+    color: #0c4a6e;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(3,105,161,.15);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
+}
+
+.mlg-card:hover:not(:disabled) {
+    background: #f0f9ff;
+}
+
+.mlg-card:focus-visible {
+    outline: 3px solid #0284c7;
+    outline-offset: 3px;
+}
+
+/* ---------- حالة التحديد: Highlight + ارتفاع/ظل خفيف ---------- */
+
+.mlg-card.mlg-selected {
+    border-color: #0284c7;
+    background: #e0f2fe;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 0 rgba(3,105,161,.2), 0 10px 18px rgba(3,105,161,.18);
+}
+
+/* ---------- حالة الصحيح: لا تعتمد على اللون وحده — ✓ + حدّ متصل ---------- */
+
+.mlg-card.mlg-correct {
+    border-color: #16a34a;
+    border-style: solid;
+    background: #f0fdf4;
+    color: #15803d;
+    cursor: default;
+    box-shadow: 0 3px 0 rgba(22,163,74,.2);
+}
+
+.mlg-card.mlg-correct::after {
+    content: "✓";
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 20px;
+    color: #16a34a;
+    font-weight: 900;
+}
+
+/* ---------- حالة الخطأ: × + اهتزاز خفيف + حدّ متقطّع ---------- */
+
+.mlg-card.mlg-wrong {
+    border-color: #dc2626;
+    border-style: dashed;
+    background: #fef2f2;
+    animation: mlgShake .4s ease;
+}
+
+.mlg-card.mlg-wrong::after {
+    content: "×";
+    position: absolute;
+    top: 2px;
+    left: 10px;
+    font-size: 24px;
+    color: #dc2626;
+    font-weight: 900;
+}
+
+@keyframes mlgShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+
+/* ---------- شاشة إكمال الجولة ---------- */
+
+.mlg-success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(12,74,110,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+}
+
+.mlg-success-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 34px 28px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+}
+
+.mlg-success-card h3 {
+    font-size: 24px;
+    color: #15803d;
+    margin-bottom: 8px;
+}
+
+.mlg-success-card p {
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 18px;
+}
+
+/* ---------- قصاصات احتفال محدودة جدًا (8 قصاصات فقط) ---------- */
+
+.mlg-confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.mlg-confetti-piece {
+    position: absolute;
+    top: -12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: mlgConfettiFall 1.1s ease-in forwards;
+}
+
+@keyframes mlgConfettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(220px) rotate(220deg); opacity: 0; }
+}
+
+/* ---------- الوضع الداكن ---------- */
+
+body.dark-mode .mlg-title,
+body.dark-mode .mlg-message,
+body.dark-mode .mlg-stars {
+    color: #bae6fd;
+}
+
+body.dark-mode .mlg-stars,
+body.dark-mode .mlg-back-btn {
+    background: #0c2d3f;
+    border-color: #0369a1;
+}
+
+body.dark-mode .mlg-card {
+    background: #0c2d3f;
+    border-color: #0369a1;
+    color: #e0f2fe;
+}
+
+body.dark-mode .mlg-card.mlg-selected {
+    background: #164e63;
+}
+
+body.dark-mode .mlg-card.mlg-correct {
+    background: #052e1a;
+}
+
+body.dark-mode .mlg-card.mlg-wrong {
+    background: #450a0a;
+}
+
+body.dark-mode .mlg-success-card {
+    background: #0c2d3f;
+}
+
+body.dark-mode .mlg-success-card p {
+    color: #94a3b8;
+}
+
+/* ---------- تجاوب الشاشات الصغيرة جدًا ---------- */
+
+@media (max-width: 360px) {
+    .mlg-card {
+        min-height: 92px;
+        font-size: clamp(26px, 9vw, 36px);
+    }
+}
