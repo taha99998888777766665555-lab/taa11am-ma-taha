@@ -10151,8 +10151,11 @@ function handleMlgCorrect(btnA, btnB, cardA, cardB) {
 
     if (typeof addStars === "function") addStars(1);
 
+    /* 🛠️ الصوت الوحيد في هذه اللعبة هو صوت الحرف المحلي — تم
+       إيقاف نطق عبارة التشجيع هنا عمدًا (كانت تذهب دائمًا لـ
+       Browser TTS الاحتياطي لعدم وجود ملف محلي مطابق لها، وتُسمَع
+       بعد صوت الحرف مباشرة). الرسالة البصرية تبقى كما هي. */
     const successPhrase = getMatchingSuccessMessage();
-    speakEducational(successPhrase);
     showMlgMessage("🎉 " + successPhrase, "success");
 
     updateMlgHUD();
@@ -10179,8 +10182,9 @@ function handleMlgWrong(btnA, btnB) {
         if (btn) btn.classList.add("mlg-wrong");
     });
 
+    /* 🛠️ نفس المبدأ: الصوت الوحيد هنا هو صوت الحرف المحلي — تم
+       إيقاف نطق "حاول مرة أخرى" عمدًا، تبقى الرسالة البصرية فقط */
     showMlgMessage("😊 حاول مرة أخرى", "wrong");
-    speakEducational("حاول مرة أخرى");
 
     setTimeout(() => {
 
@@ -10368,6 +10372,517 @@ showScreen = function (screenId) {
 /* =========================================================
    🔚 نهاية قسم "حرف ↔ حرف" الاحترافي المستقل
    ========================================================= */
+
+/* =========================================================================
+   🆕 =====================================================================
+   🔢 رقم ↔ كمية — نسخة احترافية مستقلة (Tap-to-Select)
+   =====================================================================
+   قسم جديد كليًا ومعزول تمامًا — لا يشارك أي حالة أو عنصر DOM مع
+   نظام المطابقة الأصلي أو مع "حرف ↔ حرف". توليد البيانات مستقل
+   بالكامل (generateNQPairs) ولا يمسّ generateMatchingPairs أو
+   حالتها الأصلية لنمط numbers-quantities إطلاقًا — يُعيد استخدام
+   نفس arabicNumber()/numberWords الموجودين فعليًا فقط، بلا أي
+   تعديل عليهما. 4 مستويات بتدرّج حقيقي في مدى الأرقام المستخدمة
+   (1-3 ← 1-5 ← 1-7 ← 1-10)، وليس فقط عدد الأزواج. تمثيل الكمية
+   بإطار العشرة (Ten-Frame) — أداة تربوية معتمدة لتعليم الأعداد
+   المبكر، بنية ثابتة ٢×٥ تجعل العدّ والمقارنة سهلين دائمًا بلا
+   ازدحام مهما كانت الكمية.
+========================================================================= */
+
+const NQ_LEVEL_RANGES = { 1: 3, 2: 5, 3: 7, 4: 10 };
+
+const nqGame = {
+    level: 1,
+    round: 0,
+    totalRounds: 5,
+    maxNumber: 3,
+    pairs: [],
+    cards: [],
+    matchedCount: 0,
+    selectedCardId: null,
+    active: false,
+    session: 0
+};
+
+/* =========================================================
+   💾 حفظ/تحميل المستوى المفتوح — مفتاح معزول جديد خاص بهذه
+   اللعبة فقط
+   ========================================================= */
+
+function loadNQUnlockedLevel() {
+    const saved = Number(localStorage.getItem("taha_nq_unlocked_level") || 1);
+    return Math.min(Math.max(saved, 1), 4);
+}
+
+function saveNQUnlockedLevel(level) {
+    const current = loadNQUnlockedLevel();
+    if (level > current) {
+        localStorage.setItem("taha_nq_unlocked_level", String(Math.min(level, 4)));
+    }
+}
+
+/* =========================================================
+   🧮 توليد أزواج رقم↔كمية — دالة مستقلة بالكامل، لا تمسّ
+   generateMatchingPairs أو حالتها الأصلية لهذا النمط إطلاقًا
+   ========================================================= */
+
+function generateNQPairs(maxNumber, count) {
+
+    const pool = [];
+
+    for (let n = 1; n <= maxNumber; n++) {
+        pool.push({
+            id: "NQG" + n,
+            number: n,
+            numberDisplay: arabicNumber(n),
+            speak: numberWords[n] || arabicNumber(n)
+        });
+    }
+
+    return shuffle(pool).slice(0, Math.min(count, pool.length));
+}
+
+/* =========================================================
+   ▶️ بدء اللعبة — تبدأ دائمًا من المستوى المفتوح المحفوظ
+   ========================================================= */
+
+function startNQGame() {
+
+    nqGame.level = loadNQUnlockedLevel();
+    nqGame.maxNumber = NQ_LEVEL_RANGES[nqGame.level] || 3;
+    nqGame.round = 0;
+    nqGame.totalRounds = getMatchingTotalRounds(nqGame.level);
+    nqGame.matchedCount = 0;
+    nqGame.selectedCardId = null;
+    nqGame.active = true;
+    nqGame.session++;
+
+    showScreen("matchingQuantityGame");
+
+    const overlay = $("nqgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    updateNQHUD();
+    clearNQMessage();
+
+    setTimeout(() => {
+        if (nqGame.active) buildNQRound();
+    }, 150);
+}
+
+/* =========================================================
+   🧩 بناء جولة جديدة
+   ========================================================= */
+
+function buildNQRound() {
+
+    if (!nqGame.active) return;
+
+    nqGame.round++;
+    nqGame.matchedCount = 0;
+    nqGame.selectedCardId = null;
+
+    const count = Math.min(
+        getMatchingPairsCountForRound(nqGame.round, nqGame.level),
+        nqGame.maxNumber
+    );
+
+    nqGame.pairs = generateNQPairs(nqGame.maxNumber, count);
+
+    const cards = [];
+
+    nqGame.pairs.forEach(pair => {
+        cards.push({
+            cardId: pair.id + "-num",
+            pairId: pair.id,
+            type: "number",
+            number: pair.number,
+            speak: pair.speak,
+            matched: false
+        });
+        cards.push({
+            cardId: pair.id + "-qty",
+            pairId: pair.id,
+            type: "quantity",
+            number: pair.number,
+            speak: pair.speak,
+            matched: false
+        });
+    });
+
+    nqGame.cards = shuffle(cards);
+
+    renderNQGrid();
+    updateNQHUD();
+    showNQMessage("🧩 اختر الرقم وعدد العناصر المناسب له");
+}
+
+/* =========================================================
+   🎨 رسم الشبكة — بطاقات رقم كبيرة جدًا + بطاقات كمية بإطار
+   العشرة (Ten-Frame)
+   ========================================================= */
+
+function buildTenFrame(number) {
+
+    const frame = document.createElement("div");
+    frame.className = "nqg-tenframe";
+    frame.setAttribute("aria-hidden", "true");
+
+    for (let i = 1; i <= 10; i++) {
+        const cell = document.createElement("div");
+        cell.className = "nqg-tenframe-cell" + (i <= number ? " filled" : "");
+        frame.appendChild(cell);
+    }
+
+    return frame;
+}
+
+function renderNQGrid() {
+
+    const grid = $("nqgGrid");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    nqGame.cards.forEach(card => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "nqg-card";
+        btn.dataset.cardId = card.cardId;
+
+        if (card.type === "number") {
+
+            const numEl = document.createElement("span");
+            numEl.className = "nqg-number-display";
+            numEl.textContent = arabicNumber(card.number);
+            btn.appendChild(numEl);
+
+            btn.setAttribute("aria-label", "بطاقة الرقم " + card.speak + "، اضغط للاختيار");
+
+        } else {
+
+            btn.appendChild(buildTenFrame(card.number));
+            btn.setAttribute("aria-label", "بطاقة كمية، اضغط للاختيار");
+        }
+
+        btn.setAttribute("aria-pressed", "false");
+
+        btn.addEventListener("click", () => {
+            handleNQCardTap(card.cardId);
+        });
+
+        grid.appendChild(btn);
+    });
+}
+
+function getNQCardButton(cardId) {
+    return document.querySelector(`.nqg-card[data-card-id="${CSS.escape(cardId)}"]`);
+}
+
+/* =========================================================
+   👆 التعامل مع اختيار بطاقة — Tap-to-Select
+   ========================================================= */
+
+function handleNQCardTap(cardId) {
+
+    if (!nqGame.active) return;
+
+    const card = nqGame.cards.find(c => c.cardId === cardId);
+    if (!card || card.matched) return;
+
+    const btn = getNQCardButton(cardId);
+
+    if (card.speak) {
+        speakEducational(card.speak);
+    }
+
+    if (nqGame.selectedCardId === null) {
+
+        nqGame.selectedCardId = cardId;
+
+        if (btn) {
+            btn.classList.add("nqg-selected");
+            btn.setAttribute("aria-pressed", "true");
+        }
+
+        return;
+    }
+
+    if (nqGame.selectedCardId === cardId) {
+
+        nqGame.selectedCardId = null;
+
+        if (btn) {
+            btn.classList.remove("nqg-selected");
+            btn.setAttribute("aria-pressed", "false");
+        }
+
+        return;
+    }
+
+    const firstCardId = nqGame.selectedCardId;
+    const firstCard = nqGame.cards.find(c => c.cardId === firstCardId);
+    const firstBtn = getNQCardButton(firstCardId);
+
+    const isMatch = firstCard && firstCard.pairId === card.pairId;
+
+    if (isMatch) {
+        handleNQCorrect(firstBtn, btn, firstCard, card);
+    } else {
+        handleNQWrong(firstBtn, btn);
+    }
+}
+
+/* =========================================================
+   ✅ إجابة صحيحة — ✓ + تثبيت بصري + نجمة + تقدّم، بلا صوت
+   تشجيع لفظي (الصوت الوحيد هنا هو صوت الرقم المحلي، كما
+   في "حرف ↔ حرف")
+   ========================================================= */
+
+function handleNQCorrect(btnA, btnB, cardA, cardB) {
+
+    const session = nqGame.session;
+
+    nqGame.selectedCardId = null;
+    cardA.matched = true;
+    cardB.matched = true;
+    nqGame.matchedCount++;
+
+    [btnA, btnB].forEach(btn => {
+        if (!btn) return;
+        btn.classList.remove("nqg-selected");
+        btn.classList.add("nqg-correct");
+        btn.disabled = true;
+        btn.setAttribute("aria-pressed", "false");
+        btn.setAttribute("aria-label", "بطاقة متطابقة بنجاح");
+    });
+
+    if (typeof addStars === "function") addStars(1);
+
+    showNQMessage("🎉 أحسنت!");
+
+    updateNQHUD();
+
+    if (nqGame.matchedCount >= nqGame.pairs.length) {
+
+        setTimeout(() => {
+            if (session !== nqGame.session) return;
+            if (!nqGame.active) return;
+            finishNQRound();
+        }, 1000);
+    }
+}
+
+/* =========================================================
+   😊 إجابة خاطئة — × + اهتزاز خفيف، بلا أي عقوبة أو صوت لفظي
+   ========================================================= */
+
+function handleNQWrong(btnA, btnB) {
+
+    const session = nqGame.session;
+
+    [btnA, btnB].forEach(btn => {
+        if (btn) btn.classList.add("nqg-wrong");
+    });
+
+    showNQMessage("😊 حاول مرة أخرى");
+
+    setTimeout(() => {
+
+        if (session !== nqGame.session) return;
+
+        [btnA, btnB].forEach(btn => {
+            if (!btn) return;
+            btn.classList.remove("nqg-wrong", "nqg-selected");
+            btn.setAttribute("aria-pressed", "false");
+        });
+
+        nqGame.selectedCardId = null;
+
+    }, 650);
+}
+
+/* =========================================================
+   🏁 إكمال الجولة/المستوى — شاشة نجاح أنيقة + Confetti محدود
+   ========================================================= */
+
+function finishNQRound() {
+
+    if (nqGame.round < nqGame.totalRounds) {
+
+        setTimeout(() => {
+            if (!nqGame.active) return;
+            buildNQRound();
+        }, 400);
+
+        return;
+    }
+
+    nqGame.active = false;
+
+    const isLastLevel = nqGame.level >= 4;
+
+    saveNQUnlockedLevel(Math.min(nqGame.level + 1, 4));
+
+    const overlay = $("nqgLevelComplete");
+    const title = $("nqgLevelCompleteTitle");
+    const body = $("nqgLevelCompleteBody");
+    const nextBtn = $("nqgLevelCompleteNextBtn");
+
+    if (title) {
+        title.textContent = isLastLevel ? "🎉 أكملت كل المستويات!" : "🌟 أحسنت! أكملت المستوى";
+    }
+    if (body) {
+        body.textContent = isLastLevel
+            ? "عمل رائع في مطابقة الأرقام والكميات"
+            : "المستوى التالي بانتظارك";
+    }
+    if (nextBtn) {
+        nextBtn.textContent = isLastLevel ? "🏠 العودة للألعاب" : "▶ المستوى التالي";
+        nextBtn.onclick = isLastLevel ? exitNQGame : advanceToNextNQLevel;
+    }
+
+    renderNQConfetti();
+
+    if (overlay) overlay.style.display = "flex";
+
+    if (nextBtn) {
+        setTimeout(() => nextBtn.focus(), 50);
+    }
+}
+
+function advanceToNextNQLevel() {
+
+    nqGame.level = Math.min(nqGame.level + 1, 4);
+    nqGame.maxNumber = NQ_LEVEL_RANGES[nqGame.level] || 10;
+    nqGame.round = 0;
+    nqGame.totalRounds = getMatchingTotalRounds(nqGame.level);
+    nqGame.matchedCount = 0;
+    nqGame.selectedCardId = null;
+    nqGame.active = true;
+
+    const overlay = $("nqgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    updateNQHUD();
+    clearNQMessage();
+
+    buildNQRound();
+}
+
+/* =========================================================
+   🎊 قصاصات احتفال محدودة جدًا (8 قصاصات فقط)
+   ========================================================= */
+
+function renderNQConfetti() {
+
+    const el = $("nqgConfetti");
+    if (!el) return;
+
+    el.innerHTML = "";
+
+    const colors = ["#4ade80", "#facc15", "#38bdf8", "#f472b6"];
+
+    for (let i = 0; i < 8; i++) {
+
+        const piece = document.createElement("div");
+        piece.className = "nqg-confetti-piece";
+        piece.style.left = (10 + Math.random() * 80) + "%";
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.25) + "s";
+
+        el.appendChild(piece);
+    }
+
+    setTimeout(() => {
+        if (el) el.innerHTML = "";
+    }, 1400);
+}
+
+/* =========================================================
+   🖥️ واجهة المعلومات (HUD)
+   ========================================================= */
+
+function updateNQHUD() {
+
+    const starsEl = $("nqgStars");
+    if (starsEl && typeof stars !== "undefined") {
+        starsEl.textContent = arabicNumber(stars);
+    }
+
+    const levelEl = $("nqgLevel");
+    if (levelEl) levelEl.textContent = arabicNumber(nqGame.level);
+
+    const roundEl = $("nqgRound");
+    if (roundEl) roundEl.textContent = arabicNumber(Math.min(nqGame.round, nqGame.totalRounds));
+
+    const totalEl = $("nqgTotalRounds");
+    if (totalEl) totalEl.textContent = arabicNumber(nqGame.totalRounds);
+
+    const fill = $("nqgProgressFill");
+    const track = $("nqgProgressTrack");
+
+    if (fill) {
+        const completedRounds = Math.max(0, nqGame.round - 1);
+        const pct = Math.min(100, Math.round((completedRounds / nqGame.totalRounds) * 100));
+        fill.style.width = pct + "%";
+        if (track) track.setAttribute("aria-valuenow", String(pct));
+    }
+}
+
+function showNQMessage(text) {
+    const el = $("nqgMessage");
+    if (el) el.textContent = text;
+}
+
+function clearNQMessage() {
+    const el = $("nqgMessage");
+    if (el) el.textContent = "";
+}
+
+/* =========================================================
+   🚪 الخروج من اللعبة
+   ========================================================= */
+
+function exitNQGame() {
+
+    nqGame.active = false;
+    nqGame.session++;
+
+    const overlay = $("nqgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    showScreen("games");
+}
+
+/* إيقاف هادئ عند مغادرة الشاشة عبر أي تنقّل عام — تغليف غير
+   جراحي إضافي لـ showScreen (يُضاف فوق التغليف السابق لـ"حرف
+   ↔ حرف"، بلا أي تعديل على أي منهما) */
+
+const originalShowScreenForNQ = showScreen;
+
+showScreen = function (screenId) {
+
+    if (
+        typeof nqGame !== "undefined" &&
+        nqGame.active &&
+        screenId !== "matchingQuantityGame"
+    ) {
+        nqGame.active = false;
+        nqGame.session++;
+
+        const overlay = $("nqgLevelComplete");
+        if (overlay) overlay.style.display = "none";
+    }
+
+    originalShowScreenForNQ(screenId);
+};
+
+/* =========================================================
+   🔚 نهاية قسم "رقم ↔ كمية" الاحترافي المستقل
+   ========================================================= */
+
 
 
 
