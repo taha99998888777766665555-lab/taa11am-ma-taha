@@ -2172,7 +2172,7 @@
 
                                                                                                             <button
                 class="game-launch-card matching-mode-card matching-mode-numbers"
-                onclick="startMatchingGame('numbers-quantities')"
+                onclick="startNQGame()"
             >
 
                 <div class="game-card-icon">
@@ -2586,6 +2586,132 @@
                     type="button"
                 >
                     ▶ متابعة
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     🆕 🔢 رقم ↔ كمية — نسخة احترافية مستقلة (Tap-to-Select)
+     قسم جديد كليًا، منفصل تمامًا عن #matchingGame وعن
+     #matchingLettersGame — لا يشاركهما أي عنصر أو حالة.
+     تمثيل الكمية بإطار العشرة (Ten-Frame) — أداة تربوية معتمدة
+     لتعليم الأعداد المبكر، أوضح من الرموز المتراصّة وأسهل للعدّ.
+========================================================= -->
+
+<section
+    id="matchingQuantityGame"
+    class="screen"
+>
+
+    <div class="nqg-wrapper">
+
+        <div class="nqg-topbar">
+
+            <button
+                class="nqg-back-btn"
+                onclick="exitNQGame()"
+                aria-label="العودة للألعاب"
+            >
+                ⬅️
+            </button>
+
+            <h2 class="nqg-title">
+                🔢 رقم ↔ كمية
+            </h2>
+
+            <div class="nqg-stars" aria-label="عدد النجوم">
+                ⭐ <strong id="nqgStars">٠</strong>
+            </div>
+
+        </div>
+
+
+        <div class="nqg-level-row">
+
+            <span class="nqg-level-badge">
+                المستوى
+                <strong id="nqgLevel">١</strong>
+            </span>
+
+            <span class="nqg-round-badge">
+                الجولة
+                <strong id="nqgRound">١</strong>
+                /
+                <strong id="nqgTotalRounds">٥</strong>
+            </span>
+
+        </div>
+
+
+        <div
+            class="nqg-progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            id="nqgProgressTrack"
+            aria-label="تقدّم الجولة"
+        >
+            <div
+                id="nqgProgressFill"
+                class="nqg-progress-fill"
+            ></div>
+        </div>
+
+
+        <div
+            id="nqgMessage"
+            class="nqg-message"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <div
+            id="nqgGrid"
+            class="nqg-grid"
+            role="group"
+            aria-label="بطاقات مطابقة الأرقام والكميات"
+        ></div>
+
+
+        <div
+            id="nqgLevelComplete"
+            class="nqg-level-complete-overlay"
+            style="display:none;"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="nqgLevelCompleteTitle"
+        >
+
+            <div class="nqg-level-complete-card">
+
+                <div
+                    id="nqgConfetti"
+                    class="nqg-confetti"
+                    aria-hidden="true"
+                ></div>
+
+                <h3 id="nqgLevelCompleteTitle">
+                    🌟 أحسنت! أكملت المستوى
+                </h3>
+
+                <p id="nqgLevelCompleteBody">
+                    المستوى التالي بانتظارك
+                </p>
+
+                <button
+                    id="nqgLevelCompleteNextBtn"
+                    class="primary"
+                    type="button"
+                >
+                    ▶ المستوى التالي
                 </button>
 
             </div>
