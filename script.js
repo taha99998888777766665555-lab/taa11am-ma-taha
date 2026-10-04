@@ -10884,6 +10884,716 @@ showScreen = function (screenId) {
    ========================================================= */
 
 
+/* =========================================================================
+   🆕 =====================================================================
+   🖼️ حرف ↔ صورة — نسخة احترافية مستقلة (Tap-to-Select)
+   =====================================================================
+   قسم جديد كليًا ومعزول تمامًا — لا يشارك أي حالة أو عنصر DOM مع نظام
+   المطابقة الأصلي ولا مع "حرف ↔ حرف" ولا "رقم ↔ كمية". بياناته مجموعة
+   ثابتة موثوقة (حرف ← كلمة ← صورة) لكل الحروف الـ28: كل كلمة تبدأ
+   فعليًا بحرفها، ولها ملف صوت محلي في بنك الصوت التعليمي (تحقّقنا
+   برمجيًا). 4 مستويات = مجموعات الحروف الأربع نفسها المعتمدة في
+   التطبيق (بلا خلط بين مجموعاتها)، وتدرّج صعوبة حقيقي داخل المستوى:
+   جولات سهلة تتباعد فيها الحروف المتشابهة، ثم متوسطة، ثم جولات تحدٍّ
+   تجمع حروفًا متشابهة فعليًا (LTR_SIMILAR_LETTERS الموجودة أصلًا).
+   فكرتها المميّزة: "مكتبة الصور" — صورة لكل حرف يُتقنه الطفل.
+   الصوت: ملفات MP3 المحلية فقط (صوت الحرف بالفتحة / اسم الصورة) —
+   لا Browser ولا Google TTS إطلاقًا داخل هذه اللعبة.
+========================================================================= */
+
+const OL_PICTURE_BANK = {
+    "أ": { word: "أسد", emoji: "🦁" },
+    "ب": { word: "بطة", emoji: "🦆" },
+    "ت": { word: "تمساح", emoji: "🐊" },
+    "ث": { word: "ثعلب", emoji: "🦊" },
+    "ج": { word: "جمل", emoji: "🐪" },
+    "ح": { word: "حصان", emoji: "🐎" },
+    "خ": { word: "خروف", emoji: "🐑" },
+    "د": { word: "دب", emoji: "🐻" },
+    "ذ": { word: "ذئب", emoji: "🐺" },
+    "ر": { word: "رجل", emoji: "👨" },
+    "ز": { word: "زرافة", emoji: "🦒" },
+    "س": { word: "سمكة", emoji: "🐟" },
+    "ش": { word: "شمس", emoji: "☀️" },
+    "ص": { word: "صقر", emoji: "🦅" },
+    "ض": { word: "ضفدع", emoji: "🐸" },
+    "ط": { word: "طائرة", emoji: "✈️" },
+    "ظ": { word: "ظرف", emoji: "✉️" },
+    "ع": { word: "عين", emoji: "👁️" },
+    "غ": { word: "غيوم", emoji: "☁️" },
+    "ف": { word: "فيل", emoji: "🐘" },
+    "ق": { word: "قلب", emoji: "❤️" },
+    "ك": { word: "كتاب", emoji: "📘" },
+    "ل": { word: "ليمون", emoji: "🍋" },
+    "م": { word: "موز", emoji: "🍌" },
+    "ن": { word: "نمر", emoji: "🐯" },
+    "ه": { word: "هلال", emoji: "🌙" },
+    "و": { word: "وردة", emoji: "🌹" },
+    "ي": { word: "يد", emoji: "✋" },
+};
+
+const olGame = {
+    level: 1,
+    round: 0,
+    totalRounds: 5,
+    levelLetters: [],
+    collected: [],
+    pairs: [],
+    cards: [],
+    matchedCount: 0,
+    selectedCardId: null,
+    active: false,
+    session: 0
+};
+
+/* =========================================================
+   🔊 صوت محلي فقط — إن لم يوجد ملف مطابق تمامًا يبقى صامتًا
+   بدل أي TTS احتياطي (التزامًا بقاعدة "MP3 المحلي فقط")
+   ========================================================= */
+
+function speakOLLocal(text) {
+    if (
+        typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined" &&
+        EDUCATIONAL_AUDIO_MANIFEST[text]
+    ) {
+        speakEducational(text);
+    }
+}
+
+/* =========================================================
+   💾 حفظ/تحميل المستوى المفتوح — مفتاح معزول جديد
+   ========================================================= */
+
+function loadOLUnlockedLevel() {
+    const saved = Number(localStorage.getItem("taha_ol_unlocked_level") || 1);
+    return Math.min(Math.max(saved, 1), 4);
+}
+
+function saveOLUnlockedLevel(level) {
+    const current = loadOLUnlockedLevel();
+    if (level > current) {
+        localStorage.setItem("taha_ol_unlocked_level", String(Math.min(level, 4)));
+    }
+}
+
+/* =========================================================
+   🧠 تدرّج الصعوبة داخل المستوى (جولات 1-2 سهلة، 3-4 متوسطة،
+   5+ تحدٍّ) — عدد الأزواج ونوع الحروف المجتمعة كلاهما يتدرّج
+   ========================================================= */
+
+function olTierForRound(round) {
+    if (round <= 2) return "easy";
+    if (round <= 4) return "medium";
+    return "hard";
+}
+
+function olPairCountForTier(tier, poolLength) {
+    const wanted = tier === "easy" ? 3 : tier === "medium" ? 4 : 5;
+    return Math.min(wanted, poolLength);
+}
+
+function olLettersAreSimilar(a, b) {
+    const sim = (typeof LTR_SIMILAR_LETTERS !== "undefined") ? LTR_SIMILAR_LETTERS : {};
+    return (sim[a] || []).includes(b) || (sim[b] || []).includes(a);
+}
+
+function selectOLLetters(pool, collected, count, tier) {
+
+    /* الحروف التي لم تُجمَع صورتها بعد تُفضَّل أولًا */
+    const ordered = shuffle(pool.filter(l => !collected.includes(l)))
+        .concat(shuffle(pool.filter(l => collected.includes(l))));
+
+    const chosen = [];
+
+    if (tier === "hard") {
+
+        /* تحدٍّ: ابدأ بحرف له متشابهات داخل نفس المستوى، ثم أضف متشابهاته */
+        const seed = ordered.find(l => pool.some(o => o !== l && olLettersAreSimilar(l, o)));
+
+        if (seed) {
+            chosen.push(seed);
+            pool.forEach(o => {
+                if (chosen.length < count && o !== seed && olLettersAreSimilar(seed, o)) {
+                    chosen.push(o);
+                }
+            });
+        }
+
+    } else if (tier === "easy") {
+
+        /* سهل: تباعد الحروف المتشابهة قدر الإمكان */
+        ordered.forEach(l => {
+            if (chosen.length < count && !chosen.some(c => olLettersAreSimilar(c, l))) {
+                chosen.push(l);
+            }
+        });
+    }
+
+    ordered.forEach(l => {
+        if (chosen.length < count && !chosen.includes(l)) chosen.push(l);
+    });
+
+    return chosen;
+}
+
+/* =========================================================
+   ▶️ بدء اللعبة — تبدأ دائمًا من المستوى المفتوح المحفوظ
+   ========================================================= */
+
+function resetOLLevelState() {
+    const group = LETTER_LEVEL_GROUPS[olGame.level - 1];
+    olGame.levelLetters = group ? group.letters.slice() : [];
+    olGame.collected = [];
+    olGame.round = 0;
+    olGame.totalRounds = getMatchingTotalRounds(olGame.level);
+    olGame.matchedCount = 0;
+    olGame.selectedCardId = null;
+    olGame.pairs = [];
+    olGame.cards = [];
+}
+
+function startOLGame() {
+
+    olGame.level = loadOLUnlockedLevel();
+    resetOLLevelState();
+    olGame.active = true;
+    olGame.session++;
+
+    showScreen("matchingPictureGame");
+
+    setOLBackgroundInert(false);
+
+    const overlay = $("olgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    renderOLGallery();
+    updateOLHUD();
+    clearOLMessage();
+
+    setTimeout(() => {
+        if (olGame.active) buildOLRound();
+    }, 150);
+}
+
+/* =========================================================
+   🧩 بناء جولة جديدة
+   ========================================================= */
+
+function buildOLRound() {
+
+    if (!olGame.active) return;
+
+    olGame.round++;
+    olGame.matchedCount = 0;
+    olGame.selectedCardId = null;
+
+    const tier = olTierForRound(olGame.round);
+    const count = olPairCountForTier(tier, olGame.levelLetters.length);
+
+    const letterSet = selectOLLetters(olGame.levelLetters, olGame.collected, count, tier);
+
+    olGame.pairs = letterSet.map((letter, index) => ({
+        id: "OLG" + index,
+        letter: letter,
+        word: OL_PICTURE_BANK[letter].word,
+        emoji: OL_PICTURE_BANK[letter].emoji
+    }));
+
+    const cards = [];
+
+    olGame.pairs.forEach(pair => {
+        cards.push({ cardId: pair.id + "-L", pairId: pair.id, type: "letter", pair: pair, matched: false });
+        cards.push({ cardId: pair.id + "-P", pairId: pair.id, type: "picture", pair: pair, matched: false });
+    });
+
+    olGame.cards = shuffle(cards);
+
+    renderOLGrid();
+    updateOLHUD();
+    showOLMessage("🧩 اربط كل حرف بالصورة التي تبدأ به");
+}
+
+/* =========================================================
+   🎨 رسم الشبكة — بطاقات حرف كبيرة جدًا + بطاقات صورة "ملصقات"
+   (الكلمة مخفية حتى لا تكشف الحل، وتظهر بعد الإجابة الصحيحة)
+   ========================================================= */
+
+function renderOLGrid() {
+
+    const grid = $("olgGrid");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    olGame.cards.forEach(card => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.dataset.cardId = card.cardId;
+
+        if (card.type === "letter") {
+
+            btn.className = "olg-card olg-letter-card";
+
+            const letterEl = document.createElement("span");
+            letterEl.className = "olg-letter-display";
+            letterEl.textContent = card.pair.letter;
+            btn.appendChild(letterEl);
+
+            btn.setAttribute("aria-label", "بطاقة الحرف " + letterWithFatha(card.pair.letter) + "، اضغط للاختيار");
+
+        } else {
+
+            btn.className = "olg-card olg-picture-card";
+
+            const sticker = document.createElement("span");
+            sticker.className = "olg-picture-sticker";
+            sticker.setAttribute("aria-hidden", "true");
+            sticker.textContent = card.pair.emoji;
+            btn.appendChild(sticker);
+
+            const wordEl = document.createElement("span");
+            wordEl.className = "olg-picture-word";
+            wordEl.setAttribute("aria-hidden", "true");
+
+            const first = document.createElement("span");
+            first.className = "olg-first-letter";
+            first.textContent = card.pair.word.charAt(0);
+            wordEl.appendChild(first);
+            wordEl.appendChild(document.createTextNode(card.pair.word.slice(1)));
+            btn.appendChild(wordEl);
+
+            btn.setAttribute("aria-label", "بطاقة صورة " + card.pair.word + "، اضغط للاختيار");
+        }
+
+        btn.setAttribute("aria-pressed", "false");
+
+        btn.addEventListener("click", () => {
+            handleOLCardTap(card.cardId);
+        });
+
+        grid.appendChild(btn);
+    });
+}
+
+function getOLCardButton(cardId) {
+    return document.querySelector(`.olg-card[data-card-id="${CSS.escape(cardId)}"]`);
+}
+
+/* =========================================================
+   👆 التعامل مع اختيار بطاقة — Tap-to-Select
+   ========================================================= */
+
+function handleOLCardTap(cardId) {
+
+    if (!olGame.active) return;
+
+    const card = olGame.cards.find(c => c.cardId === cardId);
+    if (!card || card.matched) return;
+
+    const btn = getOLCardButton(cardId);
+
+    /* الحرف ينطق صوته بالفتحة، والصورة تنطق اسمها — MP3 محلي فقط */
+    if (card.type === "letter") {
+        speakOLLocal(letterWithFatha(card.pair.letter));
+    } else {
+        speakOLLocal(card.pair.word);
+    }
+
+    if (olGame.selectedCardId === null) {
+
+        olGame.selectedCardId = cardId;
+
+        if (btn) {
+            btn.classList.add("olg-selected");
+            btn.setAttribute("aria-pressed", "true");
+        }
+
+        return;
+    }
+
+    if (olGame.selectedCardId === cardId) {
+
+        olGame.selectedCardId = null;
+
+        if (btn) {
+            btn.classList.remove("olg-selected");
+            btn.setAttribute("aria-pressed", "false");
+        }
+
+        return;
+    }
+
+    const firstCardId = olGame.selectedCardId;
+    const firstCard = olGame.cards.find(c => c.cardId === firstCardId);
+    const firstBtn = getOLCardButton(firstCardId);
+
+    const isMatch = firstCard && firstCard.pairId === card.pairId;
+
+    if (isMatch) {
+        handleOLCorrect(firstBtn, btn, firstCard, card);
+    } else {
+        handleOLWrong(firstBtn, btn);
+    }
+}
+
+/* =========================================================
+   ✅ إجابة صحيحة — ✓ + تثبيت بصري + إظهار الكلمة + نجمة +
+   تقدّم + إضافة الصورة إلى المكتبة (بلا أي صوت إضافي)
+   ========================================================= */
+
+function handleOLCorrect(btnA, btnB, cardA, cardB) {
+
+    const session = olGame.session;
+
+    olGame.selectedCardId = null;
+    cardA.matched = true;
+    cardB.matched = true;
+    olGame.matchedCount++;
+
+    [btnA, btnB].forEach(btn => {
+        if (!btn) return;
+        btn.classList.remove("olg-selected");
+        btn.classList.add("olg-correct");
+        btn.disabled = true;
+        btn.setAttribute("aria-pressed", "false");
+    });
+
+    const pair = cardA.pair;
+
+    [[btnA, cardA], [btnB, cardB]].forEach(([btn, card]) => {
+        if (!btn) return;
+        btn.setAttribute(
+            "aria-label",
+            "بطاقة متطابقة بنجاح: " + (card.type === "letter"
+                ? letterWithFatha(pair.letter)
+                : pair.word)
+        );
+    });
+
+    let newlyCollectedLetter = null;
+
+    if (!olGame.collected.includes(pair.letter)) {
+        olGame.collected.push(pair.letter);
+        newlyCollectedLetter = pair.letter;
+    }
+
+    if (typeof addStars === "function") addStars(1);
+
+    showOLMessage("🎉 أحسنت! " + pair.word + " يبدأ بحرف " + pair.letter);
+
+    renderOLGallery(newlyCollectedLetter);
+    updateOLHUD();
+
+    if (olGame.matchedCount >= olGame.pairs.length) {
+
+        setTimeout(() => {
+            if (session !== olGame.session) return;
+            if (!olGame.active) return;
+            finishOLRound();
+        }, 1200);
+    }
+}
+
+/* =========================================================
+   😊 إجابة خاطئة — × + اهتزاز خفيف، بلا أي عقوبة أو صوت لفظي
+   ========================================================= */
+
+function handleOLWrong(btnA, btnB) {
+
+    const session = olGame.session;
+
+    [btnA, btnB].forEach(btn => {
+        if (btn) btn.classList.add("olg-wrong");
+    });
+
+    showOLMessage("😊 حاول مرة أخرى");
+
+    setTimeout(() => {
+
+        if (session !== olGame.session) return;
+
+        [btnA, btnB].forEach(btn => {
+            if (!btn) return;
+            btn.classList.remove("olg-wrong", "olg-selected");
+            btn.setAttribute("aria-pressed", "false");
+        });
+
+        olGame.selectedCardId = null;
+
+    }, 650);
+}
+
+/* =========================================================
+   ♿ عند ظهور شاشة النجاح (aria-modal) يُعطَّل ما خلفها (inert) حتى
+   لا يصل إليه مستخدم لوحة المفاتيح أو قارئ الشاشة، ويُعاد بعد إغلاقها
+   ========================================================= */
+
+function olTrapDialogFocus(event) {
+    if (event.key !== "Tab") return;
+    const btn = $("olgLevelCompleteNextBtn");
+    if (!btn) return;
+    /* في الحوار زرّ واحد فقط — نُبقي التركيز عليه بدل أن يغادر الصفحة */
+    event.preventDefault();
+    btn.focus();
+}
+
+function setOLBackgroundInert(flag) {
+    const wrapper = document.querySelector("#matchingPictureGame .olg-wrapper");
+    if (!wrapper) return;
+    Array.from(wrapper.children).forEach(child => {
+        if (child.id === "olgLevelComplete") return;
+        child.inert = !!flag;
+    });
+}
+
+/* =========================================================
+   🏁 إكمال الجولة/المستوى — شاشة نجاح أنيقة + Confetti محدود
+   ========================================================= */
+
+function finishOLRound() {
+
+    const session = olGame.session;
+
+    if (olGame.round < olGame.totalRounds) {
+
+        showOLMessage("🌟 جولة مكتملة");
+
+        setTimeout(() => {
+            if (session !== olGame.session) return;
+            if (!olGame.active) return;
+            buildOLRound();
+        }, 500);
+
+        return;
+    }
+
+    olGame.active = false;
+
+    const isLastLevel = olGame.level >= 4;
+
+    saveOLUnlockedLevel(Math.min(olGame.level + 1, 4));
+
+    const overlay = $("olgLevelComplete");
+    const title = $("olgLevelCompleteTitle");
+    const body = $("olgLevelCompleteBody");
+    const nextBtn = $("olgLevelCompleteNextBtn");
+    const summary = $("olgLevelCompleteGallery");
+
+    if (title) {
+        title.textContent = isLastLevel ? "🎉 أكملت كل المستويات!" : "🌟 أحسنت! أكملت المستوى";
+    }
+
+    if (body) {
+        body.textContent = "جمعت " + arabicNumber(olGame.collected.length) +
+            " من " + arabicNumber(olGame.levelLetters.length) + " صور في مكتبتك";
+    }
+
+    if (summary) {
+        summary.innerHTML = "";
+        olGame.levelLetters.forEach(letter => {
+            if (olGame.collected.includes(letter)) {
+                const span = document.createElement("span");
+                span.textContent = OL_PICTURE_BANK[letter].emoji;
+                summary.appendChild(span);
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.textContent = isLastLevel ? "🏠 العودة للألعاب" : "▶ المستوى التالي";
+        nextBtn.onclick = isLastLevel ? exitOLGame : advanceToNextOLLevel;
+    }
+
+    renderOLConfetti();
+
+    setOLBackgroundInert(true);
+
+    if (overlay) {
+        overlay.addEventListener("keydown", olTrapDialogFocus);
+        overlay.style.display = "flex";
+    }
+
+    if (nextBtn) {
+        setTimeout(() => nextBtn.focus(), 50);
+    }
+}
+
+function advanceToNextOLLevel() {
+
+    olGame.level = Math.min(olGame.level + 1, 4);
+    resetOLLevelState();
+    olGame.active = true;
+    olGame.session++;
+
+    setOLBackgroundInert(false);
+
+    const overlay = $("olgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    renderOLGallery();
+    updateOLHUD();
+    clearOLMessage();
+
+    buildOLRound();
+}
+
+/* =========================================================
+   🎊 قصاصات احتفال محدودة جدًا (8 قصاصات فقط)
+   ========================================================= */
+
+function renderOLConfetti() {
+
+    const el = $("olgConfetti");
+    if (!el) return;
+
+    el.innerHTML = "";
+
+    const colors = ["#fbbf24", "#4ade80", "#38bdf8", "#f472b6"];
+
+    for (let i = 0; i < 8; i++) {
+
+        const piece = document.createElement("div");
+        piece.className = "olg-confetti-piece";
+        piece.style.left = (10 + Math.random() * 80) + "%";
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.25) + "s";
+
+        el.appendChild(piece);
+    }
+
+    setTimeout(() => {
+        if (el) el.innerHTML = "";
+    }, 1400);
+}
+
+/* =========================================================
+   📚 مكتبة الصور — خانة لكل حرف في المستوى، تمتلئ بصورته عند
+   إتقانه
+   ========================================================= */
+
+function renderOLGallery(justCollectedLetter) {
+
+    const strip = $("olgGallery");
+    if (!strip) return;
+
+    strip.innerHTML = "";
+
+    olGame.levelLetters.forEach(letter => {
+
+        const slot = document.createElement("span");
+        slot.className = "olg-gallery-slot";
+        slot.setAttribute("role", "listitem");
+
+        if (olGame.collected.includes(letter)) {
+            slot.classList.add("filled");
+            if (letter === justCollectedLetter) slot.classList.add("olg-just-filled");
+            slot.textContent = OL_PICTURE_BANK[letter].emoji;
+            slot.setAttribute("aria-label", "صورة مجمَّعة: " + OL_PICTURE_BANK[letter].word);
+        } else {
+            slot.setAttribute("aria-label", "خانة فارغة");
+        }
+
+        strip.appendChild(slot);
+    });
+
+    const countEl = $("olgGalleryCount");
+    if (countEl) {
+        countEl.textContent =
+            arabicNumber(olGame.collected.length) + "/" +
+            arabicNumber(olGame.levelLetters.length);
+    }
+}
+
+/* =========================================================
+   🖥️ واجهة المعلومات (HUD)
+   ========================================================= */
+
+function updateOLHUD() {
+
+    const starsEl = $("olgStars");
+    if (starsEl && typeof stars !== "undefined") {
+        starsEl.textContent = arabicNumber(stars);
+    }
+
+    const levelEl = $("olgLevel");
+    if (levelEl) levelEl.textContent = arabicNumber(olGame.level);
+
+    const roundEl = $("olgRound");
+    if (roundEl) roundEl.textContent = arabicNumber(Math.min(Math.max(olGame.round, 1), olGame.totalRounds));
+
+    const totalEl = $("olgTotalRounds");
+    if (totalEl) totalEl.textContent = arabicNumber(olGame.totalRounds);
+
+    const fill = $("olgProgressFill");
+    const track = $("olgProgressTrack");
+
+    if (fill) {
+        const done = Math.max(0, olGame.round - 1);
+        const inRound = olGame.pairs.length ? olGame.matchedCount / olGame.pairs.length : 0;
+        const pct = Math.min(100, Math.round(((done + inRound) / olGame.totalRounds) * 100));
+        fill.style.width = pct + "%";
+        if (track) track.setAttribute("aria-valuenow", String(pct));
+    }
+}
+
+function showOLMessage(text) {
+    const el = $("olgMessage");
+    if (el) el.textContent = text;
+}
+
+function clearOLMessage() {
+    const el = $("olgMessage");
+    if (el) el.textContent = "";
+}
+
+/* =========================================================
+   🚪 الخروج من اللعبة
+   ========================================================= */
+
+function exitOLGame() {
+
+    olGame.active = false;
+    olGame.session++;
+
+    setOLBackgroundInert(false);
+
+    const overlay = $("olgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    showScreen("games");
+}
+
+/* إيقاف هادئ عند مغادرة الشاشة عبر أي تنقّل عام — تغليف غير جراحي
+   إضافي لـ showScreen (فوق التغليفات السابقة، بلا تعديل عليها) */
+
+const originalShowScreenForOL = showScreen;
+
+showScreen = function (screenId) {
+
+    if (
+        typeof olGame !== "undefined" &&
+        olGame.active &&
+        screenId !== "matchingPictureGame"
+    ) {
+        olGame.active = false;
+        olGame.session++;
+
+        setOLBackgroundInert(false);
+
+        const overlay = $("olgLevelComplete");
+        if (overlay) overlay.style.display = "none";
+    }
+
+    originalShowScreenForOL(screenId);
+};
+
+/* =========================================================
+   🔚 نهاية قسم "حرف ↔ صورة" الاحترافي المستقل
+   ========================================================= */
+
+
+
 
 
 /* =========================================================================
