@@ -12497,6 +12497,3826 @@ showScreen = function (screenId) {
    🔚 نهاية قسم "صورة ↔ كلمة" الاحترافي المستقل
    ========================================================= */
 
+/* =========================================================================
+   🆕 =====================================================================
+   🌟 أرقامي الجميلة — أنشطة تفاعلية داخل قسم الأرقام
+   =====================================================================
+   تحويل تفاعلي لمحتوى كتابَي «أرقامي الجميلة ١–١٠» و«أرقامي الجميلة ١١–٢٠»
+   (٣ صفحات لكل رقم). كل نشاط في الكتابين صار نشاطًا تفاعليًا فعليًا بنفس
+   عنوانه وتدرّجه: تلوين بالأصبع، اختيار، بحث ووسم، توصيل (سحب أو لمس)،
+   تتبّع وكتابة، عدّ ولوحة أرقام، ملء تسلسل، سحب وإفلات، متاهة، توصيل
+   نقاط، وبناء إطار العشرة.
+
+   قسم جديد معزول: كل المعرّفات تبدأ بـ aj / AJ ومفتاح الحفظ
+   taha_aj_progress_v1، ولا يشارك أي حالة مع الألعاب أو الأقسام الأخرى.
+   الأرقام عربية هندية فقط. بلا مؤقّت ولا أرواح ولا عقوبات: الخطأ يهتز
+   بهدوء ثم يُعاد، وبعد خطأين متتاليين يظهر تلميح هادئ (إطار أصفر + 💡).
+   الصوت: ملفات MP3 المحلية فقط (كلمات الأرقام ١–٢٠) — لا Browser ولا
+   Google TTS إطلاقًا داخل هذا القسم.
+========================================================================= */
+
+const AJ_KEY = "taha_aj_progress_v1";
+
+const AJ_COLORS = [
+    { id: "red",    hex: "#ef6c5b", name: "الأحمر" },
+    { id: "orange", hex: "#f5a54a", name: "البرتقالي" },
+    { id: "yellow", hex: "#f6d55c", name: "الأصفر" },
+    { id: "green",  hex: "#6cc27a", name: "الأخضر" },
+    { id: "blue",   hex: "#58a6e0", name: "الأزرق" },
+    { id: "purple", hex: "#a98ad8", name: "البنفسجي" }
+];
+
+const AJ_PASTELS = ["#dbe8f6", "#e3f1e0", "#fbe8d8", "#fbf1cf", "#ebe3f3"];
+
+/* خطة كل رقم: ٣ صفحات (مطابقة لصفحات الكتابين) — كل عنصر نوع نشاط */
+
+const AJ_PLAN_1_10 = [
+    ["colorNumberObjects", "pointNumber", "circleCorrect", "findGrid", "connectIdentical"],
+    ["circleRows", "crossGrid", "connectSet", "connectQuantity"],
+    ["trace", "countWrite"]
+];
+
+const AJ_PLAN_11_20 = {
+    11: [["frameColor", "balloonsFind", "numberLine"], ["tenHowManyCircle", "connectPictures", "colorReveal"], ["traceTwo", "frameBuilder"]],
+    12: [["frameColor", "countCircle"], ["beforeAfter", "circleBigger", "maze"], ["traceTwo", "numberLine", "crossOutCard"]],
+    13: [["frameColor", "balloonsFind"], ["baseTenCircle", "missingNumber", "colorReveal"], ["traceTwo", "orderNumbers"]],
+    14: [["frameColor", "countCircle"], ["tenHowManyWrite", "beforeAfter", "dotToDot"], ["traceTwo", "frameBuilder"]],
+    15: [["frameColor", "balloonsFind"], ["trainMissing", "circleSmaller", "colorReveal"], ["traceTwo", "beforeAfter"]],
+    16: [["frameColor", "countCircle", "numberLine"], ["baseTenCircle", "connectBaseTen", "maze"], ["traceTwo", "frameBuilder"]],
+    17: [["frameColor", "balloonsFind"], ["missingNumber", "tenHowManyWrite", "colorReveal"], ["traceTwo", "orderNumbers"]],
+    18: [["frameColor", "countCircle"], ["tenHowManyCircle", "beforeAfter", "dotToDot"], ["traceTwo", "circleSmaller"]],
+    19: [["frameColor", "balloonsFind"], ["trainMissing", "circleBigger", "colorReveal"], ["traceTwo", "beforeAfter"]],
+    20: [["frameColor", "countCircle"], ["baseTenCircle", "missingNumber", "maze"], ["traceTwo", "orderNumbers"]]
+};
+
+const AJ_OBJECTS = {
+    apples:   { svg: "apple",   label: "تفاحة",  plural: "التفاحات" },
+    fish:     { svg: "fish",    label: "سمكة",   plural: "الأسماك" },
+    balloons: { svg: "balloon", label: "بالون",  plural: "البالونات" }
+};
+
+/* صور المفاجأة (لوّن كل خانة فيها الرقم لتظهر الصورة) — ٩ أعمدة × ٧ صفوف
+   كل حرف = لون خانة مستهدفة، والنقطة = خانة عادية (ليست الرقم) */
+
+const AJ_REVEAL_PATTERNS = [
+    { name: "بيت", rows: [
+        "....r....",
+        "...rrr...",
+        "..rrrrr..",
+        ".rrrrrrr.",
+        ".bbbbbbb.",
+        ".bbyybbb.",
+        ".bbyybbb." ] },
+    { name: "قلب", rows: [
+        ".........",
+        ".rr...rr.",
+        "rrrr.rrrr",
+        "rrrrrrrrr",
+        ".rrrrrrr.",
+        "..rrrrr..",
+        "...rrr..." ] },
+    { name: "شجرة", rows: [
+        "....g....",
+        "...ggg...",
+        "..ggggg..",
+        ".ggggggg.",
+        "...nnn...",
+        "...nnn...",
+        "...nnn..." ] },
+    { name: "سمكة", rows: [
+        ".........",
+        "..bbbb.b.",
+        ".bbbbbbbb",
+        "bbwbbbbbb",
+        ".bbbbbbbb",
+        "..bbbb.b.",
+        "........." ] },
+    { name: "زهرة", rows: [
+        "...r.r...",
+        "....y....",
+        "...ryr...",
+        "....y....",
+        ".....g...",
+        "...g.g...",
+        "....ggg.." ] }
+];
+
+const AJ_REVEAL_COLORS = {
+    r: "#ef6c5b", y: "#f6d55c", g: "#6cc27a", b: "#58a6e0", n: "#a9784f", w: "#ffffff", o: "#f5a54a"
+};
+
+const ajGame = {
+    book: 1,
+    number: 1,
+    actIndex: 0,
+    plan: null,
+    current: null,
+    active: false,
+    session: 0,
+    wrongRun: 0
+};
+
+/* =========================================================
+   🧰 أدوات عامة صغيرة
+   ========================================================= */
+
+function ajNum(n) {
+    return arabicNumber(n);
+}
+
+function ajRand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function ajRange(min, max) {
+    const out = [];
+    for (let i = min; i <= max; i++) out.push(i);
+    return out;
+}
+
+/* أعداد مختلفة عن n ضمن مدى، مع تفضيل الأقرب (تشتيت مناسب لا عشوائي) */
+function ajOthers(n, min, max, count) {
+
+    const pool = ajRange(min, max).filter(x => x !== n);
+
+    const near = pool
+        .slice()
+        .sort((a, b) => Math.abs(a - n) - Math.abs(b - n))
+        .slice(0, Math.max(count + 2, count * 2));
+
+    return shuffle(near).slice(0, count);
+}
+
+function ajEl(tag, className, text, attrs) {
+
+    const el = document.createElement(tag);
+
+    if (className) el.className = className;
+    if (text !== undefined && text !== null) el.textContent = text;
+
+    if (attrs) {
+        Object.keys(attrs).forEach(k => el.setAttribute(k, attrs[k]));
+    }
+
+    return el;
+}
+
+/* =========================================================
+   🔊 مشغّل MP3 محلي خاص بهذا القسم — بلا أي مسار تراجع إلى TTS
+
+   يستخدم ملفات بنك الصوت التعليمي نفسها (EDUCATIONAL_AUDIO_MANIFEST) وبالسرعة
+   نفسها، وبنفس سلوك «القفل + أحدث طلب» (الصوت يكتمل ولا يُقاطَع؛ ويُحفظ
+   أحدث طلب فقط ليُشغَّل بعده).
+
+   لماذا لا نستعمل speakEducational هنا؟ لأن مسار التراجع فيها يستدعي speak()
+   (صوت المتصفح) عند أي رفض لـ audio.play() — ومنه الرفض الناتج عن إيقاف الصوت
+   أثناء بدء تشغيله حين ينتقل الطفل سريعًا بين الشاشات. هنا الفشل = صمت فقط.
+   نظام الصوت العام نفسه لم يُمَسّ.
+   ========================================================= */
+
+let ajAudioEl = null;
+let ajAudioBusy = false;
+let ajAudioPending = null;
+
+function speakAJLocal(text) {
+
+    const manifest = (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined")
+        ? EDUCATIONAL_AUDIO_MANIFEST
+        : null;
+
+    const path = manifest ? manifest[text] : null;
+
+    if (!path) return;
+
+    if (ajAudioBusy) {
+        ajAudioPending = text;
+        return;
+    }
+
+    let audio;
+
+    try {
+        audio = new Audio(path);
+    } catch (e) {
+        return;
+    }
+
+    ajAudioBusy = true;
+    ajAudioEl = audio;
+
+    audio.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined")
+        ? EDUCATIONAL_AUDIO_PLAYBACK_RATE
+        : 0.8;
+
+    try {
+        audio.preservesPitch = true;
+        audio.mozPreservesPitch = true;
+        audio.webkitPreservesPitch = true;
+    } catch (e) { /* غير مدعوم */ }
+
+    const finish = () => {
+
+        /* صوت قديم أُوقف عمدًا: نتجاهل أحداثه المتأخرة */
+        if (ajAudioEl !== audio) return;
+
+        ajAudioEl = null;
+        ajAudioBusy = false;
+
+        if (ajAudioPending) {
+            const next = ajAudioPending;
+            ajAudioPending = null;
+            speakAJLocal(next);
+        }
+    };
+
+    audio.addEventListener("ended", finish, { once: true });
+    audio.addEventListener("error", finish, { once: true });
+
+    /* حارس: لو لم يُطلق الصوت حدث النهاية لأي سبب لا يبقى القفل مغلقًا */
+    setTimeout(() => { if (ajAudioEl === audio) finish(); }, 5000);
+
+    try {
+        const p = audio.play();
+        if (p && typeof p.catch === "function") p.catch(finish);
+    } catch (e) {
+        finish();
+    }
+}
+
+function ajStopAudio() {
+
+    const a = ajAudioEl;
+
+    ajAudioEl = null;
+    ajAudioBusy = false;
+    ajAudioPending = null;
+
+    if (a) {
+        try {
+            a.pause();
+            a.currentTime = 0;
+        } catch (e) { /* لا شيء */ }
+    }
+}
+
+function ajSpeakNumber(n) {
+    const word = (typeof numberWords !== "undefined") ? numberWords[n] : null;
+    if (word) speakAJLocal(word);
+}
+
+/* =========================================================
+   💾 تقدّم الطالب — محفوظ ومعزول
+   ========================================================= */
+
+let ajProgressCache = null;
+
+function ajLoadProgress() {
+
+    if (ajProgressCache) return ajProgressCache;
+
+    let data = null;
+
+    try {
+        data = JSON.parse(localStorage.getItem(AJ_KEY) || "null");
+    } catch (e) {
+        data = null;
+    }
+
+    if (!data || typeof data !== "object") data = {};
+
+    ajProgressCache = {
+        done: data.done || {},
+        skipped: data.skipped || {},
+        bonus: data.bonus || {}
+    };
+
+    return ajProgressCache;
+}
+
+function ajSaveProgress() {
+    try {
+        localStorage.setItem(AJ_KEY, JSON.stringify(ajLoadProgress()));
+    } catch (e) { /* التخزين ممتلئ أو معطّل: نكمل دون حفظ */ }
+}
+
+function ajReloadProgressFromStorage() {
+    ajProgressCache = null;
+    return ajLoadProgress();
+}
+
+function ajActKey(n, idx) {
+    return n + ":" + idx;
+}
+
+function ajIsDone(n, idx) {
+    return !!ajLoadProgress().done[ajActKey(n, idx)];
+}
+
+function ajIsSkipped(n, idx) {
+    return !!ajLoadProgress().skipped[ajActKey(n, idx)];
+}
+
+function ajMarkDone(n, idx) {
+    const p = ajLoadProgress();
+    p.done[ajActKey(n, idx)] = 1;
+    delete p.skipped[ajActKey(n, idx)];
+    ajSaveProgress();
+}
+
+function ajMarkSkipped(n, idx) {
+    const p = ajLoadProgress();
+    if (!p.done[ajActKey(n, idx)]) p.skipped[ajActKey(n, idx)] = 1;
+    ajSaveProgress();
+}
+
+function ajNumberCounts(n) {
+
+    const plan = ajBuildPlan(n);
+    let done = 0;
+    let skipped = 0;
+
+    plan.flat.forEach((_, idx) => {
+        if (ajIsDone(n, idx)) done++;
+        else if (ajIsSkipped(n, idx)) skipped++;
+    });
+
+    return { total: plan.flat.length, done: done, skipped: skipped };
+}
+
+function ajNumberComplete(n) {
+    const c = ajNumberCounts(n);
+    return c.done + c.skipped >= c.total;
+}
+
+/* فتح تدريجي: الرقم ١ مفتوح، وكل رقم يُفتح بإكمال الذي قبله
+   (وبهذا يُفتح ١١ بعد إكمال ١٠ — نفس تدرّج الكتابين) */
+
+function ajNumberUnlocked(n) {
+    return n === 1 || ajNumberComplete(n - 1);
+}
+
+function ajFirstOpenIndex(n) {
+
+    const plan = ajBuildPlan(n);
+
+    for (let i = 0; i < plan.flat.length; i++) {
+        if (!ajIsDone(n, i) && !ajIsSkipped(n, i)) return i;
+    }
+
+    return 0;
+}
+
+function ajTotalDone() {
+    let total = 0;
+    for (let n = 1; n <= 20; n++) total += ajNumberCounts(n).done;
+    return total;
+}
+
+/* =========================================================
+   🗺️ خطة الأنشطة لكل رقم
+   ========================================================= */
+
+function ajBuildPlan(n) {
+
+    const pagesKeys = (n <= 10) ? AJ_PLAN_1_10 : AJ_PLAN_11_20[n];
+
+    const flat = [];
+
+    pagesKeys.forEach((page, pageIndex) => {
+        page.forEach(type => {
+            flat.push({ type: type, page: pageIndex });
+        });
+    });
+
+    return { pages: pagesKeys, flat: flat };
+}
+
+/* =========================================================
+   🎨 رسوم SVG بسيطة (تفاحة/سمكة/بالون) + إطار العشرة + مكعبات
+   تُرسم برمجيًا (لا إيموجي) لثبات الشكل وإمكان تلوينها
+   ========================================================= */
+
+function ajShapeSVG(kind) {
+
+    if (kind === "apple") {
+        return '<svg class="aj-shape" viewBox="0 0 48 52" aria-hidden="true" focusable="false">' +
+            '<path class="aj-fill" d="M24 15 C19 9 7 12 7 28 C7 41 15 50 21 50 C22.5 50 23.2 49.3 24 49.3 C24.8 49.3 25.5 50 27 50 C33 50 41 41 41 28 C41 12 29 9 24 15 Z"/>' +
+            '<path class="aj-stem" d="M24 15 C24 11 25.5 8 28 6"/>' +
+            '<path class="aj-leaf" d="M27 10 C31 4 38 5 40 9 C36 13 30 13 27 10 Z"/>' +
+            '</svg>';
+    }
+
+    if (kind === "fish") {
+        return '<svg class="aj-shape" viewBox="0 0 56 36" aria-hidden="true" focusable="false">' +
+            '<path class="aj-fill" d="M4 18 C10 6 30 4 40 18 C30 32 10 30 4 18 Z"/>' +
+            '<path class="aj-fill" d="M38 18 L54 6 L54 30 Z"/>' +
+            '<circle class="aj-eye" cx="12" cy="15" r="2.2"/>' +
+            '</svg>';
+    }
+
+    return '<svg class="aj-shape" viewBox="0 0 40 56" aria-hidden="true" focusable="false">' +
+        '<ellipse class="aj-fill" cx="20" cy="20" rx="16" ry="19"/>' +
+        '<path class="aj-fill" d="M17 38 L23 38 L20 43 Z"/>' +
+        '<path class="aj-stem" d="M20 43 C16 48 24 50 20 55"/>' +
+        '</svg>';
+}
+
+/* إطار العشرة: ٢×٥ — filled = عدد العدّادات الظاهرة في الإطار */
+
+function ajFrameEl(filled, cls) {
+
+    const frame = ajEl("div", "aj-frame" + (cls ? " " + cls : ""));
+    frame.setAttribute("aria-hidden", "true");
+
+    for (let i = 0; i < 10; i++) {
+        const cell = ajEl("span", "aj-frame-cell");
+        if (i < filled) cell.appendChild(ajEl("span", "aj-counter"));
+        frame.appendChild(cell);
+    }
+
+    return frame;
+}
+
+/* مكعبات العشرات والآحاد: قضيب = ١٠ مربعات زرقاء، ومربع برتقالي = ١ */
+
+function ajBaseTenSVG(n) {
+
+    const tens = Math.floor(n / 10);
+    const units = n % 10;
+
+    const rodW = 16, gap = 6, cell = 11;
+    const unitCols = 3, unitCell = 15;
+
+    const tensWidth = tens * (rodW + gap);
+    const unitsWidth = units ? unitCols * unitCell : 0;
+    const width = Math.max(40, tensWidth + unitsWidth + 8);
+    const height = 10 * cell + 8;
+
+    let svg = '<svg class="aj-base10" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true" focusable="false">';
+
+    for (let t = 0; t < tens; t++) {
+        for (let i = 0; i < 10; i++) {
+            svg += '<rect class="aj-b10-ten" x="' + (width - 4 - (t + 1) * (rodW + gap) + gap) + '" y="' + (4 + i * cell) + '" width="' + rodW + '" height="' + (cell - 1) + '" rx="2"/>';
+        }
+    }
+
+    for (let u = 0; u < units; u++) {
+        const col = u % unitCols;
+        const row = Math.floor(u / unitCols);
+        svg += '<rect class="aj-b10-unit" x="' + (4 + col * unitCell) + '" y="' + (4 + row * unitCell) + '" width="' + (unitCell - 2) + '" height="' + (unitCell - 2) + '" rx="2"/>';
+    }
+
+    return svg + '</svg>';
+}
+
+/* مجموعة أشياء ثابتة (غير تفاعلية) في صفوف منتظمة */
+
+function ajObjectsRow(type, count, solid) {
+
+    const wrap = ajEl("div", "aj-objects" + (solid ? " aj-solid" : ""));
+    wrap.setAttribute("aria-hidden", "true");
+
+    const info = AJ_OBJECTS[type];
+
+    for (let i = 0; i < count; i++) {
+        const o = ajEl("span", "aj-object aj-object-" + info.svg);
+        o.innerHTML = ajShapeSVG(info.svg);
+        wrap.appendChild(o);
+    }
+
+    return wrap;
+}
+
+/* =========================================================
+   🏗️ مولّدات الأنشطة — كل دالة تُنتج «مواصفة» (spec) لنشاط واحد.
+   العناوين حرفيًا من الكتابين. المحتوى يُولَّد عند كل لعب (تشتيت
+   قريب من الرقم لا عشوائي)، والإجابات الصحيحة محفوظة في الـ spec فقط.
+   ========================================================= */
+
+function ajNumeralOption(value, correct) {
+    return {
+        value: value,
+        text: ajNum(value),
+        correct: !!correct,
+        speak: (typeof numberWords !== "undefined") ? numberWords[value] : null,
+        aria: "الرقم " + ((typeof numberWords !== "undefined" && numberWords[value]) || ajNum(value))
+    };
+}
+
+function ajThreeNumerals(n, min, max) {
+    const others = ajOthers(n, min, max, 2);
+    return shuffle([ajNumeralOption(n, true)].concat(others.map(v => ajNumeralOption(v, false))));
+}
+
+/* ترتيب مختلف عن الأصل (حتى لا يكون التوصيل بالموضع) */
+function ajDifferentOrder(list) {
+    for (let i = 0; i < 12; i++) {
+        const c = shuffle(list);
+        if (c.every((v, idx) => v !== list[idx])) return c;
+    }
+    const r = list.slice();
+    r.push(r.shift());
+    return r;
+}
+
+/* ---------- ١–١٠ ---------- */
+
+function ajBuildColorNumberObjects(n) {
+    return { text: ajNum(n), objects: { type: "apples", count: n }, goal: 0.72 };
+}
+
+function ajBuildPointNumber(n) {
+    const options = shuffle([n].concat(ajOthers(n, 1, 10, 5))).map(v => ajNumeralOption(v, v === n));
+    return {
+        mark: "circle",
+        autoSpeak: n,
+        groups: [{ options: options, layout: "grid3", cls: "aj-opts-big" }]
+    };
+}
+
+function ajBuildCircleCorrect(n) {
+    return {
+        mark: "circle",
+        groups: [{
+            stimulus: { type: "objects", kind: "apples", count: n },
+            options: ajThreeNumerals(n, 1, 10),
+            layout: "row",
+            cls: "aj-opts-round"
+        }]
+    };
+}
+
+function ajFindCells(n, total, targetCount, min, max) {
+    const others = ajRange(min, max).filter(v => v !== n);
+    const cells = [];
+    for (let i = 0; i < targetCount; i++) cells.push({ text: ajNum(n), target: true });
+    for (let i = targetCount; i < total; i++) cells.push({ text: ajNum(others[ajRand(0, others.length - 1)]), target: false });
+    return shuffle(cells);
+}
+
+function ajBuildFindGrid(n) {
+    return {
+        variant: "grid", cols: 4, mark: "color",
+        cells: ajFindCells(n, 20, ajRand(5, 7), 1, 10),
+        word: ajNum(n)
+    };
+}
+
+function ajBuildCircleRows(n) {
+    /* ٤ صفوف × ٥ خانات؛ في كل صف رقم واحد على الأقل */
+    const rows = [];
+    for (let r = 0; r < 4; r++) {
+        const t = ajRand(1, 2);
+        rows.push(ajFindCells(n, 5, t, 1, 10));
+    }
+    return {
+        variant: "rows", cols: 5, mark: "circle",
+        cells: [].concat.apply([], rows),
+        word: ajNum(n)
+    };
+}
+
+function ajBuildCrossGrid(n) {
+    return {
+        variant: "grid", cols: 5, mark: "cross",
+        cells: ajFindCells(n, 20, ajRand(5, 6), 1, 10),
+        word: ajNum(n)
+    };
+}
+
+function ajBuildConnectIdentical(n) {
+    const values = [n].concat(ajOthers(n, 1, 10, 2));
+    const left = shuffle(values);
+    const right = ajDifferentOrder(left);
+    const pairs = {};
+    values.forEach(v => { pairs["a" + v] = "b" + v; });
+    return {
+        layout: "two",
+        a: left.map(v => ({ id: "a" + v, value: v, numeral: ajNum(v), speak: numberWords[v] })),
+        b: right.map(v => ({ id: "b" + v, value: v, numeral: ajNum(v), speak: numberWords[v] })),
+        pairs: pairs
+    };
+}
+
+function ajBuildConnectSet(n) {
+    const counts = shuffle([n].concat(ajOthers(n, 1, 10, 5)));
+    return {
+        layout: "center",
+        a: [{ id: "c", value: n, numeral: ajNum(n), big: true, speak: numberWords[n] }],
+        b: counts.map(v => ({ id: "s" + v, value: v, objects: { type: "apples", count: v }, aria: "مجموعة" })),
+        pairs: { c: "s" + n }
+    };
+}
+
+function ajBuildConnectQuantity(n) {
+    const values = [n].concat(ajOthers(n, 1, 10, 2));
+    const left = shuffle(values);
+    const right = ajDifferentOrder(left);
+    const pairs = {};
+    values.forEach(v => { pairs["a" + v] = "b" + v; });
+    return {
+        layout: "two",
+        a: left.map(v => ({ id: "a" + v, value: v, numeral: ajNum(v), speak: numberWords[v] })),
+        b: right.map(v => ({ id: "b" + v, value: v, objects: { type: "apples", count: v }, aria: "كمية" })),
+        pairs: pairs
+    };
+}
+
+function ajBuildTrace(n) {
+    return {
+        text: ajNum(n),
+        stages: [
+            { guide: "dotted", threshold: 0.5, label: "تتبّع النقاط" },
+            { guide: "faint", threshold: 0.42, label: "تتبّع النقاط الخفيفة" },
+            { guide: "none", threshold: 0.28, label: "اكتبه وحدك" }
+        ]
+    };
+}
+
+function ajBuildCountWrite(n) {
+    return { objects: { type: "apples", count: n }, answer: n };
+}
+
+/* ---------- ١١–٢٠ ---------- */
+
+function ajBuildFrameColor(n) {
+    return { text: ajNum(n), objects: { type: "frames", count: n }, goal: 0.72 };
+}
+
+function ajBuildBalloonsFind(n) {
+    return {
+        variant: "balloons", cols: 4, mark: "color",
+        cells: ajFindCells(n, 12, ajRand(5, 7), 11, 20),
+        word: ajNum(n)
+    };
+}
+
+function ajBuildNumberLine(n) {
+    return {
+        mark: "circle",
+        groups: [{
+            stimulus: { type: "bigNumeral", value: n },
+            options: ajRange(10, 20).map(v => Object.assign(ajNumeralOption(v, v === n), { tick: true })),
+            layout: "line",
+            cls: "aj-opts-line"
+        }]
+    };
+}
+
+function ajBuildTenHowManyCircle(n) {
+    const m1 = n - 10;
+    let m2 = ajRand(1, 9);
+    if (m2 === m1) m2 = (m2 % 9) + 1;
+
+    const groupFor = m => ({
+        stimulus: { type: "tenPlus", extra: m },
+        options: ajThreeNumerals(10 + m, 11, 20),
+        layout: "row",
+        cls: "aj-opts-round"
+    });
+
+    return { mark: "circle", groups: [groupFor(m1), groupFor(m2)] };
+}
+
+function ajBuildConnectPictures(n) {
+    const values = [n].concat(ajOthers(n, 11, 20, 2));
+    const left = shuffle(values);
+    const right = ajDifferentOrder(left);
+    const pairs = {};
+    values.forEach(v => { pairs["a" + v] = "b" + v; });
+    return {
+        layout: "two",
+        a: left.map(v => ({ id: "a" + v, value: v, frame: v - 10, aria: "صورة عدد" })),
+        b: right.map(v => ({ id: "b" + v, value: v, numeral: ajNum(v), speak: numberWords[v] })),
+        pairs: pairs
+    };
+}
+
+function ajBuildConnectBaseTen(n) {
+    const values = [n].concat(ajOthers(n, 10, 20, 2));
+    const left = shuffle(values);
+    const right = ajDifferentOrder(left);
+    const pairs = {};
+    values.forEach(v => { pairs["a" + v] = "b" + v; });
+    return {
+        layout: "two",
+        a: left.map(v => ({ id: "a" + v, value: v, base10: v, aria: "مكعبات عدد" })),
+        b: right.map(v => ({ id: "b" + v, value: v, numeral: ajNum(v), speak: numberWords[v] })),
+        pairs: pairs
+    };
+}
+
+function ajBuildColorReveal(n) {
+    const pattern = AJ_REVEAL_PATTERNS[(((n - 11) / 2) | 0) % AJ_REVEAL_PATTERNS.length];
+    const others = ajRange(11, 20).filter(v => v !== n);
+    const cells = [];
+
+    pattern.rows.forEach(row => {
+        row.split("").forEach(ch => {
+            if (ch === ".") {
+                cells.push({ text: ajNum(others[ajRand(0, others.length - 1)]), target: false });
+            } else {
+                cells.push({ text: ajNum(n), target: true, pic: AJ_REVEAL_COLORS[ch] || "#58a6e0" });
+            }
+        });
+    });
+
+    return { variant: "reveal", cols: 9, mark: "color", cells: cells, revealName: pattern.name, word: ajNum(n) };
+}
+
+function ajBuildFrameBuilder(n) {
+    const need = n - 10;
+    const pre = need >= 2 ? ajRand(0, need - 1) : 0;
+    return { target: n, rows: [{ pre: pre }, { pre: 0 }] };
+}
+
+function ajBuildCountCircle(n) {
+    const kinds = { 12: "fish", 14: "balloons", 16: "apples", 18: "fish", 20: "balloons" };
+    return {
+        mark: "circle",
+        groups: [{
+            stimulus: { type: "countable", kind: kinds[n] || "apples", count: n },
+            options: ajThreeNumerals(n, 11, 20),
+            layout: "row",
+            cls: "aj-opts-round"
+        }]
+    };
+}
+
+function ajBlank(answer) { return { type: "blank", answer: answer }; }
+function ajFixed(text, hl) { return { type: "fixed", text: text, hl: !!hl }; }
+
+function ajBuildBeforeAfter(n) {
+    let m = ajRand(12, 19);
+    if (m === n) m = (m === 19 ? 12 : m + 1);
+
+    const rowFor = v => ({
+        tokens: [ajBlank(v - 1), ajFixed(ajNum(v), true), ajBlank(v + 1)]   /* RTL: الأيمن = «قبله» (الأصغر) */
+    });
+
+    return { rows: [rowFor(n), rowFor(m)], label: "قبل — الرقم — بعد" };
+}
+
+function ajSeqRow(centerValue, blankValue) {
+    let s = ajRand(Math.max(10, centerValue - 3), Math.min(16, centerValue - 1));
+    if (s > centerValue || s + 4 < centerValue) s = Math.min(16, Math.max(10, centerValue - 2));
+    const tokens = [];
+    /* تصاعدي: العنصر الأول (الأيمن في RTL) هو الأصغر — كما في الكتابين */
+    for (let v = s; v <= s + 4; v++) {
+        tokens.push(v === blankValue ? ajBlank(v) : ajFixed(ajNum(v), false));
+    }
+    return { tokens: tokens };
+}
+
+function ajBuildMissingNumber(n) {
+    const row1 = ajSeqRow(n, n);
+    let other = ajRand(11, 19);
+    if (other === n) other = (other === 19 ? 12 : other + 1);
+    const row2 = ajSeqRow(other, other + (Math.random() < 0.5 ? 0 : (other < 19 ? 1 : 0)));
+    return { rows: [row1, row2], label: "اكتب العدد الناقص" };
+}
+
+function ajBuildTenHowManyWrite(n) {
+    let m2 = ajRand(1, 9);
+    if (m2 === n - 10) m2 = (m2 % 9) + 1;
+
+    const rowFor = m => ({
+        ltr: true,
+        tokens: [
+            ajBlank(m),
+            { type: "sym", text: "+" },
+            ajFixed(ajNum(10), false),
+            { type: "sym", text: "=" },
+            ajFixed(ajNum(10 + m), true),
+            { type: "pic", extra: m }
+        ]
+    });
+
+    return { rows: [rowFor(n - 10), rowFor(m2)], label: "عشرة وكم؟" };
+}
+
+function ajBuildCompare(n, bigger) {
+
+    const pairA = shuffle([n, ajOthers(n, 11, 20, 1)[0]]);
+    let pairB = shuffle(ajRange(11, 20)).slice(0, 2);
+    if (pairB.indexOf(n) !== -1 && pairA.indexOf(n) !== -1 && pairB.every(v => pairA.indexOf(v) !== -1)) {
+        pairB = shuffle(ajRange(11, 20).filter(v => v !== n)).slice(0, 2);
+    }
+
+    const groupFor = pair => {
+        const target = bigger ? Math.max(pair[0], pair[1]) : Math.min(pair[0], pair[1]);
+        return {
+            options: pair.map(v => ajNumeralOption(v, v === target)),
+            layout: "cards",
+            cls: "aj-opts-cards"
+        };
+    };
+
+    return { mark: "circle", groups: [groupFor(pairA), groupFor(pairB)] };
+}
+
+function ajBuildCircleBigger(n) { return ajBuildCompare(n, true); }
+function ajBuildCircleSmaller(n) { return ajBuildCompare(n, false); }
+
+function ajBuildMaze(n) {
+
+    const rows = 5, cols = 6;
+    let r = 0, c = cols - 1;
+    const path = [[r, c]];
+
+    while (r < rows - 1 || c > 0) {
+        const canDown = r < rows - 1;
+        const canLeft = c > 0;
+        let down;
+        if (canDown && canLeft) down = Math.random() < 0.5;
+        else down = canDown;
+        if (down) r++; else c--;
+        path.push([r, c]);
+    }
+
+    const pool = ajOthers(n, 10, 20, 6);
+    const onPath = {};
+    path.forEach(p => { onPath[p[0] + "," + p[1]] = true; });
+
+    const cells = [];
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            const isPath = !!onPath[i + "," + j];
+            cells.push({
+                r: i, c: j, path: isPath,
+                value: isPath ? n : pool[ajRand(0, pool.length - 1)]
+            });
+        }
+    }
+
+    return { rows: rows, cols: cols, path: path, cells: cells, target: n };
+}
+
+function ajRepresentation(type, value) {
+    return { type: type, value: value };
+}
+
+function ajBuildCrossOutCard(n) {
+
+    const deltas = [-2, -1, 1, 2].filter(d => n + d >= 11 && n + d <= 20);
+    const wrongValue = n + deltas[ajRand(0, deltas.length - 1)];
+    const wrongType = ["frame", "base10", "numeral"][ajRand(0, 2)];
+
+    const cards = [
+        ajRepresentation("numeral", n),
+        ajRepresentation("frame", n),
+        ajRepresentation("base10", n),
+        ajRepresentation(wrongType, wrongValue)
+    ];
+
+    const options = shuffle(cards.map((c, i) => ({
+        rep: c,
+        correct: i === 3,
+        aria: "بطاقة"
+    })));
+
+    return {
+        mark: "cross",
+        groups: [{ options: options, layout: "cards", cls: "aj-opts-cards aj-opts-rep" }]
+    };
+}
+
+function ajBuildBaseTenCircle(n) {
+    const values = shuffle([n].concat(ajOthers(n, 10, 20, 2)));
+    return {
+        mark: "circle",
+        groups: [{
+            stimulus: { type: "bigNumeral", value: n },
+            options: values.map(v => ({ rep: ajRepresentation("base10", v), correct: v === n, aria: "مكعبات" })),
+            layout: "cards",
+            cls: "aj-opts-cards aj-opts-rep"
+        }]
+    };
+}
+
+function ajBuildOrderNumbers(n) {
+
+    const set1 = shuffle([n].concat(ajOthers(n, 11, 20, 3)));
+    const pool2 = ajRange(11, 20);
+    const set2 = shuffle(pool2).slice(0, 4);
+
+    const group = values => ({
+        tiles: values.slice(),
+        slots: values.slice().sort((a, b) => a - b).map(v => ({ expected: v }))
+    });
+
+    return { layout: "order", groups: [group(set1), group(set2)] };
+}
+
+function ajBuildTrainMissing(n) {
+
+    const all = ajRange(11, 20);
+    const blanks = [n].concat(shuffle(all.filter(v => v !== n)).slice(0, 3));
+
+    const slots = all.map(v => (
+        blanks.indexOf(v) !== -1
+            ? { expected: v }
+            : { fixed: ajNum(v) }
+    ));
+
+    return { layout: "train", groups: [{ tiles: shuffle(blanks), slots: slots }] };
+}
+
+function ajBuildDotToDot(n) {
+
+    const heart = (n === 14);
+
+    /* منحنى كثيف ثم نقاط متساوية البعد على طول المحيط (لا بحسب الزاوية)،
+       حتى لا تتكدّس النقاط قرب حزّ القلب فتتداخل مناطق اللمس */
+
+    const dense = [];
+    const STEPS = 1440;
+
+    for (let i = 0; i <= STEPS; i++) {
+        const t = (i / STEPS) * Math.PI * 2;
+        if (heart) {
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+            dense.push({ x: 50 + x * 2.4, y: 46 + y * 2.4 });
+        } else {
+            dense.push({ x: 50 + 40 * Math.sin(t), y: 50 - 40 * Math.cos(t) });
+        }
+    }
+
+    const cum = [0];
+    for (let i = 1; i < dense.length; i++) {
+        cum.push(cum[i - 1] + Math.hypot(dense[i].x - dense[i - 1].x, dense[i].y - dense[i - 1].y));
+    }
+
+    const total = cum[cum.length - 1];
+    const pts = [];
+    let j = 0;
+
+    for (let k = 0; k < n; k++) {
+        const target = (k / n) * total;
+        while (j < cum.length - 2 && cum[j + 1] < target) j++;
+        const span = cum[j + 1] - cum[j] || 1;
+        const f = (target - cum[j]) / span;
+        pts.push({
+            x: dense[j].x + (dense[j + 1].x - dense[j].x) * f,
+            y: dense[j].y + (dense[j + 1].y - dense[j].y) * f
+        });
+    }
+
+    return { n: n, shape: heart ? "heart" : "circle", points: pts };
+}
+
+function ajBuildTraceTwo(n) {
+    const spec = ajBuildTrace(n);
+    return spec;
+}
+
+/* =========================================================
+   📚 سجلّ أنواع الأنشطة: العنوان والأيقونة (من الكتابين) ونوع المكوّن
+   ========================================================= */
+
+const AJ_TYPES = {
+    colorNumberObjects: { title: "لوّن الرقم ولوّن التفاحات", icon: "🎨", kind: "paint", build: ajBuildColorNumberObjects },
+    pointNumber:        { title: "أشِر إلى الرقم", icon: "👆", kind: "choice", build: ajBuildPointNumber },
+    circleCorrect:      { title: "ضع دائرة حول الرقم الصحيح", icon: "⭕", kind: "choice", build: ajBuildCircleCorrect },
+    findGrid:           { title: "ابحث عن الرقم ولوّنه", icon: "🔍", kind: "find", build: ajBuildFindGrid },
+    connectIdentical:   { title: "صِل الرقم بالرقم المماثل", icon: "🔗", kind: "connect", build: ajBuildConnectIdentical },
+    circleRows:         { title: "ضع دائرة حول الرقم في كل صف", icon: "⭕", kind: "find", build: ajBuildCircleRows },
+    crossGrid:          { title: "اشطب الرقم المطلوب فقط", icon: "❌", kind: "find", build: ajBuildCrossGrid },
+    connectSet:         { title: "صِل الرقم بالمجموعة الصحيحة", icon: "🔗", kind: "connect", build: ajBuildConnectSet },
+    connectQuantity:    { title: "صِل الرقم بالكمية المناسبة", icon: "🔗", kind: "connect", build: ajBuildConnectQuantity },
+    trace:              { title: "تتبّع الرقم ثم انسخه", icon: "✏️", kind: "trace", build: ajBuildTrace },
+    countWrite:         { title: "عُدّ التفاحات واكتب الرقم", icon: "🔢", kind: "countWrite", build: ajBuildCountWrite },
+
+    frameColor:         { title: "لوّن الرقم ولوّن الدوائر", icon: "🎨", kind: "paint", build: ajBuildFrameColor },
+    balloonsFind:       { title: "لوّن البالونات التي فيها الرقم", icon: "🎈", kind: "find", build: ajBuildBalloonsFind },
+    numberLine:         { title: "ضع دائرة حول الرقم على خط الأعداد", icon: "📏", kind: "choice", build: ajBuildNumberLine },
+    tenHowManyCircle:   { title: "عشرة وكم؟ ضع دائرة حول العدد", icon: "🔟", kind: "choice", build: ajBuildTenHowManyCircle },
+    connectPictures:    { title: "صِل كل صورة بالعدد المناسب", icon: "🔗", kind: "connect", build: ajBuildConnectPictures },
+    colorReveal:        { title: "لوّن كل خانة فيها الرقم لتظهر الصورة", icon: "🖼️", kind: "find", build: ajBuildColorReveal },
+    frameBuilder:       { title: "ارسم دوائر في الإطار حتى يصبح العدد مثل الرقم", icon: "⚫", kind: "frames", build: ajBuildFrameBuilder },
+    countCircle:        { title: "عُدّ وضع دائرة حول العدد الصحيح", icon: "🔢", kind: "choice", build: ajBuildCountCircle },
+    beforeAfter:        { title: "اكتب العدد الذي قبله والعدد الذي بعده", icon: "✏️", kind: "fillSeq", build: ajBuildBeforeAfter },
+    circleBigger:       { title: "ضع دائرة حول العدد الأكبر", icon: "⭕", kind: "choice", build: ajBuildCircleBigger },
+    circleSmaller:      { title: "ضع دائرة حول العدد الأصغر", icon: "⭕", kind: "choice", build: ajBuildCircleSmaller },
+    maze:               { title: "امشِ على الرقم فقط حتى تصل إلى البيت", icon: "🏠", kind: "maze", build: ajBuildMaze },
+    crossOutCard:       { title: "اشطب البطاقة التي لا تساوي الرقم", icon: "❌", kind: "choice", build: ajBuildCrossOutCard },
+    baseTenCircle:      { title: "ضع دائرة حول الصورة التي تساوي الرقم", icon: "🧱", kind: "choice", build: ajBuildBaseTenCircle },
+    missingNumber:      { title: "اكتب العدد الناقص", icon: "✏️", kind: "fillSeq", build: ajBuildMissingNumber },
+    orderNumbers:       { title: "رتّب الأعداد من الأصغر إلى الأكبر", icon: "📶", kind: "dnd", build: ajBuildOrderNumbers },
+    tenHowManyWrite:    { title: "عشرة وكم؟ اكتب العدد في المربع", icon: "🔟", kind: "fillSeq", build: ajBuildTenHowManyWrite },
+    dotToDot:           { title: "صِل النقاط بالترتيب من الواحد", icon: "✨", kind: "dots", build: ajBuildDotToDot },
+    trainMissing:       { title: "اكتب الأعداد الناقصة في القطار", icon: "🚂", kind: "dnd", build: ajBuildTrainMissing },
+    connectBaseTen:     { title: "صِل كل صورة بالعدد المناسب", icon: "🔗", kind: "connect", build: ajBuildConnectBaseTen },
+    traceTwo:           { title: "تتبّع الرقم ثم اكتبه وحدك", icon: "✏️", kind: "trace", build: ajBuildTraceTwo }
+};
+
+/* =========================================================
+   🎛️ مشغّل الأنشطة — الخريطة، التنقل، التقدّم، النجوم
+   ========================================================= */
+
+/* نقرة لوحة المفاتيح: detail = 0 (أما اللمس/الفأرة ففيها detail ≥ 1
+   وتُعالَج عبر أحداث المؤشر في المكوّنات التي تدعم السحب) */
+
+function ajIsKeyboardClick(event) {
+    return event.detail === 0;
+}
+
+function ajCurrent() {
+    return ajGame.current;
+}
+
+function ajMakeApi(session) {
+
+    const alive = () => (
+        ajGame.active &&
+        ajGame.session === session &&
+        ajGame.current &&
+        ajGame.current.session === session
+    );
+
+    return {
+        session: session,
+        alive: alive,
+
+        say(text) {
+            if (!alive()) return;
+            const el = $("ajMessage");
+            if (el) el.textContent = text;
+        },
+
+        solved() {
+            if (!alive()) return;
+            ajActivitySolved();
+        },
+
+        speakNumber(n) {
+            if (alive()) ajSpeakNumber(n);
+        },
+
+        speakText(text) {
+            if (alive()) speakAJLocal(text);
+        },
+
+        /* مؤقّت آمن: لا ينفَّذ إن غادر الطفل النشاط */
+        later(fn, ms) {
+            setTimeout(() => {
+                if (alive()) fn();
+            }, ms);
+        }
+    };
+}
+
+function ajTeardownCurrent() {
+
+    ajStopAudio();
+
+    const cur = ajGame.current;
+
+    if (cur && typeof cur.cleanup === "function") {
+        try { cur.cleanup(); } catch (e) { /* تنظيف آمن */ }
+    }
+
+    ajGame.current = null;
+
+    const stage = $("ajStage");
+    if (stage) stage.innerHTML = "";
+}
+
+function ajUpdateStars() {
+    ["ajStars", "ajHomeStars"].forEach(id => {
+        const el = $(id);
+        if (el && typeof stars !== "undefined") el.textContent = arabicNumber(stars);
+    });
+}
+
+/* =========================================================
+   🏠 الصفحة الرئيسية — غلاف الكتاب + خريطة الأرقام
+   ========================================================= */
+
+function openAJHome(book) {
+
+    ajReloadProgressFromStorage();
+
+    if (book === 1 || book === 2) ajGame.book = book;
+
+    showScreen("ajHome");
+    renderAJHome();
+}
+
+function exitAJ() {
+
+    ajTeardownCurrent();
+    ajGame.active = false;
+    ajGame.session++;
+
+    showScreen("numbers");
+}
+
+function ajSelectBook(book) {
+    ajGame.book = book;
+    renderAJHome();
+}
+
+function renderAJHome() {
+
+    ajUpdateStars();
+
+    [1, 2].forEach(b => {
+        const tab = $("ajBook" + b);
+        if (!tab) return;
+        const on = ajGame.book === b;
+        tab.setAttribute("aria-selected", on ? "true" : "false");
+        tab.classList.toggle("aj-tab-on", on);
+    });
+
+    const from = ajGame.book === 1 ? 1 : 11;
+    const to = from + 9;
+
+    const map = $("ajMap");
+    if (!map) return;
+
+    map.innerHTML = "";
+
+    let doneCount = 0;
+    let totalCount = 0;
+    let currentMarked = false;
+
+    for (let n = from; n <= to; n++) {
+
+        const counts = ajNumberCounts(n);
+        const unlocked = ajNumberUnlocked(n);
+        const complete = ajNumberComplete(n);
+
+        doneCount += counts.done + counts.skipped;
+        totalCount += counts.total;
+
+        const btn = ajEl("button", "aj-num-btn" +
+            (complete ? " aj-complete" : "") +
+            (!unlocked ? " aj-locked" : ""));
+
+        btn.type = "button";
+
+        if (unlocked && !complete && !currentMarked) {
+            btn.classList.add("aj-current");
+            currentMarked = true;
+        }
+
+        btn.style.setProperty("--aj-pastel", AJ_PASTELS[(n - from) % AJ_PASTELS.length]);
+        btn.setAttribute("role", "listitem");
+        btn.dataset.number = String(n);
+
+        const numWord = (typeof numberWords !== "undefined" && numberWords[n]) || ajNum(n);
+
+        btn.setAttribute("aria-label",
+            "الرقم " + numWord + "، " +
+            (unlocked
+                ? (complete ? "مكتمل" : "أنجزت " + ajNum(counts.done + counts.skipped) + " من " + ajNum(counts.total) + " أنشطة")
+                : "مقفل، أكمل الرقم السابق أولًا"));
+
+        if (!unlocked) btn.setAttribute("aria-disabled", "true");
+
+        const num = ajEl("span", "aj-num-glyph", ajNum(n));
+        btn.appendChild(num);
+
+        const meta = ajEl("span", "aj-num-meta");
+        if (!unlocked) meta.textContent = "🔒";
+        else if (complete) meta.textContent = "✓";
+        else meta.textContent = ajNum(counts.done + counts.skipped) + "/" + ajNum(counts.total);
+        btn.appendChild(meta);
+
+        const mini = ajEl("span", "aj-num-bar");
+        const fill = ajEl("span", "aj-num-bar-fill");
+        fill.style.width = Math.round(((counts.done + counts.skipped) / counts.total) * 100) + "%";
+        mini.appendChild(fill);
+        btn.appendChild(mini);
+
+        btn.addEventListener("click", () => startAJNumber(n));
+
+        map.appendChild(btn);
+    }
+
+    const pct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+    const fillEl = $("ajOverallFill");
+    const track = $("ajOverallTrack");
+    const text = $("ajOverallText");
+
+    if (fillEl) fillEl.style.width = pct + "%";
+    if (track) track.setAttribute("aria-valuenow", String(pct));
+    if (text) text.textContent = "أنجزتَ " + ajNum(doneCount) + " من " + ajNum(totalCount) + " نشاطًا في هذا الكتاب";
+
+    const hint = $("ajHomeHint");
+    if (hint) hint.textContent = "";
+}
+
+/* =========================================================
+   ▶️ بدء رقم — يُستأنف من أول نشاط لم يُنجَز
+   ========================================================= */
+
+function startAJNumber(n) {
+
+    if (!ajNumberUnlocked(n)) {
+        const hint = $("ajHomeHint");
+        if (hint) {
+            hint.textContent = "🔒 أكمل الرقم " + ajNum(n - 1) + " أولًا لتفتح هذا الرقم";
+        }
+        return;
+    }
+
+    ajTeardownCurrent();
+
+    ajGame.number = n;
+    ajGame.book = n <= 10 ? 1 : 2;
+    ajGame.plan = ajBuildPlan(n);
+    ajGame.actIndex = ajFirstOpenIndex(n);
+    ajGame.active = true;
+    ajGame.session++;
+
+    showScreen("ajPlay");
+
+    ajSetDialogInert(false);
+
+    const dialog = $("ajDone");
+    if (dialog) dialog.style.display = "none";
+
+    renderAJActivity();
+}
+
+function ajBackToMap() {
+
+    ajTeardownCurrent();
+    ajGame.active = false;
+    ajGame.session++;
+
+    ajSetDialogInert(false);
+
+    const dialog = $("ajDone");
+    if (dialog) dialog.style.display = "none";
+
+    showScreen("ajHome");
+    renderAJHome();
+}
+
+/* =========================================================
+   🧩 عرض نشاط
+   ========================================================= */
+
+function ajUpdatePlayHeader() {
+
+    const n = ajGame.number;
+    const total = ajGame.plan.flat.length;
+    const idx = ajGame.actIndex;
+    const act = ajGame.plan.flat[idx];
+
+    const circle = $("ajNumCircle");
+    if (circle) circle.textContent = ajNum(n);
+
+    const dots = $("ajPageDots");
+    if (dots) {
+        Array.from(dots.children).forEach((d, i) => {
+            d.classList.toggle("aj-dot-on", i === act.page);
+            d.classList.toggle("aj-dot-done", i < act.page);
+        });
+    }
+
+    const fill = $("ajProgressFill");
+    const track = $("ajProgressTrack");
+    const doneCount = ajNumberCounts(n);
+    const pct = Math.round(((doneCount.done + doneCount.skipped) / total) * 100);
+
+    if (fill) fill.style.width = pct + "%";
+    if (track) track.setAttribute("aria-valuenow", String(pct));
+
+    const text = $("ajProgressText");
+    if (text) {
+        text.textContent = "الصفحة " + ajNum(act.page + 1) + " — النشاط " + ajNum(idx + 1) + " من " + ajNum(total);
+    }
+
+    ajUpdateStars();
+}
+
+function renderAJActivity() {
+
+    ajTeardownCurrent();
+
+    const n = ajGame.number;
+    const idx = ajGame.actIndex;
+    const act = ajGame.plan.flat[idx];
+    const def = AJ_TYPES[act.type];
+
+    ajGame.wrongRun = 0;
+
+    const session = ajGame.session;
+    const spec = def.build(n);
+
+    ajGame.current = {
+        session: session,
+        type: act.type,
+        kind: def.kind,
+        spec: spec,
+        solved: false,
+        cleanup: null,
+        assist: null
+    };
+
+    const title = $("ajActTitle");
+    const icon = $("ajActIcon");
+    if (title) title.textContent = def.title;
+    if (icon) icon.textContent = def.icon;
+
+    const stage = $("ajStage");
+    stage.innerHTML = "";
+    stage.className = "aj-stage aj-stage-" + def.kind;
+
+    const msg = $("ajMessage");
+    if (msg) msg.textContent = "";
+
+    const next = $("ajBtnNext");
+    if (next) {
+        next.disabled = true;
+        next.setAttribute("aria-disabled", "true");
+    }
+
+    ajUpdatePlayHeader();
+
+    const api = ajMakeApi(session);
+    const renderer = AJ_RENDERERS[def.kind];
+
+    const result = renderer(stage, spec, api);
+
+    if (result && typeof result === "object") {
+        ajGame.current.cleanup = result.cleanup || null;
+        ajGame.current.assist = result.assist || null;
+    } else if (typeof result === "function") {
+        ajGame.current.cleanup = result;
+    }
+
+    const assistBtn = $("ajBtnAssist");
+    if (assistBtn) assistBtn.hidden = !ajGame.current.assist;
+
+    /* إن كان النشاط مُنجَزًا سابقًا فيبقى قابلًا للّعب من جديد دون نجمة */
+    window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+/* =========================================================
+   ✅ نشاط مُنجَز — نجمة أولى مرة فقط، فتح «التالي» (بلا انتقال تلقائي)
+   ========================================================= */
+
+function ajActivitySolved() {
+
+    const cur = ajGame.current;
+    if (!cur || cur.solved) return;
+
+    cur.solved = true;
+
+    const n = ajGame.number;
+    const idx = ajGame.actIndex;
+
+    const firstTime = !ajIsDone(n, idx);
+
+    if (firstTime && typeof addStars === "function") addStars(1);
+
+    ajMarkDone(n, idx);
+
+    const stage = $("ajStage");
+    if (stage) stage.classList.add("aj-solved");
+
+    const msg = $("ajMessage");
+    if (msg && !/🎉|🌟|✓/.test(msg.textContent)) {
+        msg.textContent = firstTime ? "🎉 أحسنت! نشاط مكتمل ⭐" : "🎉 أحسنت!";
+    }
+
+    const next = $("ajBtnNext");
+    if (next) {
+        next.disabled = false;
+        next.removeAttribute("aria-disabled");
+        next.textContent = (idx >= ajGame.plan.flat.length - 1) ? "🌟 إنهاء الرقم" : "التالي ▶";
+    }
+
+    ajUpdatePlayHeader();
+}
+
+function ajNextActivity() {
+
+    const cur = ajGame.current;
+
+    if (!cur || !cur.solved) return;
+
+    ajAdvance();
+}
+
+function ajSkipActivity() {
+
+    if (!ajGame.current) return;
+
+    if (!ajGame.current.solved) {
+        ajMarkSkipped(ajGame.number, ajGame.actIndex);
+    }
+
+    ajAdvance();
+}
+
+function ajAdvance() {
+
+    if (ajGame.actIndex >= ajGame.plan.flat.length - 1) {
+        ajFinishNumber();
+        return;
+    }
+
+    ajGame.actIndex++;
+    renderAJActivity();
+}
+
+function ajAgainActivity() {
+    if (!ajGame.active) return;
+    renderAJActivity();
+}
+
+function ajListenActivity() {
+    if (!ajGame.active) return;
+    ajSpeakNumber(ajGame.number);
+}
+
+function ajAssistActivity() {
+    const cur = ajGame.current;
+    if (cur && typeof cur.assist === "function") cur.assist();
+}
+
+/* =========================================================
+   🌟 إتمام رقم — شاشة نجاح أنيقة + فتح الرقم التالي
+   ========================================================= */
+
+function ajTrapDialogFocus(event) {
+
+    if (event.key !== "Tab") return;
+
+    const focusables = [$("ajDoneNext"), $("ajDoneMap")].filter(b => b && !b.hidden);
+
+    if (!focusables.length) return;
+
+    event.preventDefault();
+
+    const index = focusables.indexOf(document.activeElement);
+    let target;
+
+    if (event.shiftKey) {
+        target = index <= 0 ? focusables[focusables.length - 1] : focusables[index - 1];
+    } else {
+        target = (index === -1 || index === focusables.length - 1) ? focusables[0] : focusables[index + 1];
+    }
+
+    target.focus();
+}
+
+function ajSetDialogInert(flag) {
+
+    const wrap = document.querySelector("#ajPlay .aj-wrap");
+    if (!wrap) return;
+
+    Array.from(wrap.children).forEach(child => {
+        if (child.id === "ajDone") return;
+        child.inert = !!flag;
+    });
+}
+
+function ajFinishNumber() {
+
+    const n = ajGame.number;
+    const p = ajLoadProgress();
+
+    ajTeardownCurrent();
+
+    /* هدية الإتمام لمن أنجز كل الأنشطة فعلًا؛ التخطّي يفتح الرقم التالي فقط */
+    const counts = ajNumberCounts(n);
+    const firstCompletion = !p.bonus[n] && counts.skipped === 0;
+
+    if (firstCompletion) {
+        p.bonus[n] = 1;
+        ajSaveProgress();
+        if (typeof addStars === "function") addStars(3);
+    }
+
+    ajUpdateStars();
+
+    const hasNext = n < 20;
+    const nextUnlocked = hasNext && ajNumberUnlocked(n + 1);
+
+    const word = (typeof numberWords !== "undefined" && numberWords[n]) || ajNum(n);
+
+    const title = $("ajDoneTitle");
+    const body = $("ajDoneBody");
+    const big = $("ajDoneNumber");
+    const nextBtn = $("ajDoneNext");
+    const mapBtn = $("ajDoneMap");
+
+    if (title) title.textContent = n === 20 ? "🎉 أتممتَ كل الأرقام!" : "🌟 أحسنت! أتممتَ الرقم";
+    if (big) big.textContent = ajNum(n);
+
+    if (body) {
+        body.textContent = (firstCompletion ? "حصلت على ٣ نجوم هدية ⭐ — " : "") +
+            "الرقم " + word +
+            (nextUnlocked ? " — الرقم التالي بانتظارك" : "");
+    }
+
+    if (nextBtn) {
+        nextBtn.hidden = !nextUnlocked;
+        nextBtn.textContent = "▶ الرقم " + ajNum(n + 1);
+        nextBtn.onclick = () => startAJNumber(n + 1);
+    }
+
+    if (mapBtn) mapBtn.onclick = ajBackToMap;
+
+    ajRenderConfetti();
+
+    ajSetDialogInert(true);
+
+    const dialog = $("ajDone");
+
+    if (dialog) {
+        dialog.addEventListener("keydown", ajTrapDialogFocus);
+        dialog.style.display = "flex";
+    }
+
+    ajSpeakNumber(n);
+
+    setTimeout(() => {
+        const focusTarget = (nextBtn && !nextBtn.hidden) ? nextBtn : mapBtn;
+        if (focusTarget) focusTarget.focus();
+    }, 60);
+}
+
+/* قصاصات احتفال محدودة جدًا (٨ قصاصات فقط، قصيرة) */
+
+function ajRenderConfetti() {
+
+    const el = $("ajConfetti");
+    if (!el) return;
+
+    el.innerHTML = "";
+
+    const colors = ["#58a6e0", "#f6d55c", "#6cc27a", "#ef6c5b"];
+
+    for (let i = 0; i < 8; i++) {
+
+        const piece = ajEl("div", "aj-confetti-piece");
+        piece.style.left = (10 + Math.random() * 80) + "%";
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.25) + "s";
+
+        el.appendChild(piece);
+    }
+
+    setTimeout(() => { if (el) el.innerHTML = ""; }, 1400);
+}
+
+/* =========================================================
+   🔌 سجلّ المكوّنات
+   ========================================================= */
+
+const AJ_RENDERERS = {
+    paint: (stage, spec, api) => ajRenderPaint(stage, spec, api),
+    choice: (stage, spec, api) => ajRenderChoice(stage, spec, api),
+    find: (stage, spec, api) => ajRenderFind(stage, spec, api),
+    connect: (stage, spec, api) => ajRenderConnect(stage, spec, api),
+    trace: (stage, spec, api) => ajRenderTrace(stage, spec, api),
+    countWrite: (stage, spec, api) => ajRenderCountWrite(stage, spec, api),
+    fillSeq: (stage, spec, api) => ajRenderFillSeq(stage, spec, api),
+    dnd: (stage, spec, api) => ajRenderDnd(stage, spec, api),
+    maze: (stage, spec, api) => ajRenderMaze(stage, spec, api),
+    dots: (stage, spec, api) => ajRenderDots(stage, spec, api),
+    frames: (stage, spec, api) => ajRenderFrames(stage, spec, api)
+};
+
+/* ---------- لوحة أرقام عربية هندية كبيرة (للكتابة) ---------- */
+
+const AJ_DIGIT_NAMES = ["صفر", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
+
+function ajKeypad(onDigit, onBack) {
+
+    const pad = ajEl("div", "aj-keypad");
+    pad.setAttribute("role", "group");
+    pad.setAttribute("aria-label", "لوحة الأرقام");
+
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(d => {
+        const b = ajEl("button", "aj-key", ajNum(d));
+        b.type = "button";
+        b.setAttribute("aria-label", AJ_DIGIT_NAMES[d]);
+        b.addEventListener("click", () => onDigit(d));
+        pad.appendChild(b);
+    });
+
+    const back = ajEl("button", "aj-key aj-key-back", "⌫");
+    back.type = "button";
+    back.setAttribute("aria-label", "امسح");
+    back.addEventListener("click", onBack);
+    pad.appendChild(back);
+
+    return pad;
+}
+
+/* ---------- أشياء قابلة للعدّ: كل لمسة ترقّم الشيء وتنطق رقمه ---------- */
+
+function ajCountableObjects(kind, count, api, onChange) {
+
+    const info = AJ_OBJECTS[kind];
+    const wrap = ajEl("div", "aj-objects aj-countable aj-solid");
+    wrap.setAttribute("role", "group");
+    wrap.setAttribute("aria-label", "اضغط كل " + info.label + " لتعدّها");
+
+    let counted = 0;
+
+    for (let i = 0; i < count; i++) {
+
+        const btn = ajEl("button", "aj-object aj-object-" + info.svg);
+        btn.type = "button";
+        btn.innerHTML = ajShapeSVG(info.svg);
+        btn.setAttribute("aria-label", info.label + " " + ajNum(i + 1) + "، اضغط لتعدّها");
+
+        const badge = ajEl("span", "aj-count-badge");
+        badge.setAttribute("aria-hidden", "true");
+        btn.appendChild(badge);
+
+        btn.addEventListener("click", () => {
+
+            if (btn.classList.contains("aj-counted")) return;
+
+            counted++;
+            btn.classList.add("aj-counted");
+            btn.setAttribute("aria-pressed", "true");
+            badge.textContent = ajNum(counted);
+
+            api.speakNumber(counted);
+
+            if (onChange) onChange(counted);
+        });
+
+        wrap.appendChild(btn);
+    }
+
+    return wrap;
+}
+
+/* =========================================================
+   🖌️ أدوات اللوحة (Canvas) المشتركة للتلوين والتتبّع
+   ========================================================= */
+
+function ajGlyphFont(size) {
+    return "900 " + size + "px Tahoma, \"Noto Naskh Arabic\", Arial, sans-serif";
+}
+
+/* تخطيط الرقم داخل اللوحة: حجم خط يناسب العرض والارتفاع، ومركز رأسي دقيق */
+function ajGlyphLayout(ctx, text, W, H) {
+
+    let size = 380;
+
+    ctx.font = ajGlyphFont(size);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+
+    let m = ctx.measureText(text);
+
+    const maxW = W * 0.9;
+    const maxH = H * 0.84;
+
+    if (m.width > maxW) {
+        size = size * maxW / m.width;
+        ctx.font = ajGlyphFont(size);
+        m = ctx.measureText(text);
+    }
+
+    let asc = m.actualBoundingBoxAscent || size * 0.75;
+    let desc = m.actualBoundingBoxDescent || 0;
+
+    if (asc + desc > maxH) {
+        size = size * maxH / (asc + desc);
+        ctx.font = ajGlyphFont(size);
+        m = ctx.measureText(text);
+        asc = m.actualBoundingBoxAscent || size * 0.75;
+        desc = m.actualBoundingBoxDescent || 0;
+    }
+
+    return { font: ajGlyphFont(size), x: W / 2, y: (H + asc - desc) / 2 };
+}
+
+function ajApplyLayout(ctx, layout) {
+    ctx.font = layout.font;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+}
+
+function ajMakeCanvas(W, H, cls) {
+    const cv = document.createElement("canvas");
+    cv.width = W;
+    cv.height = H;
+    cv.className = cls;
+    return cv;
+}
+
+function ajMaskFromCtx(ctx, W, H, alphaMin) {
+
+    const d = ctx.getImageData(0, 0, W, H).data;
+    const list = [];
+
+    for (let i = 3; i < d.length; i += 4) {
+        if (d[i] >= alphaMin) list.push((i - 3) / 4);
+    }
+
+    return Uint32Array.from(list);
+}
+
+function ajCanvasPoint(canvas, event) {
+
+    const r = canvas.getBoundingClientRect();
+
+    return {
+        x: (event.clientX - r.left) * canvas.width / r.width,
+        y: (event.clientY - r.top) * canvas.height / r.height
+    };
+}
+
+/* ربط أحداث الرسم بالأصبع/الفأرة بعنصر ما */
+
+function ajBindDrawing(wrap, canvas, onSegment, onDab, onEnd) {
+
+    let drawing = false;
+    let last = null;
+
+    wrap.addEventListener("pointerdown", e => {
+        e.preventDefault();
+        drawing = true;
+        last = ajCanvasPoint(canvas, e);
+        onDab(last);
+        try { wrap.setPointerCapture(e.pointerId); } catch (err) { /* بعض المتصفحات */ }
+    });
+
+    wrap.addEventListener("pointermove", e => {
+        if (!drawing) return;
+        const p = ajCanvasPoint(canvas, e);
+        onSegment(last, p);
+        last = p;
+    });
+
+    const finish = () => {
+        if (!drawing) return;
+        drawing = false;
+        last = null;
+        onEnd();
+    };
+
+    wrap.addEventListener("pointerup", finish);
+    wrap.addEventListener("pointercancel", finish);
+    wrap.addEventListener("lostpointercapture", finish);
+}
+
+/* =========================================================
+   🎨 التلوين التفاعلي: لوّن الرقم + لوّن التفاحات / الدوائر
+   (اللون لا يخرج من حدود الرقم لأن الرسم بوضع source-atop)
+   ========================================================= */
+
+function ajRenderPaint(stage, spec, api) {
+
+    const root = ajEl("div", "aj-paint");
+    stage.appendChild(root);
+
+    const two = spec.text.length > 1;
+    const W = two ? 640 : 420;
+    const H = 420;
+    const BRUSH = 40;
+
+    let color = AJ_COLORS[0].hex;
+
+    /* لوحة الألوان */
+
+    const palette = ajEl("div", "aj-palette");
+    palette.setAttribute("role", "group");
+    palette.setAttribute("aria-label", "اختر اللون");
+
+    AJ_COLORS.forEach((c, i) => {
+        const b = ajEl("button", "aj-swatch");
+        b.type = "button";
+        b.style.background = c.hex;
+        b.setAttribute("aria-label", "اللون " + c.name);
+        b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+        b.addEventListener("click", () => {
+            color = c.hex;
+            Array.from(palette.children).forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+        });
+        palette.appendChild(b);
+    });
+
+    root.appendChild(palette);
+
+    /* لوحة الرقم */
+
+    const wrap = ajEl("div", "aj-canvas-wrap" + (two ? " aj-canvas-wide" : ""));
+    wrap.setAttribute("role", "img");
+    wrap.setAttribute("aria-label", "الرقم " + spec.text + " بحجم كبير للتلوين");
+
+    const paintCv = ajMakeCanvas(W, H, "aj-cv aj-cv-paint");
+    const outlineCv = ajMakeCanvas(W, H, "aj-cv aj-cv-outline");
+
+    wrap.appendChild(paintCv);
+    wrap.appendChild(outlineCv);
+    root.appendChild(wrap);
+
+    const ctx = paintCv.getContext("2d", { willReadFrequently: true });
+    const layout = ajGlyphLayout(ctx, spec.text, W, H);
+
+    ajApplyLayout(ctx, layout);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(spec.text, layout.x, layout.y);
+
+    const mask = ajMaskFromCtx(ctx, W, H, 200);
+
+    const octx = outlineCv.getContext("2d");
+    ajApplyLayout(octx, layout);
+    octx.lineWidth = 7;
+    octx.lineJoin = "round";
+    octx.strokeStyle = "#1f3b63";
+    octx.strokeText(spec.text, layout.x, layout.y);
+
+    function painted() {
+        const d = ctx.getImageData(0, 0, W, H).data;
+        let count = 0;
+        for (let k = 0; k < mask.length; k++) {
+            const i = mask[k] * 4;
+            if (d[i] < 248 || d[i + 1] < 248 || d[i + 2] < 248) count++;
+        }
+        return mask.length ? count / mask.length : 0;
+    }
+
+    function paintSegment(a, b) {
+        ctx.save();
+        ctx.globalCompositeOperation = "source-atop";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = BRUSH;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    /* الأشياء المطلوب تلوينها */
+
+    const objWrap = ajEl("div", "aj-paint-objects");
+    objWrap.setAttribute("role", "group");
+
+    const objButtons = [];
+
+    function makeObjButton(extraCls, innerHTML, label) {
+        const b = ajEl("button", "aj-obj-btn " + extraCls);
+        b.type = "button";
+        b.innerHTML = innerHTML;
+        b.setAttribute("aria-label", label);
+        b.setAttribute("aria-pressed", "false");
+        objButtons.push(b);
+        return b;
+    }
+
+    if (spec.objects.type === "apples") {
+
+        objWrap.setAttribute("aria-label", "التفاحات — اضغط لتلوّنها");
+        objWrap.classList.add("aj-objs-apples");
+
+        for (let i = 0; i < spec.objects.count; i++) {
+            objWrap.appendChild(makeObjButton("aj-obj-apple", ajShapeSVG("apple"), "تفاحة " + ajNum(i + 1) + "، اضغط لتلوّنها"));
+        }
+
+    } else {
+
+        objWrap.setAttribute("aria-label", "الدوائر في إطارَي العشرة — اضغط لتلوّنها");
+        objWrap.classList.add("aj-objs-frames");
+
+        const extra = spec.objects.count - 10;
+
+        [10, extra].forEach((count, fi) => {
+
+            const frame = ajEl("div", "aj-frame aj-frame-paint");
+
+            for (let i = 0; i < 10; i++) {
+                const cell = ajEl("span", "aj-frame-cell");
+                if (i < count) {
+                    cell.appendChild(makeObjButton("aj-obj-circle", "", "دائرة " + ajNum((fi === 0 ? 0 : 10) + i + 1) + "، اضغط لتلوّنها"));
+                }
+                frame.appendChild(cell);
+            }
+
+            objWrap.appendChild(frame);
+        });
+    }
+
+    root.appendChild(objWrap);
+
+    const status = ajEl("div", "aj-paint-status");
+    status.setAttribute("aria-live", "off");
+    root.appendChild(status);
+
+    let coloredCount = 0;
+
+    function colorObject(btn) {
+        if (!btn.classList.contains("aj-colored")) {
+            coloredCount++;
+            btn.classList.add("aj-colored");
+            btn.setAttribute("aria-pressed", "true");
+        }
+        btn.style.setProperty("--aj-fill", color);
+    }
+
+    let fraction = 0;
+
+    function update() {
+
+        fraction = painted();
+
+        const pct = Math.min(100, Math.round(fraction * 100));
+
+        status.textContent =
+            "الرقم: " + ajNum(pct) + "٪  •  الملوَّن: " + ajNum(coloredCount) + " من " + ajNum(objButtons.length);
+
+        if (fraction >= spec.goal && coloredCount >= objButtons.length) {
+            api.say("🎉 لوّنتَ الرقم وكل الأشياء!");
+            api.solved();
+        }
+    }
+
+    ajBindDrawing(
+        wrap, paintCv,
+        (a, b) => paintSegment(a, b),
+        p => paintSegment(p, { x: p.x + 0.1, y: p.y + 0.1 }),
+        update
+    );
+
+    /* تلوين الأشياء: لمسة أو سحب الإصبع فوقها (لمن يصعب عليه الضغط المتكرر) */
+
+    let dragging = false;
+
+    objWrap.addEventListener("pointerdown", e => {
+        const b = e.target.closest ? e.target.closest(".aj-obj-btn") : null;
+        if (!b) return;
+        dragging = true;
+        colorObject(b);
+        update();
+    });
+
+    objWrap.addEventListener("pointermove", e => {
+        if (!dragging) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const b = el && el.closest ? el.closest(".aj-obj-btn") : null;
+        if (b && objWrap.contains(b)) colorObject(b);
+    });
+
+    const stopDrag = () => {
+        if (!dragging) return;
+        dragging = false;
+        update();
+    };
+
+    document.addEventListener("pointerup", stopDrag);
+    document.addEventListener("pointercancel", stopDrag);
+
+    /* لوحة المفاتيح: النقرة بلا مؤشر (detail = 0) */
+    objWrap.addEventListener("click", e => {
+        const b = e.target.closest ? e.target.closest(".aj-obj-btn") : null;
+        if (!b || !ajIsKeyboardClick(e)) return;
+        colorObject(b);
+        update();
+    });
+
+    update();
+
+    return {
+        cleanup() {
+            document.removeEventListener("pointerup", stopDrag);
+            document.removeEventListener("pointercancel", stopDrag);
+        },
+
+        /* مساعدة (لمن تعيقه الحركة أو يستخدم لوحة المفاتيح): تلوّن الرقم وكل الأشياء */
+        assist() {
+            ctx.save();
+            ctx.globalCompositeOperation = "source-atop";
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, W, H);
+            ctx.restore();
+            objButtons.forEach(colorObject);
+            update();
+        }
+    };
+}
+
+/* =========================================================
+   ✏️ التتبّع والكتابة: ٣ مراحل كما في الكتاب
+   (نقاط واضحة ← نقاط خفيفة ← اكتبه وحدك)
+   يُقاس امتلاء «شريط» حول مسار الرقم بحبر الطفل؛ بلا عقوبة
+   ========================================================= */
+
+function ajRenderTrace(stage, spec, api) {
+
+    const root = ajEl("div", "aj-trace");
+    stage.appendChild(root);
+
+    const two = spec.text.length > 1;
+    const W = two ? 640 : 420;
+    const H = 420;
+
+    /* نموذج صغير للمرجعية */
+
+    const head = ajEl("div", "aj-trace-head");
+    const model = ajEl("div", "aj-trace-model");
+    model.setAttribute("aria-label", "النموذج: " + spec.text);
+    model.textContent = spec.text;
+    const stageLabel = ajEl("div", "aj-trace-stage");
+    const dotsRow = ajEl("div", "aj-trace-dots");
+    dotsRow.setAttribute("aria-hidden", "true");
+    spec.stages.forEach(() => dotsRow.appendChild(ajEl("span", "aj-trace-dot")));
+    head.appendChild(model);
+    head.appendChild(stageLabel);
+    head.appendChild(dotsRow);
+    root.appendChild(head);
+
+    const wrap = ajEl("div", "aj-canvas-wrap aj-trace-wrap" + (two ? " aj-canvas-wide" : ""));
+    wrap.setAttribute("role", "img");
+    wrap.setAttribute("aria-label", "لوحة التتبّع والكتابة للرقم " + spec.text);
+
+    const guideCv = ajMakeCanvas(W, H, "aj-cv aj-cv-guide");
+    const inkCv = ajMakeCanvas(W, H, "aj-cv aj-cv-ink");
+
+    wrap.appendChild(guideCv);
+    wrap.appendChild(inkCv);
+    root.appendChild(wrap);
+
+    const gctx = guideCv.getContext("2d");
+    const ictx = inkCv.getContext("2d", { willReadFrequently: true });
+
+    const layout = ajGlyphLayout(gctx, spec.text, W, H);
+
+    /* شريط التسامح حول مسار الرقم */
+
+    const bandCv = ajMakeCanvas(W, H, "");
+    const bctx = bandCv.getContext("2d", { willReadFrequently: true });
+    ajApplyLayout(bctx, layout);
+    bctx.lineWidth = 46;
+    bctx.lineJoin = "round";
+    bctx.strokeStyle = "#000";
+    bctx.strokeText(spec.text, layout.x, layout.y);
+    const band = ajMaskFromCtx(bctx, W, H, 100);
+
+    const meter = ajEl("div", "aj-meter");
+    const meterFill = ajEl("div", "aj-meter-fill");
+    meter.appendChild(meterFill);
+    meter.setAttribute("aria-hidden", "true");
+    root.appendChild(meter);
+
+    const actions = ajEl("div", "aj-trace-actions");
+    const clearBtn = ajEl("button", "aj-mini-btn", "🧹 امسح وأعد");
+    clearBtn.type = "button";
+    actions.appendChild(clearBtn);
+    root.appendChild(actions);
+
+    let si = 0;
+    let finished = false;
+
+    function drawGuide(kind) {
+
+        gctx.clearRect(0, 0, W, H);
+
+        if (kind === "none") return;
+
+        ajApplyLayout(gctx, layout);
+
+        if (kind === "dotted") {
+            gctx.fillStyle = "#f1f5fb";
+            gctx.fillText(spec.text, layout.x, layout.y);
+        }
+
+        gctx.lineJoin = "round";
+        gctx.lineCap = "round";
+        gctx.setLineDash([1, kind === "dotted" ? 11 : 15]);
+        gctx.lineWidth = kind === "dotted" ? 8 : 7;
+        gctx.strokeStyle = kind === "dotted" ? "#6f7f97" : "#c3cddb";
+        gctx.strokeText(spec.text, layout.x, layout.y);
+        gctx.setLineDash([]);
+    }
+
+    function coverage() {
+
+        const d = ictx.getImageData(0, 0, W, H).data;
+        let count = 0;
+
+        for (let k = 0; k < band.length; k++) {
+            if (d[band[k] * 4 + 3] > 40) count++;
+        }
+
+        return band.length ? count / band.length : 0;
+    }
+
+    function startStage(i) {
+
+        si = i;
+
+        const st = spec.stages[i];
+
+        ictx.clearRect(0, 0, W, H);
+        drawGuide(st.guide);
+
+        stageLabel.textContent = "المحاولة " + ajNum(i + 1) + " من " + ajNum(spec.stages.length) + " — " + st.label;
+
+        Array.from(dotsRow.children).forEach((d, k) => {
+            d.classList.toggle("aj-on", k === i);
+            d.classList.toggle("aj-done", k < i);
+        });
+
+        meterFill.style.width = "0%";
+
+        wrap.classList.toggle("aj-trace-free", st.guide === "none");
+    }
+
+    function inkSegment(a, b) {
+        ictx.save();
+        ictx.strokeStyle = "#2f6fb5";
+        ictx.lineWidth = 26;
+        ictx.lineCap = "round";
+        ictx.lineJoin = "round";
+        ictx.beginPath();
+        ictx.moveTo(a.x, a.y);
+        ictx.lineTo(b.x, b.y);
+        ictx.stroke();
+        ictx.restore();
+    }
+
+    function evaluate() {
+
+        if (finished) return;
+
+        const st = spec.stages[si];
+        const c = coverage();
+
+        meterFill.style.width = Math.min(100, Math.round((c / st.threshold) * 100)) + "%";
+
+        if (c < st.threshold) return;
+
+        if (si < spec.stages.length - 1) {
+
+            api.say("✓ ممتاز! الآن: " + spec.stages[si + 1].label);
+
+            const next = si + 1;
+
+            api.later(() => startStage(next), 900);
+
+            /* منع إعادة التقييم أثناء الانتقال */
+            si = -1;
+            return;
+        }
+
+        finished = true;
+        api.say("🎉 كتبتَ الرقم بنفسك!");
+        api.solved();
+    }
+
+    ajBindDrawing(
+        wrap, inkCv,
+        (a, b) => { if (si >= 0) inkSegment(a, b); },
+        p => { if (si >= 0) inkSegment(p, { x: p.x + 0.1, y: p.y + 0.1 }); },
+        () => { if (si >= 0) evaluate(); }
+    );
+
+    clearBtn.addEventListener("click", () => {
+        if (finished || si < 0) return;
+        ictx.clearRect(0, 0, W, H);
+        meterFill.style.width = "0%";
+    });
+
+    startStage(0);
+
+    return {
+        /* مساعدة: تُكمل المراحل (لمن تعيقه الحركة أو يستخدم لوحة المفاتيح) */
+        assist() {
+            if (finished) return;
+            finished = true;
+            ictx.clearRect(0, 0, W, H);
+            ajApplyLayout(ictx, layout);
+            ictx.lineWidth = 30;
+            ictx.lineJoin = "round";
+            ictx.strokeStyle = "#2f6fb5";
+            ictx.strokeText(spec.text, layout.x, layout.y);
+            Array.from(dotsRow.children).forEach(d => { d.classList.remove("aj-on"); d.classList.add("aj-done"); });
+            meterFill.style.width = "100%";
+            api.say("🎉 أحسنت!");
+            api.solved();
+        }
+    };
+}
+
+/* =========================================================
+   🧱 عناصر عرض مشتركة: تمثيلات العدد (رقم / إطار عشرة / مكعبات)
+   ========================================================= */
+
+function ajFramesPair(value, cls) {
+
+    const wrap = ajEl("div", "aj-frames-pair" + (cls ? " " + cls : ""));
+    wrap.setAttribute("aria-hidden", "true");
+
+    if (value <= 10) {
+        wrap.appendChild(ajFrameEl(value));
+    } else {
+        wrap.appendChild(ajFrameEl(10));
+        wrap.appendChild(ajFrameEl(value - 10));
+    }
+
+    return wrap;
+}
+
+function ajRepNode(rep) {
+
+    if (rep.type === "numeral") {
+        return ajEl("span", "aj-rep-num", ajNum(rep.value));
+    }
+
+    if (rep.type === "frame") {
+        return ajFramesPair(rep.value);
+    }
+
+    const holder = ajEl("span", "aj-rep-b10");
+    holder.setAttribute("aria-hidden", "true");
+    holder.innerHTML = ajBaseTenSVG(rep.value);
+    return holder;
+}
+
+function ajStimulusNode(st, api) {
+
+    if (st.type === "objects") {
+        const box = ajEl("div", "aj-stim aj-stim-objects");
+        box.appendChild(ajObjectsRow(st.kind, st.count, true));
+        return box;
+    }
+
+    if (st.type === "bigNumeral") {
+        const box = ajEl("div", "aj-stim aj-stim-big");
+        box.appendChild(ajEl("span", "aj-bignum", ajNum(st.value)));
+        return box;
+    }
+
+    if (st.type === "tenPlus") {
+        const box = ajEl("div", "aj-stim aj-stim-tenplus");
+        box.setAttribute("aria-hidden", "true");
+        box.appendChild(ajFrameEl(st.extra));
+        box.appendChild(ajEl("span", "aj-plus", "+"));
+        box.appendChild(ajFrameEl(10));
+        return box;
+    }
+
+    /* countable: لمسة لكل شيء تُرقّمه وتنطق رقمه */
+    const box = ajEl("div", "aj-stim aj-stim-countable");
+    box.appendChild(ajCountableObjects(st.kind, st.count, api));
+    box.appendChild(ajEl("div", "aj-stim-hint", "اضغط كل شيء لتعدّه ثم اختر العدد"));
+    return box;
+}
+
+/* =========================================================
+   ⭕ الاختيار: ضع دائرة / اشطب — عدّة مجموعات في نشاط واحد
+   صحيح: دائرة أو شطب + ✓ | خطأ: اهتزاز هادئ، وبعد خطأين تلميح أصفر
+   ========================================================= */
+
+function ajRenderChoice(stage, spec, api) {
+
+    const root = ajEl("div", "aj-choice");
+    stage.appendChild(root);
+
+    let solvedGroups = 0;
+    const total = spec.groups.length;
+
+    if (spec.autoSpeak) {
+        api.later(() => api.speakNumber(spec.autoSpeak), 250);
+    }
+
+    spec.groups.forEach((g, gi) => {
+
+        const box = ajEl("div", "aj-group");
+        root.appendChild(box);
+
+        if (g.stimulus) box.appendChild(ajStimulusNode(g.stimulus, api));
+
+        const opts = ajEl("div", "aj-opts aj-opts-" + g.layout + " " + (g.cls || ""));
+        opts.setAttribute("role", "group");
+        opts.setAttribute("aria-label", total > 1 ? "المجموعة " + ajNum(gi + 1) : "الخيارات");
+        box.appendChild(opts);
+
+        let wrongRun = 0;
+        let groupSolved = false;
+        const buttons = [];
+
+        g.options.forEach(opt => {
+
+            const b = ajEl("button", "aj-opt" + (opt.tick ? " aj-tick" : "") + (opt.rep ? " aj-opt-rep-card" : ""));
+            b.type = "button";
+            b.setAttribute("aria-label", (opt.aria || opt.text || "خيار") + "، اضغط للاختيار");
+
+            if (opt.rep) {
+                b.appendChild(ajRepNode(opt.rep));
+            } else {
+                b.appendChild(ajEl("span", "aj-opt-num", opt.text));
+                if (opt.tick) b.appendChild(ajEl("span", "aj-tick-mark"));
+            }
+
+            b.addEventListener("click", () => {
+
+                if (groupSolved) return;
+
+                if (opt.speak) api.speakText(opt.speak);
+
+                if (opt.correct) {
+
+                    groupSolved = true;
+                    solvedGroups++;
+
+                    buttons.forEach(x => x.btn.classList.remove("aj-hint"));
+
+                    b.classList.add("aj-opt-correct", spec.mark === "cross" ? "aj-mark-cross" : "aj-mark-circle");
+                    b.setAttribute("aria-label", "الإجابة الصحيحة: " + (opt.aria || opt.text || ""));
+
+                    buttons.forEach(x => {
+                        if (x.btn !== b) x.btn.classList.add("aj-dim");
+                        x.btn.setAttribute("aria-disabled", "true");
+                    });
+
+                    api.say(solvedGroups >= total ? "🎉 أحسنت! كل الإجابات صحيحة" : "✓ أحسنت! أكمل المجموعة التالية");
+
+                    if (solvedGroups >= total) api.solved();
+
+                } else {
+
+                    wrongRun++;
+
+                    b.classList.add("aj-opt-wrong");
+                    api.later(() => b.classList.remove("aj-opt-wrong"), 650);
+
+                    if (wrongRun >= 2) {
+                        const right = buttons.find(x => x.opt.correct);
+                        if (right) right.btn.classList.add("aj-hint");
+                        api.say("💡 تلميح: انظر إلى الإطار الأصفر");
+                    } else {
+                        api.say("😊 حاول مرة أخرى");
+                    }
+                }
+            });
+
+            buttons.push({ btn: b, opt: opt });
+            opts.appendChild(b);
+        });
+    });
+}
+
+/* =========================================================
+   🔍 البحث والوسم: ابحث عن الرقم ولوّنه / ضع دائرة في كل صف /
+   اشطب الرقم / لوّن البالونات / لوّن الخانات لتظهر الصورة
+   ========================================================= */
+
+function ajRenderFind(stage, spec, api) {
+
+    const root = ajEl("div", "aj-find aj-find-" + spec.variant);
+    stage.appendChild(root);
+
+    const targets = spec.cells.filter(c => c.target).length;
+
+    let marked = 0;
+    let wrongRun = 0;
+    let colorIdx = 0;
+
+    const cellButtons = [];
+
+    function mark(btn, cell) {
+
+        if (btn.classList.contains("aj-marked")) return;
+
+        btn.classList.add("aj-marked", "aj-m-" + spec.mark);
+        btn.setAttribute("aria-pressed", "true");
+
+        if (spec.mark === "color") {
+            const c = cell.pic || AJ_COLORS[colorIdx % AJ_COLORS.length].hex;
+            colorIdx++;
+            btn.style.setProperty("--aj-mark", c);
+        }
+
+        marked++;
+        wrongRun = 0;
+
+        root.querySelectorAll(".aj-hint").forEach(h => h.classList.remove("aj-hint"));
+
+        const remaining = targets - marked;
+
+        if (remaining > 0) {
+            api.say("✓ باقي " + ajNum(remaining) + " من " + ajNum(targets));
+        } else {
+            root.classList.add("aj-found-all");
+
+            if (spec.variant === "reveal") {
+                root.classList.add("aj-revealed");
+                api.say("🎉 ظهرت الصورة: " + spec.revealName + "!");
+            } else {
+                api.say("🎉 أحسنت! وجدتَ كل " + spec.word);
+            }
+
+            api.solved();
+        }
+    }
+
+    function makeCell(cell, i) {
+
+        const b = ajEl("button", "aj-cell");
+        b.type = "button";
+        b.setAttribute("aria-pressed", "false");
+        b.setAttribute("aria-label", "الرقم " + cell.text + "، اضغط للاختيار");
+
+        if (spec.variant === "balloons") {
+            const sh = ajEl("span", "aj-cell-balloon");
+            sh.innerHTML = ajShapeSVG("balloon");
+            b.appendChild(sh);
+            b.appendChild(ajEl("span", "aj-cell-num aj-on-balloon", cell.text));
+        } else {
+            b.appendChild(ajEl("span", "aj-cell-num", cell.text));
+        }
+
+        b.addEventListener("click", () => {
+
+            if (b.classList.contains("aj-marked")) return;
+
+            if (cell.target) {
+                mark(b, cell);
+                return;
+            }
+
+            wrongRun++;
+
+            b.classList.add("aj-cell-wrong");
+            api.later(() => b.classList.remove("aj-cell-wrong"), 600);
+
+            api.say("😊 هذا ليس " + spec.word + " — حاول مرة أخرى");
+
+            if (wrongRun >= 3) {
+                const left = cellButtons.find(x => x.cell.target && !x.btn.classList.contains("aj-marked"));
+                if (left) left.btn.classList.add("aj-hint");
+            }
+        });
+
+        cellButtons.push({ btn: b, cell: cell });
+
+        return b;
+    }
+
+    if (spec.variant === "rows") {
+
+        for (let r = 0; r * spec.cols < spec.cells.length; r++) {
+
+            const row = ajEl("div", "aj-find-row");
+            row.setAttribute("role", "group");
+            row.setAttribute("aria-label", "الصف " + ajNum(r + 1));
+
+            spec.cells.slice(r * spec.cols, (r + 1) * spec.cols).forEach((cell, k) => {
+                row.appendChild(makeCell(cell, r * spec.cols + k));
+            });
+
+            root.appendChild(row);
+        }
+
+    } else {
+
+        const grid = ajEl("div", "aj-find-grid");
+        grid.style.gridTemplateColumns = "repeat(" + spec.cols + ", 1fr)";
+        grid.setAttribute("role", "group");
+        grid.setAttribute("aria-label", "الأرقام");
+
+        spec.cells.forEach((cell, i) => grid.appendChild(makeCell(cell, i)));
+
+        root.appendChild(grid);
+    }
+
+    api.say(spec.variant === "reveal"
+        ? "🖼️ لوّن كل خانة فيها الرقم " + spec.word + " لتظهر صورة مفاجأة"
+        : "🔍 ابحث عن كل الرقم " + spec.word);
+}
+
+/* =========================================================
+   🔗 التوصيل: اسحب من عنصر إلى آخر (خط حيّ) أو المس عنصرًا ثم الآخر،
+   أو استخدم لوحة المفاتيح (Enter/Space). الخطوط الصحيحة تثبت،
+   والخاطئة تهتز بهدوء وتختفي بلا عقوبة، وبعد خطأين تلميح أصفر.
+   ========================================================= */
+
+const AJ_SVG_NS = "http://www.w3.org/2000/svg";
+
+function ajConnLabel(d) {
+
+    const word = (typeof numberWords !== "undefined" && numberWords[d.value]) || ajNum(d.value);
+
+    if (d.numeral) return "الرقم " + word;
+    if (d.objects) return "مجموعة من " + ajNum(d.value) + " تفاحات";
+    if (d.base10 !== undefined) return "مكعبات العدد " + ajNum(d.value);
+    return "صورة العدد " + ajNum(d.value);
+}
+
+function ajConnContent(d) {
+
+    if (d.numeral) {
+        return ajEl("span", "aj-conn-num" + (d.big ? " aj-conn-num-big" : ""), d.numeral);
+    }
+
+    if (d.objects) {
+        const row = ajObjectsRow(d.objects.type, d.objects.count, true);
+        row.classList.add("aj-objects-mini");
+        return row;
+    }
+
+    if (d.base10 !== undefined) {
+        return ajRepNode({ type: "base10", value: d.base10 });
+    }
+
+    return ajFramesPair(d.value, "aj-frames-mini");
+}
+
+function ajRenderConnect(stage, spec, api) {
+
+    const root = ajEl("div", "aj-connect aj-connect-" + spec.layout);
+    stage.appendChild(root);
+
+    /* كميات (مجموعات تفاح) في أحد الطرفين: نمنحها عرضًا أكبر ليسهل عدّها */
+    if (spec.layout === "two" && spec.b.some(d => d.objects)) root.classList.add("aj-two-qty");
+
+    const items = {};
+    const links = [];
+    const need = Object.keys(spec.pairs).length;
+
+    let connected = 0;
+    let selectedId = null;
+    let wrongRun = 0;
+    let drag = null;
+    let tempLine = null;
+
+    function buildItem(data, side, edges) {
+
+        const el = ajEl("button", "aj-conn-item aj-conn-" + side + (data.big ? " aj-conn-bigitem" : ""));
+        el.type = "button";
+        el.dataset.id = data.id;
+        el.dataset.side = side;
+        el.setAttribute("aria-label", ajConnLabel(data) + "، اضغط للاختيار ثم اختر ما يناسبه");
+        el.setAttribute("aria-pressed", "false");
+        el.appendChild(ajConnContent(data));
+
+        const dots = { l: null, r: null };
+
+        edges.forEach(edge => {
+            const dot = ajEl("span", "aj-dot aj-dot-" + edge);
+            dot.setAttribute("aria-hidden", "true");
+            el.appendChild(dot);
+            dots[edge] = dot;
+        });
+
+        items[data.id] = { id: data.id, side: side, data: data, el: el, dots: dots, locked: false };
+
+        return el;
+    }
+
+    /* ---- بناء التخطيط ---- */
+
+    if (spec.layout === "center") {
+
+        /* بنية مسطّحة: الرقم أولًا ثم المجموعات الست؛ والتوزيع (ثلاثة أعمدة على
+           الشاشات العريضة، أو عمودان على الضيقة) يتولاه CSS. الحافة المواجهة
+           للخط تُحسب عند كل تخطيط (updateFaces) فتظهر نقطة واحدة فقط */
+
+        spec.a.forEach(d => root.appendChild(buildItem(d, "a", ["l", "r"])));
+        spec.b.forEach(d => root.appendChild(buildItem(d, "b", ["l", "r"])));
+
+    } else {
+
+        const colA = ajEl("div", "aj-conn-col");
+        const colB = ajEl("div", "aj-conn-col");
+
+        spec.a.forEach(d => colA.appendChild(buildItem(d, "a", ["l"])));
+        spec.b.forEach(d => colB.appendChild(buildItem(d, "b", ["r"])));
+
+        root.appendChild(colA);
+        root.appendChild(colB);
+    }
+
+    const svg = document.createElementNS(AJ_SVG_NS, "svg");
+    svg.setAttribute("class", "aj-conn-svg");
+    svg.setAttribute("aria-hidden", "true");
+    root.appendChild(svg);
+
+    /* ---- هندسة الخطوط ---- */
+
+    function centerX(item) {
+        const r = item.el.getBoundingClientRect();
+        return r.left + r.width / 2;
+    }
+
+    function anchor(item, towardX) {
+
+        const rootR = root.getBoundingClientRect();
+        const want = towardX < centerX(item) ? "l" : "r";
+        const dot = item.dots[want] || item.dots[want === "l" ? "r" : "l"];
+        const dr = dot.getBoundingClientRect();
+
+        return { x: dr.left + dr.width / 2 - rootR.left, y: dr.top + dr.height / 2 - rootR.top };
+    }
+
+    function placeLine(line, A, B) {
+        const pA = anchor(A, centerX(B));
+        const pB = anchor(B, centerX(A));
+        line.setAttribute("x1", pA.x);
+        line.setAttribute("y1", pA.y);
+        line.setAttribute("x2", pB.x);
+        line.setAttribute("y2", pB.y);
+    }
+
+    function makeLine(cls) {
+        const line = document.createElementNS(AJ_SVG_NS, "line");
+        line.setAttribute("class", "aj-conn-line " + cls);
+        svg.appendChild(line);
+        return line;
+    }
+
+    /* مركز: أي حافة من كل عنصر تواجه الطرف الآخر؟ تُخفى النقطة الأخرى */
+    function updateFaces() {
+
+        if (spec.layout !== "center") return;
+
+        const centre = Object.keys(items).map(k => items[k]).find(it => it.side === "a");
+        if (!centre) return;
+
+        const cx = centerX(centre);
+        const used = { l: false, r: false };
+
+        Object.keys(items).forEach(k => {
+            const it = items[k];
+            if (it.side !== "b") return;
+            const face = cx < centerX(it) ? "l" : "r";
+            it.el.dataset.face = face;
+            used[cx < centerX(it) ? "l" : "r"] = true;
+        });
+
+        /* حافة الرقم المواجهة: إن كانت المجموعة على يمينه فنقطته يمينية */
+        centre.el.dataset.faceL = used.r ? "1" : "0";
+        centre.el.dataset.faceR = used.l ? "1" : "0";
+    }
+
+    function redraw() {
+        updateFaces();
+        links.forEach(l => placeLine(l.line, items[l.aId], items[l.bId]));
+    }
+
+    let observer = null;
+
+    if (typeof ResizeObserver !== "undefined") {
+        observer = new ResizeObserver(redraw);
+        observer.observe(root);
+    }
+
+    window.addEventListener("resize", redraw);
+
+    /* ---- الاختيار ---- */
+
+    function setSelected(id) {
+
+        if (selectedId && items[selectedId]) {
+            items[selectedId].el.classList.remove("aj-selected");
+            items[selectedId].el.setAttribute("aria-pressed", "false");
+        }
+
+        selectedId = id;
+
+        if (id && items[id]) {
+            items[id].el.classList.add("aj-selected");
+            items[id].el.setAttribute("aria-pressed", "true");
+        }
+    }
+
+    function partnerOf(id) {
+
+        const it = items[id];
+
+        if (it.side === "a") return spec.pairs[id];
+
+        return Object.keys(spec.pairs).find(k => spec.pairs[k] === id);
+    }
+
+    function evaluate(idX, idY) {
+
+        const X = items[idX];
+        const Y = items[idY];
+
+        if (!X || !Y || X.locked || Y.locked || X.side === Y.side) {
+            setSelected(null);
+            return;
+        }
+
+        const a = X.side === "a" ? X : Y;
+        const b = X.side === "a" ? Y : X;
+
+        if (spec.pairs[a.id] === b.id) {
+
+            a.locked = true;
+            b.locked = true;
+
+            [a, b].forEach(it => {
+                it.el.classList.add("aj-conn-ok");
+                it.el.classList.remove("aj-selected", "aj-hint");
+                it.el.setAttribute("aria-pressed", "false");
+                it.el.setAttribute("aria-disabled", "true");
+                it.el.setAttribute("aria-label", "موصول: " + ajConnLabel(it.data));
+            });
+
+            const line = makeLine("aj-conn-ok-line");
+            placeLine(line, a, b);
+            links.push({ aId: a.id, bId: b.id, line: line });
+
+            connected++;
+            wrongRun = 0;
+            selectedId = null;
+
+            if (connected >= need) {
+                api.say("🎉 أحسنت! وصلتَ كل الأزواج");
+                api.solved();
+            } else {
+                api.say("✓ أحسنت! بقي " + ajNum(need - connected));
+            }
+
+            return;
+        }
+
+        /* خطأ: خط أحمر متقطع قصير + اهتزاز، ثم يُلغى التحديد (بلا عقوبة) */
+
+        wrongRun++;
+
+        const bad = makeLine("aj-conn-bad-line");
+        placeLine(bad, a, b);
+
+        [X, Y].forEach(it => it.el.classList.add("aj-conn-wrong"));
+
+        api.later(() => {
+            bad.remove();
+            [X, Y].forEach(it => it.el.classList.remove("aj-conn-wrong"));
+        }, 650);
+
+        if (wrongRun >= 2) {
+            const target = partnerOf(idX);
+            if (target && items[target]) items[target].el.classList.add("aj-hint");
+            api.say("💡 تلميح: انظر إلى الإطار الأصفر");
+        } else {
+            api.say("😊 حاول مرة أخرى");
+        }
+
+        setSelected(null);
+    }
+
+    function tapItem(id) {
+
+        const it = items[id];
+        if (!it || it.locked) return;
+
+        if (it.data.speak) api.speakText(it.data.speak);
+
+        if (!selectedId) { setSelected(id); return; }
+
+        if (selectedId === id) { setSelected(null); return; }
+
+        if (items[selectedId].side === it.side) { setSelected(id); return; }
+
+        evaluate(selectedId, id);
+    }
+
+    /* ---- السحب بالمؤشر (أصبع/فأرة) ---- */
+
+    function itemFromTarget(target) {
+        const el = target && target.closest ? target.closest(".aj-conn-item") : null;
+        return el && root.contains(el) ? items[el.dataset.id] : null;
+    }
+
+    function updateTemp(clientX, clientY) {
+
+        const it = items[drag.id];
+        const rootR = root.getBoundingClientRect();
+
+        if (!tempLine) tempLine = makeLine("aj-conn-temp-line");
+
+        const p = anchor(it, clientX);
+
+        tempLine.setAttribute("x1", p.x);
+        tempLine.setAttribute("y1", p.y);
+        tempLine.setAttribute("x2", clientX - rootR.left);
+        tempLine.setAttribute("y2", clientY - rootR.top);
+    }
+
+    function clearTemp() {
+        if (tempLine) { tempLine.remove(); tempLine = null; }
+    }
+
+    function onMove(e) {
+
+        if (!drag) return;
+
+        if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 10) {
+            drag.moved = true;
+            setSelected(drag.id);
+            const it = items[drag.id];
+            if (it.data.speak) api.speakText(it.data.speak);
+        }
+
+        if (drag.moved) updateTemp(e.clientX, e.clientY);
+    }
+
+    function endDrag(e, cancelled) {
+
+        const d = drag;
+        drag = null;
+
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        document.removeEventListener("pointercancel", onCancel);
+
+        clearTemp();
+
+        if (!d) return;
+
+        if (cancelled) { if (d.moved) setSelected(null); return; }
+
+        if (d.moved) {
+            const target = itemFromTarget(document.elementFromPoint(e.clientX, e.clientY));
+            if (target && target.id !== d.id) evaluate(d.id, target.id);
+            else setSelected(null);
+        } else {
+            tapItem(d.id);
+        }
+    }
+
+    function onUp(e) { endDrag(e, false); }
+    function onCancel(e) { endDrag(e, true); }
+
+    root.addEventListener("pointerdown", e => {
+
+        const it = itemFromTarget(e.target);
+        if (!it || it.locked) return;
+
+        drag = { id: it.id, sx: e.clientX, sy: e.clientY, moved: false };
+
+        document.addEventListener("pointermove", onMove);
+        document.addEventListener("pointerup", onUp);
+        document.addEventListener("pointercancel", onCancel);
+    });
+
+    /* لوحة المفاتيح (Enter/Space على زرّ) — detail = 0 */
+    root.addEventListener("click", e => {
+        if (!ajIsKeyboardClick(e)) return;
+        const it = itemFromTarget(e.target);
+        if (it) tapItem(it.id);
+    });
+
+    api.say(spec.layout === "center"
+        ? "🔗 اسحب من الرقم إلى المجموعة الصحيحة، أو المس الرقم ثم المجموعة"
+        : "🔗 اسحب من عنصر إلى ما يناسبه، أو المس عنصرًا ثم الآخر");
+
+    /* بعد أول رسم للتخطيط */
+    requestAnimationFrame(redraw);
+
+    return {
+        cleanup() {
+            document.removeEventListener("pointermove", onMove);
+            document.removeEventListener("pointerup", onUp);
+            document.removeEventListener("pointercancel", onCancel);
+            window.removeEventListener("resize", redraw);
+            if (observer) observer.disconnect();
+        }
+    };
+}
+
+/* =========================================================
+   🔢 عُدّ واكتب الرقم: لمسة لكل شيء تعدّه (وتنطق رقمه)، ثم تكتب
+   الجواب بلوحة أرقام عربية هندية كبيرة. بلا عقوبة عند الخطأ.
+   ========================================================= */
+
+function ajKeyFor(pad, digit) {
+    const keys = pad.querySelectorAll(".aj-key");
+    return keys[digit === 0 ? 9 : digit - 1];
+}
+
+function ajRenderCountWrite(stage, spec, api) {
+
+    const root = ajEl("div", "aj-countwrite");
+    stage.appendChild(root);
+
+    const info = AJ_OBJECTS[spec.objects.type];
+
+    const box = ajEl("div", "aj-stim aj-stim-countable");
+    box.appendChild(ajCountableObjects(spec.objects.type, spec.objects.count, api));
+    box.appendChild(ajEl("div", "aj-stim-hint", "اضغط كل " + info.label + " لتعدّها"));
+    root.appendChild(box);
+
+    const answerRow = ajEl("div", "aj-answer-row");
+    answerRow.appendChild(ajEl("span", "aj-answer-label", "اكتب الرقم:"));
+
+    const answerBox = ajEl("div", "aj-answer-box");
+    answerBox.setAttribute("role", "status");
+    answerBox.setAttribute("aria-live", "polite");
+    answerBox.setAttribute("aria-label", "الجواب");
+    answerRow.appendChild(answerBox);
+    root.appendChild(answerRow);
+
+    const len = String(spec.answer).length;
+    let typed = "";
+    let wrongRun = 0;
+    let done = false;
+
+    function render() {
+        answerBox.textContent = typed ? ajNum(typed) : "";
+    }
+
+    function check() {
+
+        if (Number(typed) === spec.answer) {
+
+            done = true;
+            answerBox.classList.add("aj-answer-ok");
+            api.speakNumber(spec.answer);
+            api.say("🎉 أحسنت! العدد " + ajNum(spec.answer));
+            api.solved();
+            return;
+        }
+
+        wrongRun++;
+        answerBox.classList.add("aj-answer-wrong");
+
+        api.say(wrongRun >= 2
+            ? "💡 تلميح: اضغط كل " + info.label + " لتعدّها ثم اكتب آخر رقم"
+            : "😊 عُدّ مرة أخرى ثم اكتب الرقم");
+
+        api.later(() => {
+            typed = "";
+            answerBox.classList.remove("aj-answer-wrong");
+            render();
+        }, 650);
+    }
+
+    const pad = ajKeypad(d => {
+
+        if (done || typed.length >= len || answerBox.classList.contains("aj-answer-wrong")) return;
+
+        typed += String(d);
+        render();
+
+        if (typed.length === len) check();
+
+    }, () => {
+        if (done) return;
+        typed = typed.slice(0, -1);
+        render();
+    });
+
+    root.appendChild(pad);
+
+    api.say("🔢 عُدّ ثم اكتب الرقم");
+}
+
+/* =========================================================
+   ✏️ ملء التسلسل: قبل/بعد، العدد الناقص، «عشرة وكم؟» (معادلة)
+   كل مربع فارغ يقبل أرقامًا عربية هندية من لوحة كبيرة؛ الصحيح يثبت ✓،
+   والخطأ يهتز ويُمسح بلا عقوبة، وبعد خطأين يُلمَّح الرقم المطلوب على اللوحة.
+   ========================================================= */
+
+function ajRenderFillSeq(stage, spec, api) {
+
+    const root = ajEl("div", "aj-fill");
+    stage.appendChild(root);
+
+    const blanks = [];
+    let active = null;
+    let wrongRun = 0;
+
+    spec.rows.forEach(row => {
+
+        const rowEl = ajEl("div", "aj-seq-row" + (row.ltr ? " aj-seq-ltr" : "") + (row.tokens.length >= 5 && !row.ltr ? " aj-seq-one-line" : ""));
+        rowEl.setAttribute("role", "group");
+
+        row.tokens.forEach(tok => {
+
+            if (tok.type === "blank") {
+
+                const b = ajEl("button", "aj-blank");
+                b.type = "button";
+                b.setAttribute("aria-label", "مربع فارغ، اكتب العدد");
+                b.setAttribute("aria-pressed", "false");
+
+                const rec = { el: b, answer: tok.answer, len: String(tok.answer).length, typed: "", solved: false };
+
+                b.addEventListener("click", () => {
+                    if (!rec.solved) setActive(rec);
+                });
+
+                blanks.push(rec);
+                rowEl.appendChild(b);
+
+            } else if (tok.type === "fixed") {
+
+                const f = ajEl("span", "aj-seq-fixed" + (tok.hl ? " aj-seq-hl" : ""), tok.text);
+                rowEl.appendChild(f);
+
+            } else if (tok.type === "sym") {
+
+                rowEl.appendChild(ajEl("span", "aj-seq-sym", tok.text));
+
+            } else {
+
+                const pic = ajEl("span", "aj-seq-pic");
+                pic.setAttribute("aria-hidden", "true");
+                pic.appendChild(ajFrameEl(tok.extra, "aj-frame-mini"));
+                pic.appendChild(ajEl("span", "aj-plus aj-plus-mini", "+"));
+                pic.appendChild(ajFrameEl(10, "aj-frame-mini"));
+                rowEl.appendChild(pic);
+            }
+        });
+
+        root.appendChild(rowEl);
+    });
+
+    function renderBlank(rec) {
+        rec.el.textContent = rec.typed ? ajNum(rec.typed) : "";
+    }
+
+    function setActive(rec) {
+
+        blanks.forEach(b => {
+            b.el.classList.toggle("aj-blank-active", b === rec);
+            b.el.setAttribute("aria-pressed", b === rec ? "true" : "false");
+        });
+
+        active = rec;
+
+        clearKeyHints();
+    }
+
+    const pad = ajKeypad(d => {
+
+        if (!active || active.solved || active.el.classList.contains("aj-blank-wrong")) return;
+        if (active.typed.length >= active.len) return;
+
+        active.typed += String(d);
+        renderBlank(active);
+        clearKeyHints();
+
+        if (active.typed.length === active.len) check(active);
+
+    }, () => {
+
+        if (!active || active.solved) return;
+
+        active.typed = active.typed.slice(0, -1);
+        renderBlank(active);
+    });
+
+    function clearKeyHints() {
+        pad.querySelectorAll(".aj-hint").forEach(k => k.classList.remove("aj-hint"));
+    }
+
+    function check(rec) {
+
+        if (Number(rec.typed) === rec.answer) {
+
+            rec.solved = true;
+            wrongRun = 0;
+            rec.el.classList.remove("aj-blank-active");
+            rec.el.classList.add("aj-blank-ok");
+            rec.el.setAttribute("aria-label", "صحيح: " + ajNum(rec.answer));
+            rec.el.setAttribute("aria-pressed", "false");
+
+            api.speakNumber(rec.answer);
+
+            const left = blanks.filter(b => !b.solved);
+
+            if (!left.length) {
+                api.say("🎉 أحسنت! أكملتَ كل الأعداد");
+                api.solved();
+            } else {
+                api.say("✓ أحسنت! بقي " + ajNum(left.length));
+                setActive(left[0]);
+            }
+
+            return;
+        }
+
+        wrongRun++;
+
+        rec.el.classList.add("aj-blank-wrong");
+
+        if (wrongRun >= 2) {
+            const need = Number(String(rec.answer)[0]);
+            const key = ajKeyFor(pad, need);
+            if (key) key.classList.add("aj-hint");
+            api.say("💡 تلميح: ابدأ بالرقم المُلمَّح على اللوحة");
+        } else {
+            api.say("😊 حاول مرة أخرى");
+        }
+
+        api.later(() => {
+            rec.typed = "";
+            rec.el.classList.remove("aj-blank-wrong");
+            renderBlank(rec);
+        }, 650);
+    }
+
+    root.appendChild(pad);
+
+    if (blanks.length) setActive(blanks[0]);
+
+    api.say("✏️ اضغط المربع الفارغ ثم اكتب العدد");
+}
+
+/* =========================================================
+   🖐️ السحب والإفلات: رتّب الأعداد / قطار الأعداد
+   اسحب البطاقة إلى مكانها، أو المس البطاقة ثم المكان (أو العكس)،
+   أو Enter/Space. المكان الخاطئ يهتز بهدوء وتعود البطاقة بلا عقوبة.
+   ========================================================= */
+
+function ajRenderDnd(stage, spec, api) {
+
+    const root = ajEl("div", "aj-dnd aj-dnd-" + spec.layout);
+    stage.appendChild(root);
+
+    const total = spec.groups.length;
+    let solvedGroups = 0;
+    const cleanups = [];
+
+    spec.groups.forEach((g, gi) => {
+
+        const box = ajEl("div", "aj-dnd-group");
+        root.appendChild(box);
+
+        const slotsWrap = ajEl("div", spec.layout === "train" ? "aj-train" : "aj-slots");
+        slotsWrap.setAttribute("role", "group");
+        slotsWrap.setAttribute("aria-label", spec.layout === "train" ? "القطار" : "الأماكن: من الأصغر إلى الأكبر");
+
+        if (spec.layout === "train") {
+            const engine = ajEl("span", "aj-engine", "🚂");
+            engine.setAttribute("aria-hidden", "true");
+            slotsWrap.appendChild(engine);
+        }
+
+        const slots = [];
+
+        g.slots.forEach((s, si) => {
+
+            if (s.fixed !== undefined) {
+                slotsWrap.appendChild(ajEl("span", "aj-wagon aj-wagon-fixed", s.fixed));
+                return;
+            }
+
+            const el = ajEl("button", "aj-slot" + (spec.layout === "train" ? " aj-wagon" : ""));
+            el.type = "button";
+            el.setAttribute("aria-label", spec.layout === "train" ? "عربة فارغة" : "مكان فارغ رقم " + ajNum(si + 1));
+
+            const rec = { el: el, expected: s.expected, filled: false };
+
+            slots.push(rec);
+            slotsWrap.appendChild(el);
+        });
+
+        box.appendChild(slotsWrap);
+
+        const bank = ajEl("div", "aj-bank");
+        bank.setAttribute("role", "group");
+        bank.setAttribute("aria-label", "البطاقات — اسحب كل بطاقة إلى مكانها");
+        box.appendChild(bank);
+
+        const tiles = [];
+        let selectedTile = null;
+        let selectedSlot = null;
+        let wrongRun = 0;
+        let groupSolved = false;
+
+        function clearSelection() {
+            if (selectedTile) selectedTile.el.classList.remove("aj-selected");
+            if (selectedSlot) selectedSlot.el.classList.remove("aj-selected");
+            selectedTile = null;
+            selectedSlot = null;
+        }
+
+        function clearHints() {
+            box.querySelectorAll(".aj-hint").forEach(h => h.classList.remove("aj-hint"));
+        }
+
+        function place(tile, slot) {
+
+            if (tile.used || slot.filled || groupSolved) { clearSelection(); return; }
+
+            if (tile.value === slot.expected) {
+
+                tile.used = true;
+                slot.filled = true;
+                wrongRun = 0;
+
+                tile.el.classList.add("aj-tile-used");
+                tile.el.disabled = true;
+                tile.el.setAttribute("aria-hidden", "true");
+
+                slot.el.textContent = ajNum(tile.value);
+                slot.el.classList.add("aj-slot-ok");
+                slot.el.setAttribute("aria-label", "صحيح: " + ajNum(tile.value));
+                slot.el.disabled = true;
+
+                clearHints();
+                clearSelection();
+
+                api.speakNumber(tile.value);
+
+                if (slots.every(s => s.filled)) {
+
+                    groupSolved = true;
+                    solvedGroups++;
+
+                    if (solvedGroups >= total) {
+                        api.say("🎉 أحسنت! رتّبتَ كل الأعداد");
+                        api.solved();
+                    } else {
+                        api.say("✓ أحسنت! أكمل المجموعة التالية");
+                    }
+
+                } else {
+                    api.say("✓ أحسنت! بقي " + ajNum(slots.filter(s => !s.filled).length));
+                }
+
+                return;
+            }
+
+            /* مكان خاطئ: اهتزاز هادئ وتعود البطاقة، بلا عقوبة */
+
+            wrongRun++;
+
+            tile.el.classList.add("aj-opt-wrong");
+            slot.el.classList.add("aj-opt-wrong");
+
+            api.later(() => {
+                tile.el.classList.remove("aj-opt-wrong");
+                slot.el.classList.remove("aj-opt-wrong");
+            }, 650);
+
+            if (wrongRun >= 2) {
+                const right = slots.find(s => s.expected === tile.value && !s.filled);
+                if (right) right.el.classList.add("aj-hint");
+                api.say("💡 تلميح: ضعها في المكان ذي الإطار الأصفر");
+            } else {
+                api.say(spec.layout === "order"
+                    ? "😊 ابدأ بأصغر عدد — حاول مرة أخرى"
+                    : "😊 ليست هذه العربة — حاول مرة أخرى");
+            }
+
+            clearSelection();
+        }
+
+        function tapTile(tile) {
+
+            if (tile.used || groupSolved) return;
+
+            api.speakNumber(tile.value);
+
+            if (selectedSlot) { place(tile, selectedSlot); return; }
+
+            if (spec.layout === "order") {
+                /* في الترتيب: لمسة واحدة تضع البطاقة في أول مكان فارغ إن كانت صحيحة */
+                const first = slots.find(s => !s.filled);
+                if (first) place(tile, first);
+                return;
+            }
+
+            if (selectedTile === tile) { clearSelection(); return; }
+
+            clearSelection();
+            selectedTile = tile;
+            tile.el.classList.add("aj-selected");
+        }
+
+        function tapSlot(slot) {
+
+            if (slot.filled || groupSolved) return;
+
+            if (selectedTile) { place(selectedTile, slot); return; }
+
+            if (selectedSlot === slot) { clearSelection(); return; }
+
+            clearSelection();
+            selectedSlot = slot;
+            slot.el.classList.add("aj-selected");
+        }
+
+        slots.forEach(slot => {
+            slot.el.addEventListener("click", () => tapSlot(slot));
+        });
+
+        g.tiles.forEach(value => {
+
+            const el = ajEl("button", "aj-tile", ajNum(value));
+            el.type = "button";
+            el.setAttribute("aria-label", "بطاقة الرقم " + ajNum(value) + "، اسحبها أو اضغطها");
+
+            const tile = { el: el, value: value, used: false };
+
+            tiles.push(tile);
+            bank.appendChild(el);
+
+            /* السحب بالمؤشر مع بطاقة شبحية تتبع الإصبع */
+
+            el.addEventListener("pointerdown", e => {
+
+                if (tile.used || groupSolved) return;
+
+                e.preventDefault();
+
+                const sx = e.clientX;
+                const sy = e.clientY;
+                let moved = false;
+                let ghost = null;
+                let overSlot = null;
+
+                const move = ev => {
+
+                    if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) {
+                        moved = true;
+                        ghost = el.cloneNode(true);
+                        ghost.classList.add("aj-ghost");
+                        ghost.removeAttribute("aria-label");
+                        ghost.setAttribute("aria-hidden", "true");
+                        document.body.appendChild(ghost);
+                        el.classList.add("aj-dragging");
+                        clearSelection();
+                    }
+
+                    if (ghost) {
+                        ghost.style.left = ev.clientX + "px";
+                        ghost.style.top = ev.clientY + "px";
+
+                        const under = document.elementFromPoint(ev.clientX, ev.clientY);
+                        const slotEl = under && under.closest ? under.closest(".aj-slot") : null;
+
+                        if (overSlot && overSlot !== slotEl) overSlot.classList.remove("aj-drop-over");
+                        overSlot = slotEl;
+                        if (overSlot) overSlot.classList.add("aj-drop-over");
+                    }
+                };
+
+                const up = ev => {
+
+                    document.removeEventListener("pointermove", move);
+                    document.removeEventListener("pointerup", up);
+                    document.removeEventListener("pointercancel", up);
+
+                    if (ghost) ghost.remove();
+                    if (overSlot) overSlot.classList.remove("aj-drop-over");
+                    el.classList.remove("aj-dragging");
+
+                    if (!moved) { tapTile(tile); return; }
+
+                    const under = document.elementFromPoint(ev.clientX, ev.clientY);
+                    const slotEl = under && under.closest ? under.closest(".aj-slot") : null;
+                    const slot = slotEl ? slots.find(s => s.el === slotEl) : null;
+
+                    if (slot) place(tile, slot);
+                };
+
+                document.addEventListener("pointermove", move);
+                document.addEventListener("pointerup", up);
+                document.addEventListener("pointercancel", up);
+
+                cleanups.push(() => {
+                    document.removeEventListener("pointermove", move);
+                    document.removeEventListener("pointerup", up);
+                    document.removeEventListener("pointercancel", up);
+                    if (ghost) ghost.remove();
+                });
+            });
+
+            /* لوحة المفاتيح: النقرة بلا مؤشر */
+            el.addEventListener("click", e => {
+                if (ajIsKeyboardClick(e)) tapTile(tile);
+            });
+        });
+    });
+
+    api.say(spec.layout === "order"
+        ? "📶 اسحب الأعداد من الأصغر إلى الأكبر (أو المس البطاقة)"
+        : "🚂 اسحب كل عدد إلى عربته (أو المس البطاقة ثم العربة)");
+
+    return {
+        cleanup() {
+            cleanups.forEach(fn => fn());
+            document.querySelectorAll(".aj-ghost").forEach(g => g.remove());
+        }
+    };
+}
+
+/* =========================================================
+   🏠 المتاهة: امشِ على الرقم فقط حتى تصل إلى البيت
+   اسحب الإصبع فوق المربعات أو المس المربع المجاور خطوة خطوة.
+   الخطأ يهتز بهدوء بلا عقوبة، وبعد ٣ أخطاء يظهر تلميح للمربع التالي.
+   ========================================================= */
+
+function ajRenderMaze(stage, spec, api) {
+
+    const root = ajEl("div", "aj-maze");
+    stage.appendChild(root);
+
+    const goal = ajEl("div", "aj-maze-goal", "امشِ على الرقم " + ajNum(spec.target) + " فقط");
+    root.appendChild(goal);
+
+    const grid = ajEl("div", "aj-maze-grid");
+    grid.style.gridTemplateColumns = "repeat(" + spec.cols + ", 1fr)";
+    grid.setAttribute("role", "group");
+    grid.setAttribute("aria-label", "المتاهة: ابدأ من الولد وامشِ على الرقم " + ajNum(spec.target) + " حتى البيت");
+    root.appendChild(grid);
+
+    const byKey = {};
+    const path = spec.path;
+    const start = path[0];
+    const end = path[path.length - 1];
+
+    let pos = 0;
+    let wrongRun = 0;
+    let finished = false;
+    let down = false;
+    let lastKey = null;
+
+    spec.cells.forEach(cell => {
+
+        const b = ajEl("button", "aj-maze-cell");
+        b.type = "button";
+        b.dataset.r = cell.r;
+        b.dataset.c = cell.c;
+        b.setAttribute("aria-label", "الرقم " + ajNum(cell.value));
+
+        b.appendChild(ajEl("span", "aj-maze-num", ajNum(cell.value)));
+
+        if (cell.r === start[0] && cell.c === start[1]) {
+            const badge = ajEl("span", "aj-maze-badge aj-maze-boy", "🧒");
+            badge.setAttribute("aria-hidden", "true");
+            b.appendChild(badge);
+            b.classList.add("aj-maze-visited", "aj-maze-start");
+            b.setAttribute("aria-label", "البداية: الولد، الرقم " + ajNum(cell.value));
+        }
+
+        if (cell.r === end[0] && cell.c === end[1]) {
+            const badge = ajEl("span", "aj-maze-badge aj-maze-house", "🏠");
+            badge.setAttribute("aria-hidden", "true");
+            b.appendChild(badge);
+            b.classList.add("aj-maze-end");
+            b.setAttribute("aria-label", "البيت، الرقم " + ajNum(cell.value));
+        }
+
+        byKey[cell.r + "," + cell.c] = { el: b, cell: cell };
+        grid.appendChild(b);
+    });
+
+    function tryCell(r, c, fromDrag) {
+
+        if (finished) return;
+
+        const key = r + "," + c;
+        const rec = byKey[key];
+
+        if (!rec || rec.el.classList.contains("aj-maze-visited")) return;
+
+        const cur = path[pos];
+        const next = path[pos + 1];
+
+        if (next && next[0] === r && next[1] === c) {
+
+            pos++;
+            wrongRun = 0;
+
+            rec.el.classList.add("aj-maze-visited");
+            rec.el.classList.remove("aj-hint");
+
+            if (pos === path.length - 1) {
+                finished = true;
+                api.say("🎉 وصل الولد إلى البيت!");
+                api.solved();
+            } else {
+                api.say("✓ أحسنت! تابع");
+            }
+
+            return;
+        }
+
+        const adjacent = Math.abs(r - cur[0]) + Math.abs(c - cur[1]) === 1;
+
+        if (!adjacent) {
+            if (!fromDrag) api.say("👣 امشِ خطوة خطوة من المربع الأخضر");
+            return;
+        }
+
+        /* مجاور لكنه ليس الرقم المطلوب: اهتزاز هادئ بلا عقوبة */
+
+        wrongRun++;
+
+        rec.el.classList.add("aj-cell-wrong");
+        api.later(() => rec.el.classList.remove("aj-cell-wrong"), 600);
+
+        api.say("😊 هذا ليس " + ajNum(spec.target) + " — جرّب مربعًا آخر");
+
+        if (wrongRun >= 3 && next) {
+            const hintRec = byKey[next[0] + "," + next[1]];
+            if (hintRec) hintRec.el.classList.add("aj-hint");
+        }
+    }
+
+    function cellFromPoint(x, y) {
+        const el = document.elementFromPoint(x, y);
+        const cell = el && el.closest ? el.closest(".aj-maze-cell") : null;
+        return cell && grid.contains(cell) ? cell : null;
+    }
+
+    grid.addEventListener("pointerdown", e => {
+        const cell = e.target.closest ? e.target.closest(".aj-maze-cell") : null;
+        if (!cell) return;
+        down = true;
+        lastKey = cell.dataset.r + "," + cell.dataset.c;
+        tryCell(Number(cell.dataset.r), Number(cell.dataset.c), false);
+    });
+
+    grid.addEventListener("pointermove", e => {
+        if (!down) return;
+        const cell = cellFromPoint(e.clientX, e.clientY);
+        if (!cell) return;
+        const key = cell.dataset.r + "," + cell.dataset.c;
+        if (key === lastKey) return;
+        lastKey = key;
+        tryCell(Number(cell.dataset.r), Number(cell.dataset.c), true);
+    });
+
+    const stop = () => { down = false; lastKey = null; };
+
+    document.addEventListener("pointerup", stop);
+    document.addEventListener("pointercancel", stop);
+
+    grid.addEventListener("click", e => {
+        if (!ajIsKeyboardClick(e)) return;
+        const cell = e.target.closest ? e.target.closest(".aj-maze-cell") : null;
+        if (cell) tryCell(Number(cell.dataset.r), Number(cell.dataset.c), false);
+    });
+
+    api.say("🧒 ابدأ من الولد وامشِ على الرقم " + ajNum(spec.target) + " حتى البيت 🏠");
+
+    return {
+        cleanup() {
+            document.removeEventListener("pointerup", stop);
+            document.removeEventListener("pointercancel", stop);
+        }
+    };
+}
+
+/* =========================================================
+   ✨ توصيل النقاط بالترتيب من الواحد
+   كل نقطة تنطق رقمها (عدّ مسموع)، وعند الاكتمال يُغلق الشكل ويتلوّن
+   ========================================================= */
+
+function ajRenderDots(stage, spec, api) {
+
+    const root = ajEl("div", "aj-dots-root");
+    stage.appendChild(root);
+
+    const board = ajEl("div", "aj-dots");
+    board.setAttribute("role", "group");
+    board.setAttribute("aria-label", "النقاط المرقَّمة من ١ إلى " + ajNum(spec.n));
+    root.appendChild(board);
+
+    const svg = document.createElementNS(AJ_SVG_NS, "svg");
+    svg.setAttribute("class", "aj-dots-svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("aria-hidden", "true");
+    board.appendChild(svg);
+
+    const fill = document.createElementNS(AJ_SVG_NS, "polygon");
+    fill.setAttribute("class", "aj-dots-fill");
+    fill.setAttribute("points", spec.points.map(p => p.x + "," + p.y).join(" "));
+    svg.appendChild(fill);
+
+    const buttons = [];
+    let next = 1;
+    let wrongRun = 0;
+
+    spec.points.forEach((p, i) => {
+
+        const b = ajEl("button", "aj-dot-btn" + (i === 0 ? " aj-dot-start" : ""), ajNum(i + 1));
+        b.type = "button";
+        b.style.left = p.x + "%";
+        b.style.top = p.y + "%";
+        b.setAttribute("aria-label", "النقطة " + ajNum(i + 1));
+
+        b.addEventListener("click", () => tapDot(i + 1, b));
+
+        buttons.push(b);
+        board.appendChild(b);
+    });
+
+    function addLine(a, b, cls) {
+        const line = document.createElementNS(AJ_SVG_NS, "line");
+        line.setAttribute("class", "aj-dots-line " + (cls || ""));
+        line.setAttribute("x1", a.x);
+        line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x);
+        line.setAttribute("y2", b.y);
+        svg.appendChild(line);
+    }
+
+    function tapDot(k, btn) {
+
+        if (k < next) return;
+
+        if (k === next) {
+
+            wrongRun = 0;
+            buttons.forEach(x => x.classList.remove("aj-hint"));
+
+            btn.classList.add("aj-dot-done");
+            btn.classList.remove("aj-dot-start");
+            btn.setAttribute("aria-label", "النقطة " + ajNum(k) + "، تم");
+
+            api.speakNumber(k);
+
+            if (k > 1) addLine(spec.points[k - 2], spec.points[k - 1]);
+
+            next++;
+
+            if (k === spec.n) {
+
+                addLine(spec.points[spec.n - 1], spec.points[0]);
+                svg.classList.add("aj-dots-complete");
+
+                api.say("🎉 ظهر " + (spec.shape === "heart" ? "القلب" : "الشكل") + "! أحسنت");
+                api.solved();
+
+            } else {
+
+                api.say("✓ الآن اضغط النقطة رقم " + ajNum(next));
+            }
+
+            return;
+        }
+
+        wrongRun++;
+
+        btn.classList.add("aj-cell-wrong");
+        api.later(() => btn.classList.remove("aj-cell-wrong"), 600);
+
+        api.say("😊 اضغط النقطة رقم " + ajNum(next));
+
+        if (wrongRun >= 2) buttons[next - 1].classList.add("aj-hint");
+    }
+
+    api.say("✨ ابدأ من النقطة رقم " + ajNum(1));
+}
+
+/* =========================================================
+   ⚫ بناء إطار العشرة: ارسم دوائر في الإطار حتى يصبح العدد مثل الرقم
+   (اللمس يضع/يُزيل دائرة؛ لا عقوبة على الزيادة — فقط تلميح لطيف)
+   ========================================================= */
+
+function ajRenderFrames(stage, spec, api) {
+
+    const root = ajEl("div", "aj-frames");
+    stage.appendChild(root);
+
+    const need = spec.target - 10;
+    const rowsState = [];
+    let solvedRows = 0;
+
+    spec.rows.forEach((row, ri) => {
+
+        const rowEl = ajEl("div", "aj-frames-row");
+        rowEl.setAttribute("role", "group");
+        rowEl.setAttribute("aria-label", "الإطار " + ajNum(ri + 1));
+
+        const chip = ajEl("span", "aj-frames-chip", ajNum(spec.target));
+        chip.setAttribute("aria-label", "العدد المطلوب " + ajNum(spec.target));
+        rowEl.appendChild(chip);
+
+        const frames = ajEl("div", "aj-frames-pair aj-frames-pair-live");
+
+        const full = ajFrameEl(10);
+        frames.appendChild(full);
+
+        const live = ajEl("div", "aj-frame aj-frame-live");
+        const cells = [];
+
+        for (let i = 0; i < 10; i++) {
+
+            const cell = ajEl("button", "aj-frame-cell aj-frame-cell-btn");
+            cell.type = "button";
+            cell.setAttribute("aria-pressed", "false");
+            cell.setAttribute("aria-label", "خانة " + ajNum(i + 1) + " في الإطار الثاني، اضغط لتضع دائرة");
+
+            if (i < row.pre) {
+                cell.appendChild(ajEl("span", "aj-counter"));
+                cell.classList.add("aj-prefilled");
+                cell.disabled = true;
+                cell.setAttribute("aria-pressed", "true");
+                cell.setAttribute("aria-label", "خانة " + ajNum(i + 1) + " فيها دائرة");
+            }
+
+            cells.push(cell);
+            live.appendChild(cell);
+        }
+
+        frames.appendChild(live);
+        rowEl.appendChild(frames);
+
+        const state = { cells: cells, rowEl: rowEl, solved: false };
+        rowsState.push(state);
+
+        function count() {
+            return cells.filter(c => c.querySelector(".aj-counter")).length;
+        }
+
+        cells.forEach(cell => {
+
+            cell.addEventListener("click", () => {
+
+                if (state.solved || cell.disabled) return;
+
+                const existing = cell.querySelector(".aj-counter");
+
+                if (existing) {
+                    existing.remove();
+                    cell.setAttribute("aria-pressed", "false");
+                } else {
+                    cell.appendChild(ajEl("span", "aj-counter aj-counter-new"));
+                    cell.setAttribute("aria-pressed", "true");
+                }
+
+                const c = count();
+
+                if (c === need) {
+
+                    state.solved = true;
+                    solvedRows++;
+                    rowEl.classList.add("aj-row-ok");
+
+                    cells.forEach(x => { x.disabled = true; });
+
+                    api.speakNumber(spec.target);
+
+                    if (solvedRows >= spec.rows.length) {
+                        api.say("🎉 أحسنت! أصبح العدد مثل الرقم " + ajNum(spec.target));
+                        api.solved();
+                    } else {
+                        api.say("✓ أحسنت! أكمل الإطار التالي");
+                    }
+
+                } else if (c > need) {
+                    api.say("😊 كثير قليلًا — اضغط دائرة لتُزيلها");
+                } else {
+                    api.say("🧮 بقي " + ajNum(need - c) + " دائرة");
+                }
+            });
+        });
+
+        root.appendChild(rowEl);
+    });
+
+    api.say("⚫ ضع دوائر في الإطار الثاني حتى يصبح العدد " + ajNum(spec.target));
+}
+
+/* =========================================================
+   🧷 ربط القسم بالتطبيق: إيقاف هادئ عند مغادرة الشاشة بأي تنقّل عام
+   (تغليف غير جراحي لـ showScreen — فوق التغليفات السابقة، بلا تعديل عليها)
+   ========================================================= */
+
+const originalShowScreenForAJ = showScreen;
+
+showScreen = function (screenId) {
+
+    if (screenId !== "ajPlay" && screenId !== "ajHome") ajStopAudio();
+
+    if (
+        typeof ajGame !== "undefined" &&
+        ajGame.active &&
+        screenId !== "ajPlay"
+    ) {
+        ajTeardownCurrent();
+        ajGame.active = false;
+        ajGame.session++;
+
+        ajSetDialogInert(false);
+
+        const dialog = $("ajDone");
+        if (dialog) dialog.style.display = "none";
+    }
+
+    originalShowScreenForAJ(screenId);
+};
+
+/* =========================================================
+   🔚 نهاية قسم "أرقامي الجميلة" التفاعلي المستقل
+   ========================================================= */
+
+
 
 
 
