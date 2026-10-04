@@ -490,6 +490,19 @@
     </h2>
 
 
+    <button
+        class="aj-entry-btn"
+        type="button"
+        onclick="openAJHome()"
+    >
+        <span class="aj-entry-text">
+            <strong>🌟 أرقامي الجميلة</strong>
+            <small>أنشطة تفاعلية من ١ إلى ٢٠</small>
+        </span>
+        <span class="aj-entry-go" aria-hidden="true">◀</span>
+    </button>
+
+
     <div
         class="number"
         id="currentNumber"
@@ -3021,6 +3034,350 @@
                 >
                     ▶ المستوى التالي
                 </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     🆕 🌟 أرقامي الجميلة — أنشطة تفاعلية (قسم الأرقام)
+     شاشتان جديدتان معزولتان تمامًا: الخريطة، ومشغّل النشاط.
+     تحويل تفاعلي لكتابَي «أرقامي الجميلة ١–١٠» و«١١–٢٠».
+========================================================= -->
+
+<section
+    id="ajHome"
+    class="screen"
+>
+
+    <div class="aj-wrap">
+
+        <div class="aj-topbar">
+
+            <button
+                class="aj-back-btn"
+                type="button"
+                onclick="exitAJ()"
+                aria-label="العودة إلى قسم الأرقام"
+            >
+                ⬅️
+            </button>
+
+            <div class="aj-top-title">
+                🌟 أرقامي الجميلة
+            </div>
+
+            <div class="aj-stars" aria-label="عدد النجوم">
+                ⭐ <strong id="ajHomeStars">٠</strong>
+            </div>
+
+        </div>
+
+
+        <div class="aj-cover">
+
+            <div class="aj-cover-dots" aria-hidden="true">
+                <span style="--aj-pastel:#dbe8f6">١</span>
+                <span style="--aj-pastel:#e3f1e0">٢</span>
+                <span style="--aj-pastel:#fbe8d8">٣</span>
+                <span style="--aj-pastel:#fbf1cf">٤</span>
+                <span style="--aj-pastel:#ebe3f3">٥</span>
+            </div>
+
+            <h2 class="aj-cover-title">
+                أرقامي الجميلة
+            </h2>
+
+            <div class="aj-gold-line" aria-hidden="true"></div>
+
+            <p class="aj-cover-sub">
+                تدريبات تفاعلية للأرقام
+            </p>
+
+        </div>
+
+
+        <div
+            class="aj-tabs"
+            role="tablist"
+            aria-label="اختر الكتاب"
+        >
+
+            <button
+                id="ajBook1"
+                class="aj-tab aj-tab-on"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                onclick="ajSelectBook(1)"
+            >
+                من ١ إلى ١٠
+            </button>
+
+            <button
+                id="ajBook2"
+                class="aj-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                onclick="ajSelectBook(2)"
+            >
+                من ١١ إلى ٢٠
+            </button>
+
+        </div>
+
+
+        <div
+            class="aj-overall-track"
+            id="ajOverallTrack"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-label="تقدّمك في هذا الكتاب"
+        >
+            <div
+                id="ajOverallFill"
+                class="aj-overall-fill"
+            ></div>
+        </div>
+
+        <div
+            id="ajOverallText"
+            class="aj-overall-text"
+        ></div>
+
+
+        <div
+            id="ajMap"
+            class="aj-map"
+            role="list"
+            aria-label="خريطة الأرقام"
+        ></div>
+
+        <div
+            id="ajHomeHint"
+            class="aj-home-hint"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+    </div>
+
+</section>
+
+
+<section
+    id="ajPlay"
+    class="screen"
+>
+
+    <div class="aj-wrap aj-play-wrap">
+
+        <div class="aj-topbar">
+
+            <button
+                class="aj-back-btn"
+                type="button"
+                onclick="ajBackToMap()"
+                aria-label="العودة إلى خريطة الأرقام"
+            >
+                ⬅️
+            </button>
+
+            <div class="aj-top-title">
+                🌟 أرقامي الجميلة
+            </div>
+
+            <div class="aj-stars" aria-label="عدد النجوم">
+                ⭐ <strong id="ajStars">٠</strong>
+            </div>
+
+        </div>
+
+
+        <div class="aj-pagehead">
+
+            <div
+                id="ajNumCircle"
+                class="aj-numcircle"
+                aria-hidden="true"
+            >
+                ١
+            </div>
+
+            <div
+                id="ajPageDots"
+                class="aj-pagedots"
+                aria-hidden="true"
+            >
+                <i></i><i></i><i></i>
+            </div>
+
+
+        </div>
+
+
+        <div
+            class="aj-progress-track"
+            id="ajProgressTrack"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-label="تقدّمك في هذا الرقم"
+        >
+            <div
+                id="ajProgressFill"
+                class="aj-progress-fill"
+            ></div>
+        </div>
+
+        <div
+            id="ajProgressText"
+            class="aj-progress-text"
+        ></div>
+
+
+        <section class="aj-card">
+
+            <div class="aj-card-head">
+
+                <span
+                    id="ajActIcon"
+                    class="aj-card-icon"
+                    aria-hidden="true"
+                >
+                    🎨
+                </span>
+
+                <h3 id="ajActTitle"></h3>
+
+            </div>
+
+            <div
+                id="ajMessage"
+                class="aj-message"
+                role="status"
+                aria-live="polite"
+            ></div>
+
+            <div
+                id="ajStage"
+                class="aj-stage"
+            ></div>
+
+        </section>
+
+
+        <div class="aj-controls">
+
+            <button
+                id="ajBtnListen"
+                class="aj-ctl"
+                type="button"
+                onclick="ajListenActivity()"
+                aria-label="اسمع اسم الرقم"
+            >
+                🔊 اسمع
+            </button>
+
+            <button
+                id="ajBtnAssist"
+                class="aj-ctl"
+                type="button"
+                onclick="ajAssistActivity()"
+                hidden
+            >
+                🪄 ساعدني
+            </button>
+
+            <button
+                id="ajBtnAgain"
+                class="aj-ctl"
+                type="button"
+                onclick="ajAgainActivity()"
+            >
+                ↻ من جديد
+            </button>
+
+            <button
+                id="ajBtnSkip"
+                class="aj-ctl"
+                type="button"
+                onclick="ajSkipActivity()"
+            >
+                ⏭ تخطَّ
+            </button>
+
+            <button
+                id="ajBtnNext"
+                class="aj-ctl aj-ctl-next"
+                type="button"
+                onclick="ajNextActivity()"
+                disabled
+                aria-disabled="true"
+            >
+                التالي ▶
+            </button>
+
+        </div>
+
+
+        <div
+            id="ajDone"
+            class="aj-done-overlay"
+            style="display:none;"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="ajDoneTitle"
+        >
+
+            <div class="aj-done-card">
+
+                <div
+                    id="ajConfetti"
+                    class="aj-confetti"
+                    aria-hidden="true"
+                ></div>
+
+                <div
+                    id="ajDoneNumber"
+                    class="aj-done-number"
+                    aria-hidden="true"
+                >
+                    ١
+                </div>
+
+                <h3 id="ajDoneTitle">
+                    🌟 أحسنت! أتممتَ الرقم
+                </h3>
+
+                <p id="ajDoneBody"></p>
+
+                <div class="aj-done-actions">
+
+                    <button
+                        id="ajDoneNext"
+                        class="primary"
+                        type="button"
+                    >
+                        ▶ الرقم التالي
+                    </button>
+
+                    <button
+                        id="ajDoneMap"
+                        class="secondary"
+                        type="button"
+                    >
+                        🗺️ خريطة الأرقام
+                    </button>
+
+                </div>
 
             </div>
 
