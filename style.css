@@ -8840,3 +8840,555 @@ body.dark-mode .olg-level-complete-card p { color: #94a3b8; }
     .olg-card { min-height: 116px; }
     .olg-gallery-slot { width: 40px; height: 40px; font-size: 22px; }
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   📝 صورة ↔ كلمة — نسخة احترافية مستقلة (Tap-to-Select)
+   =====================================================================
+   قسم جديد كليًا ومعزول — كل الأصناف بادئة بـ pwg- (Picture-Word Game).
+   هوية "لوحة تسمية": صفحة صور بخانات تسمية، وصينية بطاقات كلمات على
+   هيئة "بطاقات تسمية" (Tags). لون تيل مميّز عن بقية ألعاب المطابقة.
+   ملاحظات تقنية مقصودة:
+   - لا letter-spacing ولا حشو أفقي داخل نص الكلمة (يقطع اتصال الحروف).
+   - لون معتم صريح للأزرار المعطّلة (الافتراضي شبه شفاف ويُبهِت الإيموجي).
+   - الحركة تخضع تلقائيًا لقاعدة prefers-reduced-motion العامة.
+========================================================================= */
+
+.pwg-wrapper {
+    position: relative;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 14px 16px 34px;
+}
+
+/* ---------- الشريط العلوي ---------- */
+
+.pwg-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.pwg-back-btn {
+    border: 2px solid #5eead4;
+    background: #ffffff;
+    color: #0f766e;
+    font-size: 20px;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color .15s ease;
+}
+
+.pwg-back-btn:hover { background: #f0fdfa; }
+
+.pwg-back-btn:focus-visible {
+    outline: 3px solid #0f766e;
+    outline-offset: 2px;
+}
+
+.pwg-title {
+    font-size: 20px;
+    color: #134e4a;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+}
+
+.pwg-stars {
+    font-size: 17px;
+    font-weight: bold;
+    color: #134e4a;
+    background: #f0fdfa;
+    border: 2px solid #5eead4;
+    border-radius: 30px;
+    padding: 6px 14px;
+    white-space: nowrap;
+}
+
+/* ---------- الشارات ---------- */
+
+.pwg-level-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.pwg-badge {
+    font-size: 14px;
+    font-weight: bold;
+    color: #134e4a;
+    background: #ccfbf1;
+    border: 1px solid #5eead4;
+    border-radius: 20px;
+    padding: 5px 12px;
+}
+
+/* ---------- شريط التقدّم ---------- */
+
+.pwg-progress-track {
+    height: 14px;
+    background: #ccfbf1;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    border: 1px solid #5eead4;
+}
+
+.pwg-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2dd4bf, #0d9488);
+    border-radius: 20px;
+    transition: width .35s ease;
+}
+
+/* ---------- رسالة الحالة ---------- */
+
+/* مساحة الرسالة محجوزة دائمًا (سطران على الشاشات الضيقة): تغيّر طول
+   الرسالة لا يجوز أن يحرّك اللوحة والبطاقات فجأة — القفزات المفاجئة
+   تُربك أطفال التوحد وفرط الحركة. */
+.pwg-message {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    line-height: 1.5;
+    color: #134e4a;
+    margin-bottom: 8px;
+}
+
+@media (min-width: 560px) {
+    .pwg-message { min-height: 34px; }
+}
+
+/* ---------- صفحة الصور (لوحة التسمية) ---------- */
+
+.pwg-page {
+    background: #ffffff;
+    border-radius: 22px;
+    border-top: 7px solid #14b8a6;
+    box-shadow: 0 6px 18px rgba(13,148,136,.14);
+    padding: 16px 10px 14px;
+    margin-bottom: 16px;
+}
+
+.pwg-board {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.pwg-pic-card,
+.pwg-pic-card:disabled {
+    color: #134e4a;
+    opacity: 1;
+}
+
+.pwg-pic-card {
+    position: relative;
+    flex: 0 0 calc(50% - 6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 8px 10px;
+    background: #ffffff;
+    border: 3px solid #99f6e4;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(13,148,136,.15);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
+}
+
+.pwg-pic-card:hover:not(:disabled) { background: #f0fdfa; }
+
+.pwg-pic-card:focus-visible,
+.pwg-tile:focus-visible {
+    outline: 3px solid #0f766e;
+    outline-offset: 3px;
+}
+
+.pwg-pic-emoji {
+    width: clamp(86px, 26vw, 112px);
+    height: clamp(86px, 26vw, 112px);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f0fdfa, #99f6e4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(54px, 16vw, 70px);
+    line-height: 1;
+}
+
+/* خانة التسمية: فارغة بخط متقطّع، وتستقر فيها الكلمة عند الصحيح */
+
+.pwg-pic-slot {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #5eead4;
+    border-radius: 12px;
+    font-size: 24px;
+    font-weight: 900;
+    color: #15803d;
+    background: #f0fdfa;
+}
+
+.pwg-pic-slot.filled {
+    border-style: solid;
+    border-color: #16a34a;
+    background: #ffffff;
+    animation: pwgSnap .35s ease;
+}
+
+@keyframes pwgSnap {
+    0% { transform: translateY(12px); opacity: .2; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+/* ---------- صينية الكلمات ---------- */
+
+.pwg-tray-wrap {
+    background: #ccfbf1;
+    border-radius: 22px;
+    box-shadow: inset 0 3px 8px rgba(13,148,136,.2);
+    padding: 12px 10px 14px;
+}
+
+.pwg-tray-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #134e4a;
+    margin-bottom: 10px;
+}
+
+.pwg-tray {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.pwg-tile,
+.pwg-tile:disabled {
+    color: #134e4a;
+    opacity: 1;
+}
+
+.pwg-tile {
+    position: relative;
+    flex: 0 0 calc(50% - 5px);
+    min-height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 30px 8px 12px;
+    background: #ffffff;
+    border: 3px solid #5eead4;
+    border-radius: 16px;
+    font-size: clamp(26px, 7.4vw, 34px);
+    font-weight: 900;
+    line-height: 1.3;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(13,148,136,.18);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
+}
+
+/* ثقب بطاقة التسمية (زخرفة فقط) */
+.pwg-tile::before {
+    content: "";
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid #5eead4;
+    transform: translateY(-50%);
+}
+
+.pwg-tile:hover:not(:disabled) { background: #f0fdfa; }
+
+/* ---------- حالة التحديد: ارتفاع + حلقة + أيقونة (لا يعتمد على اللون وحده) ---------- */
+
+.pwg-selected {
+    border-color: #0f766e;
+    background-color: #f0fdfa;
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 4px rgba(13,148,136,.28), 0 9px 14px rgba(13,148,136,.2);
+}
+
+.pwg-selected::after {
+    content: "👆";
+    position: absolute;
+    top: 4px;
+    left: 8px;
+    font-size: 18px;
+}
+
+/* ---------- حالة الصحيح: ✓ + تثبيت (بطاقة الصورة) ---------- */
+
+.pwg-pic-card.pwg-correct {
+    border-color: #16a34a;
+    border-style: solid;
+    background-color: #f0fdf4;
+    cursor: default;
+    box-shadow: 0 3px 0 rgba(22,163,74,.2);
+}
+
+.pwg-pic-card.pwg-correct::after {
+    content: "✓";
+    position: absolute;
+    top: 4px;
+    left: 9px;
+    font-size: 22px;
+    color: #16a34a;
+    font-weight: 900;
+}
+
+/* البطاقة التي استقرّت كلمتها تترك "أثرًا" متقطّعًا بدل أن تختفي (يبقى التخطيط ثابتًا) */
+
+.pwg-tile.pwg-placed,
+.pwg-tile.pwg-placed:disabled {
+    color: transparent;
+    background: transparent;
+    border-style: dashed;
+    box-shadow: none;
+    cursor: default;
+    transform: none;
+}
+
+.pwg-tile.pwg-placed::before { display: none; }
+
+/* ---------- حالة الخطأ: × + اهتزاز خفيف + حدّ متقطّع ---------- */
+
+.pwg-wrong {
+    border-color: #dc2626 !important;
+    border-style: dashed !important;
+    background-color: #fef2f2 !important;
+    animation: pwgShake .4s ease;
+}
+
+.pwg-wrong::after {
+    content: "×";
+    position: absolute;
+    top: 0;
+    left: 10px;
+    font-size: 26px;
+    color: #dc2626;
+    font-weight: 900;
+}
+
+@keyframes pwgShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+
+/* ---------- تلميح هادئ بعد خطأين متتاليين: إطار متقطّع + 💡 ---------- */
+
+.pwg-hint {
+    outline: 4px dashed #f59e0b;
+    outline-offset: 3px;
+}
+
+.pwg-hint:not(.pwg-selected):not(.pwg-wrong):not(.pwg-correct)::after {
+    content: "💡";
+    position: absolute;
+    top: 4px;
+    left: 8px;
+    font-size: 20px;
+}
+
+/* ---------- شاشة إكمال المستوى ---------- */
+
+.pwg-level-complete-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(19,78,74,0.58);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 16px;
+}
+
+.pwg-level-complete-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 26px 20px 22px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+}
+
+.pwg-level-complete-card h3 {
+    font-size: 24px;
+    color: #15803d;
+    margin-bottom: 6px;
+}
+
+.pwg-level-complete-card p {
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+/* صفحة "قاموسي": الكلمات التي تعلّمها الطفل مع صورها */
+
+.pwg-dict {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+    gap: 8px;
+    max-height: 210px;
+    overflow-y: auto;
+    padding: 8px;
+    margin-bottom: 16px;
+    background: #f0fdfa;
+    border: 2px solid #99f6e4;
+    border-radius: 16px;
+}
+
+.pwg-dict:focus-visible {
+    outline: 3px solid #0f766e;
+    outline-offset: 2px;
+}
+
+.pwg-dict-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    background: #ffffff;
+    border: 1px solid #99f6e4;
+    border-radius: 12px;
+}
+
+.pwg-dict-emoji { font-size: 30px; line-height: 1.1; }
+
+.pwg-dict-word {
+    font-size: 16px;
+    font-weight: 800;
+    color: #134e4a;
+}
+
+/* ---------- قصاصات احتفال محدودة جدًا (8 قصاصات فقط) ---------- */
+
+.pwg-confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.pwg-confetti-piece {
+    position: absolute;
+    top: -12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: pwgConfettiFall 1.1s ease-in forwards;
+}
+
+@keyframes pwgConfettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(240px) rotate(220deg); opacity: 0; }
+}
+
+/* ---------- السبورة الذكية / الشاشات العريضة ---------- */
+
+@media (min-width: 1000px) {
+    /* حاوية التطبيق الأم محدودة بـ900px على أي شاشة، فالعرض الفعلي ~808px:
+       خمس بطاقات بعرض 152px تتسع في صف واحد (وتتقلّص قليلًا عند الحاجة) */
+    .pwg-wrapper { max-width: 980px; }
+    .pwg-board { gap: 12px; }
+    .pwg-pic-card { flex: 0 1 152px; min-width: 0; padding: 12px 8px 10px; }
+    .pwg-pic-emoji { width: 104px; height: 104px; font-size: 66px; }
+    .pwg-pic-slot { min-height: 52px; font-size: 26px; }
+    .pwg-tray { gap: 12px; }
+    .pwg-tile { flex: 0 1 auto; min-width: 128px; min-height: 72px; font-size: 34px; padding-left: 14px; padding-right: 34px; }
+    .pwg-tile::before { right: 12px; width: 12px; height: 12px; }
+    .pwg-message { font-size: 20px; min-height: 30px; margin-bottom: 6px; }
+    .pwg-topbar { margin-bottom: 6px; }
+    .pwg-level-row { margin-bottom: 6px; }
+    .pwg-progress-track { margin-bottom: 6px; }
+    .pwg-page { margin-bottom: 12px; }
+    .pwg-tray-wrap { padding: 10px 10px 12px; }
+    .pwg-tray-title { margin-bottom: 8px; }
+}
+
+@media (min-width: 560px) and (max-width: 999px) {
+    .pwg-pic-card { flex: 0 0 calc(33.333% - 8px); }
+    .pwg-tile { flex: 0 0 calc(33.333% - 7px); }
+}
+
+/* ---------- الوضع الداكن ---------- */
+
+body.dark-mode .pwg-title,
+body.dark-mode .pwg-message,
+body.dark-mode .pwg-stars,
+body.dark-mode .pwg-badge,
+body.dark-mode .pwg-tray-title {
+    color: #99f6e4;
+}
+
+body.dark-mode .pwg-stars,
+body.dark-mode .pwg-back-btn,
+body.dark-mode .pwg-badge {
+    background: #0a2a28;
+    border-color: #0f766e;
+}
+
+body.dark-mode .pwg-page { background: #0a2a28; border-top-color: #0f766e; }
+body.dark-mode .pwg-tray-wrap { background: #0f3d3a; }
+
+body.dark-mode .pwg-pic-card,
+body.dark-mode .pwg-tile {
+    background-color: #0a2a28;
+    border-color: #0f766e;
+}
+
+body.dark-mode .pwg-pic-card,
+body.dark-mode .pwg-pic-card:disabled,
+body.dark-mode .pwg-tile,
+body.dark-mode .pwg-tile:disabled { color: #ccfbf1; }
+
+body.dark-mode .pwg-tile.pwg-placed,
+body.dark-mode .pwg-tile.pwg-placed:disabled { color: transparent; background: transparent; }
+
+body.dark-mode .pwg-pic-emoji { background: radial-gradient(circle at 35% 30%, #134e4a, #0a2a28); }
+body.dark-mode .pwg-pic-slot { background: #0f3d3a; border-color: #0f766e; color: #86efac; }
+body.dark-mode .pwg-pic-slot.filled { background: #0a2a28; }
+body.dark-mode .pwg-pic-card.pwg-correct { background-color: #052e1a; }
+body.dark-mode .pwg-selected { background-color: #134e4a; }
+body.dark-mode .pwg-level-complete-card { background: #0a2a28; }
+body.dark-mode .pwg-level-complete-card p { color: #94a3b8; }
+body.dark-mode .pwg-dict { background: #0f3d3a; border-color: #0f766e; }
+body.dark-mode .pwg-dict-item { background: #0a2a28; border-color: #0f766e; }
+body.dark-mode .pwg-dict-word { color: #ccfbf1; }
+
+/* ---------- تجاوب الشاشات الصغيرة جدًا ---------- */
+
+@media (max-width: 360px) {
+    .pwg-pic-slot { font-size: 21px; min-height: 42px; }
+    .pwg-tile { min-height: 60px; padding-left: 8px; padding-right: 26px; }
+}
