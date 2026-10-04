@@ -2222,7 +2222,7 @@
 
             <button
                 class="game-launch-card matching-mode-card matching-mode-objectletter"
-                onclick="startMatchingGame('objects-letters')"
+                onclick="startOLGame()"
             >
 
                 <div class="game-card-icon">
@@ -2708,6 +2708,154 @@
 
                 <button
                     id="nqgLevelCompleteNextBtn"
+                    class="primary"
+                    type="button"
+                >
+                    ▶ المستوى التالي
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     🆕 🖼️ حرف ↔ صورة — نسخة احترافية مستقلة (Tap-to-Select)
+     قسم جديد كليًا، منفصل تمامًا عن #matchingGame و
+     #matchingLettersGame و #matchingQuantityGame.
+     فكرة مميّزة: "مكتبة الصور" — يجمع الطفل صورة لكل حرف يُتقنه.
+========================================================= -->
+
+<section
+    id="matchingPictureGame"
+    class="screen"
+>
+
+    <div class="olg-wrapper">
+
+        <div class="olg-topbar">
+
+            <button
+                class="olg-back-btn"
+                onclick="exitOLGame()"
+                aria-label="العودة للألعاب"
+            >
+                ⬅️
+            </button>
+
+            <h2 class="olg-title">
+                🖼️ حرف ↔ صورة
+            </h2>
+
+            <div class="olg-stars" aria-label="عدد النجوم">
+                ⭐ <strong id="olgStars">٠</strong>
+            </div>
+
+        </div>
+
+
+        <div class="olg-level-row">
+
+            <span class="olg-level-badge">
+                المستوى
+                <strong id="olgLevel">١</strong>
+            </span>
+
+            <span class="olg-round-badge">
+                الجولة
+                <strong id="olgRound">١</strong>
+                /
+                <strong id="olgTotalRounds">٥</strong>
+            </span>
+
+        </div>
+
+
+        <div
+            class="olg-progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            id="olgProgressTrack"
+            aria-label="تقدّم المستوى"
+        >
+            <div
+                id="olgProgressFill"
+                class="olg-progress-fill"
+            ></div>
+        </div>
+
+
+        <div
+            id="olgMessage"
+            class="olg-message"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <div
+            id="olgGrid"
+            class="olg-grid"
+            role="group"
+            aria-label="بطاقات مطابقة الحروف والصور"
+        ></div>
+
+
+        <div class="olg-gallery">
+
+            <div class="olg-gallery-title">
+                📚 مكتبة الصور
+                <span id="olgGalleryCount" class="olg-gallery-count">٠/٧</span>
+            </div>
+
+            <div
+                id="olgGallery"
+                class="olg-gallery-strip"
+                role="list"
+                aria-label="الصور التي جمعتها"
+            ></div>
+
+        </div>
+
+
+        <div
+            id="olgLevelComplete"
+            class="olg-level-complete-overlay"
+            style="display:none;"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="olgLevelCompleteTitle"
+        >
+
+            <div class="olg-level-complete-card">
+
+                <div
+                    id="olgConfetti"
+                    class="olg-confetti"
+                    aria-hidden="true"
+                ></div>
+
+                <h3 id="olgLevelCompleteTitle">
+                    🌟 أحسنت! أكملت المستوى
+                </h3>
+
+                <p id="olgLevelCompleteBody">
+                    المستوى التالي بانتظارك
+                </p>
+
+                <div
+                    id="olgLevelCompleteGallery"
+                    class="olg-complete-gallery"
+                    aria-hidden="true"
+                ></div>
+
+                <button
+                    id="olgLevelCompleteNextBtn"
                     class="primary"
                     type="button"
                 >
