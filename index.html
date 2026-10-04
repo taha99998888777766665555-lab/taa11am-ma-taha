@@ -2246,11 +2246,11 @@
 
             <button
                 class="game-launch-card matching-mode-card matching-mode-places"
-                onclick="startMatchingGame('places-words')"
+                onclick="startPWGame()"
             >
 
                 <div class="game-card-icon">
-                    🏫🕌
+                    🐪📝
                 </div>
 
                 <h3>
@@ -2258,7 +2258,7 @@
                 </h3>
 
                 <p>
-                    تعرّف على أماكن من حولنا: مدرسة، مسجد، مستشفى، بقالة، صيدلية
+                    اربط كل صورة بكلمتها، بمستويات الحروف من الأسهل إلى الأصعب
                 </p>
 
                 <span>
@@ -2856,6 +2856,166 @@
 
                 <button
                     id="olgLevelCompleteNextBtn"
+                    class="primary"
+                    type="button"
+                >
+                    ▶ المستوى التالي
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     🆕 📝 صورة ↔ كلمة — نسخة احترافية مستقلة (Tap-to-Select)
+     قسم جديد كليًا، منفصل تمامًا عن بقية أقسام/ألعاب المطابقة.
+     فكرة مميّزة: "لوحة التسمية" — صور في الأعلى لكل منها خانة
+     تسمية فارغة، وصينية بطاقات كلمات بالأسفل؛ يختار الطفل كلمة
+     ثم صورتها فتستقر الكلمة في خانة الصورة، وفي نهاية المستوى
+     يحصل على صفحة "قاموسي" بالكلمات التي تعلّمها.
+========================================================= -->
+
+<section
+    id="matchingPictureWordGame"
+    class="screen"
+>
+
+    <div class="pwg-wrapper">
+
+        <div class="pwg-topbar">
+
+            <button
+                class="pwg-back-btn"
+                onclick="exitPWGame()"
+                aria-label="العودة للألعاب"
+            >
+                ⬅️
+            </button>
+
+            <h2 class="pwg-title">
+                📝 صورة ↔ كلمة
+            </h2>
+
+            <div class="pwg-stars" aria-label="عدد النجوم">
+                ⭐ <strong id="pwgStars">٠</strong>
+            </div>
+
+        </div>
+
+
+        <div class="pwg-level-row">
+
+            <span class="pwg-badge">
+                المستوى
+                <strong id="pwgLevel">١</strong>
+            </span>
+
+            <span class="pwg-badge">
+                الجولة
+                <strong id="pwgRound">١</strong>
+                /
+                <strong id="pwgTotalRounds">٥</strong>
+            </span>
+
+            <span class="pwg-badge">
+                📖 كلماتي
+                <strong id="pwgWordsCount">٠</strong>
+            </span>
+
+        </div>
+
+
+        <div
+            class="pwg-progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            id="pwgProgressTrack"
+            aria-label="تقدّم المستوى"
+        >
+            <div
+                id="pwgProgressFill"
+                class="pwg-progress-fill"
+            ></div>
+        </div>
+
+
+        <div
+            id="pwgMessage"
+            class="pwg-message"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <div class="pwg-page">
+
+            <div
+                id="pwgBoard"
+                class="pwg-board"
+                role="group"
+                aria-label="الصور"
+            ></div>
+
+        </div>
+
+
+        <div class="pwg-tray-wrap">
+
+            <div class="pwg-tray-title">
+                🔤 اختر كلمة
+            </div>
+
+            <div
+                id="pwgTray"
+                class="pwg-tray"
+                role="group"
+                aria-label="بطاقات الكلمات"
+            ></div>
+
+        </div>
+
+
+        <div
+            id="pwgLevelComplete"
+            class="pwg-level-complete-overlay"
+            style="display:none;"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="pwgLevelCompleteTitle"
+        >
+
+            <div class="pwg-level-complete-card">
+
+                <div
+                    id="pwgConfetti"
+                    class="pwg-confetti"
+                    aria-hidden="true"
+                ></div>
+
+                <h3 id="pwgLevelCompleteTitle">
+                    🌟 أحسنت! أكملت المستوى
+                </h3>
+
+                <p id="pwgLevelCompleteBody">
+                    المستوى التالي بانتظارك
+                </p>
+
+                <div
+                    id="pwgLevelCompleteDict"
+                    class="pwg-dict"
+                    role="list"
+                    aria-label="الكلمات التي تعلّمتها"
+                    tabindex="0"
+                ></div>
+
+                <button
+                    id="pwgLevelCompleteNextBtn"
                     class="primary"
                     type="button"
                 >
