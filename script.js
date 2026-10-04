@@ -11593,6 +11593,912 @@ showScreen = function (screenId) {
    ========================================================= */
 
 
+/* =========================================================================
+   🆕 =====================================================================
+   📝 صورة ↔ كلمة — نسخة احترافية مستقلة (Tap-to-Select)
+   =====================================================================
+   قسم جديد كليًا ومعزول تمامًا — لا يشارك أي حالة أو عنصر DOM أو تخزين
+   مع بقية أقسام/ألعاب المطابقة. فكرته "لوحة التسمية": صور في الأعلى لكل
+   منها خانة تسمية فارغة، وصينية بطاقات كلمات بالأسفل؛ يختار الطفل كلمة
+   ثم صورتها (أو العكس) فتستقر الكلمة في خانة الصورة.
+
+   البيانات: 110 زوجًا (كلمة + صورة) مُنتقاة من LETTER_UNITS — مصدر
+   الصور الموجود أصلًا في التطبيق وكلماته هي نفسها كلمات ملفات الصوت
+   المحلية. استُبعد منه ما فيه لبس أو خطأ: صور مكررة لكلمتين، صور لا
+   تمثّل الكلمة (مثل «ذيل» 🦁، «تين» 🍈، «ثلاجة» 🧊، «طاولة» 🪑)، أفعال،
+   وإيموجي مركّب أو حديث قد لا يظهر على الأجهزة القديمة. لم تُضَف أي
+   صورة جديدة. المستويات الأربعة = مجموعات الحروف الأربع المعتمدة
+   (بحسب أول حرف في الكلمة)، بلا خلط بينها.
+
+   التدرّج داخل المستوى مرتبط بمهارة القراءة نفسها:
+   - سهل: كلمات قصيرة وبدايات مختلفة، والصورة تنطق اسمها عند لمسها.
+   - متوسط: أي طول مع بدايات مختلفة، والصورة تنطق أيضًا.
+   - تحدٍّ: ثلاث كلمات تتشارك الحرف الأول (يجب قراءتها كاملة)، وتصمت
+     الصورة ويبقى نطق الكلمة للتحقق (سحب الدعم تدريجيًا).
+   كما يُمنع اجتماع كلمتين قد تلتبس صورتاهما (دجاجة/ديك، قرد/غوريلا).
+
+   الصوت: ملفات MP3 المحلية فقط (اسم الكلمة) — لا Browser ولا Google
+   TTS ولا أي صوت بديل داخل هذه اللعبة.
+========================================================================= */
+
+const PW_WORD_BANK = {
+    1: [
+        { word: "أناناس", emoji: "🍍" }, { word: "أرنب", emoji: "🐰" }, { word: "أسد", emoji: "🦁" },
+        { word: "أذن", emoji: "👂" }, { word: "أخطبوط", emoji: "🐙" }, { word: "بيت", emoji: "🏠" },
+        { word: "بنت", emoji: "👧" }, { word: "بطة", emoji: "🦆" }, { word: "باب", emoji: "🚪" },
+        { word: "برتقال", emoji: "🍊" }, { word: "بقرة", emoji: "🐄" }, { word: "بطيخ", emoji: "🍉" },
+        { word: "تفاح", emoji: "🍎" }, { word: "تاج", emoji: "👑" }, { word: "تمساح", emoji: "🐊" },
+        { word: "ثعلب", emoji: "🦊" }, { word: "ثوم", emoji: "🧄" }, { word: "ثعبان", emoji: "🐍" },
+        { word: "ثلج", emoji: "❄️" }, { word: "جسر", emoji: "🌉" }, { word: "جبنة", emoji: "🧀" },
+        { word: "جرس", emoji: "🔔" }, { word: "جزر", emoji: "🥕" }, { word: "جبل", emoji: "⛰️" },
+        { word: "جمل", emoji: "🐪" }, { word: "حصان", emoji: "🐎" }, { word: "حليب", emoji: "🥛" },
+        { word: "حذاء", emoji: "👞" }, { word: "حوت", emoji: "🐳" }, { word: "حقيبة", emoji: "🎒" },
+        { word: "خيمة", emoji: "⛺" }, { word: "خيار", emoji: "🥒" }, { word: "خس", emoji: "🥬" },
+        { word: "خوخ", emoji: "🍑" }, { word: "خبز", emoji: "🍞" }, { word: "خروف", emoji: "🐑" },
+    ],
+    2: [
+        { word: "دجاجة", emoji: "🐔" }, { word: "دب", emoji: "🐻" }, { word: "ديك", emoji: "🐓" },
+        { word: "دلفين", emoji: "🐬" }, { word: "دفتر", emoji: "📓" }, { word: "دراجة", emoji: "🚲" },
+        { word: "ذئب", emoji: "🐺" }, { word: "زهرة", emoji: "🌸" }, { word: "زرافة", emoji: "🦒" },
+        { word: "سفينة", emoji: "🚢" }, { word: "سيارة", emoji: "🚗" }, { word: "سمكة", emoji: "🐟" },
+        { word: "ساعة", emoji: "⏰" }, { word: "سرير", emoji: "🛏️" }, { word: "شمس", emoji: "☀️" },
+        { word: "شجرة", emoji: "🌳" }, { word: "شمعة", emoji: "🕯️" }, { word: "صندوق", emoji: "📦" },
+        { word: "صاروخ", emoji: "🚀" }, { word: "صحن", emoji: "🍽️" }, { word: "صبار", emoji: "🌵" },
+    ],
+    3: [
+        { word: "ضرس", emoji: "🦷" }, { word: "ضفدع", emoji: "🐸" }, { word: "طائرة", emoji: "✈️" },
+        { word: "طاووس", emoji: "🦚" }, { word: "طفل", emoji: "👶" }, { word: "ظرف", emoji: "✉️" },
+        { word: "علم", emoji: "🚩" }, { word: "عصفور", emoji: "🐦" }, { word: "عين", emoji: "👁️" },
+        { word: "عنب", emoji: "🍇" }, { word: "عسل", emoji: "🍯" }, { word: "عصير", emoji: "🧃" },
+        { word: "غيوم", emoji: "☁️" }, { word: "غوريلا", emoji: "🦍" }, { word: "فراشة", emoji: "🦋" },
+        { word: "فستان", emoji: "👗" }, { word: "فانوس", emoji: "🏮" }, { word: "فراولة", emoji: "🍓" },
+        { word: "فيل", emoji: "🐘" }, { word: "فأر", emoji: "🐭" }, { word: "قميص", emoji: "👕" },
+        { word: "قلم", emoji: "✏️" }, { word: "قرد", emoji: "🐒" }, { word: "قلب", emoji: "❤️" },
+        { word: "قفاز", emoji: "🧤" }, { word: "قصر", emoji: "🏰" },
+    ],
+    4: [
+        { word: "كرة", emoji: "⚽" }, { word: "كلب", emoji: "🐶" }, { word: "كرسي", emoji: "🪑" },
+        { word: "كيك", emoji: "🎂" }, { word: "كرز", emoji: "🍒" }, { word: "كتاب", emoji: "📘" },
+        { word: "ليمون", emoji: "🍋" }, { word: "لحم", emoji: "🥩" }, { word: "لمبة", emoji: "💡" },
+        { word: "لعبة", emoji: "🧸" }, { word: "لسان", emoji: "👅" }, { word: "مدرسة", emoji: "🏫" },
+        { word: "مسجد", emoji: "🕌" }, { word: "مقص", emoji: "✂️" }, { word: "مفتاح", emoji: "🔑" },
+        { word: "موز", emoji: "🍌" }, { word: "نسر", emoji: "🦅" }, { word: "نحل", emoji: "🐝" },
+        { word: "نجمة", emoji: "⭐" }, { word: "نمر", emoji: "🐯" }, { word: "نخلة", emoji: "🌴" },
+        { word: "هلال", emoji: "🌙" }, { word: "هدية", emoji: "🎁" }, { word: "هاتف", emoji: "📱" },
+        { word: "ولد", emoji: "👦" }, { word: "وردة", emoji: "🌹" }, { word: "يد", emoji: "✋" },
+    ],
+};
+
+const PW_CONFLICT_GROUPS = [
+    ["دجاجة", "ديك"],
+    ["قرد", "غوريلا"]
+];
+
+const pwGame = {
+    level: 1,
+    round: 0,
+    totalRounds: 5,
+    tier: "easy",
+    levelWords: [],
+    collected: [],
+    pairs: [],
+    items: [],
+    matchedCount: 0,
+    selectedId: null,
+    consecutiveWrong: 0,
+    active: false,
+    session: 0
+};
+
+/* =========================================================
+   🔊 صوت محلي فقط — إن لم يوجد ملف مطابق تمامًا يبقى صامتًا
+   بدل أي TTS احتياطي
+   ========================================================= */
+
+function speakPWLocal(text) {
+    if (
+        typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined" &&
+        EDUCATIONAL_AUDIO_MANIFEST[text]
+    ) {
+        speakEducational(text);
+    }
+}
+
+function pwEmojiFor(word) {
+    for (const lvl of Object.keys(PW_WORD_BANK)) {
+        const hit = PW_WORD_BANK[lvl].find(e => e.word === word);
+        if (hit) return hit.emoji;
+    }
+    return "";
+}
+
+/* =========================================================
+   💾 حفظ/تحميل المستوى المفتوح — مفتاح معزول جديد
+   ========================================================= */
+
+function loadPWUnlockedLevel() {
+    const saved = Number(localStorage.getItem("taha_pw_unlocked_level") || 1);
+    return Math.min(Math.max(saved, 1), 4);
+}
+
+function savePWUnlockedLevel(level) {
+    const current = loadPWUnlockedLevel();
+    if (level > current) {
+        localStorage.setItem("taha_pw_unlocked_level", String(Math.min(level, 4)));
+    }
+}
+
+/* =========================================================
+   🧠 تدرّج الصعوبة داخل المستوى (جولات 1-2 سهلة، 3-4 متوسطة،
+   5+ تحدٍّ)
+   ========================================================= */
+
+function pwTierForRound(round) {
+    if (round <= 2) return "easy";
+    if (round <= 4) return "medium";
+    return "hard";
+}
+
+function pwPairCountForTier(tier, poolLength) {
+    const wanted = tier === "easy" ? 3 : tier === "medium" ? 4 : 5;
+    return Math.min(wanted, poolLength);
+}
+
+/* سحب الدعم الصوتي تدريجيًا: في التحدّي تصمت الصورة ويبقى نطق الكلمة */
+function pwPictureSpeaks(tier) {
+    return tier !== "hard";
+}
+
+function pwWordLen(word) {
+    return Array.from(word).length;
+}
+
+function pwWordsConflict(a, b) {
+    return PW_CONFLICT_GROUPS.some(g => g.includes(a) && g.includes(b));
+}
+
+function pwSelectOnce(poolWords, collected, count, tier) {
+
+    /* الكلمات التي لم يتعلّمها الطفل بعد تُفضَّل أولًا */
+    const ordered = shuffle(poolWords.filter(w => !collected.includes(w)))
+        .concat(shuffle(poolWords.filter(w => collected.includes(w))));
+
+    const chosen = [];
+
+    const canAdd = (w, opts) => {
+        if (chosen.includes(w)) return false;
+        if (chosen.some(c => pwWordsConflict(c, w))) return false;
+        if (opts.distinctFirst && chosen.some(c => c.charAt(0) === w.charAt(0))) return false;
+        if (opts.maxLen && pwWordLen(w) > opts.maxLen) return false;
+        return true;
+    };
+
+    const fill = (opts, list) => {
+        list.forEach(w => {
+            if (chosen.length < count && canAdd(w, opts)) chosen.push(w);
+        });
+    };
+
+    if (tier === "hard") {
+
+        /* تحدٍّ: ثلاث كلمات تتشارك الحرف الأول (إن وُجدت) */
+        const countByLetter = {};
+        poolWords.forEach(w => {
+            countByLetter[w.charAt(0)] = (countByLetter[w.charAt(0)] || 0) + 1;
+        });
+
+        const seed = ordered.find(w => countByLetter[w.charAt(0)] >= 3);
+
+        if (seed) {
+            let cluster = 0;
+            [seed].concat(ordered.filter(w => w !== seed && w.charAt(0) === seed.charAt(0)))
+                .forEach(w => {
+                    if (cluster < 3 && chosen.length < count && canAdd(w, {})) {
+                        chosen.push(w);
+                        cluster++;
+                    }
+                });
+        }
+
+        /* ثم كلمات أطول بدايات مختلفة */
+        const longFirst = ordered.slice().sort((a, b) =>
+            (pwWordLen(b) >= 5 ? 1 : 0) - (pwWordLen(a) >= 5 ? 1 : 0)
+        );
+        fill({ distinctFirst: true }, longFirst);
+
+    } else if (tier === "easy") {
+
+        /* سهل: كلمات قصيرة وبدايات مختلفة */
+        fill({ distinctFirst: true, maxLen: 3 }, ordered);
+        fill({ distinctFirst: true, maxLen: 4 }, ordered);
+
+    } else {
+
+        fill({ distinctFirst: true }, ordered);
+    }
+
+    /* احتياط: تخفيف الشروط لضمان اكتمال العدد دائمًا */
+    fill({}, ordered);
+
+    return chosen;
+}
+
+/* الخوارزمية أعلاه جشعة: قد تقع في طريق مسدود (مثلًا اختيار «قرد» يمنع
+   «غوريلا») فتُكمل بكلمة سبق تعلّمها بينما يوجد حلّ أفضل. لذلك نجرّب عدة
+   محاولات ونأخذ الأفضل: أكثر كلمات جديدة، مع احترام قاعدة المستوى. */
+
+function pwScoreSelection(chosen, collected, tier) {
+    const fresh = chosen.filter(w => !collected.includes(w)).length;
+
+    const firsts = {};
+    chosen.forEach(w => { firsts[w.charAt(0)] = (firsts[w.charAt(0)] || 0) + 1; });
+    const maxShare = Math.max.apply(null, Object.values(firsts));
+
+    let rule = 0;
+
+    if (tier === "hard") {
+        rule = maxShare >= 3 ? 5 : 0;
+    } else {
+        rule = maxShare === 1 ? 5 : 0;
+        if (tier === "easy" && chosen.every(w => pwWordLen(w) <= 3)) rule += 3;
+    }
+
+    return fresh * 10 + rule;
+}
+
+function selectPWWords(poolWords, collected, count, tier) {
+
+    let best = null;
+    let bestScore = -1;
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+
+        const candidate = pwSelectOnce(poolWords, collected, count, tier);
+        const score = pwScoreSelection(candidate, collected, tier);
+
+        if (candidate.length === count && score > bestScore) {
+            best = candidate;
+            bestScore = score;
+        }
+
+        /* أعلى درجة ممكنة: كل الكلمات جديدة + قاعدة المستوى محقَّقة كاملة */
+        const maxPossible = count * 10 + (tier === "easy" ? 8 : 5);
+        if (bestScore >= maxPossible) break;
+    }
+
+    return best || pwSelectOnce(poolWords, collected, count, tier);
+}
+
+/* =========================================================
+   ▶️ بدء اللعبة — تبدأ دائمًا من المستوى المفتوح المحفوظ
+   ========================================================= */
+
+function resetPWLevelState() {
+    pwGame.levelWords = (PW_WORD_BANK[pwGame.level] || []).map(e => e.word);
+    pwGame.collected = [];
+    pwGame.round = 0;
+    pwGame.totalRounds = getMatchingTotalRounds(pwGame.level);
+    pwGame.tier = "easy";
+    pwGame.matchedCount = 0;
+    pwGame.selectedId = null;
+    pwGame.consecutiveWrong = 0;
+    pwGame.pairs = [];
+    pwGame.items = [];
+}
+
+function startPWGame() {
+
+    pwGame.level = loadPWUnlockedLevel();
+    resetPWLevelState();
+    pwGame.active = true;
+    pwGame.session++;
+
+    showScreen("matchingPictureWordGame");
+
+    setPWBackgroundInert(false);
+
+    const overlay = $("pwgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    updatePWHUD();
+    clearPWMessage();
+
+    setTimeout(() => {
+        if (pwGame.active) buildPWRound();
+    }, 150);
+}
+
+/* =========================================================
+   🧩 بناء جولة جديدة
+   ========================================================= */
+
+function pwShuffleTilesAwayFromPictures(pictures, tiles) {
+    /* لا نترك ترتيب البطاقات مطابقًا لترتيب الصور (حتى لا يُخمَّن
+       الحل بالموضع): نعيد الخلط حتى لا يقع أي تطابق موضعي */
+    for (let attempt = 0; attempt < 12; attempt++) {
+        const candidate = shuffle(tiles);
+        if (candidate.every((t, i) => !pictures[i] || t.pairId !== pictures[i].pairId)) {
+            return candidate;
+        }
+    }
+    const rotated = tiles.slice();
+    if (rotated.length > 1) rotated.push(rotated.shift());
+    return rotated;
+}
+
+function buildPWRound() {
+
+    if (!pwGame.active) return;
+
+    pwGame.round++;
+    pwGame.matchedCount = 0;
+    pwGame.selectedId = null;
+    pwGame.consecutiveWrong = 0;
+
+    const tier = pwTierForRound(pwGame.round);
+    pwGame.tier = tier;
+
+    const count = pwPairCountForTier(tier, pwGame.levelWords.length);
+    const words = selectPWWords(pwGame.levelWords, pwGame.collected, count, tier);
+
+    pwGame.pairs = words.map((word, index) => ({
+        id: "PWG" + index,
+        word: word,
+        emoji: pwEmojiFor(word)
+    }));
+
+    const pictures = shuffle(pwGame.pairs.map(pair => ({
+        itemId: pair.id + "-P", pairId: pair.id, kind: "picture", pair: pair, matched: false
+    })));
+
+    const tiles = pwShuffleTilesAwayFromPictures(
+        pictures,
+        pwGame.pairs.map(pair => ({
+            itemId: pair.id + "-W", pairId: pair.id, kind: "tile", pair: pair, matched: false
+        }))
+    );
+
+    pwGame.items = pictures.concat(tiles);
+
+    renderPWBoard(pictures, tiles);
+    updatePWHUD();
+
+    showPWMessage(
+        tier === "hard"
+            ? "🔍 تحدٍّ: اقرأ الكلمات بعناية ثم اختر الصورة"
+            : "🧩 اختر كلمة ثم الصورة التي تدل عليها"
+    );
+}
+
+/* =========================================================
+   🎨 رسم اللوحة — صور بخانات تسمية + صينية كلمات
+   ========================================================= */
+
+function renderPWBoard(pictures, tiles) {
+
+    const board = $("pwgBoard");
+    const tray = $("pwgTray");
+    if (!board || !tray) return;
+
+    board.innerHTML = "";
+    tray.innerHTML = "";
+
+    pictures.forEach(item => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pwg-pic-card";
+        btn.dataset.itemId = item.itemId;
+
+        const emoji = document.createElement("span");
+        emoji.className = "pwg-pic-emoji";
+        emoji.setAttribute("aria-hidden", "true");
+        emoji.textContent = item.pair.emoji;
+        btn.appendChild(emoji);
+
+        const slot = document.createElement("span");
+        slot.className = "pwg-pic-slot";
+        slot.setAttribute("aria-hidden", "true");
+        btn.appendChild(slot);
+
+        btn.setAttribute("aria-label", "صورة " + item.pair.word + "، اضغط للاختيار");
+        btn.setAttribute("aria-pressed", "false");
+
+        btn.addEventListener("click", () => handlePWTap(item.itemId));
+
+        board.appendChild(btn);
+    });
+
+    tiles.forEach(item => {
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pwg-tile";
+        btn.dataset.itemId = item.itemId;
+        btn.textContent = item.pair.word;
+
+        btn.setAttribute("aria-label", "الكلمة " + item.pair.word + "، اضغط للاختيار");
+        btn.setAttribute("aria-pressed", "false");
+
+        btn.addEventListener("click", () => handlePWTap(item.itemId));
+
+        tray.appendChild(btn);
+    });
+}
+
+function getPWButton(itemId) {
+    return document.querySelector(
+        `#matchingPictureWordGame [data-item-id="${CSS.escape(itemId)}"]`
+    );
+}
+
+function clearPWHints() {
+    document
+        .querySelectorAll("#matchingPictureWordGame .pwg-hint")
+        .forEach(el => el.classList.remove("pwg-hint"));
+}
+
+function setPWSelected(itemId, flag) {
+    const btn = getPWButton(itemId);
+    if (!btn) return;
+    btn.classList.toggle("pwg-selected", flag);
+    btn.setAttribute("aria-pressed", flag ? "true" : "false");
+}
+
+/* =========================================================
+   👆 التعامل مع اختيار بطاقة — Tap-to-Select
+   (كلمة ثم صورة، أو صورة ثم كلمة؛ لمس بطاقة من النوع نفسه
+   ينقل التحديد إليها؛ لمس المحدَّدة مرة ثانية يُلغيها)
+   ========================================================= */
+
+function handlePWTap(itemId) {
+
+    if (!pwGame.active) return;
+
+    const item = pwGame.items.find(i => i.itemId === itemId);
+    if (!item || item.matched) return;
+
+    /* الصوت: الكلمة تنطق دائمًا؛ والصورة تنطق في السهل والمتوسط فقط */
+    if (item.kind === "tile" || pwPictureSpeaks(pwGame.tier)) {
+        speakPWLocal(item.pair.word);
+    }
+
+    if (pwGame.selectedId === null) {
+
+        pwGame.selectedId = itemId;
+        setPWSelected(itemId, true);
+
+        showPWMessage(
+            item.kind === "tile"
+                ? "👆 اخترتَ «" + item.pair.word + "» — الآن اختر صورتها"
+                : "👆 اخترتَ صورة — الآن اختر كلمتها"
+        );
+
+        return;
+    }
+
+    if (pwGame.selectedId === itemId) {
+
+        setPWSelected(itemId, false);
+        pwGame.selectedId = null;
+        clearPWMessage();
+
+        return;
+    }
+
+    const first = pwGame.items.find(i => i.itemId === pwGame.selectedId);
+
+    /* بطاقة من النوع نفسه: ننقل التحديد إليها بدل تقييم خاطئ */
+    if (first && first.kind === item.kind) {
+
+        setPWSelected(first.itemId, false);
+        pwGame.selectedId = itemId;
+        setPWSelected(itemId, true);
+
+        showPWMessage(
+            item.kind === "tile"
+                ? "👆 اخترتَ «" + item.pair.word + "» — الآن اختر صورتها"
+                : "👆 اخترتَ صورة — الآن اختر كلمتها"
+        );
+
+        return;
+    }
+
+    if (first && first.pairId === item.pairId) {
+        handlePWCorrect(first, item);
+    } else {
+        handlePWWrong(first, item);
+    }
+}
+
+/* =========================================================
+   ✅ إجابة صحيحة — ✓ + استقرار الكلمة في خانة الصورة + نجمة +
+   تقدّم + إضافة الكلمة إلى "كلماتي" (بلا أي صوت إضافي)
+   ========================================================= */
+
+function handlePWCorrect(a, b) {
+
+    const session = pwGame.session;
+
+    const picture = a.kind === "picture" ? a : b;
+    const tile = a.kind === "tile" ? a : b;
+
+    picture.matched = true;
+    tile.matched = true;
+    pwGame.selectedId = null;
+    pwGame.consecutiveWrong = 0;
+    pwGame.matchedCount++;
+
+    clearPWHints();
+
+    const picBtn = getPWButton(picture.itemId);
+    const tileBtn = getPWButton(tile.itemId);
+    const word = picture.pair.word;
+
+    if (picBtn) {
+        picBtn.classList.remove("pwg-selected", "pwg-hint");
+        picBtn.classList.add("pwg-correct");
+        picBtn.disabled = true;
+        picBtn.setAttribute("aria-pressed", "false");
+        picBtn.setAttribute("aria-label", "صورة مطابقة بنجاح: " + word);
+
+        const slot = picBtn.querySelector(".pwg-pic-slot");
+        if (slot) {
+            slot.textContent = word;
+            slot.classList.add("filled");
+        }
+    }
+
+    if (tileBtn) {
+        tileBtn.classList.remove("pwg-selected", "pwg-hint");
+        tileBtn.classList.add("pwg-placed");
+        tileBtn.disabled = true;
+        tileBtn.setAttribute("aria-pressed", "false");
+        tileBtn.setAttribute("aria-hidden", "true");
+    }
+
+    if (!pwGame.collected.includes(word)) {
+        pwGame.collected.push(word);
+    }
+
+    if (typeof addStars === "function") addStars(1);
+
+    showPWMessage("🎉 أحسنت! «" + word + "»");
+
+    updatePWHUD();
+
+    if (pwGame.matchedCount >= pwGame.pairs.length) {
+
+        setTimeout(() => {
+            if (session !== pwGame.session) return;
+            if (!pwGame.active) return;
+            finishPWRound();
+        }, 1200);
+    }
+}
+
+/* =========================================================
+   😊 إجابة خاطئة — × + اهتزاز خفيف، بلا أي عقوبة أو صوت لفظي.
+   بعد خطأين متتاليين: تلميح هادئ (إطار أصفر + 💡) على البطاقة
+   المناسبة لما اختاره الطفل أولًا، لتقليل الإحباط
+   ========================================================= */
+
+function handlePWWrong(first, second) {
+
+    const session = pwGame.session;
+
+    const firstBtn = first ? getPWButton(first.itemId) : null;
+    const secondBtn = getPWButton(second.itemId);
+
+    [firstBtn, secondBtn].forEach(btn => {
+        if (btn) btn.classList.add("pwg-wrong");
+    });
+
+    pwGame.consecutiveWrong++;
+
+    clearPWHints();
+
+    if (pwGame.consecutiveWrong >= 2 && first) {
+
+        const partner = pwGame.items.find(i =>
+            i.pairId === first.pairId && i.kind !== first.kind && !i.matched
+        );
+        const partnerBtn = partner ? getPWButton(partner.itemId) : null;
+
+        if (partnerBtn) {
+            partnerBtn.classList.add("pwg-hint");
+            showPWMessage("💡 تلميح: انظر إلى البطاقة ذات الإطار الأصفر");
+        } else {
+            showPWMessage("😊 حاول مرة أخرى");
+        }
+
+    } else {
+
+        showPWMessage("😊 حاول مرة أخرى");
+    }
+
+    setTimeout(() => {
+
+        if (session !== pwGame.session) return;
+
+        [firstBtn, secondBtn].forEach(btn => {
+            if (!btn) return;
+            btn.classList.remove("pwg-wrong", "pwg-selected");
+            btn.setAttribute("aria-pressed", "false");
+        });
+
+        pwGame.selectedId = null;
+
+    }, 650);
+}
+
+/* =========================================================
+   ♿ عند ظهور شاشة النجاح (aria-modal) يُعطَّل ما خلفها (inert)
+   ويُحبَس التركيز داخلها، ويُعاد كل ذلك بعد إغلاقها
+   ========================================================= */
+
+function pwTrapDialogFocus(event) {
+
+    if (event.key !== "Tab") return;
+
+    /* عناصر الحوار القابلة للتركيز: صفحة "قاموسي" (قابلة للتمرير بالأسهم)
+       ثم زرّ المتابعة. نُدير الحلقة بينهما فلا يغادر التركيز الحوار،
+       ويبقى القاموس متاحًا لمستخدم لوحة المفاتيح */
+    const focusables = [$("pwgLevelCompleteDict"), $("pwgLevelCompleteNextBtn")]
+        .filter(Boolean);
+
+    if (!focusables.length) return;
+
+    event.preventDefault();
+
+    const index = focusables.indexOf(document.activeElement);
+    let target;
+
+    if (event.shiftKey) {
+        target = index <= 0 ? focusables[focusables.length - 1] : focusables[index - 1];
+    } else {
+        target = (index === -1 || index === focusables.length - 1)
+            ? focusables[0]
+            : focusables[index + 1];
+    }
+
+    target.focus();
+}
+
+function setPWBackgroundInert(flag) {
+    const wrapper = document.querySelector("#matchingPictureWordGame .pwg-wrapper");
+    if (!wrapper) return;
+    Array.from(wrapper.children).forEach(child => {
+        if (child.id === "pwgLevelComplete") return;
+        child.inert = !!flag;
+    });
+}
+
+/* =========================================================
+   🏁 إكمال الجولة/المستوى — شاشة نجاح أنيقة + صفحة "قاموسي" +
+   Confetti محدود
+   ========================================================= */
+
+function finishPWRound() {
+
+    const session = pwGame.session;
+
+    if (pwGame.round < pwGame.totalRounds) {
+
+        showPWMessage("🌟 جولة مكتملة");
+
+        setTimeout(() => {
+            if (session !== pwGame.session) return;
+            if (!pwGame.active) return;
+            buildPWRound();
+        }, 500);
+
+        return;
+    }
+
+    pwGame.active = false;
+
+    const isLastLevel = pwGame.level >= 4;
+
+    savePWUnlockedLevel(Math.min(pwGame.level + 1, 4));
+
+    const overlay = $("pwgLevelComplete");
+    const title = $("pwgLevelCompleteTitle");
+    const body = $("pwgLevelCompleteBody");
+    const nextBtn = $("pwgLevelCompleteNextBtn");
+    const dict = $("pwgLevelCompleteDict");
+
+    if (title) {
+        title.textContent = isLastLevel ? "🎉 أكملت كل المستويات!" : "🌟 أحسنت! أكملت المستوى";
+    }
+
+    if (body) {
+        body.textContent = "تعلّمت " + arabicNumber(pwGame.collected.length) +
+            " كلمة جديدة في قاموسك";
+    }
+
+    if (dict) {
+        dict.innerHTML = "";
+        (PW_WORD_BANK[pwGame.level] || []).forEach(entry => {
+            if (!pwGame.collected.includes(entry.word)) return;
+
+            const cell = document.createElement("div");
+            cell.className = "pwg-dict-item";
+            cell.setAttribute("role", "listitem");
+
+            const emoji = document.createElement("span");
+            emoji.className = "pwg-dict-emoji";
+            emoji.setAttribute("aria-hidden", "true");
+            emoji.textContent = entry.emoji;
+
+            const word = document.createElement("span");
+            word.className = "pwg-dict-word";
+            word.textContent = entry.word;
+
+            cell.appendChild(emoji);
+            cell.appendChild(word);
+            dict.appendChild(cell);
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.textContent = isLastLevel ? "🏠 العودة للألعاب" : "▶ المستوى التالي";
+        nextBtn.onclick = isLastLevel ? exitPWGame : advanceToNextPWLevel;
+    }
+
+    renderPWConfetti();
+
+    setPWBackgroundInert(true);
+
+    if (overlay) {
+        overlay.addEventListener("keydown", pwTrapDialogFocus);
+        overlay.style.display = "flex";
+    }
+
+    if (nextBtn) {
+        setTimeout(() => nextBtn.focus(), 50);
+    }
+}
+
+function advanceToNextPWLevel() {
+
+    pwGame.level = Math.min(pwGame.level + 1, 4);
+    resetPWLevelState();
+    pwGame.active = true;
+    pwGame.session++;
+
+    setPWBackgroundInert(false);
+
+    const overlay = $("pwgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    updatePWHUD();
+    clearPWMessage();
+
+    buildPWRound();
+}
+
+/* =========================================================
+   🎊 قصاصات احتفال محدودة جدًا (8 قصاصات فقط)
+   ========================================================= */
+
+function renderPWConfetti() {
+
+    const el = $("pwgConfetti");
+    if (!el) return;
+
+    el.innerHTML = "";
+
+    const colors = ["#2dd4bf", "#fbbf24", "#4ade80", "#f472b6"];
+
+    for (let i = 0; i < 8; i++) {
+
+        const piece = document.createElement("div");
+        piece.className = "pwg-confetti-piece";
+        piece.style.left = (10 + Math.random() * 80) + "%";
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.25) + "s";
+
+        el.appendChild(piece);
+    }
+
+    setTimeout(() => {
+        if (el) el.innerHTML = "";
+    }, 1400);
+}
+
+/* =========================================================
+   🖥️ واجهة المعلومات (HUD)
+   ========================================================= */
+
+function updatePWHUD() {
+
+    const starsEl = $("pwgStars");
+    if (starsEl && typeof stars !== "undefined") {
+        starsEl.textContent = arabicNumber(stars);
+    }
+
+    const levelEl = $("pwgLevel");
+    if (levelEl) levelEl.textContent = arabicNumber(pwGame.level);
+
+    const roundEl = $("pwgRound");
+    if (roundEl) roundEl.textContent = arabicNumber(Math.min(Math.max(pwGame.round, 1), pwGame.totalRounds));
+
+    const totalEl = $("pwgTotalRounds");
+    if (totalEl) totalEl.textContent = arabicNumber(pwGame.totalRounds);
+
+    const wordsEl = $("pwgWordsCount");
+    if (wordsEl) wordsEl.textContent = arabicNumber(pwGame.collected.length);
+
+    const fill = $("pwgProgressFill");
+    const track = $("pwgProgressTrack");
+
+    if (fill) {
+        const done = Math.max(0, pwGame.round - 1);
+        const inRound = pwGame.pairs.length ? pwGame.matchedCount / pwGame.pairs.length : 0;
+        const pct = Math.min(100, Math.round(((done + inRound) / pwGame.totalRounds) * 100));
+        fill.style.width = pct + "%";
+        if (track) track.setAttribute("aria-valuenow", String(pct));
+    }
+}
+
+function showPWMessage(text) {
+    const el = $("pwgMessage");
+    if (el) el.textContent = text;
+}
+
+function clearPWMessage() {
+    const el = $("pwgMessage");
+    if (el) el.textContent = "";
+}
+
+/* =========================================================
+   🚪 الخروج من اللعبة
+   ========================================================= */
+
+function exitPWGame() {
+
+    pwGame.active = false;
+    pwGame.session++;
+
+    setPWBackgroundInert(false);
+
+    const overlay = $("pwgLevelComplete");
+    if (overlay) overlay.style.display = "none";
+
+    showScreen("games");
+}
+
+/* إيقاف هادئ عند مغادرة الشاشة عبر أي تنقّل عام — تغليف غير جراحي
+   إضافي لـ showScreen (فوق التغليفات السابقة، بلا تعديل عليها) */
+
+const originalShowScreenForPW = showScreen;
+
+showScreen = function (screenId) {
+
+    if (
+        typeof pwGame !== "undefined" &&
+        pwGame.active &&
+        screenId !== "matchingPictureWordGame"
+    ) {
+        pwGame.active = false;
+        pwGame.session++;
+
+        setPWBackgroundInert(false);
+
+        const overlay = $("pwgLevelComplete");
+        if (overlay) overlay.style.display = "none";
+    }
+
+    originalShowScreenForPW(screenId);
+};
+
+/* =========================================================
+   🔚 نهاية قسم "صورة ↔ كلمة" الاحترافي المستقل
+   ========================================================= */
+
+
+
 
 
 
