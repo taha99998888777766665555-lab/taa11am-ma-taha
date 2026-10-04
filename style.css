@@ -8377,3 +8377,466 @@ body.dark-mode .nqg-level-complete-card p {
         max-width: 140px;
     }
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   🖼️ حرف ↔ صورة — نسخة احترافية مستقلة (Tap-to-Select)
+   =====================================================================
+   قسم جديد كليًا ومعزول — كل الأصناف بادئة بـ olg- (Objects-Letters
+   Game). هوية "بطاقات تعليمية" دافئة بلون العنبر، مطابقة للون بطاقة
+   "حرف ↔ صورة" في شاشة الاختيار، ومتمايزة عن الأزرق (حرف↔حرف)
+   والأخضر (رقم↔كمية). فكرة اللعبة المميزة: "مكتبة الصور" التي
+   تمتلئ تدريجيًا. الحركة تخضع تلقائيًا لقاعدة prefers-reduced-motion
+   العامة الموجودة أصلًا أعلى الملف.
+========================================================================= */
+
+.olg-wrapper {
+    position: relative;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 14px 16px 30px;
+}
+
+/* ---------- الشريط العلوي ---------- */
+
+.olg-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.olg-back-btn {
+    border: 2px solid #fcd34d;
+    background: #ffffff;
+    color: #b45309;
+    font-size: 20px;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color .15s ease;
+}
+
+.olg-back-btn:hover { background: #fffbeb; }
+
+.olg-back-btn:focus-visible {
+    outline: 3px solid #b45309;
+    outline-offset: 2px;
+}
+
+.olg-title {
+    font-size: 20px;
+    color: #78350f;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+}
+
+.olg-stars {
+    font-size: 17px;
+    font-weight: bold;
+    color: #78350f;
+    background: #fffbeb;
+    border: 2px solid #fcd34d;
+    border-radius: 30px;
+    padding: 6px 14px;
+    white-space: nowrap;
+}
+
+/* ---------- شارات المستوى والجولة ---------- */
+
+.olg-level-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.olg-level-badge,
+.olg-round-badge {
+    font-size: 14px;
+    font-weight: bold;
+    color: #78350f;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 20px;
+    padding: 5px 12px;
+}
+
+/* ---------- شريط التقدّم ---------- */
+
+.olg-progress-track {
+    height: 14px;
+    background: #fef3c7;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    border: 1px solid #fcd34d;
+}
+
+.olg-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #fbbf24, #d97706);
+    border-radius: 20px;
+    transition: width .35s ease;
+}
+
+/* ---------- رسالة الحالة ---------- */
+
+.olg-message {
+    min-height: 26px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    color: #78350f;
+    margin-bottom: 10px;
+}
+
+/* ---------- الشبكة: عمودان ---------- */
+
+.olg-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.olg-card {
+    position: relative;
+    min-height: 138px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    background: #ffffff;
+    border: 3px solid #fcd34d;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(180,83,9,.15);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
+}
+
+/* لون معتم صريح: الأزرار المعطَّلة تأخذ افتراضيًا لونًا شبه شفاف
+   (rgba(16,16,16,.3)) يُطبَّق على رموز الإيموجي الملوّنة في Chromium
+   فتبدو الصورة المثبَّتة باهتة — نُعيد لونًا معتمًا ثابتًا */
+.olg-card,
+.olg-card:disabled {
+    color: #78350f;
+    opacity: 1;
+}
+
+.olg-card:hover:not(:disabled) { background: #fffbeb; }
+
+.olg-card:focus-visible {
+    outline: 3px solid #d97706;
+    outline-offset: 3px;
+}
+
+/* ---------- بطاقة الحرف: حرف كبير جدًا على خط كتابة ---------- */
+
+.olg-card.olg-letter-card {
+    background-image: linear-gradient(to bottom, transparent 70%, #fde68a 70%, #fde68a 72%, transparent 72%);
+}
+
+.olg-letter-display {
+    font-size: clamp(56px, 16vw, 84px);
+    font-weight: 900;
+    color: #78350f;
+    line-height: 1.15;
+}
+
+/* ---------- بطاقة الصورة: "ملصق" داخل دائرة ناعمة ---------- */
+
+.olg-picture-sticker {
+    width: clamp(78px, 24vw, 104px);
+    height: clamp(78px, 24vw, 104px);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fffbeb, #fde68a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(46px, 14vw, 64px);
+    line-height: 1;
+}
+
+/* الكلمة تظهر فقط بعد الإجابة الصحيحة (لا تكشف الحل قبل ذلك) */
+
+.olg-picture-word {
+    display: none;
+    font-size: 17px;
+    font-weight: 800;
+    color: #15803d;
+}
+
+/* تمييز الحرف الأول باللون + خط سفلي فقط (ليس باللون وحده) — وبلا أي
+   حشو أو تغيير لحجم الخط، لأن ذلك يقطع اتصال الحروف العربية فيظهر
+   الحرف منفصلًا بشكل خاطئ. لون + خط سفلي يحفظان التشكيل المتصل. */
+.olg-picture-word .olg-first-letter {
+    color: #b45309;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 6px;
+}
+
+/* ---------- حالة التحديد ---------- */
+
+.olg-card.olg-selected {
+    border-color: #d97706;
+    background-color: #fef3c7;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 0 rgba(180,83,9,.2), 0 10px 18px rgba(180,83,9,.18);
+}
+
+/* ---------- حالة الصحيح: ✓ + حدّ متصل أخضر (لا يعتمد على اللون وحده) ---------- */
+
+.olg-card.olg-correct {
+    border-color: #16a34a;
+    border-style: solid;
+    background-color: #f0fdf4;
+    background-image: none;
+    cursor: default;
+    box-shadow: 0 3px 0 rgba(22,163,74,.2);
+}
+
+.olg-card.olg-correct::after {
+    content: "✓";
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 20px;
+    color: #16a34a;
+    font-weight: 900;
+}
+
+.olg-card.olg-correct .olg-letter-display { color: #15803d; }
+
+.olg-card.olg-correct .olg-picture-word { display: block; }
+
+/* ---------- حالة الخطأ: × + اهتزاز خفيف + حدّ متقطّع ---------- */
+
+.olg-card.olg-wrong {
+    border-color: #dc2626;
+    border-style: dashed;
+    background-color: #fef2f2;
+    animation: olgShake .4s ease;
+}
+
+.olg-card.olg-wrong::after {
+    content: "×";
+    position: absolute;
+    top: 2px;
+    left: 10px;
+    font-size: 24px;
+    color: #dc2626;
+    font-weight: 900;
+}
+
+@keyframes olgShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+
+/* ---------- مكتبة الصور: خانات تمتلئ تدريجيًا ---------- */
+
+.olg-gallery {
+    margin-top: 18px;
+    padding: 12px 10px;
+    background: #fffbeb;
+    border: 2px dashed #fcd34d;
+    border-radius: 18px;
+}
+
+.olg-gallery-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #78350f;
+    margin-bottom: 10px;
+}
+
+.olg-gallery-count {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 14px;
+    padding: 1px 10px;
+    font-size: 14px;
+}
+
+.olg-gallery-strip {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.olg-gallery-slot {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2px dashed #fcd34d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    background: transparent;
+}
+
+.olg-gallery-slot.filled {
+    border-style: solid;
+    border-color: #16a34a;
+    background: #ffffff;
+}
+
+.olg-gallery-slot.olg-just-filled {
+    animation: olgSlotPop .35s ease;
+}
+
+@keyframes olgSlotPop {
+    0% { transform: scale(.5); }
+    100% { transform: scale(1); }
+}
+
+/* ---------- شاشة إكمال المستوى ---------- */
+
+.olg-level-complete-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(120,53,15,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+}
+
+.olg-level-complete-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 30px 24px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+}
+
+.olg-level-complete-card h3 {
+    font-size: 24px;
+    color: #15803d;
+    margin-bottom: 8px;
+}
+
+.olg-level-complete-card p {
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 14px;
+}
+
+.olg-complete-gallery {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+    font-size: 28px;
+}
+
+/* ---------- قصاصات احتفال محدودة جدًا (8 قصاصات فقط) ---------- */
+
+.olg-confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.olg-confetti-piece {
+    position: absolute;
+    top: -12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: olgConfettiFall 1.1s ease-in forwards;
+}
+
+@keyframes olgConfettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(220px) rotate(220deg); opacity: 0; }
+}
+
+/* ---------- الوضع الداكن ---------- */
+
+body.dark-mode .olg-title,
+body.dark-mode .olg-message,
+body.dark-mode .olg-stars,
+body.dark-mode .olg-level-badge,
+body.dark-mode .olg-round-badge,
+body.dark-mode .olg-gallery-title {
+    color: #fde68a;
+}
+
+body.dark-mode .olg-stars,
+body.dark-mode .olg-back-btn,
+body.dark-mode .olg-level-badge,
+body.dark-mode .olg-round-badge,
+body.dark-mode .olg-gallery-count {
+    background: #2a1a05;
+    border-color: #b45309;
+}
+
+body.dark-mode .olg-gallery { background: #2a1a05; border-color: #b45309; }
+
+body.dark-mode .olg-card {
+    background-color: #2a1a05;
+    border-color: #b45309;
+}
+
+body.dark-mode .olg-card,
+body.dark-mode .olg-card:disabled { color: #fde68a; }
+
+body.dark-mode .olg-card.olg-letter-card { background-image: none; }
+
+body.dark-mode .olg-letter-display { color: #fde68a; }
+
+body.dark-mode .olg-picture-sticker {
+    background: radial-gradient(circle at 35% 30%, #4a2f0a, #2a1a05);
+}
+
+body.dark-mode .olg-card.olg-selected { background-color: #4a2f0a; }
+body.dark-mode .olg-card.olg-correct { background-color: #052e1a; }
+body.dark-mode .olg-card.olg-wrong { background-color: #450a0a; }
+body.dark-mode .olg-gallery-slot.filled { background: #2a1a05; }
+body.dark-mode .olg-level-complete-card { background: #2a1a05; }
+body.dark-mode .olg-level-complete-card p { color: #94a3b8; }
+
+/* ---------- السبورة الذكية / الشاشات العريضة: بطاقات أكبر وأربعة أعمدة
+   حتى تظهر الجولة كاملة مع مكتبة الصور دون تمرير طويل ---------- */
+
+@media (min-width: 1000px) {
+    .olg-wrapper { max-width: 920px; }
+    .olg-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .olg-card { min-height: 168px; }
+    .olg-letter-display { font-size: 104px; }
+    .olg-picture-sticker { width: 118px; height: 118px; font-size: 74px; }
+    .olg-picture-word { font-size: 20px; }
+    .olg-gallery-slot { width: 54px; height: 54px; font-size: 30px; }
+}
+
+/* ---------- تجاوب الشاشات الصغيرة جدًا ---------- */
+
+@media (max-width: 360px) {
+    .olg-card { min-height: 116px; }
+    .olg-gallery-slot { width: 40px; height: 40px; font-size: 22px; }
+}
