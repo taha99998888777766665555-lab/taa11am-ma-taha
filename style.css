@@ -11028,3 +11028,585 @@ body.dark-mode .aj-done-card { background: #16263d; border-color: #3a5a82; }
 @media (min-width: 560px) {
     .aj-opts-line .aj-opt { flex: 0 0 calc(100% / 11); min-width: 0; }
 }
+
+/* =========================================================================
+   🆕 =====================================================================
+   🧱 بنّاء الكلمات — شاشة مستقلة (قسم الألعاب)
+   =====================================================================
+   كل الأصناف بادئة بـ wb-. هوية نيلية هادئة. الحروف تُعرض بأشكالها
+   المتصلة (Presentation Forms) فلا letter-spacing ولا حشو داخل الحرف.
+   ألوان الأزرار المعطّلة معتمة صراحةً. الحركة تخضع تلقائيًا لقاعدة
+   prefers-reduced-motion العامة الموجودة أعلى الملف.
+========================================================================= */
+
+.wb-game-card {
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    border-color: #a5b4fc;
+}
+
+#wordBuilderGame {
+    --wb-ink: #312e81;
+    --wb-main: #4f46e5;
+    --wb-soft: #eef2ff;
+    --wb-line: #c7d2fe;
+    --wb-line2: #a5b4fc;
+    --wb-ok: #16a34a;
+    --wb-bad: #dc2626;
+    --wb-hint: #f59e0b;
+}
+
+.wb-wrapper {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 14px 14px 30px;
+}
+
+/* ---------- الشريط العلوي ---------- */
+
+.wb-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.wb-back-btn {
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--wb-line2);
+    background: #fff;
+    color: var(--wb-ink);
+    font-size: 21px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wb-back-btn:hover { background: var(--wb-soft); }
+
+.wb-title {
+    flex: 1;
+    margin: 0;
+    text-align: center;
+    font-size: 21px;
+    color: var(--wb-ink);
+}
+
+.wb-stars {
+    font-size: 17px;
+    font-weight: bold;
+    color: var(--wb-ink);
+    background: var(--wb-soft);
+    border: 2px solid var(--wb-line2);
+    border-radius: 30px;
+    padding: 6px 14px;
+    white-space: nowrap;
+}
+
+/* ---------- المستويات ---------- */
+
+.wb-levels {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.wb-chip,
+.wb-chip:disabled {
+    color: var(--wb-ink);
+}
+
+.wb-chip {
+    min-width: 74px;
+    min-height: 54px;
+    padding: 4px 12px;
+    background: #fff;
+    border: 3px solid var(--wb-line2);
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.25;
+    cursor: pointer;
+}
+
+.wb-chip small { display: block; font-size: 12px; font-weight: bold; }
+
+.wb-chip[aria-pressed="true"],
+.wb-chip[aria-pressed="true"]:disabled {
+    background: var(--wb-main);
+    border-color: var(--wb-main);
+    color: #fff;
+}
+
+.wb-chip.wb-locked { opacity: .55; cursor: not-allowed; border-style: dashed; }
+
+.wb-badges {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.wb-badge {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--wb-ink);
+    background: var(--wb-soft);
+    border: 1px solid var(--wb-line2);
+    border-radius: 20px;
+    padding: 5px 12px;
+}
+
+.wb-progress-track {
+    height: 14px;
+    background: var(--wb-soft);
+    border: 1px solid var(--wb-line2);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.wb-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #818cf8, var(--wb-main));
+    border-radius: 20px;
+    transition: width .35s ease;
+}
+
+/* مساحة الرسالة محجوزة (سطران): تغيّر طولها لا يحرّك اللعبة فجأة */
+.wb-message {
+    flex: 1 1 100%;
+    width: 100%;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    line-height: 1.5;
+    color: var(--wb-ink);
+    padding: 2px 6px;
+}
+
+/* ---------- اللوحة: الصورة + بناء الكلمة ---------- */
+
+.wb-board { display: grid; gap: 14px; }
+
+.wb-pic-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 14px;
+    background: #fff;
+    border: 3px solid var(--wb-line);
+    border-radius: 22px;
+}
+
+.wb-pic {
+    width: clamp(112px, 32vw, 150px);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, #c7d2fe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(64px, 19vw, 90px);
+    line-height: 1;
+    color: var(--wb-ink);
+}
+
+.wb-pic.wb-pic-done { box-shadow: 0 0 0 6px rgba(22,163,74,.35); }
+
+.wb-listen,
+.wb-listen:disabled {
+    color: var(--wb-ink);
+    opacity: 1;
+}
+
+.wb-listen {
+    min-height: 66px;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 900;
+    background: var(--wb-soft);
+    border: 3px solid var(--wb-main);
+    border-radius: 18px;
+    cursor: pointer;
+}
+
+.wb-listen:hover { background: #e0e7ff; }
+
+.wb-word-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 136px;
+    padding: 12px 8px;
+    background: #fff;
+    border: 3px solid var(--wb-line);
+    border-radius: 22px;
+}
+
+.wb-slots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    direction: rtl;
+}
+
+.wb-slots[hidden], .wb-joined[hidden] { display: none; }
+
+.wb-slot {
+    position: relative;
+    width: calc((100% - (var(--wb-n, 4) - 1) * 8px) / var(--wb-n, 4));
+    max-width: 96px;
+    min-width: 38px;
+    aspect-ratio: 3 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 3px dashed var(--wb-line2);
+    border-radius: 16px;
+    color: var(--wb-ink);
+    font-family: Tahoma, "Noto Naskh Arabic", Arial, sans-serif;
+    font-size: clamp(30px, 9vw, 58px);
+    font-weight: 900;
+    line-height: 1;
+}
+
+.wb-slot.wb-slot-next { border-width: 4px; border-color: var(--wb-main); }
+
+.wb-slot.wb-slot-filled {
+    border-style: solid;
+    border-color: var(--wb-main);
+    background: var(--wb-soft);
+}
+
+.wb-slot.wb-slot-ok { border-color: var(--wb-ok); background: #f0fdf4; }
+
+.wb-slot.wb-slot-wrong {
+    border-style: dashed;
+    border-color: var(--wb-bad);
+    background: #fef2f2;
+    animation: wbShake .4s ease;
+}
+
+.wb-slot.wb-slot-wrong::after {
+    content: "×";
+    position: absolute;
+    top: -2px;
+    left: 6px;
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--wb-bad);
+}
+
+@keyframes wbShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+
+/* الكلمة كاملة بالشكل المتصل (سلسلة أشكال متجاورة تتصل كنص واحد) */
+
+.wb-joined {
+    width: 100%;
+    text-align: center;
+    font-family: Tahoma, "Noto Naskh Arabic", Arial, sans-serif;
+    font-size: clamp(56px, 17vw, 88px);
+    font-weight: 900;
+    line-height: 1.3;
+    color: var(--wb-ok);
+    direction: rtl;
+}
+
+/* ---------- صينية الحروف ---------- */
+
+.wb-tray {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px 8px;
+    background: var(--wb-soft);
+    border-radius: 20px;
+    box-shadow: inset 0 3px 8px rgba(79,70,229,.14);
+    min-height: 100px;
+}
+
+.wb-tile,
+.wb-tile:disabled {
+    color: var(--wb-ink);
+    opacity: 1;
+}
+
+.wb-tile {
+    position: relative;
+    width: clamp(66px, 19vw, 92px);
+    height: clamp(74px, 21vw, 100px);
+    background: #fff;
+    border: 3px solid var(--wb-line2);
+    border-radius: 18px;
+    font-family: Tahoma, "Noto Naskh Arabic", Arial, sans-serif;
+    font-size: clamp(36px, 10.5vw, 54px);
+    font-weight: 900;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(79,70,229,.2);
+    transition: transform .12s ease;
+}
+
+.wb-tile:hover:not(:disabled) { background: #f5f7ff; transform: translateY(-2px); }
+
+.wb-tile:active:not(:disabled) { transform: scale(.96); }
+
+.wb-tile.wb-tile-used,
+.wb-tile.wb-tile-used:disabled {
+    color: transparent;
+    background: transparent;
+    border-style: dashed;
+    box-shadow: none;
+    cursor: default;
+    transform: none;
+}
+
+.wb-hint {
+    outline: 4px dashed var(--wb-hint);
+    outline-offset: 3px;
+    background: #fff8e6;
+}
+
+.wb-tile:focus-visible,
+.wb-chip:focus-visible,
+.wb-listen:focus-visible,
+.wb-ctl:focus-visible,
+.wb-back-btn:focus-visible {
+    outline: 4px solid var(--wb-ink);
+    outline-offset: 3px;
+}
+
+/* ---------- أزرار التحكم ---------- */
+
+.wb-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.wb-ctl,
+.wb-ctl:disabled {
+    color: var(--wb-ink);
+    opacity: 1;
+}
+
+.wb-ctl {
+    min-height: 62px;
+    min-width: 110px;
+    padding: 8px 18px;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 900;
+    background: #fff;
+    border: 3px solid var(--wb-line2);
+    border-radius: 16px;
+    cursor: pointer;
+}
+
+.wb-ctl:hover:not(:disabled) { background: var(--wb-soft); }
+
+.wb-ctl:disabled { border-style: dashed; cursor: not-allowed; background: #f4f5fb; color: #8b90b5; }
+
+.wb-ctl.wb-ctl-next,
+.wb-ctl.wb-ctl-next:disabled { color: #fff; }
+
+.wb-ctl.wb-ctl-next { background: var(--wb-main); border-color: var(--wb-main); min-width: 150px; }
+
+.wb-ctl.wb-ctl-next:disabled { background: #a8acd6; border-color: #a8acd6; border-style: solid; }
+
+.wb-ctl.wb-nudge { animation: wbNudge .6s ease; border-color: var(--wb-main); }
+
+@keyframes wbNudge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(79,70,229,.0); }
+    40% { box-shadow: 0 0 0 10px rgba(79,70,229,.3); }
+}
+
+/* ---------- شاشة إكمال المستوى ---------- */
+
+.wb-done-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(49,46,129,.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    padding: 16px;
+}
+
+.wb-done-card {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    background: #fff;
+    border-radius: 26px;
+    padding: 26px 20px 22px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.wb-done-card h3 { font-size: 24px; color: var(--wb-ok); margin: 0 0 6px; }
+
+.wb-done-card p { font-size: 16px; font-weight: bold; color: #64748b; margin: 0 0 12px; }
+
+.wb-done-words {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 8px;
+    margin-bottom: 16px;
+    background: var(--wb-soft);
+    border: 2px solid var(--wb-line);
+    border-radius: 16px;
+}
+
+.wb-done-words:focus-visible { outline: 3px solid var(--wb-ink); outline-offset: 2px; }
+
+.wb-done-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    background: #fff;
+    border: 1px solid var(--wb-line);
+    border-radius: 12px;
+}
+
+.wb-done-emoji { font-size: 30px; line-height: 1.1; }
+
+.wb-done-word {
+    font-family: Tahoma, "Noto Naskh Arabic", Arial, sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--wb-ink);
+}
+
+.wb-done-actions { display: flex; flex-direction: column; gap: 10px; }
+
+.wb-done-actions button[hidden] { display: none; }
+
+.wb-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+.wb-confetti-piece {
+    position: absolute;
+    top: -12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: wbConfettiFall 1.1s ease-in forwards;
+}
+
+@keyframes wbConfettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(260px) rotate(220deg); opacity: 0; }
+}
+
+/* ---------- السبورة الذكية / الشاشات العريضة ---------- */
+
+@media (min-width: 900px) {
+
+    /* سبورة ذكية: غلاف أعرض، المستويات والعدّادات في سطر واحد، الرسالة تحت
+       زر السماع، والأزرار تحت الحروف — فتتّسع الجولة في الشاشة دون تمرير يُذكر */
+
+    .wb-wrapper { max-width: 1120px; padding: 8px 18px 20px; text-align: center; }
+    .wb-topbar { margin-bottom: 6px; text-align: initial; }
+    .wb-levels, .wb-badges { display: inline-flex; vertical-align: middle; margin: 0 8px 6px; }
+    .wb-chip { min-height: 48px; min-width: 120px; }
+    .wb-progress-track { margin-bottom: 8px; }
+    .wb-board { grid-template-columns: 270px 1fr; align-items: start; text-align: initial; }
+    .wb-pic-card { flex-direction: column; gap: 10px; padding: 12px; }
+    .wb-pic { width: 150px; font-size: 80px; }
+    .wb-message { font-size: 19px; min-height: 64px; }
+    .wb-word-wrap { min-height: 124px; padding: 8px; }
+    .wb-slot { max-width: 88px; font-size: 56px; }
+    .wb-tray { margin-top: 12px; padding: 10px; min-height: 0; }
+    .wb-tile { width: 88px; height: 92px; font-size: 52px; }
+    .wb-controls { margin-top: 12px; }
+    .wb-ctl { min-height: 58px; }
+}
+
+/* ---------- الهاتف الضيق ---------- */
+
+@media (max-width: 480px) {
+    .wb-levels { flex-wrap: nowrap; gap: 6px; }
+    .wb-chip { flex: 1 1 0; min-width: 0; padding: 4px 4px; font-size: 14px; }
+    .wb-chip small { font-size: 11px; }
+    .wb-wrapper { padding: 10px 8px 24px; }
+    .wb-word-wrap { padding: 10px 4px; }
+    .wb-slots { gap: 6px; }
+    .wb-slot { width: calc((100% - (var(--wb-n, 4) - 1) * 6px) / var(--wb-n, 4)); border-width: 2.5px; }
+}
+
+/* ---------- الوضع الداكن ---------- */
+
+body.dark-mode .wb-title,
+body.dark-mode .wb-message,
+body.dark-mode .wb-stars,
+body.dark-mode .wb-badge { color: #c7d2fe; }
+
+body.dark-mode .wb-stars,
+body.dark-mode .wb-badge,
+body.dark-mode .wb-back-btn { background: #1e1b4b; border-color: #4f46e5; color: #c7d2fe; }
+
+body.dark-mode .wb-pic-card,
+body.dark-mode .wb-word-wrap { background: #1e1b4b; border-color: #4338ca; }
+
+body.dark-mode .wb-pic { background: radial-gradient(circle at 35% 30%, #312e81, #1e1b4b); }
+
+body.dark-mode .wb-tray { background: #27246b; }
+
+body.dark-mode .wb-slot,
+body.dark-mode .wb-tile,
+body.dark-mode .wb-chip,
+body.dark-mode .wb-ctl,
+body.dark-mode .wb-listen { background: #1e1b4b; border-color: #6366f1; color: #e0e7ff; }
+
+body.dark-mode .wb-slot.wb-slot-filled { background: #312e81; }
+body.dark-mode .wb-slot.wb-slot-ok { background: #052e1a; border-color: #22c55e; }
+body.dark-mode .wb-slot.wb-slot-wrong { background: #450a0a; }
+body.dark-mode .wb-tile,
+body.dark-mode .wb-tile:disabled,
+body.dark-mode .wb-chip,
+body.dark-mode .wb-chip:disabled,
+body.dark-mode .wb-ctl,
+body.dark-mode .wb-ctl:disabled,
+body.dark-mode .wb-listen { color: #e0e7ff; }
+body.dark-mode .wb-tile.wb-tile-used,
+body.dark-mode .wb-tile.wb-tile-used:disabled { color: transparent; background: transparent; }
+body.dark-mode .wb-chip[aria-pressed="true"] { background: #4f46e5; color: #fff; }
+body.dark-mode .wb-ctl.wb-ctl-next, body.dark-mode .wb-ctl.wb-ctl-next:disabled { color: #fff; }
+body.dark-mode .wb-ctl:disabled:not(.wb-ctl-next) { background: #27246b; color: #8b90b5; }
+body.dark-mode .wb-done-card { background: #1e1b4b; }
+body.dark-mode .wb-done-card p { color: #a5b4fc; }
+body.dark-mode .wb-done-words { background: #27246b; border-color: #4338ca; }
+body.dark-mode .wb-done-item { background: #1e1b4b; border-color: #4338ca; }
+body.dark-mode .wb-done-word { color: #e0e7ff; }
