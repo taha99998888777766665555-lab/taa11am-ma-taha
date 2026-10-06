@@ -16316,6 +16316,1070 @@ showScreen = function (screenId) {
    🔚 نهاية قسم "أرقامي الجميلة" التفاعلي المستقل
    ========================================================= */
 
+/* =========================================================
+   🆕 =====================================================
+   🧱 بنّاء الكلمات — لعبة مستقلة (قسم الألعاب)
+   =====================================================
+   الطفل يرى الصورة، ويسمع الكلمة، ثم يبنيها باختيار الحروف بالترتيب.
+   تظهر الحروف المختارة في خانات الكلمة بالشكل المتصل الصحيح، مع
+   إمكانية حذف آخر حرف وإعادة المحاولة. بلا مؤقت ولا أرواح ولا عقوبة.
+
+   مستقلة تمامًا: معرّفاتها wb / WB، ومفتاح حفظها taha_wb_progress_v1،
+   ومشغّل صوتها الخاص (MP3 محلي فقط، بلا أي TTS، وصوت واحد في كل مرة).
+   تقرأ فقط (دون تعديل) من: PW_WORD_BANK (الكلمات والصور)،
+   EDUCATIONAL_AUDIO_MANIFEST (الصوت)، arabicLetterForms +
+   RACE_NON_CONNECTORS + raceShapeForLetterAtPosition (اتصال الحروف)،
+   LTR_SIMILAR_LETTERS (الحروف المتشابهة للمشتّتات).
+========================================================= */
+
+const WB_KEY = "taha_wb_progress_v1";
+const WB_ROUNDS = 6;
+
+const WB_LEVELS = [
+    { id: 1, label: "٢–٣ حروف", extra: 0, similar: 0 },
+    { id: 2, label: "٤ حروف",   extra: 2, similar: 0 },
+    { id: 3, label: "٥ حروف",   extra: 3, similar: 1 },
+    { id: 4, label: "٥–٦ حروف", extra: 4, similar: 2 }
+];
+
+/* أشكال «ا» و«ة» القياسية (Unicode) — غير موجودة في جدول المشروع الأصلي،
+   فتُضاف هنا داخل اللعبة فقط دون المساس بالجدول. تحقّقتُ ببكسلات المتصفح
+   أن الكلمات المركّبة بها تطابق التشكيل الطبيعي تمامًا. */
+const WB_EXTRA_FORMS = {
+    "ا": { isolated: "\uFE8D", final: "\uFE8E" },
+    "ة": { isolated: "\uFE93", final: "\uFE94" }
+};
+
+/* «ا» لا صوت مسجّلًا لها: تُنطَق بصوت «أ» (همزة الألف). «ة» بلا صوت مسجّل
+   فتبقى صامتة (لا TTS). */
+const WB_SOUND_ALIAS = { "ا": "أ" };
+
+/* حروف همزة/ألف مقصورة بلا أشكال ولا أصوات في بيانات المشروع */
+const WB_UNSUPPORTED_LETTERS = /[ءئؤىإآ]/;
+
+const wbGame = {
+    active: false,
+    session: 0,
+    level: 1,
+    round: 0,
+    entry: null,
+    letters: [],
+    tiles: [],
+    placed: [],
+    wrongAt: {},
+    solved: false,
+    usedWords: [],
+    sessionWords: []
+};
+
+
+/* مساعد إنشاء عناصر خاص باللعبة (لا اعتماد على أقسام أخرى) */
+function wbEl(tag, className, text) {
+
+    const el = document.createElement(tag);
+
+    if (className) el.className = className;
+    if (text !== undefined && text !== null) el.textContent = text;
+
+    return el;
+}
+
+/* =========================================================
+   💾 حفظ التقدّم (مستقل)
+   ========================================================= */
+
+let wbProgressCache = null;
+
+function wbLoadProgress() {
+
+    if (wbProgressCache) return wbProgressCache;
+
+    let data = null;
+
+    try {
+        data = JSON.parse(localStorage.getItem(WB_KEY) || "null");
+    } catch (e) {
+        data = null;
+    }
+
+    if (!data || typeof data !== "object") data = {};
+
+    const unlocked = Math.min(Math.max(Number(data.unlocked) || 1, 1), WB_LEVELS.length);
+
+    wbProgressCache = {
+        unlocked: unlocked,
+        collected: data.collected && typeof data.collected === "object" ? data.collected : {},
+        bonus: data.bonus && typeof data.bonus === "object" ? data.bonus : {}
+    };
+
+    return wbProgressCache;
+}
+
+function wbSaveProgress() {
+    try {
+        localStorage.setItem(WB_KEY, JSON.stringify(wbLoadProgress()));
+    } catch (e) { /* التخزين معطّل: نكمل دون حفظ */ }
+}
+
+function wbCollectedFor(level) {
+    const c = wbLoadProgress().collected;
+    return Array.isArray(c[level]) ? c[level] : [];
+}
+
+function wbMarkCollected(level, word) {
+    const p = wbLoadProgress();
+    if (!Array.isArray(p.collected[level])) p.collected[level] = [];
+    if (!p.collected[level].includes(word)) p.collected[level].push(word);
+    wbSaveProgress();
+}
+
+/* =========================================================
+   🔤 اتصال الحروف: نفس خوارزمية المشروع (RACE_NON_CONNECTORS +
+   raceShapeForLetterAtPosition) مع إضافة «ة» (لا تتصل بما بعدها)
+   ========================================================= */
+
+function wbIsNonConnector(letter) {
+    return RACE_NON_CONNECTORS.has(letter) || letter === "ة";
+}
+
+function wbFormsOf(letter) {
+    return arabicLetterForms[letter] || WB_EXTRA_FORMS[letter] || null;
+}
+
+function wbGlyph(letter, position) {
+
+    if (arabicLetterForms[letter]) {
+        return raceShapeForLetterAtPosition(letter, position);
+    }
+
+    const f = WB_EXTRA_FORMS[letter];
+
+    return f ? (f[position] || f.isolated) : letter;
+}
+
+/* موضع الحرف i داخل كلمة طولها total (الحروف السابقة هي ما اختاره الطفل) */
+function wbPosition(seq, i, total) {
+
+    const hasIncoming = i > 0 && !wbIsNonConnector(seq[i - 1]);
+    const hasOutgoing = !wbIsNonConnector(seq[i]) && i < total - 1;
+
+    if (hasIncoming && hasOutgoing) return "medial";
+    if (!hasIncoming && hasOutgoing) return "initial";
+    if (hasIncoming && !hasOutgoing) return "final";
+
+    return "isolated";
+}
+
+function wbJoinedRun(letters) {
+    return letters.map((ch, i) => wbGlyph(ch, wbPosition(letters, i, letters.length))).join("");
+}
+
+/* =========================================================
+   📚 بنك الكلمات: فحص + استبعاد + مجمّعات المستويات
+   ========================================================= */
+
+function wbValidateEntry(entry) {
+
+    const word = entry.word || "";
+    const L = Array.from(word);
+
+    if (!entry.emoji) return "لا صورة";
+    if (typeof EDUCATIONAL_AUDIO_MANIFEST === "undefined" || !EDUCATIONAL_AUDIO_MANIFEST[word]) return "لا صوت للكلمة";
+    if (L.length < 2) return "قصيرة جدًا";
+    if (L.some(c => WB_UNSUPPORTED_LETTERS.test(c))) return "حرف همزة بلا بيانات أشكال";
+    if (L.some(c => !wbFormsOf(c))) return "حرف بلا شكل";
+    if (/ل[اأإآ]/.test(word)) return "فيها لام-ألف (تتحوّل إلى رمز واحد)";
+    if (L.indexOf("ة") !== -1 && L.indexOf("ة") !== L.length - 1) return "تاء مربوطة في غير آخر الكلمة";
+
+    return null;
+}
+
+let wbBankCache = null;
+
+function wbBank() {
+
+    if (wbBankCache) return wbBankCache;
+
+    const valid = [];
+    const excluded = [];
+    const seen = new Set();
+
+    Object.keys(PW_WORD_BANK).forEach(key => {
+        PW_WORD_BANK[key].forEach(e => {
+
+            if (seen.has(e.word)) return;
+            seen.add(e.word);
+
+            const reason = wbValidateEntry(e);
+
+            if (reason) {
+                excluded.push({ word: e.word, reason: reason });
+                return;
+            }
+
+            const letters = Array.from(e.word);
+            const connectCount = letters.filter((c, i) => i < letters.length - 1 && !wbIsNonConnector(c)).length;
+
+            valid.push({ word: e.word, emoji: e.emoji, letters: letters, len: letters.length, connectCount: connectCount });
+        });
+    });
+
+    /* المستوى ١: ٢–٣ حروف | ٢: ٤ حروف | ٣ و٤: ٥–٦ حروف تُقسَم بالصعوبة
+       (عدد الحروف المتصلة بما بعدها؛ الأقل أسهل) فتذهب الأسهل إلى ٣ */
+
+    const long = valid
+        .filter(w => w.len >= 5)
+        .sort((a, b) => (a.len - b.len) || (a.connectCount - b.connectCount) || a.word.localeCompare(b.word, "ar"));
+
+    const half = Math.ceil(long.length / 2);
+
+    const pools = {
+        1: valid.filter(w => w.len <= 3),
+        2: valid.filter(w => w.len === 4),
+        3: long.slice(0, half),
+        4: long.slice(half)
+    };
+
+    wbBankCache = { valid: valid, excluded: excluded, pools: pools };
+
+    return wbBankCache;
+}
+
+/* =========================================================
+   🎯 المشتّتات والحروف المتاحة
+   ========================================================= */
+
+function wbPickDistractors(entry, level) {
+
+    const cfg = WB_LEVELS[level - 1];
+
+    if (!cfg || !cfg.extra) return [];
+
+    const banned = new Set(entry.letters);
+
+    /* لا نخلط أ/ا مع بعضهما، ولا ه/ت مع ة: التباس لا فائدة تعليمية منه الآن */
+    if (banned.has("أ") || banned.has("ا")) banned.add("أ");
+    if (banned.has("ة")) { banned.add("ه"); banned.add("ت"); }
+
+    const candidates = Object.keys(arabicLetterForms).filter(c => !banned.has(c));
+    const chosen = [];
+
+    if (cfg.similar) {
+
+        const sims = [];
+
+        shuffle(entry.letters).forEach(l => {
+            (LTR_SIMILAR_LETTERS[l] || []).forEach(s => {
+                if (candidates.includes(s) && !sims.includes(s)) sims.push(s);
+            });
+        });
+
+        shuffle(sims).slice(0, cfg.similar).forEach(s => chosen.push(s));
+    }
+
+    shuffle(candidates.filter(c => !chosen.includes(c)))
+        .slice(0, cfg.extra - chosen.length)
+        .forEach(c => chosen.push(c));
+
+    return chosen;
+}
+
+function wbBuildTiles(entry, level) {
+
+    const all = entry.letters.concat(wbPickDistractors(entry, level));
+    let order = shuffle(all);
+
+    /* في المستوى الأول (بلا مشتّتات) لا يكون الترتيب مطابقًا للكلمة من البداية */
+    if (all.length > 1) {
+        for (let t = 0; t < 12 && order.join("") === entry.letters.join(""); t++) {
+            order = shuffle(all);
+        }
+    }
+
+    return order.map((letter, i) => ({ id: i, letter: letter, used: false }));
+}
+
+function wbPickWord(level) {
+
+    const pool = wbBank().pools[level] || [];
+
+    let candidates = pool.filter(w => !wbGame.usedWords.includes(w.word));
+    if (!candidates.length) candidates = pool.slice();
+
+    const collected = wbCollectedFor(level);
+    const fresh = candidates.filter(w => !collected.includes(w.word));
+
+    const from = fresh.length ? fresh : candidates;
+
+    return from[Math.floor(Math.random() * from.length)];
+}
+
+/* =========================================================
+   🔊 مشغّل MP3 محلي خاص باللعبة — بلا TTS وصوت واحد فقط في كل مرة
+   (الصوت الجارٍ يكتمل؛ وأحدث طلب فقط يُحفظ ليُشغَّل بعده). الفشل = صمت.
+   ========================================================= */
+
+let wbAudioEl = null;
+let wbAudioBusy = false;
+let wbAudioPending = null;
+
+function speakWBLocal(text, interrupt) {
+
+    const manifest = (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined") ? EDUCATIONAL_AUDIO_MANIFEST : null;
+    const path = manifest ? manifest[text] : null;
+
+    if (!path) return;
+
+    if (interrupt && wbAudioBusy) wbStopAudio();
+
+    if (wbAudioBusy) {
+        wbAudioPending = text;
+        return;
+    }
+
+    let audio;
+
+    try {
+        audio = new Audio(path);
+    } catch (e) {
+        return;
+    }
+
+    wbAudioBusy = true;
+    wbAudioEl = audio;
+
+    audio.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined")
+        ? EDUCATIONAL_AUDIO_PLAYBACK_RATE
+        : 0.8;
+
+    try {
+        audio.preservesPitch = true;
+        audio.mozPreservesPitch = true;
+        audio.webkitPreservesPitch = true;
+    } catch (e) { /* غير مدعوم */ }
+
+    const finish = () => {
+
+        if (wbAudioEl !== audio) return;
+
+        wbAudioEl = null;
+        wbAudioBusy = false;
+
+        if (wbAudioPending) {
+            const next = wbAudioPending;
+            wbAudioPending = null;
+            speakWBLocal(next);
+        }
+    };
+
+    audio.addEventListener("ended", finish, { once: true });
+    audio.addEventListener("error", finish, { once: true });
+
+    setTimeout(() => { if (wbAudioEl === audio) finish(); }, 5000);
+
+    try {
+        const p = audio.play();
+        if (p && typeof p.catch === "function") p.catch(finish);
+    } catch (e) {
+        finish();
+    }
+}
+
+function wbStopAudio() {
+
+    const a = wbAudioEl;
+
+    wbAudioEl = null;
+    wbAudioBusy = false;
+    wbAudioPending = null;
+
+    if (a) {
+        try {
+            a.pause();
+            a.currentTime = 0;
+        } catch (e) { /* لا شيء */ }
+    }
+}
+
+function wbLetterSoundText(letter) {
+
+    const base = WB_SOUND_ALIAS[letter] || letter;
+    const text = letterWithFatha(base);
+
+    return (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined" && EDUCATIONAL_AUDIO_MANIFEST[text]) ? text : null;
+}
+
+/* =========================================================
+   🎛️ مساعدات الواجهة
+   ========================================================= */
+
+function wbSay(text) {
+    const el = $("wbMessage");
+    if (el) el.textContent = text;
+}
+
+function wbAlive(session) {
+    return wbGame.active && wbGame.session === session;
+}
+
+function wbLater(fn, ms) {
+    const session = wbGame.session;
+    setTimeout(() => { if (wbAlive(session)) fn(); }, ms);
+}
+
+function wbUpdateStars() {
+    const el = $("wbStars");
+    if (el && typeof stars !== "undefined") el.textContent = arabicNumber(stars);
+}
+
+function wbSetInert(flag) {
+
+    const wrap = document.querySelector("#wordBuilderGame .wb-wrapper");
+    if (!wrap) return;
+
+    Array.from(wrap.children).forEach(child => {
+        if (child.id === "wbDone") return;
+        child.inert = !!flag;
+    });
+}
+
+function wbRenderLevels() {
+
+    const box = $("wbLevels");
+    if (!box) return;
+
+    const unlocked = wbLoadProgress().unlocked;
+
+    box.innerHTML = "";
+
+    WB_LEVELS.forEach(cfg => {
+
+        const locked = cfg.id > unlocked;
+        const btn = wbEl("button", "wb-chip" + (locked ? " wb-locked" : ""));
+
+        btn.type = "button";
+        btn.dataset.level = String(cfg.id);
+        btn.setAttribute("aria-pressed", cfg.id === wbGame.level ? "true" : "false");
+        btn.setAttribute("aria-label", "المستوى " + arabicNumber(cfg.id) + "، " + cfg.label + (locked ? "، مقفل" : ""));
+
+        const title = wbEl("span", "", locked ? "🔒 " + arabicNumber(cfg.id) : "المستوى " + arabicNumber(cfg.id));
+        const sub = wbEl("small", "", cfg.label);
+
+        btn.appendChild(title);
+        btn.appendChild(sub);
+
+        if (locked) btn.setAttribute("aria-disabled", "true");
+
+        btn.addEventListener("click", () => {
+            if (locked) {
+                wbSay("🔒 أكمل المستوى " + arabicNumber(cfg.id - 1) + " أولًا لتفتح هذا المستوى");
+                return;
+            }
+            if (cfg.id !== wbGame.level) wbStartLevel(cfg.id);
+        });
+
+        box.appendChild(btn);
+    });
+}
+
+function wbUpdateHud() {
+
+    const roundEl = $("wbRound");
+    const totalEl = $("wbTotalRounds");
+    const wordsEl = $("wbWordsCount");
+    const fill = $("wbProgressFill");
+    const track = $("wbProgressTrack");
+
+    if (roundEl) roundEl.textContent = arabicNumber(Math.min(Math.max(wbGame.round, 1), WB_ROUNDS));
+    if (totalEl) totalEl.textContent = arabicNumber(WB_ROUNDS);
+
+    if (wordsEl) {
+        wordsEl.textContent = arabicNumber(wbCollectedFor(wbGame.level).length) +
+            " / " + arabicNumber((wbBank().pools[wbGame.level] || []).length);
+    }
+
+    const done = Math.max(wbGame.round - 1, 0) + (wbGame.solved ? 1 : 0);
+    const pct = Math.round((done / WB_ROUNDS) * 100);
+
+    if (fill) fill.style.width = pct + "%";
+    if (track) track.setAttribute("aria-valuenow", String(pct));
+
+    const back = $("wbBtnBack");
+    if (back) back.disabled = wbGame.solved || wbGame.placed.length === 0;
+
+    wbUpdateStars();
+}
+
+/* =========================================================
+   🖼️ عرض الجولة
+   ========================================================= */
+
+function wbRenderSlots() {
+
+    const box = $("wbSlots");
+    if (!box || !wbGame.entry) return;
+
+    const N = wbGame.letters.length;
+    const seq = wbGame.placed.map(p => p.letter);
+
+    box.innerHTML = "";
+    box.style.setProperty("--wb-n", String(N));
+
+    for (let i = 0; i < N; i++) {
+
+        const slot = wbEl("div", "wb-slot");
+        slot.setAttribute("role", "img");
+
+        if (i < seq.length) {
+
+            const wrong = !!wbGame.placed[i].wrong;
+
+            slot.textContent = wbGlyph(seq[i], wbPosition(seq, i, N));
+            slot.classList.add("wb-slot-filled", wrong ? "wb-slot-wrong" : "wb-slot-ok");
+            slot.setAttribute("aria-label", "الخانة " + arabicNumber(i + 1) + ": الحرف " + seq[i] + (wrong ? "، غير مناسب هنا" : ""));
+
+        } else {
+
+            slot.setAttribute("aria-label", "الخانة " + arabicNumber(i + 1) + ": فارغة");
+
+            if (i === seq.length && !wbGame.solved) slot.classList.add("wb-slot-next");
+        }
+
+        box.appendChild(slot);
+    }
+}
+
+function wbRenderTray() {
+
+    const tray = $("wbTray");
+    if (!tray) return;
+
+    tray.innerHTML = "";
+
+    wbGame.tiles.forEach(tile => {
+
+        const btn = wbEl("button", "wb-tile", wbGlyph(tile.letter, "isolated"));
+
+        btn.type = "button";
+        btn.dataset.id = String(tile.id);
+        btn.setAttribute("aria-label", "الحرف " + tile.letter);
+
+        btn.addEventListener("click", () => wbTapTile(tile.id));
+
+        tile.el = btn;
+        tray.appendChild(btn);
+    });
+}
+
+function wbUpdateTray() {
+
+    wbGame.tiles.forEach(tile => {
+
+        const btn = tile.el;
+        if (!btn) return;
+
+        btn.classList.toggle("wb-tile-used", tile.used);
+        btn.disabled = tile.used || wbGame.solved;
+
+        if (tile.used) btn.setAttribute("aria-hidden", "true");
+        else btn.removeAttribute("aria-hidden");
+    });
+}
+
+function wbClearHints() {
+    wbGame.tiles.forEach(t => { if (t.el) t.el.classList.remove("wb-hint"); });
+}
+
+function wbShowHint() {
+
+    wbClearHints();
+
+    const idx = wbGame.placed.length;
+    const need = wbGame.letters[idx];
+    const tile = wbGame.tiles.find(t => !t.used && t.letter === need);
+
+    if (tile && tile.el) tile.el.classList.add("wb-hint");
+}
+
+function wbFocusNextTile(fromId) {
+
+    const open = wbGame.tiles.filter(t => !t.used && t.el);
+
+    if (!open.length) return;
+
+    const after = open.find(t => t.id > fromId) || open[0];
+
+    after.el.focus();
+}
+
+function wbRenderRound() {
+
+    const entry = wbGame.entry;
+
+    const pic = $("wbPic");
+    if (pic) {
+        pic.textContent = entry.emoji;
+        pic.classList.remove("wb-pic-done");
+    }
+
+    const slots = $("wbSlots");
+    const joined = $("wbJoined");
+    if (slots) slots.hidden = false;
+    if (joined) { joined.hidden = true; joined.textContent = ""; }
+
+    const next = $("wbBtnNext");
+    if (next) {
+        next.disabled = true;
+        next.textContent = wbGame.round >= WB_ROUNDS ? "🌟 إنهاء المستوى" : "التالي ▶";
+    }
+
+    wbRenderTray();
+    wbRenderSlots();
+    wbUpdateTray();
+    wbUpdateHud();
+}
+
+/* =========================================================
+   ▶️ تدفّق اللعبة
+   ========================================================= */
+
+function startWBGame(level) {
+
+    wbProgressCache = null;
+    wbLoadProgress();
+
+    const target = Math.min(Math.max(Number(level) || wbLoadProgress().unlocked, 1), wbLoadProgress().unlocked);
+
+    wbTeardown();
+
+    wbGame.active = true;
+    wbGame.session++;
+
+    showScreen("wordBuilderGame");
+
+    wbSetInert(false);
+
+    const dialog = $("wbDone");
+    if (dialog) dialog.style.display = "none";
+
+    document.addEventListener("keydown", wbKeyHandler);
+
+    wbStartLevel(target);
+}
+
+function wbStartLevel(level) {
+
+    wbStopAudio();
+
+    const dialog = $("wbDone");
+    if (dialog) dialog.style.display = "none";
+    wbSetInert(false);
+
+    wbGame.level = level;
+    wbGame.round = 0;
+    wbGame.usedWords = [];
+    wbGame.sessionWords = [];
+
+    wbRenderLevels();
+    wbNextRound();
+}
+
+function wbNextRound() {
+
+    wbGame.round++;
+
+    const entry = wbPickWord(wbGame.level);
+
+    wbGame.entry = entry;
+    wbGame.letters = entry.letters.slice();
+    wbGame.tiles = wbBuildTiles(entry, wbGame.level);
+    wbGame.placed = [];
+    wbGame.wrongAt = {};
+    wbGame.solved = false;
+    wbGame.usedWords.push(entry.word);
+
+    wbRenderRound();
+
+    wbSay("👂 اسمع الكلمة ثم اختر حروفها بالترتيب");
+
+    wbLater(() => speakWBLocal(entry.word), 350);
+}
+
+function wbListen() {
+    if (!wbGame.active || !wbGame.entry) return;
+    speakWBLocal(wbGame.entry.word);
+}
+
+function wbHasWrong() {
+    const last = wbGame.placed[wbGame.placed.length - 1];
+    return !!(last && last.wrong);
+}
+
+function wbTapTile(tileId) {
+
+    if (!wbGame.active || wbGame.solved) return;
+
+    const tile = wbGame.tiles.find(t => t.id === tileId);
+
+    if (!tile || tile.used) return;
+
+    if (wbHasWrong()) {
+
+        wbSay("😊 احذف الحرف الأخير أولًا ثم جرّب حرفًا آخر");
+
+        const back = $("wbBtnBack");
+        if (back) {
+            back.classList.remove("wb-nudge");
+            void back.offsetWidth;
+            back.classList.add("wb-nudge");
+        }
+
+        return;
+    }
+
+    const index = wbGame.placed.length;
+
+    if (index >= wbGame.letters.length) return;
+
+    const sound = wbLetterSoundText(tile.letter);
+    if (sound) speakWBLocal(sound, true);
+
+    const correct = tile.letter === wbGame.letters[index];
+
+    tile.used = true;
+    wbGame.placed.push({ letter: tile.letter, tileId: tile.id, wrong: !correct });
+
+    if (correct) {
+
+        wbGame.wrongAt[index] = 0;
+        wbClearHints();
+
+        wbRenderSlots();
+        wbUpdateTray();
+        wbUpdateHud();
+
+        if (wbGame.placed.length === wbGame.letters.length) {
+            wbComplete();
+        } else {
+            const remaining = wbGame.letters.length - wbGame.placed.length;
+            wbSay("✓ أحسنت! بقي " + arabicNumber(remaining) + (remaining === 1 ? " حرف" : " حروف"));
+            wbFocusNextTile(tile.id);
+        }
+
+        return;
+    }
+
+    wbGame.wrongAt[index] = (wbGame.wrongAt[index] || 0) + 1;
+
+    wbRenderSlots();
+    wbUpdateTray();
+    wbUpdateHud();
+
+    if (wbGame.wrongAt[index] >= 2) {
+        wbSay("💡 تلميح: احذف هذا الحرف ثم اختر الحرف ذا الإطار الأصفر");
+    } else {
+        wbSay("😊 هذا ليس الحرف المناسب هنا — اضغط ⌫ لتحذفه وجرّب غيره");
+    }
+
+    const back = $("wbBtnBack");
+    if (back) {
+        back.classList.remove("wb-nudge");
+        void back.offsetWidth;
+        back.classList.add("wb-nudge");
+    }
+}
+
+function wbRemoveLast() {
+
+    if (!wbGame.active || wbGame.solved || !wbGame.placed.length) return;
+
+    const last = wbGame.placed.pop();
+    const tile = wbGame.tiles.find(t => t.id === last.tileId);
+
+    if (tile) tile.used = false;
+
+    wbRenderSlots();
+    wbUpdateTray();
+    wbUpdateHud();
+
+    const index = wbGame.placed.length;
+
+    if ((wbGame.wrongAt[index] || 0) >= 2) {
+        wbShowHint();
+        wbSay("💡 تلميح: اختر الحرف ذا الإطار الأصفر");
+    } else {
+        wbClearHints();
+        wbSay("↩️ حذفنا الحرف الأخير — اختر الحرف التالي");
+    }
+
+    if (tile && tile.el) tile.el.focus();
+}
+
+function wbResetWord() {
+
+    if (!wbGame.active || wbGame.solved) return;
+
+    wbGame.placed = [];
+    wbGame.wrongAt = {};
+    wbGame.tiles.forEach(t => { t.used = false; });
+
+    wbClearHints();
+    wbRenderSlots();
+    wbUpdateTray();
+    wbUpdateHud();
+
+    wbSay("↻ لنبدأ الكلمة من جديد");
+}
+
+function wbComplete() {
+
+    wbGame.solved = true;
+
+    const entry = wbGame.entry;
+
+    wbRenderSlots();
+    wbUpdateTray();
+
+    /* الكلمة كاملة بالشكل المتصل (سلسلة أشكال متجاورة تتصل كنص واحد) */
+    const slots = $("wbSlots");
+    const joined = $("wbJoined");
+
+    if (slots) slots.hidden = true;
+
+    if (joined) {
+        joined.textContent = wbJoinedRun(wbGame.letters);
+        joined.setAttribute("aria-label", "الكلمة كاملة: " + entry.word);
+        joined.hidden = false;
+    }
+
+    const pic = $("wbPic");
+    if (pic) pic.classList.add("wb-pic-done");
+
+    wbClearHints();
+
+    if (typeof addStars === "function") addStars(1);
+
+    wbMarkCollected(wbGame.level, entry.word);
+
+    if (!wbGame.sessionWords.some(w => w.word === entry.word)) {
+        wbGame.sessionWords.push({ word: entry.word, emoji: entry.emoji, letters: wbGame.letters.slice() });
+    }
+
+    wbSay("🎉 أحسنت! بنيتَ كلمة «" + entry.word + "»");
+
+    /* الكلمة تُنطَق بعد صوت الحرف الأخير (صوت واحد في كل مرة) */
+    speakWBLocal(entry.word);
+
+    const next = $("wbBtnNext");
+    if (next) next.disabled = false;
+
+    wbUpdateHud();
+
+    wbLater(() => {
+        const n = $("wbBtnNext");
+        if (n && !n.disabled) n.focus();
+    }, 250);
+}
+
+function wbNext() {
+
+    if (!wbGame.active || !wbGame.solved) return;
+
+    if (wbGame.round >= WB_ROUNDS) {
+        wbFinishLevel();
+        return;
+    }
+
+    wbNextRound();
+}
+
+/* =========================================================
+   🌟 إكمال المستوى
+   ========================================================= */
+
+function wbTrapFocus(event) {
+
+    if (event.key !== "Tab") return;
+
+    const focusables = [$("wbDoneWords"), $("wbDoneNext"), $("wbDoneAgain"), $("wbDoneExit")]
+        .filter(b => b && !b.hidden);
+
+    if (!focusables.length) return;
+
+    event.preventDefault();
+
+    const index = focusables.indexOf(document.activeElement);
+    let target;
+
+    if (event.shiftKey) {
+        target = index <= 0 ? focusables[focusables.length - 1] : focusables[index - 1];
+    } else {
+        target = (index === -1 || index === focusables.length - 1) ? focusables[0] : focusables[index + 1];
+    }
+
+    target.focus();
+}
+
+function wbFinishLevel() {
+
+    const level = wbGame.level;
+    const p = wbLoadProgress();
+
+    if (level < WB_LEVELS.length && p.unlocked < level + 1) p.unlocked = level + 1;
+
+    const firstTime = !p.bonus[level];
+
+    if (firstTime) {
+        p.bonus[level] = 1;
+        if (typeof addStars === "function") addStars(3);
+    }
+
+    wbSaveProgress();
+    wbRenderLevels();
+    wbUpdateStars();
+
+    const hasNext = level < WB_LEVELS.length;
+
+    const title = $("wbDoneTitle");
+    const body = $("wbDoneBody");
+    const list = $("wbDoneWords");
+    const nextBtn = $("wbDoneNext");
+    const againBtn = $("wbDoneAgain");
+    const exitBtn = $("wbDoneExit");
+
+    if (title) title.textContent = hasNext ? "🌟 أحسنت! أكملت المستوى " + arabicNumber(level) : "🎉 أكملت كل المستويات!";
+
+    if (body) {
+        body.textContent = "بنيتَ " + arabicNumber(wbGame.sessionWords.length) + " كلمات" +
+            (firstTime ? " وحصلت على ٣ نجوم هدية ⭐" : "");
+    }
+
+    if (list) {
+
+        list.innerHTML = "";
+
+        wbGame.sessionWords.forEach(w => {
+
+            const item = wbEl("div", "wb-done-item");
+            item.setAttribute("role", "listitem");
+            item.setAttribute("aria-label", w.word);
+
+            item.appendChild(wbEl("span", "wb-done-emoji", w.emoji));
+            item.appendChild(wbEl("span", "wb-done-word", wbJoinedRun(w.letters)));
+
+            list.appendChild(item);
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.hidden = !hasNext;
+        nextBtn.textContent = "▶ المستوى " + arabicNumber(level + 1);
+        nextBtn.onclick = () => wbStartLevel(level + 1);
+    }
+
+    if (againBtn) againBtn.onclick = () => wbStartLevel(level);
+
+    if (exitBtn) exitBtn.onclick = exitWBGame;
+
+    wbRenderConfetti();
+
+    wbSetInert(true);
+
+    const dialog = $("wbDone");
+
+    if (dialog) {
+        dialog.removeEventListener("keydown", wbTrapFocus);
+        dialog.addEventListener("keydown", wbTrapFocus);
+        dialog.style.display = "flex";
+    }
+
+    setTimeout(() => {
+        const target = (nextBtn && !nextBtn.hidden) ? nextBtn : exitBtn;
+        if (target) target.focus();
+    }, 60);
+}
+
+function wbRenderConfetti() {
+
+    const el = $("wbConfetti");
+    if (!el) return;
+
+    el.innerHTML = "";
+
+    const colors = ["#818cf8", "#fbbf24", "#34d399", "#f472b6"];
+
+    for (let i = 0; i < 8; i++) {
+        const piece = wbEl("div", "wb-confetti-piece");
+        piece.style.left = (10 + Math.random() * 80) + "%";
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.25) + "s";
+        el.appendChild(piece);
+    }
+
+    setTimeout(() => { if (el) el.innerHTML = ""; }, 1400);
+}
+
+/* =========================================================
+   ⌨️ لوحة المفاتيح + الإنهاء + التغليف
+   ========================================================= */
+
+function wbKeyHandler(event) {
+
+    if (!wbGame.active) return;
+
+    const dialog = $("wbDone");
+    if (dialog && dialog.style.display === "flex") return;
+
+    if (event.key === "Backspace" || event.key === "Delete") {
+
+        const tag = event.target && event.target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+        event.preventDefault();
+        wbRemoveLast();
+    }
+}
+
+function wbTeardown() {
+
+    wbStopAudio();
+
+    document.removeEventListener("keydown", wbKeyHandler);
+
+    wbGame.active = false;
+    wbGame.session++;
+
+    const dialog = $("wbDone");
+    if (dialog) dialog.style.display = "none";
+
+    wbSetInert(false);
+}
+
+function exitWBGame() {
+
+    wbTeardown();
+
+    showScreen("games");
+}
+
+/* تغليف غير جراحي لـ showScreen — فوق التغليفات السابقة بلا تعديل عليها */
+
+const originalShowScreenForWB = showScreen;
+
+showScreen = function (screenId) {
+
+    if (typeof wbGame !== "undefined" && wbGame.active && screenId !== "wordBuilderGame") {
+        wbTeardown();
+    }
+
+    originalShowScreenForWB(screenId);
+};
+
+/* =========================================================
+   🔚 نهاية لعبة "بنّاء الكلمات" المستقلة
+   ========================================================= */
+
+
 
 
 
