@@ -1418,6 +1418,34 @@
             </button>
 
 
+            <!-- =====================================
+                 🧱 بنّاء الكلمات
+            ====================================== -->
+
+            <button
+                class="game-launch-card wb-game-card"
+                onclick="startWBGame()"
+            >
+
+                <div class="game-card-icon">
+                    🧱
+                </div>
+
+                <h3>
+                    بنّاء الكلمات
+                </h3>
+
+                <p>
+                    اسمع الكلمة وابنِها حرفًا حرفًا بالشكل المتصل الصحيح
+                </p>
+
+                <span>
+                    ابدأ البناء ▶
+                </span>
+
+            </button>
+
+
         </div>
 
 
@@ -3375,6 +3403,246 @@
                         type="button"
                     >
                         🗺️ خريطة الأرقام
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     🆕 🧱 بنّاء الكلمات — شاشة مستقلة (قسم الألعاب)
+     الطفل يرى الصورة ويسمع الكلمة ثم يبنيها باختيار الحروف بالترتيب؛
+     تظهر الحروف في الخانات بشكلها المتصل الصحيح. لا مؤقت ولا أرواح.
+========================================================= -->
+
+<section
+    id="wordBuilderGame"
+    class="screen"
+>
+
+    <div class="wb-wrapper">
+
+        <div class="wb-topbar">
+
+            <button
+                class="wb-back-btn"
+                type="button"
+                onclick="exitWBGame()"
+                aria-label="العودة إلى الألعاب"
+            >
+                ⬅️
+            </button>
+
+            <h2 class="wb-title">
+                🧱 بنّاء الكلمات
+            </h2>
+
+            <div class="wb-stars" aria-label="عدد النجوم">
+                ⭐ <strong id="wbStars">٠</strong>
+            </div>
+
+        </div>
+
+
+        <div
+            id="wbLevels"
+            class="wb-levels"
+            role="group"
+            aria-label="المستويات"
+        ></div>
+
+
+        <div class="wb-badges">
+
+            <span class="wb-badge">
+                الجولة
+                <strong id="wbRound">١</strong>
+                /
+                <strong id="wbTotalRounds">٦</strong>
+            </span>
+
+            <span class="wb-badge">
+                📖 كلماتي
+                <strong id="wbWordsCount">٠</strong>
+            </span>
+
+        </div>
+
+
+        <div
+            id="wbProgressTrack"
+            class="wb-progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-label="تقدّم المستوى"
+        >
+            <div
+                id="wbProgressFill"
+                class="wb-progress-fill"
+            ></div>
+        </div>
+
+
+
+
+        <div class="wb-board">
+
+            <div class="wb-pic-card">
+
+                <div
+                    id="wbPic"
+                    class="wb-pic"
+                    aria-hidden="true"
+                ></div>
+
+                <button
+                    id="wbListen"
+                    class="wb-listen"
+                    type="button"
+                    onclick="wbListen()"
+                    aria-label="اسمع الكلمة"
+                >
+                    🔊 اسمع الكلمة
+                </button>
+
+                <div
+                    id="wbMessage"
+                    class="wb-message"
+                    role="status"
+                    aria-live="polite"
+                ></div>
+
+            </div>
+
+            <div class="wb-build">
+
+                <div class="wb-word-wrap">
+
+                    <div
+                        id="wbSlots"
+                        class="wb-slots"
+                        role="group"
+                        aria-label="خانات الكلمة"
+                    ></div>
+
+                    <div
+                        id="wbJoined"
+                        class="wb-joined"
+                        hidden
+                    ></div>
+
+                </div>
+
+                <div
+                    id="wbTray"
+                    class="wb-tray"
+                    role="group"
+                    aria-label="الحروف المتاحة — اختر الحرف التالي"
+                ></div>
+
+                <div class="wb-controls">
+
+                    <button
+                        id="wbBtnBack"
+                        class="wb-ctl"
+                        type="button"
+                        onclick="wbRemoveLast()"
+                        disabled
+                    >
+                        ⌫ احذف الحرف الأخير
+                    </button>
+
+                    <button
+                        id="wbBtnReset"
+                        class="wb-ctl"
+                        type="button"
+                        onclick="wbResetWord()"
+                    >
+                        ↻ من جديد
+                    </button>
+
+                    <button
+                        id="wbBtnNext"
+                        class="wb-ctl wb-ctl-next"
+                        type="button"
+                        onclick="wbNext()"
+                        disabled
+                    >
+                        التالي ▶
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+
+        <div
+            id="wbDone"
+            class="wb-done-overlay"
+            style="display:none;"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="wbDoneTitle"
+        >
+
+            <div class="wb-done-card">
+
+                <div
+                    id="wbConfetti"
+                    class="wb-confetti"
+                    aria-hidden="true"
+                ></div>
+
+                <h3 id="wbDoneTitle">
+                    🌟 أحسنت! أكملت المستوى
+                </h3>
+
+                <p id="wbDoneBody"></p>
+
+                <div
+                    id="wbDoneWords"
+                    class="wb-done-words"
+                    role="list"
+                    aria-label="الكلمات التي بنيتها"
+                    tabindex="0"
+                ></div>
+
+                <div class="wb-done-actions">
+
+                    <button
+                        id="wbDoneNext"
+                        class="primary"
+                        type="button"
+                    >
+                        ▶ المستوى التالي
+                    </button>
+
+                    <button
+                        id="wbDoneAgain"
+                        class="secondary"
+                        type="button"
+                    >
+                        ↻ أعد المستوى
+                    </button>
+
+                    <button
+                        id="wbDoneExit"
+                        class="secondary"
+                        type="button"
+                    >
+                        🏠 العودة للألعاب
                     </button>
 
                 </div>
