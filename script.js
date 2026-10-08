@@ -1,4 +1,134 @@
 /* =========================================================
+   👥 نظام ملفات الطلاب المتعددة — طبقة التخزين
+   كل بيانات التعلّم تُحفظ تحت بادئة خاصة بالطالب الحالي
+   (taha_s_<id>__<المفتاح الأصلي>)، فيعمل بقية الكود دون أي تغيير.
+   مفاتيح الجهاز المشتركة (الإعدادات، رمز المعلم، القرآن) لا تتغير.
+   عند أول تشغيل تُنسخ بيانات الملف القديم إلى أول طالب (والنسخة
+   القديمة تبقى كما هي احتياطًا ولا تُقرأ بعد ذلك).
+========================================================= */
+var StudentStore = (function () {
+    var real = window.localStorage;
+    var REG = "taha_students_v1";
+    var CUR = "taha_current_student";
+    var SHARED = { taha_settings: 1, taha_teacher_pin: 1, taha_quran_last_surah_index: 1 };
+    var OVR = "taha_teacher_override_levels";
+    var MAX_STUDENTS = 30;
+    var cur = null;
+    var list = [];
+
+    function isPerStudent(k) {
+        if (typeof k !== "string") return false;
+        if (SHARED[k] || k === REG || k === CUR) return false;
+        if (k.indexOf("taha_s_") === 0) return false;
+        return k.indexOf("taha_") === 0 || k === "matchingProgressV2" || k === "matchingBestScore";
+    }
+    function pfx(id) { return "taha_s_" + id + "__"; }
+    function gen() {
+        return "stu_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+    }
+    function rget(k) { try { return real.getItem(k); } catch (e) { return null; } }
+    function rset(k, v) { try { real.setItem(k, v); } catch (e) { /* ممتلئ */ } }
+    function saveReg() { rset(REG, JSON.stringify({ list: list })); }
+
+    function init() {
+        var reg = null;
+        try { reg = JSON.parse(rget(REG)); } catch (e) { reg = null; }
+        if (reg && Array.isArray(reg.list) && reg.list.length) {
+            list = reg.list.filter(function (x) { return typeof x === "string"; });
+        }
+        if (!list.length) {
+            var id = rget("taha_student_id") || gen();
+            var keys = [];
+            try { for (var i = 0; i < real.length; i++) keys.push(real.key(i)); } catch (e) { /* لا شيء */ }
+            keys.forEach(function (k) {
+                if (isPerStudent(k)) { var v = rget(k); if (v !== null) rset(pfx(id) + k, v); }
+            });
+            rset(pfx(id) + "taha_student_id", id);
+            list = [id];
+            saveReg();
+            rset(CUR, id);
+        }
+        var c = rget(CUR);
+        cur = (c && list.indexOf(c) >= 0) ? c : list[0];
+        rset(CUR, cur);
+    }
+
+    var shim = {
+        getItem: function (k) { return real.getItem(isPerStudent(k) ? pfx(cur) + k : k); },
+        setItem: function (k, v) { real.setItem(isPerStudent(k) ? pfx(cur) + k : k, v); },
+        removeItem: function (k) { real.removeItem(isPerStudent(k) ? pfx(cur) + k : k); },
+        key: function (i) { return real.key(i); },
+        get length() { return real.length; },
+        clear: function () { real.clear(); }
+    };
+
+    init();
+    try {
+        Object.defineProperty(window, "localStorage", { configurable: true, get: function () { return shim; } });
+    } catch (e) { /* المتصفح لا يسمح — يبقى الملف الواحد */ }
+
+    function read(id, k) { return rget(pfx(id) + k); }
+    function num(id, k, d) { var n = Number(read(id, k)); return isFinite(n) && read(id, k) !== null ? n : d; }
+
+    function info(id) {
+        return {
+            id: id,
+            name: read(id, "taha_child_name") || "",
+            avatar: read(id, "taha_child_avatar") || "🦁",
+            stars: num(id, "taha_app_stars", 0),
+            level: num(id, "taha_app_level", 1),
+            override: read(id, OVR) === "1",
+            current: id === cur
+        };
+    }
+
+    return {
+        MAX: MAX_STUDENTS,
+        currentId: function () { return cur; },
+        count: function () { return list.length; },
+        list: function () { return list.map(info); },
+        get: info,
+        isOverride: function (id) { return read(id || cur, OVR) === "1"; },
+        setOverride: function (id, on) { rset(pfx(id) + OVR, on ? "1" : "0"); },
+        /* المستوى الفعلي لعرض الأقفال فقط — لا يُكتب أبدًا في التقدّم */
+        eff: function (n) { return read(cur, OVR) === "1" ? 99 : n; },
+        add: function (name, avatar) {
+            if (list.length >= MAX_STUDENTS) return null;
+            var id = gen();
+            rset(pfx(id) + "taha_student_id", id);
+            rset(pfx(id) + "taha_child_name", String(name || "").slice(0, 24));
+            rset(pfx(id) + "taha_child_avatar", avatar || "🦁");
+            list.push(id);
+            saveReg();
+            return id;
+        },
+        update: function (id, name, avatar) {
+            if (list.indexOf(id) < 0) return;
+            rset(pfx(id) + "taha_child_name", String(name || "").slice(0, 24));
+            rset(pfx(id) + "taha_child_avatar", avatar || "🦁");
+        },
+        remove: function (id) {
+            if (list.length <= 1 || list.indexOf(id) < 0) return false;
+            var p = pfx(id), keys = [];
+            try { for (var i = 0; i < real.length; i++) keys.push(real.key(i)); } catch (e) { /* لا شيء */ }
+            keys.forEach(function (k) { if (k.indexOf(p) === 0) { try { real.removeItem(k); } catch (e) { /* لا شيء */ } } });
+            list = list.filter(function (x) { return x !== id; });
+            saveReg();
+            if (cur === id) { cur = list[0]; rset(CUR, cur); return "switched"; }
+            return true;
+        },
+        /* التبديل = حفظ المؤشر ثم إعادة تحميل التطبيق، فلا يبقى أي
+           متغيّر في الذاكرة من الطالب السابق */
+        switchTo: function (id) {
+            if (list.indexOf(id) < 0) return;
+            if (id !== cur) rset(CUR, id);
+            try { sessionStorage.setItem("taha_stu_switched", "1"); } catch (e) { /* لا شيء */ }
+            location.reload();
+        }
+    };
+})();
+
+/* =========================================================
 🌟 تعلم مع أ/ طه محمد 🌟
 script.js - النسخة النهائية المصلحة بالكامل
 ========================================================= */
@@ -11220,7 +11350,7 @@ function ajNumberComplete(n) {
    (وبهذا يُفتح ١١ بعد إكمال ١٠ — نفس تدرّج الكتابين) */
 
 function ajNumberUnlocked(n) {
-    return n === 1 || ajNumberComplete(n - 1);
+    return n === 1 || StudentStore.isOverride() || ajNumberComplete(n - 1);
 }
 
 function ajFirstOpenIndex(n) {
@@ -15116,7 +15246,7 @@ function wbRenderLevels() {
     const box = $("wbLevels");
     if (!box) return;
 
-    const unlocked = wbLoadProgress().unlocked;
+    const unlocked = StudentStore.eff(wbLoadProgress().unlocked);
 
     box.innerHTML = "";
 
@@ -15316,7 +15446,7 @@ function startWBGame(level) {
     wbProgressCache = null;
     wbLoadProgress();
 
-    const target = Math.min(Math.max(Number(level) || wbLoadProgress().unlocked, 1), wbLoadProgress().unlocked);
+    const target = Math.min(Math.max(Number(level) || wbLoadProgress().unlocked, 1), Math.min(StudentStore.eff(wbLoadProgress().unlocked), WB_LEVELS.length));
 
     wbTeardown();
 
@@ -15593,7 +15723,7 @@ function wbFinishLevel() {
     const level = wbGame.level;
     const p = wbLoadProgress();
 
-    if (level < WB_LEVELS.length && p.unlocked < level + 1) p.unlocked = level + 1;
+    if (level < WB_LEVELS.length && p.unlocked < level + 1 && level <= p.unlocked) p.unlocked = level + 1;
 
     const firstTime = !p.bonus[level];
 
@@ -18045,7 +18175,7 @@ function saveAdditionUnlockedLevel(n) {
 }
 
 function unlockAdditionLevel(n) {
-    if (n > loadAdditionUnlockedLevel()) {
+    if (n > loadAdditionUnlockedLevel() && n - 1 <= loadAdditionUnlockedLevel()) {
         saveAdditionUnlockedLevel(n);
     }
 }
@@ -18215,7 +18345,7 @@ function renderAdditionLevelsHub() {
 
     if (!grid) return;
 
-    const unlocked = loadAdditionUnlockedLevel();
+    const unlocked = StudentStore.eff(loadAdditionUnlockedLevel());
     const bestScores = loadAdditionLevelBest();
 
     grid.innerHTML = ADDITION_LEVELS.map(level => {
@@ -18265,7 +18395,7 @@ function showAdditionLockedMessage() {
 
 function openAdditionLevel(levelId) {
 
-    const unlocked = loadAdditionUnlockedLevel();
+    const unlocked = StudentStore.eff(loadAdditionUnlockedLevel());
 
     if (levelId > unlocked) {
         showAdditionLockedMessage();
@@ -18987,7 +19117,7 @@ function saveSubtractionUnlockedLevel(n) {
 }
 
 function unlockSubtractionLevel(n) {
-    if (n > loadSubtractionUnlockedLevel()) {
+    if (n > loadSubtractionUnlockedLevel() && n - 1 <= loadSubtractionUnlockedLevel()) {
         saveSubtractionUnlockedLevel(n);
     }
 }
@@ -19342,7 +19472,7 @@ function renderSubtractionLevelsHub() {
 
     if (!grid) return;
 
-    const unlocked = loadSubtractionUnlockedLevel();
+    const unlocked = StudentStore.eff(loadSubtractionUnlockedLevel());
     const bestScores = loadSubtractionLevelBest();
 
     grid.innerHTML = SUBTRACTION_LEVELS.map(level => {
@@ -19392,7 +19522,7 @@ function showSubtractionLockedMessage() {
 
 function openSubtractionLevel(levelId) {
 
-    const unlocked = loadSubtractionUnlockedLevel();
+    const unlocked = StudentStore.eff(loadSubtractionUnlockedLevel());
 
     if (levelId > unlocked) {
         showSubtractionLockedMessage();
@@ -20405,7 +20535,7 @@ function saveWordsUnlockedLevel(n) {
 }
 
 function unlockWordsLevel(n) {
-    if (n > loadWordsUnlockedLevel()) {
+    if (n > loadWordsUnlockedLevel() && n - 1 <= loadWordsUnlockedLevel()) {
         saveWordsUnlockedLevel(n);
     }
 }
@@ -20708,7 +20838,7 @@ function renderWordsLevelsHub() {
     const grid = $("wordsLevelsGrid");
     if (!grid) return;
 
-    const unlocked = loadWordsUnlockedLevel();
+    const unlocked = StudentStore.eff(loadWordsUnlockedLevel());
     const bestScores = loadWordsLevelBest();
 
     grid.innerHTML = WORDS_LEVELS.map(level => {
@@ -20754,7 +20884,7 @@ function showWordsLockedMessage() {
 
 function openWordsLevel(levelId) {
 
-    const unlocked = loadWordsUnlockedLevel();
+    const unlocked = StudentStore.eff(loadWordsUnlockedLevel());
 
     if (levelId > unlocked) {
         showWordsLockedMessage();
@@ -21703,7 +21833,7 @@ function ltrSaveUnlockedLevel(n) {
 }
 
 function ltrUnlockLevel(n) {
-    if (n > ltrLoadUnlockedLevel()) ltrSaveUnlockedLevel(n);
+    if (n > ltrLoadUnlockedLevel() && n - 1 <= ltrLoadUnlockedLevel()) ltrSaveUnlockedLevel(n);
 }
 
 function ltrLoadCompletedLetters() {
@@ -21841,7 +21971,7 @@ function renderLettersLevelsHub() {
     const grid = $("lettersLevelsGrid");
     if (!grid) return;
 
-    const unlocked = ltrLoadUnlockedLevel();
+    const unlocked = StudentStore.eff(ltrLoadUnlockedLevel());
 
     grid.innerHTML = LETTER_LEVEL_GROUPS.map(group => {
         const isUnlocked = group.id <= unlocked;
@@ -21876,7 +22006,7 @@ function ltrShowLockedMessage() {
 ========================================================= */
 
 function openLettersLevel(levelId) {
-    const unlocked = ltrLoadUnlockedLevel();
+    const unlocked = StudentStore.eff(ltrLoadUnlockedLevel());
     if (levelId > unlocked) { ltrShowLockedMessage(); return; }
 
     const group = LETTER_LEVEL_GROUPS[levelId - 1];
@@ -26310,3 +26440,314 @@ window.zoo = zoo;
 /* =========================================================
    🔚 نهاية لعبة «أصدقاء الحديقة» المستقلة
 ========================================================= */
+
+
+/* =========================================================
+   👥 واجهة ملفات الطلاب — اختيار سريع + إدارة (للمعلم) + تجاوز القفل
+   التبديل بين الطلاب مفتوح بلمسة واحدة؛ الإضافة والتعديل والحذف
+   وتجاوز القفل خلف نفس بوابة المعلم (رمز سري أو سؤال حساب).
+========================================================= */
+(function () {
+    var view = "pick";          // pick | gate | manage | edit | confirm
+    var gateOK = false;
+    var gateNext = "manage";
+    var editId = null;          // null = طالب جديد
+    var editAvatar = "🦁";
+    var confirmId = null;
+    var note = "";
+    var root = null;
+
+    function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text !== undefined) e.textContent = text;
+        return e;
+    }
+    function nm(s, i) { return s.name && s.name.trim() ? s.name : "طالب " + arabicNumber(i + 1); }
+    function btn(cls, text, act, id) {
+        var b = el("button", cls, text);
+        b.type = "button";
+        b.dataset.act = act;
+        if (id) b.dataset.id = id;
+        return b;
+    }
+
+    function ensureRoot() {
+        if (root) return root;
+        root = el("div", "stu-overlay");
+        root.id = "stuOverlay";
+        root.setAttribute("role", "dialog");
+        root.setAttribute("aria-modal", "true");
+        root.hidden = true;
+        root.addEventListener("click", onClick);
+        document.body.appendChild(root);
+        return root;
+    }
+
+    function open(v) {
+        ensureRoot();
+        gateOK = teacherUnlockedSession === true;
+        note = "";
+        view = v || "pick";
+        root.hidden = false;
+        document.body.classList.add("stu-open");
+        render();
+    }
+    function close() {
+        if (!root) return;
+        root.hidden = true;
+        document.body.classList.remove("stu-open");
+        gateOK = false;
+    }
+
+    function panel(title) {
+        root.innerHTML = "";
+        var p = el("div", "stu-panel");
+        p.appendChild(el("h2", "stu-title", title));
+        root.appendChild(p);
+        return p;
+    }
+    function noteLine(p) {
+        if (note) p.appendChild(el("p", "stu-note", note));
+    }
+
+    function render() {
+        if (view === "pick") return renderPick();
+        if (view === "gate") return renderGate();
+        if (view === "manage") return renderManage();
+        if (view === "edit") return renderEdit();
+        if (view === "confirm") return renderConfirm();
+    }
+
+    function renderPick() {
+        var p = panel("👥 من سيتعلم الآن؟");
+        var grid = el("div", "stu-grid");
+        StudentStore.list().forEach(function (s, i) {
+            var b = el("button", "stu-card" + (s.current ? " current" : ""));
+            b.type = "button";
+            b.dataset.act = "switch";
+            b.dataset.id = s.id;
+            b.appendChild(el("span", "stu-card-avatar", s.avatar));
+            b.appendChild(el("span", "stu-card-name", nm(s, i)));
+            var stt = el("span", "stu-card-stats");
+            stt.appendChild(el("span", "", "⭐ " + arabicNumber(s.stars)));
+            stt.appendChild(el("span", "", "🎯 " + arabicNumber(s.level)));
+            b.appendChild(stt);
+            if (s.current) b.appendChild(el("span", "stu-card-check", "✓ الحالي"));
+            grid.appendChild(b);
+        });
+        p.appendChild(grid);
+        noteLine(p);
+        var row = el("div", "stu-actions");
+        row.appendChild(btn("stu-btn", "➕ طالب جديد", "new"));
+        row.appendChild(btn("stu-btn", "⚙️ إدارة الطلاب", "manage"));
+        row.appendChild(btn("stu-btn ghost", "إغلاق", "close"));
+        p.appendChild(row);
+    }
+
+    function renderGate() {
+        var p = panel("🔒 للمعلم فقط");
+        var pin = localStorage.getItem("taha_teacher_pin");
+        p.appendChild(el("p", "stu-q", pin ? "🔢 أدخل الرمز السري (٤ أرقام)" : generateTeacherMathQuestion()));
+        var inp = el("input", "stu-input");
+        inp.id = "stuGateInput";
+        inp.type = "text";
+        inp.inputMode = "numeric";
+        inp.autocomplete = "off";
+        if (pin) inp.maxLength = 4;
+        inp.addEventListener("keydown", function (e) { if (e.key === "Enter") onClick({ target: root.querySelector("[data-act=gateok]") }); });
+        p.appendChild(inp);
+        noteLine(p);
+        var row = el("div", "stu-actions");
+        row.appendChild(btn("stu-btn", "تأكيد", "gateok"));
+        row.appendChild(btn("stu-btn ghost", "رجوع", "back"));
+        p.appendChild(row);
+        setTimeout(function () { try { inp.focus(); } catch (e) { /* لا شيء */ } }, 50);
+    }
+
+    function renderManage() {
+        var p = panel("⚙️ إدارة الطلاب");
+        var list = el("div", "stu-rows");
+        StudentStore.list().forEach(function (s, i) {
+            var r = el("div", "stu-row" + (s.current ? " current" : ""));
+            r.appendChild(el("span", "stu-row-avatar", s.avatar));
+            var info = el("span", "stu-row-info");
+            info.appendChild(el("b", "", nm(s, i) + (s.current ? "  ✓" : "")));
+            var sm = el("small", "stu-card-stats");
+            sm.appendChild(el("span", "", "⭐ " + arabicNumber(s.stars)));
+            sm.appendChild(el("span", "", "🎯 " + arabicNumber(s.level)));
+            info.appendChild(sm);
+            r.appendChild(info);
+            var ob = btn("stu-mini" + (s.override ? " on" : ""), s.override ? "🔓 مفتوحة" : "🔒 عادي", "ovr", s.id);
+            ob.setAttribute("aria-pressed", s.override ? "true" : "false");
+            ob.setAttribute("aria-label", "فتح كل المستويات للطالب " + nm(s, i));
+            r.appendChild(ob);
+            var eb = btn("stu-mini", "✏️", "edit", s.id);
+            eb.setAttribute("aria-label", "تعديل " + nm(s, i));
+            r.appendChild(eb);
+            var db = btn("stu-mini danger", "🗑", "del", s.id);
+            db.setAttribute("aria-label", "حذف " + nm(s, i));
+            if (StudentStore.count() <= 1) db.disabled = true;
+            r.appendChild(db);
+            list.appendChild(r);
+        });
+        p.appendChild(list);
+        p.appendChild(el("p", "stu-hint", "🔓 «مفتوحة» = يظهر للطالب كل المستويات دون تغيير تقدّمه الحقيقي."));
+        noteLine(p);
+        var row = el("div", "stu-actions");
+        var add = btn("stu-btn", "➕ طالب جديد", "new");
+        if (StudentStore.count() >= StudentStore.MAX) add.disabled = true;
+        row.appendChild(add);
+        row.appendChild(btn("stu-btn ghost", "رجوع", "pick"));
+        p.appendChild(row);
+    }
+
+    function renderEdit() {
+        var p = panel(editId ? "✏️ تعديل الطالب" : "➕ طالب جديد");
+        var lab = el("label", "stu-label", "اسم الطالب");
+        lab.htmlFor = "stuNameInput";
+        p.appendChild(lab);
+        var inp = el("input", "stu-input");
+        inp.id = "stuNameInput";
+        inp.type = "text";
+        inp.maxLength = 24;
+        inp.autocomplete = "off";
+        inp.placeholder = "اكتب الاسم";
+        if (editId) inp.value = StudentStore.get(editId).name;
+        p.appendChild(inp);
+        p.appendChild(el("div", "stu-label", "الصورة"));
+        var g = el("div", "stu-avatars");
+        AVATAR_OPTIONS.forEach(function (a) {
+            var b = btn("stu-av" + (a === editAvatar ? " selected" : ""), a, "av");
+            b.dataset.av = a;
+            g.appendChild(b);
+        });
+        p.appendChild(g);
+        noteLine(p);
+        var row = el("div", "stu-actions");
+        row.appendChild(btn("stu-btn", "💾 حفظ", "save"));
+        row.appendChild(btn("stu-btn ghost", "إلغاء", "manage"));
+        p.appendChild(row);
+    }
+
+    function renderConfirm() {
+        var s = StudentStore.get(confirmId);
+        var p = panel("🗑 حذف الطالب؟");
+        p.appendChild(el("p", "stu-q", "سيُحذف «" + (s.name || "الطالب") + "» وكل نجومه ومستوياته وسجله نهائيًا."));
+        var row = el("div", "stu-actions");
+        row.appendChild(btn("stu-btn danger", "نعم، احذف", "delok"));
+        row.appendChild(btn("stu-btn ghost", "لا، رجوع", "manage"));
+        p.appendChild(row);
+    }
+
+    function need(next) {
+        if (gateOK) { view = next; note = ""; render(); return; }
+        gateNext = next;
+        view = "gate";
+        note = "";
+        render();
+    }
+
+    function onClick(e) {
+        var t = e.target;
+        if (t === root) { close(); return; }
+        var b = t && t.closest ? t.closest("[data-act]") : null;
+        if (!b || b.disabled) return;
+        var act = b.dataset.act, id = b.dataset.id;
+        if (act === "switch") {
+            if (id === StudentStore.currentId()) { close(); return; }
+            var s = StudentStore.get(id);
+            var p = panel("🔄 جارٍ التبديل…");
+            p.appendChild(el("p", "stu-q", s.avatar + " " + (s.name || "")));
+            StudentStore.switchTo(id);
+        } else if (act === "close") close();
+        else if (act === "pick") { view = "pick"; note = ""; render(); }
+        else if (act === "back") { view = "pick"; note = ""; render(); }
+        else if (act === "manage") need("manage");
+        else if (act === "new") {
+            editId = null; editAvatar = AVATAR_OPTIONS[StudentStore.count() % AVATAR_OPTIONS.length];
+            need("edit");
+        } else if (act === "gateok") {
+            var inp = document.getElementById("stuGateInput");
+            var v = inp ? inp.value.trim() : "";
+            var pin = localStorage.getItem("taha_teacher_pin");
+            var ok = pin ? v === pin : Number(v) === teacherMathAnswer && v !== "";
+            if (ok) { gateOK = true; view = gateNext; note = ""; render(); }
+            else { note = "😊 حاول مرة أخرى"; render(); }
+        } else if (act === "ovr") {
+            StudentStore.setOverride(id, !StudentStore.isOverride(id));
+            render();
+        } else if (act === "edit") {
+            editId = id; editAvatar = StudentStore.get(id).avatar; view = "edit"; note = ""; render();
+        } else if (act === "av") {
+            var typed = document.getElementById("stuNameInput");
+            var keep = typed ? typed.value : "";
+            editAvatar = b.dataset.av;
+            render();
+            var again = document.getElementById("stuNameInput");
+            if (again) again.value = keep;
+        } else if (act === "save") {
+            var ni = document.getElementById("stuNameInput");
+            var name = ni ? ni.value.trim() : "";
+            if (!name) { note = "😊 اكتب اسم الطالب أولًا"; render(); return; }
+            if (editId) {
+                StudentStore.update(editId, name, editAvatar);
+                if (editId === StudentStore.currentId() && typeof applyProfileToHeader === "function") applyProfileToHeader();
+                note = "✅ تم الحفظ";
+            } else {
+                var nid = StudentStore.add(name, editAvatar);
+                note = nid ? "✅ تمت إضافة " + name : "لا يمكن إضافة أكثر من " + arabicNumber(StudentStore.MAX) + " طالبًا";
+            }
+            view = "manage"; render();
+        } else if (act === "del") {
+            confirmId = id; view = "confirm"; render();
+        } else if (act === "delok") {
+            var r = StudentStore.remove(confirmId);
+            if (r === "switched") { StudentStore.switchTo(StudentStore.currentId()); return; }
+            note = r ? "✅ تم الحذف" : "";
+            view = "manage"; render();
+        }
+    }
+
+    window.openStudentPicker = function () { open("pick"); };
+    window.openStudentManager = function () { open("manage"); };
+
+    /* تجاوز القفل داخل لوحة المعلم (للطالب الحالي) */
+    window.toggleTeacherOverride = function (on) {
+        StudentStore.setOverride(StudentStore.currentId(), !!on);
+        refreshTeacherStudentCard();
+    };
+    function refreshTeacherStudentCard() {
+        var cb = document.getElementById("teacherOverrideToggle");
+        if (cb) cb.checked = StudentStore.isOverride();
+        var c = document.getElementById("teacherStudentCount");
+        if (c) c.textContent = arabicNumber(StudentStore.count());
+    }
+    var origStats = renderTeacherStats;
+    renderTeacherStats = function () {
+        origStats.apply(this, arguments);
+        refreshTeacherStudentCard();
+    };
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && root && !root.hidden) close();
+    });
+
+    /* بعد التبديل: شاشة رئيسية + ترحيب قصير */
+    document.addEventListener("DOMContentLoaded", function () {
+        var chip = document.getElementById("headerProfileChip");
+        if (chip) {
+            chip.setAttribute("onclick", "openStudentPicker()");
+            chip.setAttribute("aria-label", "تبديل الطالب");
+            if (!chip.querySelector(".stu-swap")) chip.appendChild(el("span", "stu-swap", "⇄"));
+        }
+        var sw = null;
+        try { sw = sessionStorage.getItem("taha_stu_switched"); sessionStorage.removeItem("taha_stu_switched"); } catch (e) { /* لا شيء */ }
+        if (sw) {
+            var n = localStorage.getItem("taha_child_name");
+            var t = el("div", "stu-toast", "👋 أهلًا " + (n || "بك") + "!");
+            document.body.appendChild(t);
+            setTimeout(function () { t.remove(); }, 2200);
+        }
+    });
+})();
