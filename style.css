@@ -12455,3 +12455,115 @@ body.dark-mode .pop-level-text strong { color: #263238; }
     .pop-big-btn { min-height: 66px; }
     .pop-dialog-box .pop-ctl { min-height: 62px; }
 }
+
+
+/* =========================================================
+   👥 ملفات الطلاب
+========================================================= */
+.stu-swap { font-size: 16px; opacity: .85; }
+body.stu-open { overflow: hidden; }
+.stu-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(20, 30, 60, .6);
+    display: flex; align-items: center; justify-content: center;
+    padding: 12px; direction: rtl;
+}
+.stu-overlay[hidden] { display: none; }
+.stu-panel {
+    background: #fff; color: #263238;
+    width: min(680px, 100%); max-height: 94vh; overflow-y: auto;
+    border-radius: 24px; padding: 20px 18px 18px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.35); text-align: center;
+}
+.stu-title { margin: 0 0 14px; font-size: 26px; }
+.stu-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;
+}
+.stu-card {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    min-height: 150px; padding: 12px 8px; border: 4px solid #cfd8dc;
+    border-radius: 20px; background: #f5f9ff; cursor: pointer; font-family: inherit;
+    color: inherit; position: relative;
+}
+.stu-card:hover, .stu-card:focus-visible { border-color: #2196f3; background: #e8f3ff; outline: none; }
+.stu-card.current { border-color: #43a047; background: #eaf7ec; }
+.stu-card-avatar { font-size: 56px; line-height: 1.1; }
+.stu-card-name { font-size: 22px; font-weight: 700; word-break: break-word; }
+.stu-card-stats { font-size: 15px; color: #546e7a; display: flex; gap: 14px; justify-content: center; }
+.stu-card-check { font-size: 14px; color: #2e7d32; font-weight: 700; }
+.stu-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; }
+.stu-btn {
+    min-height: 56px; padding: 10px 22px; font-size: 20px; font-family: inherit; font-weight: 700;
+    border: none; border-radius: 16px; background: #2196f3; color: #fff; cursor: pointer;
+}
+.stu-btn.ghost { background: #eceff1; color: #37474f; }
+.stu-btn.danger { background: #e53935; }
+.stu-btn:disabled, .stu-mini:disabled { opacity: .4; cursor: not-allowed; }
+.stu-note { margin: 12px 0 0; font-size: 18px; font-weight: 700; color: #00796b; }
+.stu-q { font-size: 24px; margin: 8px 0 14px; }
+.stu-hint { font-size: 15px; color: #607d8b; margin: 12px 0 0; }
+.stu-input {
+    width: 100%; box-sizing: border-box; font-size: 24px; padding: 12px 14px; font-family: inherit;
+    border: 3px solid #b0bec5; border-radius: 14px; text-align: center;
+}
+.stu-input:focus { border-color: #2196f3; outline: none; }
+.stu-label { display: block; margin: 14px 0 6px; font-weight: 700; font-size: 18px; text-align: right; }
+.stu-avatars { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 8px; }
+.stu-av {
+    font-size: 34px; min-height: 62px; border: 3px solid #cfd8dc; border-radius: 16px;
+    background: #f5f9ff; cursor: pointer;
+}
+.stu-av.selected { border-color: #43a047; background: #eaf7ec; transform: scale(1.06); }
+.stu-rows { display: flex; flex-direction: column; gap: 8px; }
+.stu-row {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border: 3px solid #cfd8dc; border-radius: 16px; background: #f9fbfd;
+}
+.stu-row.current { border-color: #43a047; }
+.stu-row-avatar { font-size: 38px; }
+.stu-row-info { flex: 1; text-align: right; display: flex; flex-direction: column; min-width: 0; }
+.stu-row-info b { font-size: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stu-row-info small { color: #607d8b; font-size: 14px; }
+.stu-mini {
+    min-width: 52px; min-height: 52px; padding: 4px 10px; font-size: 16px; font-weight: 700; font-family: inherit;
+    border: 2px solid #b0bec5; border-radius: 14px; background: #fff; cursor: pointer; color: #37474f;
+}
+.stu-mini.on { background: #fff3cd; border-color: #f9a825; }
+.stu-mini.danger { border-color: #ef9a9a; }
+.stu-toast {
+    pointer-events: none;
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 10001;
+    background: #2e7d32; color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 22px; font-weight: 700;
+    box-shadow: 0 6px 20px rgba(0,0,0,.3);
+}
+.teacher-students-card {
+    background: #f1f8ff; border: 2px solid #bbdefb; border-radius: 16px; padding: 12px; margin: 0 0 14px;
+}
+.teacher-students-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.teacher-students-btn {
+    min-height: 48px; padding: 8px 18px; font-size: 17px; font-weight: 700; font-family: inherit;
+    border: none; border-radius: 14px; background: #2196f3; color: #fff; cursor: pointer;
+}
+.teacher-override-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 17px; cursor: pointer; }
+.teacher-override-row input { width: 28px; height: 28px; flex: none; }
+.teacher-override-row small { color: #607d8b; display: block; }
+body.dark-mode .stu-panel { background: #263238; color: #eceff1; }
+body.dark-mode .stu-card, body.dark-mode .stu-row, body.dark-mode .stu-av { background: #37474f; border-color: #546e7a; color: #eceff1; }
+body.dark-mode .stu-card-stats, body.dark-mode .stu-row-info small, body.dark-mode .stu-hint { color: #b0bec5; }
+body.dark-mode .stu-btn.ghost { background: #455a64; color: #eceff1; }
+body.dark-mode .stu-mini { background: #455a64; color: #eceff1; }
+body.dark-mode .teacher-students-card { background: #37474f; border-color: #546e7a; }
+@media (max-width: 480px) {
+    .stu-title { font-size: 22px; }
+    .stu-grid { grid-template-columns: repeat(2, 1fr); }
+    .stu-btn { font-size: 18px; padding: 10px 14px; }
+}
+.stu-row { flex-wrap: wrap; }
+.stu-row-info { flex: 1 1 130px; }
+.stu-row-info .stu-card-stats { justify-content: flex-start; }
+.stu-row-info b { white-space: normal; }
+.stu-row .stu-mini { flex: none; }
+@media (max-width: 480px) {
+    .stu-row { justify-content: flex-start; }
+    .stu-row .stu-mini:first-of-type { margin-inline-start: auto; }
+}
