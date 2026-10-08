@@ -369,23 +369,9 @@ color: #d32f2f;
 الكتابة
 ========================================== */
 
-.writing-guide {
-font-size: 100px;
-font-weight: bold;
-color: #b0bec5;
-margin: 10px;
-}
 
-#writingCanvas {
-display: block;
-width: 100%;
-height: 300px;
-background: #fff;
-border: 4px dashed #90caf9;
-border-radius: 20px;
-margin: 15px auto;
-touch-action: none;
-}
+
+
 
 /* ==========================================
 القرآن الكريم
@@ -11610,3 +11596,168 @@ body.dark-mode .wb-done-card p { color: #a5b4fc; }
 body.dark-mode .wb-done-words { background: #27246b; border-color: #4338ca; }
 body.dark-mode .wb-done-item { background: #1e1b4b; border-color: #4338ca; }
 body.dark-mode .wb-done-word { color: #e0e7ff; }
+
+/* =========================================================
+   ✍️ الكتابة — «حروفي الجميلة» (wr-*)
+   ألوان هادئة، أهداف لمس كبيرة، بلا مشتتات
+========================================================= */
+
+.wr-wrap { max-width: 760px; margin: 0 auto; padding: 8px 14px 28px; }
+
+.wr-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.wr-title { flex: 1; margin: 0; text-align: center; font-size: 24px; color: #1a237e; }
+.wr-spacer { width: 52px; }
+
+.wr-icon-btn {
+    width: 52px; height: 52px; flex: none; border: none; border-radius: 16px;
+    background: #fff; color: #283593; font-size: 22px; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+}
+.wr-icon-btn:disabled { opacity: 0.35; cursor: default; }
+
+.wr-cover {
+    text-align: center; padding: 18px 14px; border-radius: 24px; margin-bottom: 14px;
+    background: linear-gradient(135deg, #e3f2fd, #f3e5f5); box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+}
+.wr-cover h3 { margin: 0; font-size: 30px; color: #1a237e; }
+.wr-cover p { margin: 4px 0 10px; color: #455a64; font-size: 18px; }
+.wr-overall-line { font-size: 16px; color: #37474f; margin-bottom: 8px; }
+
+.wr-bar { height: 12px; background: rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; margin: 0 auto 12px; max-width: 420px; }
+.wr-bar.small { height: 8px; max-width: none; margin: 6px 0 8px; }
+.wr-bar > div { height: 100%; width: 0; background: linear-gradient(90deg, #66bb6a, #26a69a); transition: width 0.3s; }
+
+.wr-big-btn {
+    min-height: 58px; padding: 10px 26px; border: none; border-radius: 18px; cursor: pointer;
+    font-size: 20px; font-weight: bold; color: #fff; background: linear-gradient(135deg, #42a5f5, #5c6bc0);
+    box-shadow: 0 4px 12px rgba(63,81,181,0.35);
+}
+
+.wr-map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+.wr-tile {
+    position: relative; min-height: 88px; padding: 6px 4px 8px; border: 3px solid transparent; border-radius: 20px;
+    background: var(--tile, #e3f2fd); cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px; box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+.wr-tile-glyph { font-size: 46px; line-height: 1.1; color: #263238; font-weight: bold; }
+.wr-tile.complete { border-color: #66bb6a; }
+.wr-tile.complete::after { content: "⭐"; position: absolute; top: 4px; right: 6px; font-size: 16px; }
+.wr-pips { display: flex; gap: 5px; }
+.wr-pips i { width: 10px; height: 10px; border-radius: 50%; background: rgba(0,0,0,0.18); }
+.wr-pips i.on { background: #43a047; }
+
+.wr-letterbar { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wr-letter-center { display: flex; align-items: center; gap: 12px; }
+.wr-letter-big { font-size: 56px; line-height: 1; font-weight: bold; color: #1a237e; }
+.wr-keyword { font-size: 20px; color: #455a64; }
+
+.wr-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.wr-tab {
+    min-height: 54px; padding: 6px 4px; border: 2px solid transparent; border-radius: 14px; cursor: pointer;
+    background: #fff; color: #37474f; font-size: 14px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.wr-tab.active { background: #3f51b5; color: #fff; }
+.wr-tab.done:not(.active) { border-color: #66bb6a; }
+
+.wr-card { background: #fff; border-radius: 24px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.wr-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.wr-card-head h3 { margin: 0; font-size: 20px; color: #1a237e; }
+.wr-progress-text { font-size: 15px; color: #607d8b; }
+
+.wr-message { min-height: 28px; text-align: center; font-size: 18px; font-weight: bold; color: #455a64; margin-bottom: 6px; }
+.wr-message.ok { color: #2e7d32; }
+
+.wr-stage { display: flex; flex-direction: column; align-items: center; gap: 10px; min-height: 280px; }
+.wr-pass { text-align: center; font-size: 18px; color: #546e7a; }
+
+.wr-ref { display: flex; align-items: center; gap: 12px; }
+.wr-ref-glyph { font-size: 44px; font-weight: bold; color: #1a237e; }
+.wr-ref-text { font-size: 16px; color: #546e7a; }
+
+.wr-board { position: relative; width: 100%; max-width: 560px; aspect-ratio: 4 / 3; border-radius: 20px; background: #fffdf7; border: 3px solid #c5cae9; overflow: hidden; }
+.wr-board canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wr-ink-canvas { touch-action: none; cursor: crosshair; }
+
+.wr-word { display: inline-block; direction: rtl; font-size: 54px; line-height: 1.5; font-weight: bold; color: #263238; white-space: nowrap; }
+.wr-gap { display: inline-block; min-width: 0.7em; height: 1em; vertical-align: -0.1em; border-bottom: 6px dashed #ff9800; background: rgba(255,152,0,0.14); border-radius: 8px 8px 0 0; margin: 0 2px; text-align: center; }
+.wr-gap.filled { border-bottom: none; background: none; color: #2e7d32; min-width: 0; height: auto; vertical-align: baseline; }
+.wr-word-holder { display: flex; justify-content: center; }
+.wr-pic { font-size: 88px; line-height: 1.1; }
+.wr-pic.small { font-size: 58px; }
+.wr-write-top { display: flex; align-items: center; justify-content: center; gap: 16px; }
+
+.wr-forms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; max-width: 480px; }
+.wr-form {
+    min-height: 116px; font-size: 76px; font-weight: bold; line-height: 1.2; color: #1a237e; background: #f3f4ff;
+    border: 3px solid #c5cae9; border-radius: 20px; cursor: pointer;
+}
+.wr-form.right { background: #c8e6c9; border-color: #43a047; }
+.wr-form.hint, .wr-conn-p.hint { box-shadow: 0 0 0 5px #ffd54f; }
+
+.wr-conn { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; width: 100%; max-width: 560px; }
+.wr-conn-col { display: flex; flex-direction: column; gap: 10px; }
+.wr-conn-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.wr-line { stroke: #66bb6a; stroke-width: 6; stroke-linecap: round; }
+.wr-line.drag { stroke: #5c6bc0; stroke-dasharray: 2 10; }
+.wr-conn-item {
+    min-height: 88px; border: 3px solid #c5cae9; border-radius: 18px; background: #f3f4ff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 48px;
+}
+.wr-conn-w { touch-action: none; }
+.wr-conn-w .wr-word { font-size: 38px; }
+.wr-conn-item.sel { border-color: #3f51b5; background: #e8eaf6; }
+.wr-conn-item.matched { border-color: #43a047; background: #e8f5e9; }
+
+.shake { animation: wrShake 0.4s; }
+@keyframes wrShake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+.wr-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+.wr-ctl {
+    min-height: 58px; padding: 6px; border: none; border-radius: 16px; cursor: pointer; font-size: 16px; font-weight: bold;
+    background: #fff; color: #283593; box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+}
+.wr-next { grid-column: 1 / -1; min-height: 62px; font-size: 20px; background: #e0e0e0; color: #616161; border: 2px dashed #bdbdbd; box-shadow: none; }
+.wr-next.ready { background: linear-gradient(135deg, #66bb6a, #26a69a); color: #fff; border: none; box-shadow: 0 4px 12px rgba(38,166,154,0.4); }
+
+.wr-dialog { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(20,24,60,0.55); padding: 16px; }
+.wr-dialog[hidden] { display: none; }
+.wr-dialog-box { background: #fff; border-radius: 26px; padding: 22px 18px; text-align: center; max-width: 380px; width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.wr-dialog-emoji { font-size: 64px; }
+.wr-dialog-box h3 { margin: 0; color: #1a237e; font-size: 26px; }
+.wr-dialog-box p { margin: 0; font-size: 18px; color: #455a64; }
+
+@media (min-width: 700px) {
+    .wr-map { grid-template-columns: repeat(7, 1fr); }
+    .wr-tile-glyph { font-size: 52px; }
+    .wr-controls { grid-template-columns: repeat(4, 1fr) ; }
+}
+@media (min-width: 1000px) {
+    .wr-wrap { max-width: 900px; }
+    .wr-word { font-size: 66px; }
+    .wr-form { font-size: 90px; min-height: 130px; }
+}
+@media (max-width: 480px) {
+    .wr-tile-glyph { font-size: 40px; }
+    .wr-tab { font-size: 12px; }
+    .wr-word { font-size: 46px; }
+    .wr-conn { gap: 40px; }
+    .wr-conn-w .wr-word { font-size: 30px; }
+    .wr-conn-item { min-height: 84px; font-size: 42px; }
+    .wr-letter-big { font-size: 48px; }
+    .wr-ctl { font-size: 14px; }
+}
+
+body.dark-mode .wr-title, body.dark-mode .wr-card-head h3, body.dark-mode .wr-cover h3, body.dark-mode .wr-letter-big, body.dark-mode .wr-ref-glyph, body.dark-mode .wr-dialog-box h3 { color: #c5cae9; }
+body.dark-mode .wr-cover { background: linear-gradient(135deg, #1e2a4a, #2b1f45); }
+body.dark-mode .wr-cover p, body.dark-mode .wr-overall-line, body.dark-mode .wr-pass, body.dark-mode .wr-keyword, body.dark-mode .wr-progress-text, body.dark-mode .wr-ref-text, body.dark-mode .wr-message, body.dark-mode .wr-dialog-box p { color: #b0bec5; }
+body.dark-mode .wr-message.ok { color: #81c784; }
+body.dark-mode .wr-card, body.dark-mode .wr-dialog-box { background: #1e2233; }
+body.dark-mode .wr-icon-btn, body.dark-mode .wr-ctl, body.dark-mode .wr-tab { background: #2a3050; color: #e8eaf6; }
+body.dark-mode .wr-tab.active { background: #5c6bc0; }
+body.dark-mode .wr-tile { background: #2a3050; }
+body.dark-mode .wr-tile-glyph, body.dark-mode .wr-word { color: #e8eaf6; }
+body.dark-mode .wr-board { background: #fffdf7; }
+body.dark-mode .wr-form, body.dark-mode .wr-conn-item { background: #2a3050; color: #e8eaf6; border-color: #3f4a7a; }
+body.dark-mode .wr-next { background: #2a2e3f; color: #9e9e9e; border-color: #555; }
+body.dark-mode .wr-next.ready { color: #fff; }
