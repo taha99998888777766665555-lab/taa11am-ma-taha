@@ -26531,3 +26531,1194 @@ window.wrGame = wrGame;
 /* =========================================================
    🔚 نهاية قسم الكتابة «حروفي الجميلة»
 ========================================================= */
+
+/* =========================================================
+   🐾 أصدقاء الحديقة — لعبة مستقلة (حيوانات وطيور) — الإصدار ٢
+   ---------------------------------------------------------
+   خمسة أنشطة × ثلاثة مستويات × ٥ جولات، لكل نشاط بيئته الخاصة:
+   1) من هذا؟ (مرج)        2) أطعِم الحيوان (مزرعة)
+   3) بيت الحيوان (مناظر)   4) عدّ معي (حظيرة)
+   5) أين ظلّي؟ (مساء)
+   بلا مؤقت ولا أرواح ولا عقوبات؛ الخطأ يُعالَج بتلميح تدريجي.
+   الصوت: ملفات MP3 المحلية فقط (الكلمة كاملة لا الحروف)، بلا TTS.
+   التقدّم مستقل: taha_zoo_progress_v1
+========================================================= */
+
+const ZOO_KEY = "taha_zoo_progress_v1";
+const ZOO_ROUNDS = 5;
+
+const ZOO_ACTS = [
+    { id: "who", name: "من هذا؟", icon: "👂", mascot: "🐘", env: "meadow", desc: "اسمع الاسم واختر الحيوان", prompt: "اسمع جيدًا ثم المس الحيوان" },
+    { id: "feed", name: "أطعِم الحيوان", icon: "🥕", mascot: "🐒", env: "farm", desc: "اسحب الطعام إلى صاحبه", prompt: "اسحب الطعام إلى من يحبه" },
+    { id: "home", name: "بيت الحيوان", icon: "🏡", mascot: "🦁", env: "land", desc: "خذ كل حيوان إلى بيته", prompt: "خذ كل حيوان إلى بيته" },
+    { id: "count", name: "عدّ معي", icon: "🔢", mascot: "🐻", env: "pen", desc: "المس الحيوانات وعُدّها", prompt: "المس كل حيوان لتعدّه" },
+    { id: "shadow", name: "أين ظلّي؟", icon: "🌑", mascot: "🦊", env: "dusk", desc: "اسحب الحيوان إلى ظلّه", prompt: "اسحب كل حيوان إلى ظلّه" }
+];
+
+const ZOO_LEVELS = [
+    { id: 1, name: "سهل", stars: "⭐", note: "ابدأ من هنا بهدوء" },
+    { id: 2, name: "متوسط", stars: "⭐⭐", note: "خطوة أكبر قليلًا" },
+    { id: 3, name: "متقدّم", stars: "⭐⭐⭐", note: "للبطل الماهر" }
+];
+
+/* n الاسم (له ملف MP3)، e الرمز، g البيت، f الطعام، k نوع الحركة الهادئة */
+const ZOO_ANIMALS = [
+    { n: "أرنب", e: "🐰", g: "forest", f: "🥕", k: "hop" },
+    { n: "أسد", e: "🦁", g: "forest", f: "🍖", k: "sway" },
+    { n: "بطة", e: "🦆", g: "farm", f: "🍞", k: "sway" },
+    { n: "بقرة", e: "🐄", g: "farm", f: "🌿", k: "breathe" },
+    { n: "ثعلب", e: "🦊", g: "forest", k: "sway" },
+    { n: "ثعبان", e: "🐍", k: "sway" },
+    { n: "تمساح", e: "🐊", k: "breathe" },
+    { n: "حصان", e: "🐴", g: "farm", f: "🍎", k: "breathe" },
+    { n: "حوت", e: "🐋", g: "sea", k: "swim" },
+    { n: "خروف", e: "🐑", g: "farm", k: "breathe" },
+    { n: "دجاجة", e: "🐔", g: "farm", f: "🌽", k: "hop" },
+    { n: "دب", e: "🐻", g: "forest", f: "🍯", k: "breathe" },
+    { n: "ديك", e: "🐓", g: "farm", k: "hop" },
+    { n: "دلفين", e: "🐬", g: "sea", k: "swim" },
+    { n: "ذئب", e: "🐺", g: "forest", k: "sway" },
+    { n: "زرافة", e: "🦒", g: "forest", f: "🥬", k: "sway" },
+    { n: "سمكة", e: "🐟", g: "sea", k: "swim" },
+    { n: "نسر", e: "🦅", g: "sky", k: "fly" },
+    { n: "ضفدع", e: "🐸", k: "hop" },
+    { n: "عصفور", e: "🐦", g: "sky", f: "🌾", k: "fly" },
+    { n: "غوريلا", e: "🦍", g: "forest", k: "breathe" },
+    { n: "فراشة", e: "🦋", g: "sky", k: "fly" },
+    { n: "فيل", e: "🐘", g: "forest", f: "🥜", k: "breathe" },
+    { n: "فأر", e: "🐭", f: "🧀", k: "hop" },
+    { n: "قرد", e: "🐒", g: "forest", f: "🍌", k: "sway" },
+    { n: "كلب", e: "🐶", g: "farm", f: "🦴", k: "sway" },
+    { n: "نحل", e: "🐝", g: "sky", f: "🌺", k: "fly" },
+    { n: "نمر", e: "🐅", g: "forest", k: "sway" }
+];
+
+const ZOO_HABITATS = {
+    farm: { name: "المزرعة", e: "🏡", deco: ["🌾", "🌻"] },
+    forest: { name: "الغابة", e: "🌳", deco: ["🌲", "🍄"] },
+    sea: { name: "البحر", e: "🌊", deco: ["🐚", "🫧"] },
+    sky: { name: "السماء", e: "☁️", deco: ["☀️", "☁️"] }
+};
+
+const ZOO_NUM_WORDS = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة"];
+
+const zoo = {
+    active: false,
+    view: "hub",
+    act: "who",
+    level: 1,
+    round: 0,
+    mistakes: 0,
+    hint: 0,
+    roundSolved: false,
+    session: 0,
+    used: [],
+    cur: null,
+    bound: false
+};
+
+/* ---------- أدوات ---------- */
+
+function zEl(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+}
+
+function zNum(n) {
+    return (typeof arabicNumber === "function") ? arabicNumber(n) : String(n);
+}
+
+function zShuffle(a) {
+    const r = a.slice();
+    for (let i = r.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [r[i], r[j]] = [r[j], r[i]];
+    }
+    return r;
+}
+
+function zHasAudio(text) {
+    return typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined" && !!EDUCATIONAL_AUDIO_MANIFEST[text];
+}
+
+function zAnimals() {
+    const a = ZOO_ANIMALS.filter(x => zHasAudio(x.n));
+    return a.length >= 12 ? a : ZOO_ANIMALS;
+}
+
+function zCalm() {
+    try { return !!(typeof Settings !== "undefined" && Settings.get().calm); } catch (e) { return false; }
+}
+
+function zSay(text, kind) {
+    const m = $("zooMessage");
+    if (!m) return;
+    m.textContent = text || "";
+    m.className = "zoo-message" + (kind ? " " + kind : "");
+}
+
+/* حيوان "حيّ": حركة هادئة حسب نوعه مع تأخير عشوائي حتى لا يتحرك الجميع معًا */
+function zLive(el, animal) {
+    el.classList.add("zoo-life", "zl-" + ((animal && animal.k) || "sway"));
+    el.style.setProperty("--zd", (3.2 + Math.random() * 2.6).toFixed(2) + "s");
+    el.style.setProperty("--zl", (-Math.random() * 3).toFixed(2) + "s");
+}
+
+function zAnimalOf(name) {
+    return ZOO_ANIMALS.find(a => a.n === name);
+}
+
+/* وميض نجاح صغير: ٨ جزيئات قليلة بلا زحام، وتُلغى في الوضع الهادئ */
+function zBurst(el, glyphs) {
+    if (!el || zCalm()) return;
+    const world = $("zooWorld");
+    if (!world) return;
+    const w = world.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2 - w.left, cy = r.top + r.height / 2 - w.top;
+    const g = glyphs || ["✨", "⭐", "💛", "✨"];
+    for (let i = 0; i < 8; i++) {
+        const p = zEl("span", "zoo-spark", g[i % g.length]);
+        const ang = (Math.PI * 2 * i) / 8 + Math.random() * 0.4;
+        const dist = 60 + Math.random() * 40;
+        p.style.left = cx + "px";
+        p.style.top = cy + "px";
+        p.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+        p.style.setProperty("--dy", Math.sin(ang) * dist - 10 + "px");
+        p.setAttribute("aria-hidden", "true");
+        world.appendChild(p);
+        setTimeout(() => { if (p.parentNode) p.parentNode.removeChild(p); }, 950);
+    }
+}
+
+function zMascot(state) {
+    const m = $("zooMascot");
+    if (!m) return;
+    m.classList.remove("cheer", "oops");
+    void m.offsetWidth;
+    if (state) m.classList.add(state);
+}
+
+/* ---------- الصوت المحلي: صوت واحد في كل مرة، الكلمة كاملة، بلا TTS ---------- */
+
+let zooAudio = null;
+
+function zooStopAudio() {
+    const a = zooAudio;
+    zooAudio = null;
+    if (a) { try { a.pause(); a.currentTime = 0; } catch (e) { /* لا شيء */ } }
+}
+
+function speakZooLocal(text) {
+    const m = (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined") ? EDUCATIONAL_AUDIO_MANIFEST : null;
+    const path = m ? m[text] : null;
+    if (!path) return false;
+    zooStopAudio();
+    try {
+        const a = new Audio(path);
+        zooAudio = a;
+        a.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined") ? EDUCATIONAL_AUDIO_PLAYBACK_RATE : 0.8;
+        try { a.preservesPitch = true; } catch (e) { /* لا شيء */ }
+        a.addEventListener("ended", () => { if (zooAudio === a) zooAudio = null; }, { once: true });
+        const p = a.play();
+        if (p && p.catch) p.catch(() => { if (zooAudio === a) zooAudio = null; });
+    } catch (e) {
+        zooAudio = null;
+    }
+    return true;
+}
+
+/* ---------- التقدّم المحفوظ (مستقل عن بقية الألعاب) ---------- */
+
+function zooLoad() {
+    const empty = { done: {}, last: {} };
+    try {
+        const o = JSON.parse(localStorage.getItem(ZOO_KEY));
+        if (!o || typeof o !== "object") return empty;
+        const clean = { done: {}, last: {} };
+        const ids = ZOO_ACTS.map(a => a.id);
+        if (o.done && typeof o.done === "object") {
+            Object.keys(o.done).forEach(k => {
+                const m = /^([a-z]+):([1-3])$/.exec(k);
+                const v = o.done[k];
+                if (m && ids.indexOf(m[1]) >= 0 && v && typeof v === "object") {
+                    clean.done[k] = { n: Math.max(1, Math.min(9999, Number(v.n) || 1)), best: Math.max(0, Math.min(99, Number(v.best) || 0)) };
+                }
+            });
+        }
+        if (o.last && typeof o.last === "object") {
+            Object.keys(o.last).forEach(k => {
+                const v = o.last[k];
+                if (ids.indexOf(k) >= 0 && v && [1, 2, 3].indexOf(Number(v.level)) >= 0) {
+                    clean.last[k] = { level: Number(v.level), mistakes: Math.max(0, Math.min(99, Number(v.mistakes) || 0)) };
+                }
+            });
+        }
+        return clean;
+    } catch (e) {
+        return empty;
+    }
+}
+
+function zooSave(p) {
+    try { localStorage.setItem(ZOO_KEY, JSON.stringify(p)); } catch (e) { /* لا شيء */ }
+}
+
+function zooDoneCount() {
+    return Object.keys(zooLoad().done).length;
+}
+
+/* مستوى مقترح: التالي بعد جولة هادئة، ونفس المستوى بعد جولة فيها أخطاء كثيرة */
+function zooSuggestLevel(actId) {
+    const p = zooLoad();
+    const last = p.last[actId];
+    if (!last) return 1;
+    if (last.mistakes <= 2) return Math.min(3, last.level + 1);
+    if (last.mistakes >= 8) return Math.max(1, last.level - (last.level > 1 && last.mistakes >= 12 ? 1 : 0));
+    return last.level;
+}
+
+/* أول نشاط لم يكتمل: لزر «هيا نبدأ» */
+function zooNextStep() {
+    const p = zooLoad();
+    for (const a of ZOO_ACTS) {
+        const open = ZOO_LEVELS.find(l => !p.done[a.id + ":" + l.id]);
+        if (open) return { act: a.id, level: open.id };
+    }
+    return { act: ZOO_ACTS[0].id, level: 1 };
+}
+
+/* =========================================================
+   🌍 المشاهد: لكل بيئة زينة خاصة خلف المحتوى
+========================================================= */
+
+const ZOO_SCENERY = {
+    hub: [["☀️", "sun"], ["☁️", "c1"], ["☁️", "c2"], ["🌳", "t1"], ["🌷", "f1"], ["🌼", "f2"], ["🐦", "bd"]],
+    meadow: [["☀️", "sun"], ["☁️", "c1"], ["🌼", "f1"], ["🌷", "f2"], ["🦋", "bf"], ["🌳", "t1"]],
+    farm: [["☁️", "c1"], ["🏡", "barn"], ["🌾", "f1"], ["🌻", "f2"]],
+    land: [["☁️", "c1"], ["☁️", "c2"]],
+    pen: [["☁️", "c1"], ["🌻", "f1"], ["🌼", "f2"], ["🌿", "f3"]],
+    dusk: [["🦉", "owl"], ["🌙", "moon"], ["✨", "st1"], ["✨", "st2"], ["✨", "st3"], ["⭐", "st4"]]
+};
+
+function zooScenery(env) {
+    const world = $("zooWorld");
+    const sc = $("zooScenery");
+    if (!world || !sc) return;
+    world.dataset.env = env;
+    sc.innerHTML = "";
+    (ZOO_SCENERY[env] || []).forEach(([g, c]) => {
+        const s = zEl("span", "zoo-deco zd-" + c, g);
+        s.setAttribute("aria-hidden", "true");
+        sc.appendChild(s);
+    });
+}
+
+/* ---------- الشاشات: البداية، الأنشطة، المستويات، اللعب ---------- */
+
+function zooBind() {
+    if (zoo.bound) return;
+    zoo.bound = true;
+    const on = (id, fn) => { const e = $(id); if (e) e.addEventListener("click", fn); };
+    on("zooBack", () => zooBack());
+    on("zooBtnListen", () => zooListen());
+    on("zooBtnHint", () => zooHint());
+    on("zooBtnNext", () => zooNext());
+    on("zooDoneNext", () => { zooCloseDone(); zooStartLevel(zoo.act, Math.min(3, zoo.level + 1)); });
+    on("zooDoneAgain", () => { zooCloseDone(); zooStartLevel(zoo.act, zoo.level); });
+    on("zooDoneHub", () => { zooCloseDone(); zooShowActs(); });
+    const dlg = $("zooDone");
+    if (dlg) dlg.addEventListener("keydown", e => {
+        if (e.key === "Escape") { zooCloseDone(); return; }
+        if (e.key !== "Tab") return;
+        const f = Array.from(dlg.querySelectorAll("button")).filter(b => !b.hidden && !b.disabled);
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+}
+
+function zooViews(view) {
+    zoo.view = view;
+    const map = { hub: "zooHub", acts: "zooActs", levels: "zooLevels", play: "zooPlay" };
+    Object.keys(map).forEach(k => { const e = $(map[k]); if (e) e.hidden = k !== view; });
+    const w = $("zooWorld");
+    if (w) w.dataset.view = view;
+    const shown = $(map[view]);
+    if (shown) { shown.classList.remove("zoo-view-in"); void shown.offsetWidth; shown.classList.add("zoo-view-in"); }
+    zooKeepInView();
+    const t = $("zooTitle");
+    const act = ZOO_ACTS.find(a => a.id === zoo.act);
+    if (t) t.textContent = (view === "hub" || view === "acts" || !act) ? "🐾 أصدقاء الحديقة" : act.icon + " " + act.name;
+}
+
+/* إن كان رأس اللعبة فوق حدود الشاشة (بعد سحب طويل) نعيده للأعلى فورًا */
+function zooKeepInView() {
+    const w = $("zooWorld");
+    if (!w) return;
+    const r = w.getBoundingClientRect();
+    if (r.top < -20) { try { w.scrollIntoView({ block: "start" }); } catch (e) { /* لا شيء */ } }
+}
+
+function startZooGame() {
+    zooBind();
+    zooTeardown();
+    zoo.active = true;
+    showScreen("zooGame");
+    zooShowHub();
+}
+
+function exitZooGame() {
+    zooTeardown();
+    zoo.active = false;
+    showScreen("games");
+}
+
+function zooTeardown() {
+    zoo.session++;
+    if (zoo.cur && zoo.cur.destroy) { try { zoo.cur.destroy(); } catch (e) { /* لا شيء */ } }
+    zoo.cur = null;
+    zooStopAudio();
+    document.querySelectorAll(".zoo-spark, .zoo-ghost").forEach(n => n.remove());
+    try { zooCloseDone(); } catch (e) { /* لا شيء */ }
+}
+
+function zooBack() {
+    if (zoo.view === "play") { zooTeardown(); zooShowLevels(zoo.act); return; }
+    if (zoo.view === "levels") { zooShowActs(); return; }
+    if (zoo.view === "acts") { zooShowHub(); return; }
+    exitZooGame();
+}
+
+/* شاشة البداية: عنوان كبير وحيوانات تتمشى وزر «هيا نبدأ» */
+function zooShowHub() {
+    zooTeardown();
+    zooScenery("hub");
+    zooViews("hub");
+    const hub = $("zooHub");
+    if (!hub) return;
+    hub.innerHTML = "";
+    const hero = zEl("div", "zoo-hero");
+    hero.appendChild(zEl("div", "zoo-logo", "🐾"));
+    hero.appendChild(zEl("h1", "zoo-hero-title", "أصدقاء الحديقة"));
+    hero.appendChild(zEl("div", "zoo-hero-sub", "حيوانات وطيور وألعاب ممتعة"));
+    const walkers = zEl("div", "zoo-walkers");
+    walkers.setAttribute("aria-hidden", "true");
+    zShuffle(zAnimals()).slice(0, 4).forEach((a, i) => {
+        const w = zEl("span", "zoo-walker", a.e);
+        w.style.setProperty("--wd", (14 + i * 3) + "s");
+        w.style.setProperty("--wl", (-i * 4) + "s");
+        w.style.bottom = (i % 2 ? 2 : 12) + "px";
+        walkers.appendChild(w);
+    });
+    hero.appendChild(walkers);
+    const start = zEl("button", "zoo-start", "▶ هيا نبدأ");
+    start.type = "button";
+    start.id = "zooStart";
+    start.addEventListener("click", () => { const s = zooNextStep(); zooStartLevel(s.act, s.level); });
+    hero.appendChild(start);
+    const more = zEl("button", "zoo-choose", "🗺️ اختر نشاطًا");
+    more.type = "button";
+    more.id = "zooChoose";
+    more.addEventListener("click", () => zooShowActs());
+    hero.appendChild(more);
+    const total = ZOO_ACTS.length * ZOO_LEVELS.length;
+    hero.appendChild(zEl("div", "zoo-progress-line", "أنجزت " + zNum(zooDoneCount()) + " من " + zNum(total) + " مستوى"));
+    hub.appendChild(hero);
+}
+
+/* خريطة الأنشطة: بطاقة كبيرة بمشهد خاص لكل نشاط */
+function zooShowActs() {
+    zooTeardown();
+    zooScenery("hub");
+    zooViews("acts");
+    const box = $("zooActs");
+    if (!box) return;
+    box.innerHTML = "";
+    const p = zooLoad();
+    box.appendChild(zEl("div", "zoo-intro-line", "اختر نشاطًا وانطلق مع أصدقائك 🐾"));
+    const grid = zEl("div", "zoo-acts");
+    ZOO_ACTS.forEach(a => {
+        const b = zEl("button", "zoo-act zoo-act-" + a.env);
+        b.type = "button";
+        b.dataset.act = a.id;
+        const art = zEl("span", "zoo-act-art");
+        art.setAttribute("aria-hidden", "true");
+        art.appendChild(zEl("span", "zoo-act-mascot", a.mascot));
+        art.appendChild(zEl("span", "zoo-act-icon", a.icon));
+        b.appendChild(art);
+        const txt = zEl("span", "zoo-act-text");
+        txt.appendChild(zEl("strong", "", a.name));
+        txt.appendChild(zEl("small", "", a.desc));
+        b.appendChild(txt);
+        const dots = zEl("span", "zoo-dots");
+        dots.setAttribute("aria-hidden", "true");
+        ZOO_LEVELS.forEach(l => dots.appendChild(zEl("i", p.done[a.id + ":" + l.id] ? "on" : "")));
+        b.appendChild(dots);
+        const n = ZOO_LEVELS.filter(l => p.done[a.id + ":" + l.id]).length;
+        b.setAttribute("aria-label", a.name + "، " + a.desc + "، أُنجز " + zNum(n) + " من ٣ مستويات");
+        b.addEventListener("click", () => zooShowLevels(a.id));
+        grid.appendChild(b);
+    });
+    box.appendChild(grid);
+}
+
+/* اختيار المستوى: ثلاث درجات كبيرة داخل بيئة النشاط مع مرشد */
+function zooShowLevels(actId) {
+    zooTeardown();
+    zoo.act = actId;
+    const act = ZOO_ACTS.find(a => a.id === actId);
+    zooScenery(act.env);
+    zooViews("levels");
+    const box = $("zooLevels");
+    if (!box) return;
+    box.innerHTML = "";
+    const p = zooLoad();
+    const sug = zooSuggestLevel(actId);
+    const guide = zEl("div", "zoo-guide");
+    const m = zEl("span", "zoo-guide-mascot", act.mascot);
+    zLive(m, { k: "sway" });
+    m.setAttribute("aria-hidden", "true");
+    guide.appendChild(m);
+    guide.appendChild(zEl("div", "zoo-bubble", act.desc));
+    box.appendChild(guide);
+    const list = zEl("div", "zoo-levels");
+    ZOO_LEVELS.forEach(l => {
+        const b = zEl("button", "zoo-level zoo-lv" + l.id + (l.id === sug ? " suggested" : ""));
+        b.type = "button";
+        b.dataset.level = String(l.id);
+        const done = p.done[actId + ":" + l.id];
+        b.appendChild(zEl("span", "zoo-level-stars", done ? "🌟".repeat(l.id) : l.stars));
+        const t = zEl("span", "zoo-level-text");
+        t.appendChild(zEl("strong", "", l.name + (done ? " ✓" : "")));
+        t.appendChild(zEl("small", "", l.note + (l.id === sug ? " — مقترح لك 👍" : "")));
+        b.appendChild(t);
+        b.addEventListener("click", () => zooStartLevel(actId, l.id));
+        list.appendChild(b);
+    });
+    box.appendChild(list);
+}
+
+/* ---------- الجولات ---------- */
+
+function zooStartLevel(actId, level) {
+    zooBind();
+    zooTeardown();
+    zoo.active = true;
+    zoo.act = actId;
+    zoo.level = level;
+    zoo.round = 0;
+    zoo.mistakes = 0;
+    zoo.used = [];
+    const scr = $("zooGame");
+    if (!scr || !scr.classList.contains("active")) showScreen("zooGame");
+    const act = ZOO_ACTS.find(a => a.id === actId);
+    zooScenery(act.env);
+    zooViews("play");
+    const mas = $("zooMascot");
+    if (mas) { mas.textContent = act.mascot; zLive(mas, { k: "sway" }); }
+    zooRound();
+}
+
+function zooUpdateHead() {
+    const rp = $("zooRoundText");
+    if (rp) rp.textContent = "الجولة " + zNum(zoo.round + 1) + " من " + zNum(ZOO_ROUNDS);
+    const bar = $("zooBar");
+    if (bar) bar.style.width = Math.round((zoo.round + (zoo.roundSolved ? 1 : 0)) / ZOO_ROUNDS * 100) + "%";
+    const lv = $("zooLevelText");
+    const l = ZOO_LEVELS[zoo.level - 1];
+    if (lv && l) lv.textContent = l.stars + " " + l.name;
+    const pips = $("zooPips");
+    if (pips) {
+        pips.innerHTML = "";
+        for (let i = 0; i < ZOO_ROUNDS; i++) pips.appendChild(zEl("i", i < zoo.round || (i === zoo.round && zoo.roundSolved) ? "on" : (i === zoo.round ? "cur" : "")));
+    }
+}
+
+function zooSetNext(on) {
+    const b = $("zooBtnNext");
+    if (!b) return;
+    b.disabled = !on;
+    b.classList.toggle("ready", on);
+    b.textContent = zoo.round >= ZOO_ROUNDS - 1 ? "إنهاء المستوى 🌟" : "التالي ◀";
+}
+
+function zooRound() {
+    if (zoo.cur && zoo.cur.destroy) { try { zoo.cur.destroy(); } catch (e) { /* لا شيء */ } }
+    zoo.cur = null;
+    zoo.session++;
+    const session = zoo.session;
+    zoo.roundSolved = false;
+    zoo.hint = 0;
+    zooUpdateHead();
+    zooSetNext(false);
+    zSay("");
+    zMascot("");
+    document.querySelectorAll(".zoo-spark, .zoo-ghost").forEach(n => n.remove());
+    const stage = $("zooStage");
+    if (!stage) return;
+    stage.innerHTML = "";
+    stage.classList.remove("zoo-enter");
+    void stage.offsetWidth;
+    stage.classList.add("zoo-enter");
+    setTimeout(() => { if (session === zoo.session) stage.classList.remove("zoo-enter"); }, 900);
+    zooKeepInView();
+    const api = {
+        alive: () => session === zoo.session,
+        say: (t, k) => { if (session === zoo.session) zSay(t, k); },
+        mistake: () => { if (session === zoo.session) { zoo.mistakes++; zoo.hint = Math.min(3, zoo.hint + 1); zMascot("oops"); } },
+        solved: () => { if (session === zoo.session) zooRoundSolved(); }
+    };
+    const act = ZOO_ACTS.find(a => a.id === zoo.act);
+    const R = { who: zooRenderWho, feed: zooRenderFeed, home: zooRenderHome, count: zooRenderCount, shadow: zooRenderShadow };
+    stage.appendChild(zEl("div", "zoo-prompt", act.prompt));
+    zoo.cur = R[zoo.act](stage, api) || {};
+}
+
+function zooRoundSolved() {
+    zoo.roundSolved = true;
+    zooUpdateHead();
+    zooSetNext(true);
+    zMascot("cheer");
+    const msgs = ["أحسنت! 🌟", "رائع جدًا! ⭐", "ممتاز! 👏", "عمل جميل! 🎉", "بطل حقيقي! 🏅"];
+    zSay(msgs[zoo.round % msgs.length], "ok");
+    const stage = $("zooStage");
+    if (stage) stage.classList.add("zoo-win");
+    const nx = $("zooBtnNext");
+    if (nx) { try { nx.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ } }
+}
+
+function zooNext() {
+    if (!zoo.roundSolved) return;
+    const st = $("zooStage");
+    if (st) st.classList.remove("zoo-win");
+    if (zoo.round >= ZOO_ROUNDS - 1) { zooFinishLevel(); return; }
+    zoo.round++;
+    zooRound();
+}
+
+function zooListen() {
+    if (zoo.cur && zoo.cur.listen) zoo.cur.listen();
+}
+
+/* مساعدة تدريجية: كل ضغطة (أو خطأ) ترفع درجة التلميح */
+function zooHint() {
+    zoo.hint = Math.min(3, zoo.hint + 1);
+    if (zoo.cur && zoo.cur.hint) zoo.cur.hint(zoo.hint);
+}
+
+function zooFinishLevel() {
+    const key = zoo.act + ":" + zoo.level;
+    const p = zooLoad();
+    const first = !p.done[key];
+    const prev = p.done[key];
+    p.done[key] = { n: (prev ? prev.n : 0) + 1, best: prev ? Math.min(prev.best, zoo.mistakes) : zoo.mistakes };
+    p.last[zoo.act] = { level: zoo.level, mistakes: zoo.mistakes };
+    zooSave(p);
+    if (first) { try { addStars(1); } catch (e) { /* لا شيء */ } }
+    try {
+        if (typeof StudentData !== "undefined" && StudentData.logEvent) {
+            StudentData.logEvent({
+                type: "activity_complete",
+                subject: "games",
+                skill: "zoo_" + zoo.act,
+                activity: "level_" + zoo.level,
+                correct: null
+            });
+        }
+    } catch (e) { /* لا شيء */ }
+    const dlg = $("zooDone");
+    if (!dlg) { zooShowActs(); return; }
+    const act = ZOO_ACTS.find(a => a.id === zoo.act);
+    const t = $("zooDoneText");
+    if (t) t.textContent = "أتممت «" + act.name + "» — " + ZOO_LEVELS[zoo.level - 1].name + (first ? " وحصلت على نجمة ⭐" : "");
+    const cheer = $("zooCheer");
+    if (cheer) {
+        cheer.innerHTML = "";
+        zShuffle(zAnimals()).slice(0, 3).forEach((a, i) => {
+            const s = zEl("span", "zoo-cheer-animal", a.e);
+            s.style.animationDelay = (i * 0.18) + "s";
+            cheer.appendChild(s);
+        });
+    }
+    const nx = $("zooDoneNext");
+    if (nx) nx.hidden = zoo.level >= 3;
+    dlg.hidden = false;
+    zooSetInert(true);
+    const box = dlg.querySelector(".zoo-dialog-box");
+    if (box) {
+        const tr = box.querySelector(".zoo-trophy");
+        zBurst(tr, ["⭐", "✨", "🎉", "💛"]);
+        const ses = zoo.session;
+        setTimeout(() => { if (ses === zoo.session && !dlg.hidden) zBurst(tr, ["🌟", "✨", "💚", "⭐"]); }, 450);
+    }
+    speakZooLocal("أحسنت يا بطل");
+    const focusBtn = (nx && !nx.hidden) ? nx : $("zooDoneAgain");
+    if (focusBtn) focusBtn.focus();
+}
+
+function zooCloseDone() {
+    const dlg = $("zooDone");
+    if (dlg) dlg.hidden = true;
+    zooSetInert(false);
+}
+
+function zooSetInert(on) {
+    const dlg = $("zooDone");
+    const wrap = dlg && dlg.parentElement;
+    if (!wrap) return;
+    Array.from(wrap.children).forEach(c => {
+        if (c === dlg) return;
+        if (on) c.setAttribute("inert", ""); else c.removeAttribute("inert");
+    });
+}
+
+/* اختيار حيوانات لم تُستخدم بعد في هذا المستوى كلما أمكن */
+function zooPickAnimals(pool, n) {
+    const fresh = pool.filter(a => zoo.used.indexOf(a.n) < 0);
+    const src = fresh.length >= n ? fresh : pool;
+    const pick = zShuffle(src).slice(0, n);
+    pick.forEach(a => zoo.used.push(a.n));
+    if (zoo.used.length > 40) zoo.used.splice(0, zoo.used.length - 40);
+    return pick;
+}
+
+/* يد إرشاد تتحرك من عنصر إلى هدفه (تلميح الدرجة الثانية فما فوق) */
+function zGhost(fromEl, toEl) {
+    if (!fromEl || !toEl || zCalm() || !fromEl.animate) return;
+    document.querySelectorAll(".zoo-ghost").forEach(n => n.remove());
+    const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+    const g = zEl("span", "zoo-ghost", "👆");
+    g.setAttribute("aria-hidden", "true");
+    g.style.left = (a.left + a.width / 2 - 24) + "px";
+    g.style.top = (a.top + a.height / 2 - 10) + "px";
+    document.body.appendChild(g);
+    const dx = (b.left + b.width / 2) - (a.left + a.width / 2), dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+    const an = g.animate([
+        { transform: "translate(0,0) scale(1)", opacity: 0 },
+        { transform: "translate(0,0) scale(1.15)", opacity: 1, offset: 0.2 },
+        { transform: "translate(" + dx + "px," + dy + "px) scale(1.15)", opacity: 1, offset: 0.8 },
+        { transform: "translate(" + dx + "px," + dy + "px) scale(1)", opacity: 0 }
+    ], { duration: 1800, iterations: 2, easing: "ease-in-out" });
+    an.onfinish = () => g.remove();
+    setTimeout(() => g.remove(), 4200);
+}
+
+/* =========================================================
+   محرّك المطابقة بالسحب (إطعام / بيت / ظلّ)
+   سحب بالإصبع أو الفأرة، أو لمستان (اختر ثم المس الهدف)،
+   أو لوحة المفاتيح. الخطأ يعيد العنصر برفق بلا خصم.
+========================================================= */
+
+function zooDragMatch(stage, spec, api) {
+    const area = zEl("div", "zoo-match " + (spec.cls || ""));
+    const tRow = zEl("div", "zoo-targets");
+    const iRow = zEl("div", "zoo-items");
+    area.appendChild(tRow);
+    area.appendChild(iRow);
+    stage.appendChild(area);
+
+    const targets = spec.targets.map(t => {
+        const b = zEl("button", "zoo-target " + (t.cls || ""));
+        b.type = "button";
+        b.dataset.key = t.key;
+        if (t.bg) b.style.background = t.bg;
+        const face = zEl("span", "zoo-target-face " + (t.faceCls || ""), t.emoji);
+        face.setAttribute("aria-hidden", "true");
+        if (t.live) zLive(face, t.live);
+        b.appendChild(face);
+        if (t.label) b.appendChild(zEl("span", "zoo-target-label", t.label));
+        (t.deco || []).forEach((d, i) => { const s = zEl("span", "zoo-tdeco zt" + i, d); s.setAttribute("aria-hidden", "true"); b.appendChild(s); });
+        const put = zEl("span", "zoo-target-put");
+        put.setAttribute("aria-hidden", "true");
+        b.appendChild(put);
+        b.setAttribute("aria-label", t.aria || t.label || "هدف");
+        tRow.appendChild(b);
+        return { el: b, face, key: t.key, put, need: t.need || 0, got: 0, name: t.name };
+    });
+
+    let remaining = spec.items.filter(i => !i.decoy).length;
+    const items = zShuffle(spec.items).map((it, idx) => {
+        const b = zEl("button", "zoo-item " + (it.cls || ""), it.emoji);
+        b.type = "button";
+        b.dataset.key = it.key;
+        b.dataset.id = String(idx);
+        b.setAttribute("aria-label", it.aria || "عنصر");
+        if (it.live) zLive(b, it.live);
+        iRow.appendChild(b);
+        return { el: b, key: it.key, emoji: it.emoji, name: it.name, decoy: !!it.decoy, wrong: 0, placed: false, tx: 0, ty: 0 };
+    });
+
+    let selected = null;
+    let drag = null;
+
+    function clearSel() {
+        if (selected) selected.el.classList.remove("sel");
+        selected = null;
+    }
+
+    function clearHints() {
+        targets.forEach(t => t.el.classList.remove("hint", "hint2"));
+        items.forEach(i => i.el.classList.remove("hint"));
+    }
+
+    function openTarget(item) {
+        return targets.find(x => x.key === item.key && (!x.need || x.got < x.need));
+    }
+
+    /* تلميح تدريجي: 1 وميض الهدف، 2 يد إرشاد، 3 الهدف يكبر مع اليد */
+    function hintFor(item, level) {
+        clearHints();
+        const t = openTarget(item);
+        item.el.classList.add("hint");
+        if (!t) return;
+        t.el.classList.add("hint");
+        if (level >= 2) { t.el.classList.add("hint2"); zGhost(item.el, t.el); }
+    }
+
+    function setTx(item, x, y, extra) {
+        item.tx = x; item.ty = y;
+        item.el.style.transform = "translate(" + x + "px," + y + "px)" + (extra || "");
+    }
+
+    function giveBack(item) {
+        item.el.style.transition = "transform 0.35s cubic-bezier(.3,1.4,.5,1)";
+        setTx(item, 0, 0);
+        item.el.classList.remove("dragging");
+        setTimeout(() => { item.el.style.transition = ""; item.el.style.zIndex = ""; }, 380);
+    }
+
+    function attempt(item, target) {
+        if (!api.alive() || item.placed) return;
+        if (target && item.key === target.key && (!target.need || target.got < target.need)) {
+            item.placed = true;
+            target.got++;
+            remaining--;
+            clearHints();
+            clearSel();
+            document.querySelectorAll(".zoo-ghost").forEach(n => n.remove());
+            /* يطير العنصر إلى مركز الهدف ثم يستقر داخله */
+            const a = item.el.getBoundingClientRect(), b = target.el.getBoundingClientRect();
+            const ndx = item.tx + ((b.left + b.width / 2) - (a.left + a.width / 2));
+            const ndy = item.ty + ((b.top + b.height / 2) - (a.top + a.height / 2));
+            item.el.style.transition = "transform 0.28s ease-out, opacity 0.28s";
+            item.el.classList.remove("dragging", "sel", "hint");
+            item.el.classList.add("flying");
+            setTx(item, ndx, ndy, " scale(0.55)");
+            item.el.disabled = true;
+            setTimeout(() => {
+                item.el.classList.add("placed");
+                const mini = zEl("span", "zoo-mini", item.emoji);
+                if (spec.liveMini) zLive(mini, spec.liveMini(item));
+                target.put.appendChild(mini);
+                target.el.classList.add("hop", "done");
+                setTimeout(() => target.el.classList.remove("hop"), 700);
+                zBurst(target.el, spec.burst);
+                if (spec.onMatch) spec.onMatch(item, target);
+                if (remaining === 0) api.solved();
+                else api.say("صحيح! بقي " + zNum(remaining) + " 🌟", "ok");
+            }, 270);
+            zMascot("cheer");
+        } else {
+            item.wrong++;
+            api.mistake();
+            item.el.classList.add("shake");
+            setTimeout(() => item.el.classList.remove("shake"), 450);
+            api.say("لا بأس، حاول مرة أخرى 💙");
+            giveBack(item);
+            if (target) { target.el.classList.add("nope"); setTimeout(() => target.el.classList.remove("nope"), 500); }
+            if (!item.decoy) hintFor(item, Math.min(3, Math.max(1, zoo.hint)));
+            else { clearHints(); const real = items.find(i => !i.placed && !i.decoy); if (real && zoo.hint >= 2) hintFor(real, zoo.hint); }
+            clearSel();
+        }
+    }
+
+    function pointTarget(x, y) {
+        let best = null;
+        targets.forEach(t => {
+            const r = t.el.getBoundingClientRect();
+            if (x >= r.left - 14 && x <= r.right + 14 && y >= r.top - 14 && y <= r.bottom + 14) best = best || t;
+        });
+        return best;
+    }
+
+    function onDown(e) {
+        const b = e.target.closest(".zoo-item");
+        if (!b || b.disabled || !api.alive()) return;
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        const item = items.find(i => i.el === b);
+        if (!item || item.placed) return;
+        drag = { item, id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false };
+        b.classList.add("pressed");
+        try { b.setPointerCapture(e.pointerId); } catch (err) { /* لا شيء */ }
+    }
+
+    function onMove(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+        if (!drag.moved && Math.hypot(dx, dy) > 8) {
+            drag.moved = true;
+            drag.item.el.classList.remove("pressed");
+            drag.item.el.classList.add("dragging");
+            drag.item.el.style.transition = "none";
+            drag.item.el.style.zIndex = "30";
+            if (spec.onPick) spec.onPick(drag.item);
+        }
+        if (drag.moved) {
+            setTx(drag.item, dx, dy, " scale(1.12) rotate(" + Math.max(-8, Math.min(8, dx / 14)) + "deg)");
+            const t = pointTarget(e.clientX, e.clientY);
+            targets.forEach(x => x.el.classList.toggle("over", x === t));
+            if (e.cancelable) e.preventDefault();
+        }
+    }
+
+    function onUp(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        const d = drag;
+        drag = null;
+        d.item.el.classList.remove("pressed");
+        targets.forEach(x => x.el.classList.remove("over"));
+        if (d.moved) {
+            attempt(d.item, pointTarget(e.clientX, e.clientY));
+        } else {
+            /* لمسة عادية: اختر العنصر (أو ألغِ اختياره) */
+            if (selected === d.item) clearSel();
+            else {
+                clearSel();
+                selected = d.item;
+                d.item.el.classList.add("sel");
+                if (spec.onPick) spec.onPick(d.item);
+                api.say("الآن المس المكان المناسب 👆");
+            }
+        }
+    }
+
+    function onCancel(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        const d = drag;
+        drag = null;
+        d.item.el.classList.remove("pressed");
+        targets.forEach(x => x.el.classList.remove("over"));
+        giveBack(d.item);
+    }
+
+    iRow.addEventListener("pointerdown", onDown);
+    iRow.addEventListener("pointermove", onMove);
+    iRow.addEventListener("pointerup", onUp);
+    iRow.addEventListener("pointercancel", onCancel);
+    iRow.addEventListener("keydown", e => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const b = e.target.closest(".zoo-item");
+        if (!b || b.disabled) return;
+        e.preventDefault();
+        const item = items.find(i => i.el === b);
+        clearSel();
+        selected = item;
+        b.classList.add("sel");
+        if (spec.onPick) spec.onPick(item);
+        api.say("الآن اختر المكان المناسب");
+    });
+    tRow.addEventListener("click", e => {
+        const b = e.target.closest(".zoo-target");
+        if (!b) return;
+        const t = targets.find(x => x.el === b);
+        if (!t) return;
+        if (selected) attempt(selected, t);
+        else if (t.name) speakZooLocal(t.name);
+    });
+
+    return {
+        items, targets,
+        hint(level) {
+            const it = items.find(i => !i.placed && !i.decoy);
+            if (it) { hintFor(it, level || 1); api.say(level >= 2 ? "اتبع اليد 👆" : "انظر إلى المكان المضيء 💡"); }
+        },
+        firstOpen: () => items.find(i => !i.placed && !i.decoy),
+        selected: () => selected,
+        attempt,
+        destroy() { drag = null; document.querySelectorAll(".zoo-ghost").forEach(n => n.remove()); }
+    };
+}
+
+/* =========================================================
+   1) من هذا؟ — مرج: حيوانات تقف على لافتات خشبية
+========================================================= */
+
+function zooRenderWho(stage, api) {
+    const n = zoo.level + 1;
+    const pool = zAnimals();
+    const target = zooPickAnimals(pool, 1)[0];
+    const others = zShuffle(pool.filter(a => a.e !== target.e && a.n !== target.n)).slice(0, n - 1);
+    const options = zShuffle([target].concat(others));
+    const say = zEl("button", "zoo-sayit", "🔊");
+    say.type = "button";
+    say.setAttribute("aria-label", "اسمع الاسم مرة أخرى");
+    say.addEventListener("click", () => speakZooLocal(target.n));
+    stage.appendChild(say);
+    const row = zEl("div", "zoo-who zoo-n" + n);
+    let done = false;
+    options.forEach(a => {
+        const b = zEl("button", "zoo-card");
+        b.type = "button";
+        b.dataset.name = a.n;
+        const face = zEl("span", "zoo-card-face", a.e);
+        zLive(face, a);
+        b.appendChild(face);
+        b.appendChild(zEl("span", "zoo-card-name", ""));
+        b.setAttribute("aria-label", "حيوان");
+        b.addEventListener("click", () => {
+            if (done || !api.alive()) return;
+            if (a.n === target.n) {
+                done = true;
+                b.classList.add("right", "hop");
+                b.querySelector(".zoo-card-name").textContent = a.n;
+                b.setAttribute("aria-label", a.n);
+                row.querySelectorAll(".zoo-card").forEach(x => { x.classList.remove("hint", "hint2"); if (x !== b) x.classList.add("dim"); });
+                speakZooLocal(a.n);
+                zBurst(b);
+                api.solved();
+            } else {
+                api.mistake();
+                b.classList.add("shake", "nope");
+                setTimeout(() => b.classList.remove("shake", "nope"), 450);
+                /* يُنطق اسم الحيوان الذي لُمس ليتعلّم الطفل الفرق، ثم تلميح تدريجي */
+                speakZooLocal(a.n);
+                api.say("هذا " + a.n + "، جرّب حيوانًا آخر 💙");
+                setTimeout(() => { if (api.alive() && !done) giveHint(zoo.hint); }, 1400);
+            }
+        });
+        row.appendChild(b);
+    });
+    stage.appendChild(row);
+    function giveHint(level) {
+        const cards = Array.from(row.querySelectorAll(".zoo-card"));
+        cards.forEach(x => x.classList.remove("hint", "hint2", "dim"));
+        const c = cards.find(x => x.dataset.name === target.n);
+        if (!c) return;
+        if (level >= 1) c.classList.add("hint");
+        if (level >= 2) c.classList.add("hint2");
+        if (level >= 3) cards.forEach(x => { if (x !== c) x.classList.add("dim"); });
+        speakZooLocal(target.n);
+    }
+    setTimeout(() => { if (api.alive() && !done) speakZooLocal(target.n); }, 300);
+    return {
+        listen: () => speakZooLocal(target.n),
+        hint: level => { giveHint(level); api.say(level >= 2 ? "انظر إلى البطاقة المضيئة 👆" : "اسمع مرة أخرى 👂"); },
+        debug: { target: target.n }
+    };
+}
+
+/* =========================================================
+   2) أطعِم الحيوان — مزرعة: حيوانات في الأعلى وطاولة طعام خشبية
+========================================================= */
+
+function zooRenderFeed(stage, api) {
+    const k = zoo.level;
+    const feedable = zAnimals().filter(a => a.f);
+    const chosen = zooPickAnimals(feedable, k);
+    const used = new Set(chosen.map(a => a.f));
+    const decoy = zShuffle(feedable.filter(a => !used.has(a.f))).slice(0, 1);
+    const ctl = zooDragMatch(stage, {
+        cls: "zoo-feed",
+        burst: ["❤️", "😋", "✨", "💛"],
+        targets: chosen.map(a => ({ key: a.n, name: a.n, emoji: a.e, faceCls: "animal", live: a, aria: "حيوان جائع", need: 1, cls: "zt-feed" })),
+        items: chosen.map(a => ({ key: a.n, emoji: a.f, name: a.n, aria: "طعام", cls: "food" }))
+            .concat(decoy.map(a => ({ key: "decoy:" + a.n, emoji: a.f, decoy: true, aria: "طعام", cls: "food" }))),
+        onMatch: (it, t) => { speakZooLocal(t.key); }
+    }, api);
+    setTimeout(() => { if (api.alive() && chosen[0]) speakZooLocal(chosen[0].n); }, 300);
+    return {
+        listen: () => { const real = ctl.firstOpen(); if (real) speakZooLocal(real.name); },
+        hint: level => ctl.hint(level),
+        destroy: () => ctl.destroy(),
+        debug: { ctl }
+    };
+}
+
+/* =========================================================
+   3) بيت الحيوان — مناظر: لوحات كبيرة للغابة والبحر والسماء والمزرعة
+========================================================= */
+
+function zooRenderHome(stage, api) {
+    const nh = zoo.level + 1;
+    const na = zoo.level + 2;
+    const homeable = zAnimals().filter(a => a.g);
+    const groups = zShuffle(Object.keys(ZOO_HABITATS).filter(g => homeable.some(a => a.g === g))).slice(0, nh);
+    const first = groups.map(g => zooPickAnimals(homeable.filter(a => a.g === g), 1)[0]);
+    const restPool = homeable.filter(a => groups.indexOf(a.g) >= 0 && first.indexOf(a) < 0);
+    const rest = zooPickAnimals(restPool, Math.max(0, na - first.length));
+    const animals = first.concat(rest);
+    const needByGroup = {};
+    animals.forEach(a => { needByGroup[a.g] = (needByGroup[a.g] || 0) + 1; });
+    const ctl = zooDragMatch(stage, {
+        cls: "zoo-homes",
+        burst: ["✨", "🌟", "💚", "✨"],
+        targets: groups.map(g => ({ key: g, emoji: ZOO_HABITATS[g].e, label: ZOO_HABITATS[g].name, aria: ZOO_HABITATS[g].name, need: needByGroup[g] || 0, cls: "hab hab-" + g, deco: ZOO_HABITATS[g].deco })),
+        items: animals.map(a => ({ key: a.g, emoji: a.e, name: a.n, aria: "حيوان", cls: "animal", live: a })),
+        liveMini: it => zAnimalOf(it.name),
+        onMatch: it => { speakZooLocal(it.name); },
+        onPick: it => { speakZooLocal(it.name); }
+    }, api);
+    return {
+        listen: () => { const s = ctl.selected() || ctl.firstOpen(); if (s && s.name) speakZooLocal(s.name); },
+        hint: level => ctl.hint(level),
+        destroy: () => ctl.destroy(),
+        debug: { ctl }
+    };
+}
+
+/* =========================================================
+   5) أين ظلّي؟ — مساء: ظلال داكنة تحت القمر
+========================================================= */
+
+function zooRenderShadow(stage, api) {
+    const k = zoo.level + 1;
+    const animals = zooPickAnimals(zAnimals(), k);
+    const ctl = zooDragMatch(stage, {
+        cls: "zoo-shadows",
+        burst: ["⭐", "✨", "🌟", "✨"],
+        targets: zShuffle(animals).map(a => ({ key: a.n, name: a.n, emoji: a.e, faceCls: "shadow", aria: "ظل حيوان", need: 1, cls: "zt-shadow" })),
+        items: animals.map(a => ({ key: a.n, emoji: a.e, name: a.n, aria: "حيوان", cls: "animal", live: a })),
+        liveMini: it => zAnimalOf(it.name),
+        onMatch: it => { speakZooLocal(it.name); },
+        onPick: it => { speakZooLocal(it.name); }
+    }, api);
+    return {
+        listen: () => { const s = ctl.selected() || ctl.firstOpen(); if (s && s.name) speakZooLocal(s.name); },
+        hint: level => ctl.hint(level),
+        destroy: () => ctl.destroy(),
+        debug: { ctl }
+    };
+}
+
+/* =========================================================
+   4) عدّ معي — حظيرة: المس كل حيوان لتعدّه ثم اختر العدد
+========================================================= */
+
+function zooRenderCount(stage, api) {
+    const ranges = { 1: [1, 3], 2: [2, 6], 3: [4, 10] };
+    const r = ranges[zoo.level];
+    const avoid = zoo.used.length ? zoo.used[zoo.used.length - 1] : null;
+    const total = r[0] + Math.floor(Math.random() * (r[1] - r[0] + 1));
+    const animal = zooPickAnimals(zAnimals().filter(a => a.n !== avoid), 1)[0];
+    const big = zEl("div", "zoo-bignum", "");
+    big.setAttribute("aria-hidden", "true");
+    stage.appendChild(big);
+    const pen = zEl("div", "zoo-pen");
+    const counted = [];
+    const bubbles = [];
+    const askRow = zEl("div", "zoo-ask");
+    askRow.hidden = true;
+    for (let i = 0; i < total; i++) {
+        const b = zEl("button", "zoo-pet");
+        b.type = "button";
+        const face = zEl("span", "zoo-pet-face", animal.e);
+        zLive(face, animal);
+        b.appendChild(face);
+        b.style.setProperty("--rot", ((i % 3) - 1) * 3 + "deg");
+        b.style.setProperty("--lift", ((i * 7) % 3) * 6 + "px");
+        b.setAttribute("aria-label", "حيوان لم يُعدّ بعد");
+        b.addEventListener("click", () => {
+            if (!api.alive() || b.dataset.counted) return;
+            b.dataset.counted = "1";
+            b.classList.remove("hint", "hint2");
+            counted.push(b);
+            const n = counted.length;
+            b.classList.add("counted", "hop");
+            setTimeout(() => b.classList.remove("hop"), 600);
+            b.appendChild(zEl("span", "zoo-badge", zNum(n)));
+            b.setAttribute("aria-label", "الحيوان رقم " + zNum(n));
+            big.textContent = zNum(n);
+            big.classList.remove("pop"); void big.offsetWidth; big.classList.add("pop");
+            speakZooLocal(ZOO_NUM_WORDS[n]);
+            zBurst(b, ["✨", "⭐"]);
+            if (n === total) {
+                api.say("عدّدتها كلها! كم العدد؟", "ok");
+                askRow.hidden = false;
+            } else api.say("");
+        });
+        pen.appendChild(b);
+        bubbles.push(b);
+    }
+    stage.appendChild(pen);
+    askRow.appendChild(zEl("div", "zoo-prompt", "كم عدد الحيوانات؟"));
+    const nOpts = zoo.level === 3 ? 4 : 3;
+    const opts = new Set([total]);
+    const cand = zShuffle([total - 2, total - 1, total + 1, total + 2, total + 3].filter(x => x >= 1 && x <= 10 && x !== total));
+    for (const c of cand) { if (opts.size >= nOpts) break; opts.add(c); }
+    const numRow = zEl("div", "zoo-nums zoo-n" + nOpts);
+    let done = false;
+    function numHint(level) {
+        numRow.querySelectorAll(".zoo-num").forEach(x => {
+            x.classList.remove("hint", "hint2", "dim");
+            if (Number(x.dataset.v) === total) { if (level >= 1) x.classList.add("hint"); if (level >= 2) x.classList.add("hint2"); }
+            else if (level >= 3) x.classList.add("dim");
+        });
+    }
+    zShuffle(Array.from(opts)).forEach(v => {
+        const b = zEl("button", "zoo-num", zNum(v));
+        b.type = "button";
+        b.dataset.v = String(v);
+        b.setAttribute("aria-label", "العدد " + zNum(v));
+        b.addEventListener("click", () => {
+            if (done || !api.alive()) return;
+            if (v === total) {
+                done = true;
+                b.classList.add("right", "hop");
+                numRow.querySelectorAll(".zoo-num").forEach(x => x.classList.remove("hint", "hint2", "dim"));
+                speakZooLocal(ZOO_NUM_WORDS[total]);
+                zBurst(b);
+                api.solved();
+            } else {
+                api.mistake();
+                b.classList.add("shake", "nope");
+                setTimeout(() => b.classList.remove("shake", "nope"), 450);
+                api.say("لا بأس، عُدّها معي مرة أخرى 💙");
+                numHint(zoo.hint);
+            }
+        });
+        numRow.appendChild(b);
+    });
+    askRow.appendChild(numRow);
+    stage.appendChild(askRow);
+    return {
+        listen: () => {
+            const next = bubbles.find(b => !b.dataset.counted);
+            if (next) speakZooLocal(ZOO_NUM_WORDS[counted.length + 1]); else speakZooLocal(ZOO_NUM_WORDS[total]);
+        },
+        hint: level => {
+            const next = bubbles.find(b => !b.dataset.counted);
+            if (next) {
+                bubbles.forEach(b => b.classList.remove("hint", "hint2"));
+                next.classList.add("hint");
+                if (level >= 2) { next.classList.add("hint2"); zGhost(pen, next); }
+                api.say("المس هذا الحيوان 👆");
+            } else { numHint(level); api.say("انظر إلى الرقم المضيء 👆"); }
+        },
+        destroy: () => { document.querySelectorAll(".zoo-ghost").forEach(n => n.remove()); },
+        debug: { total, animal: animal.n }
+    };
+}
+
+/* ---------- ربط الشاشات: تنظيف عند مغادرة اللعبة ---------- */
+
+const originalShowScreenForZoo = showScreen;
+
+showScreen = function (screenId) {
+    if (typeof zoo !== "undefined" && zoo.active && screenId !== "zooGame") {
+        zooTeardown();
+        zoo.active = false;
+    }
+    return originalShowScreenForZoo.apply(this, arguments);
+};
+
+window.startZooGame = startZooGame;
+window.exitZooGame = exitZooGame;
+window.zoo = zoo;
+
+/* =========================================================
+   🔚 نهاية لعبة «أصدقاء الحديقة» المستقلة
+========================================================= */
