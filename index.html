@@ -1452,6 +1452,35 @@
             </button>
 
 
+            <!-- =====================================
+                 🐾 أصدقاء الحديقة
+            ====================================== -->
+
+            <button
+                class="game-launch-card zoo-game-card"
+                onclick="startZooGame()"
+            >
+
+                <div class="game-card-icon">
+                    🐾
+                </div>
+
+                <h3>
+                    أصدقاء الحديقة
+                </h3>
+
+                <p>
+                    حيوانات وطيور: استمع واسحب وعُدّ وطابق الظلال
+                </p>
+
+                <span>
+                    هيا نلعب ▶
+                </span>
+
+            </button>
+
+
+
         </div>
 
 
@@ -3415,6 +3444,75 @@
 
             </div>
 
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     🐾 أصدقاء الحديقة — لعبة مستقلة (قسم الألعاب)
+     حيوانات وطيور: استماع، إطعام، بيوت، عدّ، ظلال. لا مؤقت ولا أرواح.
+========================================================= -->
+
+<section
+    id="zooGame"
+    class="screen"
+>
+
+    <div class="zoo-wrap zoo-world" id="zooWorld" data-env="hub" data-view="hub">
+
+        <div class="zoo-scenery" id="zooScenery" aria-hidden="true"></div>
+
+        <div class="zoo-topbar">
+            <button class="zoo-icon-btn" id="zooBack" type="button" aria-label="رجوع">⬅️</button>
+            <h2 class="zoo-title" id="zooTitle">🐾 أصدقاء الحديقة</h2>
+            <span class="zoo-spacer" aria-hidden="true"></span>
+        </div>
+
+        <div id="zooHub" class="zoo-view"></div>
+
+        <div id="zooActs" class="zoo-view" hidden></div>
+
+        <div id="zooLevels" class="zoo-view" hidden></div>
+
+        <div id="zooPlay" class="zoo-view" hidden>
+
+            <div class="zoo-coach">
+                <span class="zoo-mascot" id="zooMascot" aria-hidden="true">🐘</span>
+                <div class="zoo-coach-main">
+                    <div class="zoo-head">
+                        <span class="zoo-level-text" id="zooLevelText"></span>
+                        <span class="zoo-round-text" id="zooRoundText"></span>
+                    </div>
+                    <div class="zoo-pips" id="zooPips" aria-hidden="true"></div>
+                    <div class="zoo-bar" aria-hidden="true"><div id="zooBar"></div></div>
+                </div>
+            </div>
+
+            <div class="zoo-message" id="zooMessage" role="status" aria-live="polite"></div>
+
+            <div class="zoo-stage" id="zooStage"></div>
+
+            <div class="zoo-controls">
+                <button class="zoo-ctl" id="zooBtnListen" type="button">🔊 استمع</button>
+                <button class="zoo-ctl" id="zooBtnHint" type="button">💡 مساعدة</button>
+                <button class="zoo-ctl zoo-next" id="zooBtnNext" type="button" disabled>التالي ◀</button>
+            </div>
+
+        </div>
+
+        <div class="zoo-dialog" id="zooDone" role="dialog" aria-modal="true" aria-labelledby="zooDoneTitle" hidden>
+            <div class="zoo-dialog-box">
+                <div class="zoo-trophy" aria-hidden="true">🏆</div>
+                <div class="zoo-cheer" id="zooCheer" aria-hidden="true"></div>
+                <h3 id="zooDoneTitle">أحسنت يا بطل!</h3>
+                <p id="zooDoneText"></p>
+                <button class="zoo-big-btn" id="zooDoneNext" type="button">المستوى التالي ◀</button>
+                <button class="zoo-ctl" id="zooDoneAgain" type="button">🔄 العب المستوى مرة أخرى</button>
+                <button class="zoo-ctl" id="zooDoneHub" type="button">🐾 كل الأنشطة</button>
+            </div>
         </div>
 
     </div>
