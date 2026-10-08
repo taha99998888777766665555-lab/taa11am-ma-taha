@@ -4765,2327 +4765,915 @@ document.addEventListener(
     }
 );
 /* =========================================================
-   🎈 لعبة فرقع الحروف — نسخة احترافية هادئة (SEN-friendly)
-   =========================================================
-   بلا مؤقت، بلا أرواح، بلا عقاب. بالونات ثابتة تطفو بهدوء
-   بدل السقوط السريع. 3 مستويات × 5 جولات لكل مستوى، تدرّج
-   صعوبة حقيقي (2 ← 3 ← 4 بالونات)، مشتتات صوتية فعلية عند
-   المستوى الأصعب (إعادة استخدام getPhoneticNeighbors الموجودة
-   أصلًا في محرك الحروف). التقدّم يُحفَظ بنفس أسلوب التخزين
-   المُتَّبع في بقية التطبيق (مفتاح معزول جديد خاص بهذه اللعبة
-   فقط). لا علاقة لهذا الكود بلعبة فرقع الأرقام إطلاقًا — تلك
-   منفصلة تمامًا في كودها الخاص ولم تُلمَس هنا بأي شكل.
-   ========================================================= */
-
-/* 🛠️ ملاحظة: يجب ألا تُنفَّذ هذه فورًا عند تحميل الملف — LETTER_LEVEL_GROUPS
-   تُعرَّف لاحقًا أدناه في محرك الحروف، فاستدعاء فوري هنا كان يُسبِّب خطأ
-   TDZ يُوقف تنفيذ بقية الملف بالكامل (ومنها matchingGame). الحل:
-   دالة عادية تُحسَب فقط عند الاستخدام الفعلي، بعد اكتمال تحميل الملف. */
-function getAllBalloonLetters() {
-    const flat = [];
-    LETTER_LEVEL_GROUPS.forEach(group => {
-        group.letters.forEach(l => flat.push(l));
-    });
-    return flat;
-}
-
-const BALLOON_LEVEL_CONFIG = {
-    1: { balloonCount: 2 },
-    2: { balloonCount: 3 },
-    3: { balloonCount: 4 }
-};
-
-const BALLOON_COLORS = ["red", "blue", "green", "yellow", "purple"];
-
-const BALLOON_POSITIONS_BY_COUNT = {
-    2: [18, 62],
-    3: [12, 42, 72],
-    4: [8, 34, 60, 84]
-};
-
-const balloonGame = {
-    level: 1,
-    round: 0,
-    roundsPerLevel: 5,
-    target: null,
-    active: false,
-    answered: false,
-    session: 0
-};
-
-/* =========================================================
-   💾 حفظ/تحميل تقدّم اللعبة — مفتاح معزول جديد خاص بهذه اللعبة
-   فقط، بنفس أسلوب مفاتيح التقدّم الأخرى في التطبيق
-   ========================================================= */
-
-function loadBalloonLettersUnlockedLevel() {
-    const saved = Number(localStorage.getItem("taha_balloon_letters_unlocked_level") || 1);
-    return Math.min(Math.max(saved, 1), 3);
-}
-
-function saveBalloonLettersUnlockedLevel(level) {
-    const current = loadBalloonLettersUnlockedLevel();
-    if (level > current) {
-        localStorage.setItem("taha_balloon_letters_unlocked_level", String(Math.min(level, 3)));
-    }
-}
-
-/* =========================================================
-   ▶️ بدء اللعبة — تبدأ دائمًا من المستوى المفتوح المحفوظ
-   ========================================================= */
-
-function startBalloonGame() {
-
-    balloonGame.level = loadBalloonLettersUnlockedLevel();
-    balloonGame.round = 0;
-    balloonGame.active = true;
-    balloonGame.answered = false;
-    balloonGame.target = null;
-    balloonGame.session++;
-
-    showScreen("balloonGame");
-
-    const overlay = $("balloonLevelComplete");
-    if (overlay) overlay.style.display = "none";
-
-    renderBalloonBasket();
-    updateBalloonHUD();
-    clearBalloonMessage();
-
-    setTimeout(() => {
-        if (!balloonGame.active) return;
-        nextBalloonRound();
-    }, 150);
-}
-
-/* =========================================================
-   🔄 الجولة التالية
-   ========================================================= */
-
-function nextBalloonRound() {
-
-    if (!balloonGame.active) return;
-
-    balloonGame.round++;
-    balloonGame.answered = false;
-
-    if (balloonGame.round > balloonGame.roundsPerLevel) {
-        finishBalloonLevel();
-        return;
-    }
-
-    const target = pickBalloonTarget();
-    balloonGame.target = target;
-
-    updateBalloonHUD();
-    clearBalloonMessage();
-    renderBalloonArena(target);
-    speakBalloonTarget(target);
-}
-
-function pickBalloonTarget() {
-    const allLetters = getAllBalloonLetters();
-    const index = Math.floor(Math.random() * allLetters.length);
-    return allLetters[index];
-}
-
-/* =========================================================
-   🧠 اختيار مشتتات ذكية — صوتية متقاربة فعليًا عند المستوى ٣
-   ========================================================= */
-
-function getBalloonDistractors(target, totalCount, level) {
-
-    const distractors = [];
-    const needed = totalCount - 1;
-
-    if (level >= 3 && typeof getPhoneticNeighbors === "function") {
-        const neighbors = shuffle(getPhoneticNeighbors(target) || []);
-        neighbors.forEach(n => {
-            if (distractors.length < needed && n !== target && !distractors.includes(n)) {
-                distractors.push(n);
-            }
-        });
-    }
-
-    const rest = shuffle(
-        getAllBalloonLetters().filter(l => l !== target && !distractors.includes(l))
-    );
-
-    let i = 0;
-    while (distractors.length < needed && i < rest.length) {
-        distractors.push(rest[i]);
-        i++;
-    }
-
-    return distractors;
-}
-
-/* =========================================================
-   🎈 رسم ساحة البالونات — مواضع ثابتة، تطفو بهدوء في مكانها
-   ========================================================= */
-
-function renderBalloonArena(target) {
-
-    const arena = $("balloonArena");
-    if (!arena) return;
-
-    const clouds = arena.querySelectorAll(".arena-cloud");
-
-    arena.querySelectorAll(".game-balloon").forEach(b => b.remove());
-
-    const config = BALLOON_LEVEL_CONFIG[balloonGame.level] || BALLOON_LEVEL_CONFIG[1];
-    const distractors = getBalloonDistractors(target, config.balloonCount, balloonGame.level);
-    const allLetters = shuffle([target, ...distractors]);
-
-    const positions = BALLOON_POSITIONS_BY_COUNT[allLetters.length] || BALLOON_POSITIONS_BY_COUNT[2];
-
-    allLetters.forEach((letter, index) => {
-
-        const balloon = document.createElement("button");
-        balloon.type = "button";
-        balloon.className =
-            "game-balloon balloon-floating balloon-" +
-            BALLOON_COLORS[index % BALLOON_COLORS.length];
-
-        balloon.style.right = positions[index] + "%";
-        balloon.style.top = (38 + (index % 2) * 14) + "%";
-        balloon.style.animationDelay = (index * 0.35) + "s";
-
-        balloon.textContent = letter;
-        balloon.dataset.letter = letter;
-
-        balloon.addEventListener("click", () => {
-            handleBalloonClick(balloon, letter, target);
-        });
-
-        arena.appendChild(balloon);
-    });
-}
-
-/* =========================================================
-   👆 التعامل مع الضغط على بالونة
-   ========================================================= */
-
-function handleBalloonClick(balloon, clickedLetter, target) {
-
-    if (!balloonGame.active) return;
-    if (balloonGame.answered) return;
-
-    if (clickedLetter === target) {
-        balloonGame.answered = true;
-        handleBalloonCorrect(balloon);
-    } else {
-        handleBalloonMistake(balloon);
-    }
-}
-
-/* =========================================================
-   ✅ إجابة صحيحة — تعزيز + نجمة + سلة + انتقال واضح
-   ========================================================= */
-
-const BALLOON_SUCCESS_PHRASES = ["أَحْسَنْتَ", "مُمْتَاز", "رَائِع", "بَرَافُو", "شَاطِر"];
-
-function getRandomBalloonSuccessPhrase() {
-    return BALLOON_SUCCESS_PHRASES[Math.floor(Math.random() * BALLOON_SUCCESS_PHRASES.length)];
-}
-
-function handleBalloonCorrect(balloon) {
-
-    const session = balloonGame.session;
-
-    if (typeof addStars === "function") {
-        addStars(1);
-    }
-
-    balloon.classList.add("balloon-pop");
-    balloon.style.pointerEvents = "none";
-
-    speakEducational(getRandomBalloonSuccessPhrase());
-
-    showBalloonMessage("🎉 أحسنت!", true);
-
-    addBalloonToBasket();
-    updateBalloonHUD();
-
-    setTimeout(() => {
-        if (session !== balloonGame.session) return;
-        if (!balloonGame.active) return;
-        nextBalloonRound();
-    }, 1500);
-}
-
-/* =========================================================
-   😊 إجابة خاطئة — تصحيح هادئ، بلا أي عقوبة أو خصم
-   ========================================================= */
-
-function handleBalloonMistake(balloon) {
-
-    if (!balloonGame.active) return;
-    if (balloonGame.answered) return;
-
-    if (balloon.dataset.wrongClicked === "true") return;
-    balloon.dataset.wrongClicked = "true";
-
-    balloon.classList.add("balloon-wrong");
-
-    showBalloonMessage("😊 حاول مرة أخرى", false);
-    speakEducational("حاول مرة أخرى");
-
-    setTimeout(() => {
-        if (balloon && balloon.parentNode) {
-            balloon.classList.remove("balloon-wrong");
-            balloon.dataset.wrongClicked = "false";
-        }
-    }, 600);
-}
-
-/* =========================================================
-   🧺 سلة التجميع المرئية
-   ========================================================= */
-
-function renderBalloonBasket() {
-    const basket = $("balloonBasket");
-    if (basket) basket.innerHTML = "";
-}
-
-function addBalloonToBasket() {
-    const basket = $("balloonBasket");
-    if (!basket) return;
-
-    const item = document.createElement("span");
-    item.className = "balloon-basket-item";
-    item.textContent = "🎈";
-    basket.appendChild(item);
-}
-
-/* =========================================================
-   🏁 إكمال المستوى — شاشة هادئة + فتح المستوى التالي
-   ========================================================= */
-
-function finishBalloonLevel() {
-
-    balloonGame.active = false;
-
-    const isLastLevel = balloonGame.level >= 3;
-
-    saveBalloonLettersUnlockedLevel(Math.min(balloonGame.level + 1, 3));
-
-    const overlay = $("balloonLevelComplete");
-    const titleEl = $("balloonLevelCompleteTitle");
-    const bodyEl = $("balloonLevelCompleteBody");
-    const nextBtn = $("balloonLevelCompleteNextBtn");
-
-    if (titleEl) {
-        titleEl.textContent = isLastLevel ? "🎉 أكملت اللعبة!" : "🌟 أحسنت! أكملت المستوى";
-    }
-
-    if (bodyEl) {
-        bodyEl.textContent = isLastLevel
-            ? "أتممت كل المستويات بنجاح"
-            : "المستوى التالي بانتظارك";
-    }
-
-    if (nextBtn) {
-        nextBtn.textContent = isLastLevel ? "🏠 العودة للألعاب" : "▶ المستوى التالي";
-        nextBtn.onclick = isLastLevel ? exitBalloonGame : advanceToNextBalloonLevel;
-    }
-
-    if (overlay) overlay.style.display = "flex";
-
-    speakEducational("أحسنت! أتممت المستوى بنجاح");
-}
-
-function advanceToNextBalloonLevel() {
-
-    balloonGame.level = Math.min(balloonGame.level + 1, 3);
-    balloonGame.round = 0;
-    balloonGame.answered = false;
-    balloonGame.active = true;
-    balloonGame.session++;
-
-    const overlay = $("balloonLevelComplete");
-    if (overlay) overlay.style.display = "none";
-
-    renderBalloonBasket();
-    updateBalloonHUD();
-    clearBalloonMessage();
-
-    nextBalloonRound();
-}
-
-/* =========================================================
-   🖥️ واجهة المعلومات (HUD) — مبسَّطة وهادئة
-   ========================================================= */
-
-function updateBalloonHUD() {
-
-    const levelEl = $("balloonLevel");
-    if (levelEl) levelEl.textContent = arabicNumber(balloonGame.level);
-
-    const fill = $("balloonProgressFill");
-    if (fill) {
-        const completedRounds = Math.max(0, balloonGame.round - 1);
-        const pct = Math.min(100, Math.round((completedRounds / balloonGame.roundsPerLevel) * 100));
-        fill.style.width = pct + "%";
-    }
-
-    const scoreEl = $("balloonScore");
-    if (scoreEl && typeof stars !== "undefined") {
-        scoreEl.textContent = arabicNumber(stars);
-    }
-}
-
-function showBalloonMessage(message, success) {
-    const el = $("balloonMessage");
-    if (!el) return;
-    el.textContent = message;
-    el.className = "balloon-message " + (success ? "success" : "wrong");
-}
-
-function clearBalloonMessage() {
-    const el = $("balloonMessage");
-    if (el) {
-        el.textContent = "";
-        el.className = "balloon-message";
-    }
-}
-
-/* =========================================================
-   🔊 نطق الحرف المطلوب — عبر speakEducational الحالية
-   ========================================================= */
-
-function speakBalloonTarget(letter) {
-    const withFatha = letterWithFatha(letter);
-
-    const targetDisplay = $("balloonTarget");
-    if (targetDisplay) targetDisplay.textContent = withFatha;
-
-    speakEducational(withFatha);
-}
-
-function repeatBalloonTarget() {
-    if (!balloonGame.target) return;
-    speakBalloonTarget(balloonGame.target);
-}
-
-/* =========================================================
-   🚪 الخروج من اللعبة
-   ========================================================= */
-
-function exitBalloonGame() {
-
-    balloonGame.active = false;
-
-    const overlay = $("balloonLevelComplete");
-    if (overlay) overlay.style.display = "none";
-
-    showScreen("games");
-}
-/* =========================================================
-   🔢 لعبة فرقع الأرقام - Number Balloon Game
-   نسخة مستقلة ومحسنة
-   ========================================================= */
-
-const numberBalloonGame = {
-    score: 0,
-    streak: 0,
-    bestStreak: 0,
-    round: 0,
-    totalRounds: 10,
-    level: 1,
-    target: null,
-    active: false,
-    paused: false,
-    lives: 3,
-    timeLeft: 15,
-
-    roundTimer: null,
-    nextRoundTimer: null,
-    spawnTimers: [],
-
-    session: 0,
-    answered: false,
-    earnedStars: 0,
-
-    bestScore: Number(
-        localStorage.getItem("numberBalloonBestScore") || 0
-    )
-};
-
-
-/* =========================================================
-   🔢 كلمات الأرقام
-   ========================================================= */
-
-const numberBalloonWords = {
-    1: "وَاحِد",
-    2: "اِثْنَان",
-    3: "ثَلَاثَة",
-    4: "أَرْبَعَة",
-    5: "خَمْسَة",
-    6: "سِتَّة",
-    7: "سَبْعَة",
-    8: "ثَمَانِيَة",
-    9: "تِسْعَة",
-    10: "عَشَرَة",
-
-    11: "أَحَدَ عَشَر",
-    12: "اِثْنَا عَشَر",
-    13: "ثَلَاثَةَ عَشَر",
-    14: "أَرْبَعَةَ عَشَر",
-    15: "خَمْسَةَ عَشَر",
-    16: "سِتَّةَ عَشَر",
-    17: "سَبْعَةَ عَشَر",
-    18: "ثَمَانِيَةَ عَشَر",
-    19: "تِسْعَةَ عَشَر",
-    20: "عِشْرُون",
-
-    21: "وَاحِد وَعِشْرُون",
-    22: "اِثْنَان وَعِشْرُون",
-    23: "ثَلَاثَة وَعِشْرُون",
-    24: "أَرْبَعَة وَعِشْرُون",
-    25: "خَمْسَة وَعِشْرُون",
-    26: "سِتَّة وَعِشْرُون",
-    27: "سَبْعَة وَعِشْرُون",
-    28: "ثَمَانِيَة وَعِشْرُون",
-    29: "تِسْعَة وَعِشْرُون",
-    30: "ثَلَاثُون"
-};
-
-
-/* =========================================================
-   🔢 تحويل الأرقام إلى أرقام عربية
-   ========================================================= */
-
-function numberBalloonArabicNumber(number) {
-    return String(number).replace(
-        /[0-9]/g,
-        digit => "٠١٢٣٤٥٦٧٨٩"[digit]
-    );
-}
-
-
-/* =========================================================
-   🎮 مستويات فرقع الأرقام
-   ========================================================= */
-
-const numberBalloonLevels = {
-
-    1: {
-        count: 4,
-        duration: 12000,
-        time: 15,
-        min: 1,
-        max: 5
-    },
-
-    2: {
-        count: 6,
-        duration: 9500,
-        time: 13,
-        min: 1,
-        max: 10
-    },
-
-    3: {
-        count: 8,
-        duration: 7500,
-        time: 11,
-        min: 1,
-        max: 20
-    },
-
-    4: {
-        count: 10,
-        duration: 6000,
-        time: 9,
-        min: 1,
-        max: 30
-    }
-};
-
-
-/* =========================================================
-   ▶️ بدء لعبة الأرقام
-   ========================================================= */
-
-function startNumberBalloonGame() {
-
-    stopNumberBalloonGameTimers();
-
-    const oldFinish =
-        document.getElementById(
-            "numberBalloonFinishScreen"
-        );
-
-    if (oldFinish) {
-        oldFinish.remove();
-    }
-
-    numberBalloonGame.score = 0;
-    numberBalloonGame.streak = 0;
-    numberBalloonGame.bestStreak = 0;
-    numberBalloonGame.round = 0;
-    numberBalloonGame.level = 1;
-    numberBalloonGame.target = null;
-    numberBalloonGame.active = true;
-    numberBalloonGame.paused = false;
-    numberBalloonGame.lives = 3;
-    numberBalloonGame.timeLeft = 15;
-    numberBalloonGame.answered = false;
-    numberBalloonGame.earnedStars = 0;
-
-    numberBalloonGame.session++;
-
-    const session =
-        numberBalloonGame.session;
-
-    showScreen("numberBalloonGame");
-
-    prepareNumberBalloonArena();
-    createNumberBalloonControls();
-    updateNumberBalloonHUD();
-
-    setTimeout(() => {
-
-        if (
-            !numberBalloonGame.active ||
-            session !== numberBalloonGame.session
-        ) {
-            return;
-        }
-
-        nextNumberBalloonRound();
-
-    }, 250);
-}
-
-
-/* =========================================================
-   🏟️ تجهيز ساحة الأرقام
-   ========================================================= */
-
-function prepareNumberBalloonArena() {
-
-    const arena =
-        document.getElementById(
-            "numberBalloonArena"
-        );
-
-    if (!arena) return;
-
-    arena.innerHTML = `
-        <div class="arena-cloud cloud-one">☁️</div>
-        <div class="arena-cloud cloud-two">☁️</div>
-    `;
-}
-
-
-/* =========================================================
-   🎮 إنشاء معلومات اللعبة
-   ========================================================= */
-
-function createNumberBalloonControls() {
-
-    const wrapper =
-        document.querySelector(
-            "#numberBalloonGame .balloon-game-wrapper"
-        );
-
-    if (!wrapper) return;
-
-    const old =
-        document.getElementById(
-            "numberBalloonControls"
-        );
-
-    if (old) {
-        old.remove();
-    }
-
-    const controls =
-        document.createElement("div");
-
-    controls.id =
-        "numberBalloonControls";
-
-    controls.className =
-        "balloon-controls";
-
-    controls.innerHTML = `
-
-        <div class="balloon-extra-hud">
-
-            <div
-                id="numberBalloonLives"
-                class="balloon-lives"
-            >
-                ❤️❤️❤️
-            </div>
-
-            <div
-                id="numberBalloonTimer"
-                class="balloon-timer"
-            >
-                ⏱️ ١٥
-            </div>
-
-            <div
-                id="numberBalloonBestScore"
-                class="balloon-best-score"
-            >
-                🏆 ٠
-            </div>
-
-        </div>
-
-        <button
-            id="numberBalloonPauseBtn"
-            class="balloon-control-btn"
-            onclick="toggleNumberBalloonPause()"
-        >
-            ⏸️ إيقاف
-        </button>
-    `;
-
-    const exitButton =
-        wrapper.querySelector(
-            ".exit-game-btn"
-        );
-
-    if (exitButton) {
-
-        wrapper.insertBefore(
-            controls,
-            exitButton
-        );
-
-    } else {
-
-        wrapper.appendChild(
-            controls
-        );
-    }
-}
-
-
-/* =========================================================
-   🔢 الجولة التالية
-   ========================================================= */
-
-function nextNumberBalloonRound() {
-
-    if (
-        !numberBalloonGame.active ||
-        numberBalloonGame.paused
-    ) {
-        return;
-    }
-
-    numberBalloonGame.round++;
-    numberBalloonGame.answered = false;
-
-    if (
-        numberBalloonGame.round >
-        numberBalloonGame.totalRounds
-    ) {
-
-        finishNumberBalloonGame(
-            "completed"
-        );
-
-        return;
-    }
-
-    updateNumberBalloonLevel();
-
-    const target =
-        getRandomNumberBalloonTarget();
-
-    numberBalloonGame.target =
-        target;
-
-    updateNumberBalloonHUD();
-
-    speakNumberBalloonTarget(
-        target
-    );
-
-    clearNumberBalloonArena();
-
-    createNumberBalloonWave(
-        target
-    );
-
-    startNumberBalloonRoundTimer();
-}
-
-
-/* =========================================================
-   📈 تحديد المستوى
-   ========================================================= */
-
-function updateNumberBalloonLevel() {
-
-    if (
-        numberBalloonGame.round <= 3
-    ) {
-
-        numberBalloonGame.level = 1;
-
-    } else if (
-        numberBalloonGame.round <= 6
-    ) {
-
-        numberBalloonGame.level = 2;
-
-    } else if (
-        numberBalloonGame.round <= 8
-    ) {
-
-        numberBalloonGame.level = 3;
-
-    } else {
-
-        numberBalloonGame.level = 4;
-    }
-}
-
-
-/* =========================================================
-   🎯 الرقم المطلوب
-   ========================================================= */
-
-function getRandomNumberBalloonTarget() {
-
-    const level =
-        numberBalloonLevels[
-            numberBalloonGame.level
-        ];
-
-    return Math.floor(
-        Math.random() *
-        (
-            level.max -
-            level.min +
-            1
-        )
-    ) + level.min;
-}
-
-
-/* =========================================================
-   🎈 إنشاء موجة البالونات
-   ========================================================= */
-
-function createNumberBalloonWave(target) {
-
-    const level =
-        numberBalloonLevels[
-            numberBalloonGame.level
-        ];
-
-    const choices =
-        getNumberBalloonChoices(
-            target,
-            level.count
-        );
-
-    clearNumberBalloonSpawnTimers();
-
-    choices.forEach(
-        (number, index) => {
-
-            const delay =
-                index * 400;
-
-            const session =
-                numberBalloonGame.session;
-
-            const timer =
-                setTimeout(() => {
-
-                    if (
-                        !numberBalloonGame.active ||
-                        numberBalloonGame.paused ||
-                        session !== numberBalloonGame.session
-                    ) {
-                        return;
-                    }
-
-                    createNumberGameBalloon(
-                        number,
-                        target,
-                        index,
-                        level.duration
-                    );
-
-                }, delay);
-
-            numberBalloonGame.spawnTimers.push(
-                timer
-            );
-        }
-    );
-}
-
-
-/* =========================================================
-   🎯 اختيار أرقام مختلفة
-   ========================================================= */
-
-function getNumberBalloonChoices(
-    target,
-    count
-) {
-
-    const level =
-        numberBalloonLevels[
-            numberBalloonGame.level
-        ];
-
-    const choices = [
-        target
-    ];
-
-    while (
-        choices.length < count
-    ) {
-
-        const randomNumber =
-            Math.floor(
-                Math.random() *
-                (
-                    level.max -
-                    level.min +
-                    1
-                )
-            ) + level.min;
-
-        if (
-            !choices.includes(
-                randomNumber
-            )
-        ) {
-
-            choices.push(
-                randomNumber
-            );
-        }
-    }
-
-    return shuffleNumberBalloonArray(
-        choices
-    );
-}
-
-
-/* =========================================================
-   🔀 خلط الأرقام
-   ========================================================= */
-
-function shuffleNumberBalloonArray(
-    array
-) {
-
-    const result = [...array];
-
-    for (
-        let i = result.length - 1;
-        i > 0;
-        i--
-    ) {
-
-        const j =
-            Math.floor(
-                Math.random() *
-                (i + 1)
-            );
-
-        [
-            result[i],
-            result[j]
-        ] = [
-            result[j],
-            result[i]
-        ];
-    }
-
-    return result;
-}
-
-
-/* =========================================================
-   🎈 إنشاء بالونة
-   ========================================================= */
-
-function createNumberGameBalloon(
-    value,
-    target,
-    index,
-    duration
-) {
-
-    const arena =
-        document.getElementById(
-            "numberBalloonArena"
-        );
-
-    if (!arena) return;
-
-    if (
-        !numberBalloonGame.active ||
-        numberBalloonGame.paused
-    ) {
-        return;
-    }
-
-    const balloon =
-        document.createElement(
-            "button"
-        );
-
-    balloon.type = "button";
-
-    balloon.className =
-        "game-balloon";
-
-    balloon.textContent =
-        numberBalloonArabicNumber(
-            value
-        );
-
-    balloon.dataset.number =
-        String(value);
-
-    balloon.dataset.target =
-        String(target);
-
-    balloon.setAttribute(
-        "aria-label",
-        `الرقم ${value}`
-    );
-
-    const colors = [
-        "red",
-        "blue",
-        "green",
-        "yellow",
-        "purple",
-        "orange",
-        "pink"
-    ];
-
-    balloon.classList.add(
-        `balloon-${
-            colors[
-                Math.floor(
-                    Math.random() *
-                    colors.length
-                )
-            ]
-        }`
-    );
-
-    const maxLeft =
-        Math.max(
-            30,
-            arena.clientWidth - 100
-        );
-
-    const left =
-        20 +
-        Math.random() *
-        maxLeft;
-
-    const bottom =
-        -110 -
-        Math.random() * 80;
-
-    balloon.style.left =
-        `${left}px`;
-
-    balloon.style.bottom =
-        `${bottom}px`;
-
-    balloon.style.transition =
-        `transform ${duration}ms linear`;
-
-    balloon.style.zIndex =
-        String(10 + index);
-
-    balloon.addEventListener(
-        "click",
-        () => {
-
-            handleNumberBalloonClick(
-                balloon,
-                value,
-                target
-            );
-
-        }
-    );
-
-    arena.appendChild(
-        balloon
-    );
-
-    requestAnimationFrame(() => {
-
-        if (
-            !numberBalloonGame.active ||
-            numberBalloonGame.paused
-        ) {
-            return;
-        }
-
-        balloon.style.transform =
-            `translateY(-${
-                arena.clientHeight + 180
-            }px)`;
-    });
-
-    const session =
-        numberBalloonGame.session;
-
-    setTimeout(() => {
-
-        if (
-            session !==
-            numberBalloonGame.session
-        ) {
-            return;
-        }
-
-        if (
-            balloon.parentNode
-        ) {
-            balloon.remove();
-        }
-
-    }, duration + 700);
-}
-
-
-/* =========================================================
-   🖱️ الضغط على البالونة
-   ========================================================= */
-
-function handleNumberBalloonClick(
-    balloon,
-    clickedNumber,
-    target
-) {
-
-    if (
-        !numberBalloonGame.active ||
-        numberBalloonGame.paused ||
-        numberBalloonGame.answered
-    ) {
-        return;
-    }
-
-    if (
-        balloon.dataset.clicked === "true"
-    ) {
-        return;
-    }
-
-    balloon.dataset.clicked =
-        "true";
-
-    if (
-        Number(clickedNumber) ===
-        Number(target)
-    ) {
-
-        numberBalloonGame.answered =
-            true;
-
-        handleNumberBalloonCorrect(
-            balloon
-        );
-
-    } else {
-
-        handleNumberBalloonMistake(
-            balloon
-        );
-    }
-}
-
-
-/* =========================================================
-   ✅ الرقم الصحيح
-   ========================================================= */
-
-function handleNumberBalloonCorrect(
-    balloon
-) {
-
-    stopNumberBalloonRoundTimer();
-
-    numberBalloonGame.streak++;
-
-    numberBalloonGame.bestStreak =
-        Math.max(
-            numberBalloonGame.bestStreak,
-            numberBalloonGame.streak
-        );
-
-    const points =
-        calculateNumberBalloonPoints();
-
-    numberBalloonGame.score +=
-        points;
-
-    numberBalloonGame.earnedStars++;
-
-    if (
-        typeof addStars === "function"
-    ) {
-        addStars(1);
-    }
-
-    balloon.style.pointerEvents =
-        "none";
-
-    balloon.style.transition =
-        "none";
-
-    balloon.style.animation =
-        "none";
-
-    void balloon.offsetWidth;
-
-    balloon.style.animation =
-        "balloonPop .45s ease-out forwards";
-
-    createNumberPopEffect(
-        balloon
-    );
-
-    showNumberBalloonMessage(
-        getNumberBalloonSuccessMessage(),
-        true
-    );
-
-    speakNumberBalloonSuccess();
-
-    updateNumberBalloonHUD();
-
-    const session =
-        numberBalloonGame.session;
-
-    numberBalloonGame.nextRoundTimer =
-        setTimeout(() => {
-
-            if (
-                !numberBalloonGame.active ||
-                session !==
-                numberBalloonGame.session
-            ) {
-                return;
-            }
-
-            clearNumberBalloonArena();
-
-            nextNumberBalloonRound();
-
-        }, 800);
-}
-
-
-/* =========================================================
-   ❌ خطأ
-   ========================================================= */
-
-function handleNumberBalloonMistake(
-    balloon
-) {
-
-    if (
-        balloon.dataset.mistake === "true"
-    ) {
-        return;
-    }
-
-    balloon.dataset.mistake =
-        "true";
-
-    numberBalloonGame.streak =
-        0;
-
-    numberBalloonGame.lives =
-        Math.max(
-            0,
-            numberBalloonGame.lives - 1
-        );
-
-    balloon.classList.add(
-        "balloon-wrong"
-    );
-
-    showNumberBalloonMessage(
-        "😊 حَاوِلْ مَرَّةً أُخْرَى",
-        false
-    );
-
-    speakEducational(
-        "حَاوِلْ مَرَّةً أُخْرَى"
-    );
-
-    updateNumberBalloonHUD();
-
-    if (
-        numberBalloonGame.lives <= 0
-    ) {
-
-        stopNumberBalloonRoundTimer();
-
-        numberBalloonGame.answered =
-            true;
-
-        const session =
-            numberBalloonGame.session;
-
-        setTimeout(() => {
-
-            if (
-                numberBalloonGame.active &&
-                session ===
-                numberBalloonGame.session
-            ) {
-
-                finishNumberBalloonGame(
-                    "noLives"
-                );
-            }
-
-        }, 500);
-
-        return;
-    }
-
-    setTimeout(() => {
-
-        if (
-            balloon.parentNode
-        ) {
-
-            balloon.classList.remove(
-                "balloon-wrong"
-            );
-        }
-
-    }, 550);
-}
-
-
-/* =========================================================
-   ⏰ مؤقت الجولة
-   ========================================================= */
-
-function startNumberBalloonRoundTimer() {
-
-    stopNumberBalloonRoundTimer();
-
-    const level =
-        numberBalloonLevels[
-            numberBalloonGame.level
-        ];
-
-    numberBalloonGame.timeLeft =
-        level.time;
-
-    updateNumberBalloonHUD();
-
-    numberBalloonGame.roundTimer =
-        setInterval(() => {
-
-            if (
-                !numberBalloonGame.active ||
-                numberBalloonGame.paused
-            ) {
-                return;
-            }
-
-            numberBalloonGame.timeLeft--;
-
-            updateNumberBalloonHUD();
-
-            if (
-                numberBalloonGame.timeLeft <= 0
-            ) {
-
-                handleNumberBalloonTimeout();
-            }
-
-        }, 1000);
-}
-
-
-/* =========================================================
-   ⏰ انتهى الوقت
-   ========================================================= */
-
-function handleNumberBalloonTimeout() {
-
-    if (
-        !numberBalloonGame.active ||
-        numberBalloonGame.answered
-    ) {
-        return;
-    }
-
-    numberBalloonGame.answered =
-        true;
-
-    stopNumberBalloonRoundTimer();
-
-    numberBalloonGame.streak =
-        0;
-
-    numberBalloonGame.lives =
-        Math.max(
-            0,
-            numberBalloonGame.lives - 1
-        );
-
-    showNumberBalloonMessage(
-        "⏰ اِنْتَهَى الوَقْت",
-        false
-    );
-
-    speakEducational(
-        "اِنْتَهَى الوَقْت"
-    );
-
-    clearNumberBalloonArena();
-
-    updateNumberBalloonHUD();
-
-    if (
-        numberBalloonGame.lives <= 0
-    ) {
-
-        finishNumberBalloonGame(
-            "noLives"
-        );
-
-        return;
-    }
-
-    const session =
-        numberBalloonGame.session;
-
-    numberBalloonGame.nextRoundTimer =
-        setTimeout(() => {
-
-            if (
-                !numberBalloonGame.active ||
-                session !==
-                numberBalloonGame.session
-            ) {
-                return;
-            }
-
-            nextNumberBalloonRound();
-
-        }, 1000);
-}
-
-
-/* =========================================================
-   ⭐ النقاط
-   ========================================================= */
-
-function calculateNumberBalloonPoints() {
-
-    let points = 10;
-
-    if (
-        numberBalloonGame.level > 1
-    ) {
-
-        points +=
-            (
-                numberBalloonGame.level -
-                1
-            ) * 5;
-    }
-
-    if (
-        numberBalloonGame.streak >= 3
-    ) {
-
-        points += 5;
-    }
-
-    if (
-        numberBalloonGame.streak >= 5
-    ) {
-
-        points += 10;
-    }
-
-    return points;
-}
-
-
-/* =========================================================
-   🛑 إيقاف المؤقت
-   ========================================================= */
-
-function stopNumberBalloonRoundTimer() {
-
-    if (
-        numberBalloonGame.roundTimer
-    ) {
-
-        clearInterval(
-            numberBalloonGame.roundTimer
-        );
-
-        numberBalloonGame.roundTimer =
-            null;
-    }
-}
-
-
-/* =========================================================
-   🧹 تنظيف مؤقتات البالونات
-   ========================================================= */
-
-function clearNumberBalloonSpawnTimers() {
-
-    numberBalloonGame.spawnTimers.forEach(
-        timer => clearTimeout(timer)
-    );
-
-    numberBalloonGame.spawnTimers =
-        [];
-}
-
-
-/* =========================================================
-   🛑 إيقاف كل مؤقتات الأرقام
-   ========================================================= */
-
-function stopNumberBalloonGameTimers() {
-
-    stopNumberBalloonRoundTimer();
-
-    clearNumberBalloonSpawnTimers();
-
-    if (
-        numberBalloonGame.nextRoundTimer
-    ) {
-
-        clearTimeout(
-            numberBalloonGame.nextRoundTimer
-        );
-
-        numberBalloonGame.nextRoundTimer =
-            null;
-    }
-}
-
-
-/* =========================================================
-   🧹 تنظيف الساحة
-   ========================================================= */
-
-function clearNumberBalloonArena() {
-
-    const arena =
-        document.getElementById(
-            "numberBalloonArena"
-        );
-
-    if (!arena) return;
-
-    arena.innerHTML = `
-        <div class="arena-cloud cloud-one">☁️</div>
-        <div class="arena-cloud cloud-two">☁️</div>
-    `;
-}
-
-
-/* =========================================================
-   🔊 نطق الرقم
-   ========================================================= */
-
-function speakNumberBalloonTarget(
-    number
-) {
-
-    const word =
-        numberBalloonWords[number] ||
-        String(number);
-
-    if (
-        typeof speak === "function"
-    ) {
-
-        speakEducational(
-            word,
-            {
-                rate: 0.68,
-                pitch: 1
-            }
-        );
-
-        return;
-    }
-
-    if (
-        "speechSynthesis" in window
-    ) {
-
-        speechSynthesis.cancel();
-
-        const utterance =
-            new SpeechSynthesisUtterance(
-                word
-            );
-
-        utterance.lang =
-            "ar-SA";
-
-        utterance.rate =
-            0.68;
-
-        utterance.pitch =
-            1;
-
-        if (
-            typeof arabicVoice !== "undefined" &&
-            arabicVoice
-        ) {
-
-            utterance.voice =
-                arabicVoice;
-        }
-
-        speechSynthesis.speak(
-            utterance
-        );
-    }
-}
-
-
-/* =========================================================
-   🔊 إعادة سماع الرقم
-   ========================================================= */
-
-function repeatNumberBalloonTarget() {
-
-    if (
-        numberBalloonGame.target === null
-    ) {
-        return;
-    }
-
-    speakNumberBalloonTarget(
-        numberBalloonGame.target
-    );
-}
-
-
-/* =========================================================
-   🔊 التشجيع
-   ========================================================= */
-
-function speakNumberBalloonSuccess() {
-
-    const messages = [
-        "أَحْسَنْتَ",
-        "مُمْتَاز",
-        "رَائِع",
-        "بَرَافُو",
-        "شَاطِر"
-    ];
-
-    speakEducational(
-        messages[
-            Math.floor(
-                Math.random() *
-                messages.length
-            )
+   🎈🔢 فرقع الحروف + فرقع الأرقام — الإصدار ٢ (SEN-friendly)
+   ---------------------------------------------------------
+   محرّك واحد للّعبتين بتصميم لكل منهما:
+   • فرقع الحروف: سماء نهارية، بالونات ملوّنة، الحرف بصوته التعليمي.
+   • فرقع الأرقام: حديقة احتفال، فقاعات/بالونات، الرقم بصوته الكامل.
+   بلا مؤقت ولا أرواح ولا عقوبات؛ الخطأ يعالَج بتلميح تدريجي.
+   الصوت: ملفات MP3 المحلية فقط من EDUCATIONAL_AUDIO_MANIFEST
+   (الحرف بصوته، والرقم/العبارة كاملة)، بلا أي TTS إطلاقًا.
+   التقدّم مستقل: taha_pop_progress_v1
+========================================================= */
+
+const POP_KEY = "taha_pop_progress_v1";
+const POP_ROUNDS = 5;
+const POP_COLORS = ["red", "blue", "green", "yellow", "purple", "orange"];
+
+/* مفاتيح الأرقام في الـmanifest (بلا تشكيل) — الرقم بصوته الكامل */
+const POP_NUM_WORDS = [null, "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة",
+    "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر", "عشرون",
+    "واحد وعشرون", "اثنان وعشرون", "ثلاثة وعشرون", "أربعة وعشرون", "خمسة وعشرون", "ستة وعشرون", "سبعة وعشرون", "ثمانية وعشرون", "تسعة وعشرون", "ثلاثون"];
+
+const POP_PRAISE = ["صحيح", "أحسنت يا بطل", "أحسنت، عمل رائع"];
+const POP_LEVEL_DONE = "أحسنت! أتممت المستوى بنجاح";
+
+const POP_KINDS = {
+    letters: {
+        screen: "balloonGame",
+        env: "sky",
+        title: "فرقع الحروف",
+        icon: "🎈",
+        sub: "اسمع الحرف ثم فرقع البالونة الصحيحة",
+        hubGlyphs: ["أ", "ب", "ت"],
+        askText: "اسمع الحرف ثم فرقع البالونة الصحيحة",
+        levels: [
+            { id: 1, name: "سهل", note: "بالونتان وحروف مألوفة", count: 2, pool: "g12", show: true },
+            { id: 2, name: "متوسط", note: "ثلاث بالونات، كل الحروف", count: 3, pool: "all", show: true },
+            { id: 3, name: "متقدّم", note: "أربع بالونات وحروف متشابهة", count: 4, pool: "all", show: false, near: true }
         ]
-    );
+    },
+    numbers: {
+        screen: "numberBalloonGame",
+        env: "fair",
+        title: "فرقع الأرقام",
+        icon: "🔢",
+        sub: "اسمع الرقم ثم فرقع البالونة الصحيحة",
+        hubGlyphs: ["١", "٢", "٣"],
+        askText: "اسمع الرقم ثم فرقع البالونة الصحيحة",
+        levels: [
+            { id: 1, name: "سهل", note: "من ١ إلى ٥ — ثلاث بالونات", count: 3, max: 5 },
+            { id: 2, name: "متوسط", note: "من ١ إلى ١٠ — أربع بالونات", count: 4, max: 10 },
+            { id: 3, name: "متقدّم", note: "من ١ إلى ٢٠ — خمس بالونات", count: 5, max: 20, near: true },
+            { id: 4, name: "بطل", note: "من ١ إلى ٣٠ — ست بالونات", count: 6, max: 30, near: true }
+        ]
+    }
+};
+
+const pop = {
+    active: false,
+    kind: "letters",
+    view: "hub",
+    level: 1,
+    round: 0,
+    mistakes: 0,
+    hint: 0,
+    solved: false,
+    session: 0,
+    target: null,
+    used: [],
+    timers: [],
+    built: {},
+    cur: null
+};
+
+/* ---------- أدوات ---------- */
+
+function pEl(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
 }
 
-
-/* =========================================================
-   💬 رسائل الأرقام
-   ========================================================= */
-
-function getNumberBalloonSuccessMessage() {
-
-    const messages = [
-        "🎉 أَحْسَنْتَ!",
-        "⭐ مُمْتَاز!",
-        "🌟 رَائِع!",
-        "👏 بَرَافُو!",
-        "🏆 شَاطِر!"
-    ];
-
-    return messages[
-        Math.floor(
-            Math.random() *
-            messages.length
-        )
-    ];
+function pNum(n) {
+    return (typeof arabicNumber === "function") ? arabicNumber(n) : String(n);
 }
 
-
-function showNumberBalloonMessage(
-    message,
-    success
-) {
-
-    const element =
-        document.getElementById(
-            "numberBalloonMessage"
-        );
-
-    if (!element) return;
-
-    element.textContent =
-        message;
-
-    element.classList.toggle(
-        "success",
-        !!success
-    );
-
-    element.classList.add(
-        "show"
-    );
-
-    setTimeout(() => {
-
-        element.classList.remove(
-            "show"
-        );
-
-    }, 1200);
+function pShuffle(a) {
+    const r = a.slice();
+    for (let i = r.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [r[i], r[j]] = [r[j], r[i]];
+    }
+    return r;
 }
 
-
-/* =========================================================
-   💥 انفجار البالونة
-   ========================================================= */
-
-function createNumberPopEffect(
-    balloon
-) {
-
-    const arena =
-        document.getElementById(
-            "numberBalloonArena"
-        );
-
-    if (!arena || !balloon) {
-        return;
-    }
-
-    const rect =
-        balloon.getBoundingClientRect();
-
-    const arenaRect =
-        arena.getBoundingClientRect();
-
-    const x =
-        rect.left +
-        rect.width / 2 -
-        arenaRect.left;
-
-    const y =
-        rect.top +
-        rect.height / 2 -
-        arenaRect.top;
-
-    const symbols = [
-        "✨",
-        "⭐",
-        "💥",
-        "🌟",
-        "🎉",
-        "💫"
-    ];
-
-    for (
-        let i = 0;
-        i < 12;
-        i++
-    ) {
-
-        const particle =
-            document.createElement(
-                "span"
-            );
-
-        particle.className =
-            "pop-particle";
-
-        particle.textContent =
-            symbols[
-                Math.floor(
-                    Math.random() *
-                    symbols.length
-                )
-            ];
-
-        particle.style.left =
-            `${x}px`;
-
-        particle.style.top =
-            `${y}px`;
-
-        particle.style.setProperty(
-            "--x",
-            `${(Math.random() - 0.5) * 200}px`
-        );
-
-        particle.style.setProperty(
-            "--y",
-            `${(Math.random() - 0.5) * 200}px`
-        );
-
-        arena.appendChild(
-            particle
-        );
-
-        setTimeout(() => {
-
-            particle.remove();
-
-        }, 900);
-    }
+function pCalm() {
+    try { return !!(typeof Settings !== "undefined" && Settings.get().calm); } catch (e) { return false; }
 }
 
+function pCfg() { return POP_KINDS[pop.kind]; }
+function pRoot() { return document.getElementById(pCfg().screen); }
+function pQ(sel) { const r = pRoot(); return r ? r.querySelector(sel) : null; }
 
-/* =========================================================
-   📊 تحديث واجهة الأرقام
-   ========================================================= */
-
-function updateNumberBalloonHUD() {
-
-    const score =
-        document.getElementById(
-            "numberBalloonScore"
-        );
-
-    const level =
-        document.getElementById(
-            "numberBalloonLevel"
-        );
-
-    const progress =
-        document.getElementById(
-            "numberBalloonProgressFill"
-        );
-
-    const streak =
-        document.getElementById(
-            "numberBalloonStreak"
-        );
-
-    const target =
-        document.getElementById(
-            "numberBalloonTarget"
-        );
-
-    if (score) {
-
-        score.textContent =
-            numberBalloonArabicNumber(
-                numberBalloonGame.score
-            );
-    }
-
-    if (level) {
-
-        level.textContent =
-            numberBalloonArabicNumber(
-                numberBalloonGame.level
-            );
-    }
-
-    if (streak) {
-
-        streak.textContent =
-            numberBalloonArabicNumber(
-                numberBalloonGame.streak
-            );
-    }
-
-    if (target) {
-
-        target.textContent =
-            numberBalloonGame.target !== null
-                ? numberBalloonArabicNumber(
-                    numberBalloonGame.target
-                )
-                : "؟";
-    }
-
-    if (progress) {
-
-        const percent =
-            Math.min(
-                100,
-                (
-                    numberBalloonGame.round /
-                    numberBalloonGame.totalRounds
-                ) * 100
-            );
-
-        progress.style.width =
-            `${percent}%`;
-    }
-
-    updateNumberBalloonExtraHUD();
+/* مؤقّتات الجولة: تُلغى كلها عند الخروج أو بدء جولة جديدة (ليست مؤقتًا للّعب، بل تأخيرات الحركة) */
+function pLater(fn, ms) {
+    const ses = pop.session;
+    const t = setTimeout(() => {
+        pop.timers = pop.timers.filter(x => x !== t);
+        if (ses === pop.session && pop.active) fn();
+    }, ms);
+    pop.timers.push(t);
+    return t;
 }
 
-
-/* =========================================================
-   ❤️ الأرواح والمؤقت
-   ========================================================= */
-
-function updateNumberBalloonExtraHUD() {
-
-    const lives =
-        document.getElementById(
-            "numberBalloonLives"
-        );
-
-    const timer =
-        document.getElementById(
-            "numberBalloonTimer"
-        );
-
-    const best =
-        document.getElementById(
-            "numberBalloonBestScore"
-        );
-
-    if (lives) {
-
-        lives.textContent =
-            "❤️".repeat(
-                Math.max(
-                    0,
-                    numberBalloonGame.lives
-                )
-            );
-    }
-
-    if (timer) {
-
-        timer.textContent =
-            `⏱️ ${numberBalloonArabicNumber(
-                Math.max(
-                    0,
-                    numberBalloonGame.timeLeft
-                )
-            )}`;
-
-        timer.classList.toggle(
-            "danger",
-            numberBalloonGame.timeLeft <= 5
-        );
-    }
-
-    if (best) {
-
-        best.textContent =
-            `🏆 ${numberBalloonArabicNumber(
-                numberBalloonGame.bestScore
-            )}`;
-    }
+function pClearTimers() {
+    pop.timers.forEach(t => clearTimeout(t));
+    pop.timers = [];
 }
 
+/* ---------- الصوت: ملفات MP3 المحلية فقط، صوت واحد في كل مرة، بلا TTS ---------- */
 
-/* =========================================================
-   ⏸️ إيقاف / استكمال
-   ========================================================= */
+let popAudio = null;
+let popAudioToken = 0;
 
-function toggleNumberBalloonPause() {
-
-    if (
-        !numberBalloonGame.active
-    ) {
-        return;
-    }
-
-    if (
-        numberBalloonGame.paused
-    ) {
-
-        resumeNumberBalloonGame();
-
-    } else {
-
-        pauseNumberBalloonGame();
-    }
+function popStopAudio() {
+    popAudioToken++;
+    const a = popAudio;
+    popAudio = null;
+    if (a) { try { a.pause(); a.currentTime = 0; } catch (e) { /* لا شيء */ } }
 }
 
-
-function pauseNumberBalloonGame() {
-
-    if (
-        numberBalloonGame.paused
-    ) {
-        return;
-    }
-
-    numberBalloonGame.paused =
-        true;
-
-    stopNumberBalloonRoundTimer();
-
-    if (
-        "speechSynthesis" in window
-    ) {
-        speechSynthesis.cancel();
-    }
-
-    showNumberBalloonPauseOverlay();
-
-    const button =
-        document.getElementById(
-            "numberBalloonPauseBtn"
-        );
-
-    if (button) {
-
-        button.textContent =
-            "▶️ استكمال";
-    }
+/* مفتاح الصوت للقيمة: الحرف بصوته (بفتحة) أو الرقم بكلمته الكاملة */
+function popKey(kind, v) {
+    if (kind === "letters") return letterWithFatha(v);
+    return POP_NUM_WORDS[Number(v)] || null;
 }
 
-
-function resumeNumberBalloonGame() {
-
-    if (
-        !numberBalloonGame.paused
-    ) {
-        return;
-    }
-
-    numberBalloonGame.paused =
-        false;
-
-    hideNumberBalloonPauseOverlay();
-
-    const button =
-        document.getElementById(
-            "numberBalloonPauseBtn"
-        );
-
-    if (button) {
-
-        button.textContent =
-            "⏸️ إيقاف";
-    }
-
-    if (
-        !numberBalloonGame.answered
-    ) {
-
-        startNumberBalloonRoundTimer();
-    }
+function popHas(key) {
+    return !!key && typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined" && !!EDUCATIONAL_AUDIO_MANIFEST[key];
 }
 
-
-/* =========================================================
-   ⏸️ شاشة التوقف
-   ========================================================= */
-
-function showNumberBalloonPauseOverlay() {
-
-    let overlay =
-        document.getElementById(
-            "numberBalloonPauseOverlay"
-        );
-
-    if (!overlay) {
-
-        overlay =
-            document.createElement(
-                "div"
-            );
-
-        overlay.id =
-            "numberBalloonPauseOverlay";
-
-        overlay.className =
-            "balloon-pause-overlay";
-
-        overlay.innerHTML = `
-
-            <div class="pause-box">
-
-                <div class="pause-icon">
-                    ⏸️
-                </div>
-
-                <h2>
-                    اللُّعْبَة مُتَوَقِّفَة
-                </h2>
-
-                <button
-                    class="balloon-control-btn"
-                    onclick="resumeNumberBalloonGame()"
-                >
-                    ▶️ استكمال اللعب
-                </button>
-
-            </div>
-        `;
-
-        document.body.appendChild(
-            overlay
-        );
-    }
-
-    overlay.classList.add(
-        "show"
-    );
+/* يشغّل قائمة مفاتيح بالتتابع (كلمة كاملة لكل مفتاح). done تُستدعى بعد آخر ملف أو إن تعذّر التشغيل */
+function popSay(keys, done) {
+    popStopAudio();
+    const token = popAudioToken;
+    const list = (Array.isArray(keys) ? keys : [keys]).filter(popHas);
+    let i = 0;
+    const finish = () => { if (token === popAudioToken && done) { const d = done; done = null; d(); } };
+    const step = () => {
+        if (token !== popAudioToken) return;
+        if (i >= list.length) { popAudio = null; finish(); return; }
+        const path = EDUCATIONAL_AUDIO_MANIFEST[list[i++]];
+        let moved = false;
+        const next = () => { if (moved || token !== popAudioToken) return; moved = true; step(); };
+        try {
+            const a = new Audio(path);
+            popAudio = a;
+            a.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined") ? EDUCATIONAL_AUDIO_PLAYBACK_RATE : 0.8;
+            try { a.preservesPitch = true; } catch (e) { /* لا شيء */ }
+            a.addEventListener("ended", next, { once: true });
+            a.addEventListener("error", next, { once: true });
+            const p = a.play();
+            if (p && p.catch) p.catch(next);
+            setTimeout(next, 7000);
+        } catch (e) { next(); }
+    };
+    step();
 }
 
+/* ---------- التقدّم المحفوظ (مستقل) ---------- */
 
-function hideNumberBalloonPauseOverlay() {
-
-    const overlay =
-        document.getElementById(
-            "numberBalloonPauseOverlay"
-        );
-
-    if (overlay) {
-
-        overlay.classList.remove(
-            "show"
-        );
-    }
-}
-
-
-/* =========================================================
-   🏆 نهاية لعبة الأرقام
-   ========================================================= */
-
-function finishNumberBalloonGame(
-    reason = "completed"
-) {
-
-    if (
-        !numberBalloonGame.active
-    ) {
-        return;
-    }
-
-    stopNumberBalloonGameTimers();
-
-    clearNumberBalloonArena();
-
-    numberBalloonGame.active =
-        false;
-
-    numberBalloonGame.paused =
-        false;
-
-    numberBalloonGame.session++;
-
-    hideNumberBalloonPauseOverlay();
-
-    if (
-        numberBalloonGame.score >
-        numberBalloonGame.bestScore
-    ) {
-
-        numberBalloonGame.bestScore =
-            numberBalloonGame.score;
-
-        localStorage.setItem(
-            "numberBalloonBestScore",
-            String(
-                numberBalloonGame.bestScore
-            )
-        );
-    }
-
-    const old =
-        document.getElementById(
-            "numberBalloonFinishScreen"
-        );
-
-    if (old) {
-        old.remove();
-    }
-
-    const screen =
-        document.getElementById(
-            "numberBalloonGame"
-        );
-
-    if (!screen) return;
-
-    const finish =
-        document.createElement(
-            "div"
-        );
-
-    finish.id =
-        "numberBalloonFinishScreen";
-
-    finish.className =
-        "balloon-finish-screen";
-
-    const completed =
-        reason === "completed";
-
-    finish.innerHTML = `
-
-        <div class="finish-trophy">
-            ${completed ? "🏆" : "💪"}
-        </div>
-
-        <h2>
-            ${
-                completed
-                    ? "أَنْهَيْتَ لُعْبَة فَرِّقْع الأَرْقَام!"
-                    : "انتهت اللعبة"
+function popLoad() {
+    const empty = () => ({ letters: { done: {}, last: null }, numbers: { done: {}, last: null } });
+    try {
+        const o = JSON.parse(localStorage.getItem(POP_KEY));
+        if (!o || typeof o !== "object") return empty();
+        const out = empty();
+        Object.keys(POP_KINDS).forEach(k => {
+            const src = o[k];
+            if (!src || typeof src !== "object") return;
+            const maxLv = POP_KINDS[k].levels.length;
+            if (src.done && typeof src.done === "object") {
+                Object.keys(src.done).forEach(lv => {
+                    const n = Number(lv);
+                    const v = src.done[lv];
+                    if (n >= 1 && n <= maxLv && v && typeof v === "object") {
+                        out[k].done[n] = { n: Math.max(1, Math.min(9999, Number(v.n) || 1)), best: Math.max(0, Math.min(99, Number(v.best) || 0)) };
+                    }
+                });
             }
-        </h2>
-
-        <p>
-            ${
-                completed
-                    ? "مُمْتَاز! أَنْتَ بَطَلُ الأَرْقَام!"
-                    : "لَا بَأْسَ! حَاوِلْ مَرَّةً أُخْرَى"
+            const l = src.last;
+            if (l && typeof l === "object" && Number(l.level) >= 1 && Number(l.level) <= maxLv) {
+                out[k].last = { level: Number(l.level), mistakes: Math.max(0, Math.min(99, Number(l.mistakes) || 0)) };
             }
-        </p>
-
-        <div class="finish-score">
-            ⭐
-            ${numberBalloonArabicNumber(
-                numberBalloonGame.score
-            )}
-        </div>
-
-        <div class="finish-stars">
-            🌟 النجوم المكتسبة:
-            ${numberBalloonArabicNumber(
-                numberBalloonGame.earnedStars
-            )}
-        </div>
-
-        <div class="finish-stats">
-
-            <div>
-                🔥 أفضل تتابع:
-                ${numberBalloonArabicNumber(
-                    numberBalloonGame.bestStreak
-                )}
-            </div>
-
-            <div>
-                🏆 أفضل نتيجة:
-                ${numberBalloonArabicNumber(
-                    numberBalloonGame.bestScore
-                )}
-            </div>
-
-        </div>
-
-        <div class="finish-actions">
-
-            <button
-                class="balloon-control-btn"
-                onclick="startNumberBalloonGame()"
-            >
-                🔄 العب مرة أخرى
-            </button>
-
-            <button
-                class="secondary balloon-control-btn"
-                onclick="exitNumberBalloonGame()"
-            >
-                ⬅️ العودة للألعاب
-            </button>
-
-        </div>
-    `;
-
-    const wrapper =
-        screen.querySelector(
-            ".balloon-game-wrapper"
-        );
-
-    if (wrapper) {
-
-        wrapper.appendChild(
-            finish
-        );
+        });
+        return out;
+    } catch (e) {
+        return empty();
     }
-
-    speakEducational(
-        completed
-            ? "مُمْتَاز! أَنْهَيْتَ لُعْبَة الأَرْقَام"
-            : "لَا بَأْسَ. حَاوِلْ مَرَّةً أُخْرَى"
-    );
 }
 
+function popSave(p) {
+    try { localStorage.setItem(POP_KEY, JSON.stringify(p)); } catch (e) { /* لا شيء */ }
+}
 
-/* =========================================================
-   🚪 الخروج من الأرقام
-   ========================================================= */
+function popDoneCount(kind) {
+    return Object.keys(popLoad()[kind].done).length;
+}
 
-function exitNumberBalloonGame() {
+/* المستوى المقترح: التالي بعد جولة هادئة، وإلا نفس المستوى */
+function popSuggest(kind) {
+    const p = popLoad()[kind];
+    const max = POP_KINDS[kind].levels.length;
+    if (!p.last) return 1;
+    if (p.last.mistakes <= 2) return Math.min(max, p.last.level + 1);
+    return p.last.level;
+}
 
-    stopNumberBalloonGameTimers();
+/* ---------- بناء الشاشة (مرة واحدة لكل لعبة) ---------- */
 
-    numberBalloonGame.active =
-        false;
+const POP_SCENERY = {
+    sky: [["☀️", "sun"], ["☁️", "c1"], ["☁️", "c2"], ["☁️", "c3"], ["🐦", "bird"]],
+    fair: [["🌙", "moon"], ["✨", "s1"], ["✨", "s2"], ["⭐", "s3"], ["✨", "s4"]]
+};
 
-    numberBalloonGame.paused =
-        false;
+function popBuild(kind) {
+    const cfg = POP_KINDS[kind];
+    const sec = document.getElementById(cfg.screen);
+    if (!sec) return null;
+    if (pop.built[kind] && sec.querySelector(".pop-world")) return sec.querySelector(".pop-world");
+    sec.innerHTML = "";
+    const world = pEl("div", "pop-world");
+    world.dataset.kind = kind;
+    world.dataset.env = cfg.env;
+    world.dataset.view = "hub";
 
-    numberBalloonGame.target =
-        null;
-
-    numberBalloonGame.session++;
-
-    clearNumberBalloonArena();
-
-    hideNumberBalloonPauseOverlay();
-
-    const controls =
-        document.getElementById(
-            "numberBalloonControls"
-        );
-
-    if (controls) {
-        controls.remove();
+    const sc = pEl("div", "pop-scenery");
+    sc.setAttribute("aria-hidden", "true");
+    if (cfg.env === "fair") {
+        const flags = pEl("div", "pop-bunting");
+        for (let i = 0; i < 9; i++) flags.appendChild(pEl("i", "pf" + (i % 5)));
+        sc.appendChild(flags);
+        for (let i = 0; i < 6; i++) {
+            const b = pEl("span", "pop-bubble-deco");
+            b.style.left = (8 + i * 16) + "%";
+            b.style.setProperty("--bd", (14 + i * 3) + "s");
+            b.style.setProperty("--bl", (-i * 3.1) + "s");
+            b.style.setProperty("--bs", (26 + (i % 3) * 14) + "px");
+            sc.appendChild(b);
+        }
     }
+    (POP_SCENERY[cfg.env] || []).forEach(([g, c]) => sc.appendChild(pEl("span", "pop-deco pd-" + c, g)));
+    world.appendChild(sc);
 
-    const finish =
-        document.getElementById(
-            "numberBalloonFinishScreen"
-        );
+    const top = pEl("div", "pop-topbar");
+    const back = pEl("button", "pop-icon-btn", "⬅️");
+    back.type = "button";
+    back.setAttribute("aria-label", "رجوع");
+    back.addEventListener("click", () => popBack());
+    top.appendChild(back);
+    top.appendChild(pEl("h2", "pop-title", cfg.icon + " " + cfg.title));
+    top.appendChild(pEl("span", "pop-spacer"));
+    world.appendChild(top);
 
-    if (finish) {
-        finish.remove();
-    }
+    const hub = pEl("div", "pop-view pop-hub");
+    const levels = pEl("div", "pop-view pop-levels");
+    levels.hidden = true;
+    const play = pEl("div", "pop-view pop-play");
+    play.hidden = true;
 
+    /* واجهة اللعب */
+    const hud = pEl("div", "pop-hud");
+    const starPill = pEl("div", "pop-pill pop-starpill");
+    starPill.appendChild(pEl("span", "", "⭐"));
+    starPill.appendChild(pEl("strong", "pop-stars", "٠"));
+    hud.appendChild(starPill);
+    const mid = pEl("div", "pop-hud-mid");
+    mid.appendChild(pEl("span", "pop-hud-level"));
+    mid.appendChild(pEl("span", "pop-round-text"));
+    hud.appendChild(mid);
+    const pips = pEl("div", "pop-pips");
+    pips.setAttribute("aria-hidden", "true");
+    hud.appendChild(pips);
+    play.appendChild(hud);
+
+    const tgt = pEl("div", "pop-target");
+    tgt.appendChild(pEl("div", "pop-ask", cfg.askText));
+    const tRow = pEl("div", "pop-target-row");
+    const glyph = pEl("button", "pop-target-glyph", "؟");
+    glyph.type = "button";
+    glyph.setAttribute("aria-label", "اسمع مرة أخرى");
+    glyph.addEventListener("click", () => popListen());
+    tRow.appendChild(glyph);
+    const sp = pEl("button", "pop-speaker", "🔊");
+    sp.type = "button";
+    sp.setAttribute("aria-label", "اسمع مرة أخرى");
+    sp.addEventListener("click", () => popListen());
+    tRow.appendChild(sp);
+    tgt.appendChild(tRow);
+    tgt.appendChild(pEl("div", "pop-word"));
+    play.appendChild(tgt);
+
+    const arena = pEl("div", "pop-arena");
+    play.appendChild(arena);
+    const msg = pEl("div", "pop-message");
+    msg.setAttribute("role", "status");
+    msg.setAttribute("aria-live", "polite");
+    play.appendChild(msg);
+    const ctl = pEl("div", "pop-controls");
+    const bL = pEl("button", "pop-ctl", "🔊 استمع");
+    bL.type = "button";
+    bL.addEventListener("click", () => popListen());
+    const bH = pEl("button", "pop-ctl pop-hintbtn", "💡 مساعدة");
+    bH.type = "button";
+    bH.addEventListener("click", () => popHintBtn());
+    ctl.appendChild(bL);
+    ctl.appendChild(bH);
+    play.appendChild(ctl);
+
+    world.appendChild(hub);
+    world.appendChild(levels);
+    world.appendChild(play);
+
+    /* شاشة الإنجاز */
+    const dlg = pEl("div", "pop-dialog");
+    dlg.setAttribute("role", "dialog");
+    dlg.setAttribute("aria-modal", "true");
+    dlg.setAttribute("aria-labelledby", "popDoneTitle_" + kind);
+    dlg.hidden = true;
+    const box = pEl("div", "pop-dialog-box");
+    box.appendChild(pEl("div", "pop-trophy", "🏆"));
+    box.appendChild(pEl("div", "pop-done-balloons"));
+    const h3 = pEl("h3", "", "أحسنت يا بطل!");
+    h3.id = "popDoneTitle_" + kind;
+    box.appendChild(h3);
+    box.appendChild(pEl("p", "pop-done-text"));
+    box.appendChild(pEl("div", "pop-done-stars"));
+    const bn = pEl("button", "pop-big-btn pop-done-next", "المستوى التالي ◀");
+    bn.type = "button";
+    const ba = pEl("button", "pop-ctl pop-done-again", "🔄 العب المستوى مرة أخرى");
+    ba.type = "button";
+    const bh = pEl("button", "pop-ctl pop-done-levels", "🎈 كل المستويات");
+    bh.type = "button";
+    bn.addEventListener("click", () => { popCloseDone(); popStartLevel(pop.kind, Math.min(POP_KINDS[pop.kind].levels.length, pop.level + 1)); });
+    ba.addEventListener("click", () => { popCloseDone(); popStartLevel(pop.kind, pop.level); });
+    bh.addEventListener("click", () => { popCloseDone(); popShowLevels(); });
+    box.appendChild(bn);
+    box.appendChild(ba);
+    box.appendChild(bh);
+    dlg.appendChild(box);
+    dlg.addEventListener("keydown", e => {
+        if (e.key === "Escape") { popCloseDone(); popShowLevels(); return; }
+        if (e.key !== "Tab") return;
+        const f = Array.from(dlg.querySelectorAll("button")).filter(b => !b.hidden && !b.disabled);
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    world.appendChild(dlg);
+
+    sec.appendChild(world);
+    pop.built[kind] = true;
+    return world;
+}
+
+function popViews(view) {
+    pop.view = view;
+    const w = pQ(".pop-world");
+    if (!w) return;
+    w.dataset.view = view;
+    const map = { hub: ".pop-hub", levels: ".pop-levels", play: ".pop-play" };
+    Object.keys(map).forEach(k => {
+        const e = w.querySelector(map[k]);
+        if (!e) return;
+        e.hidden = k !== view;
+        if (k === view) { e.classList.remove("pop-view-in"); void e.offsetWidth; e.classList.add("pop-view-in"); }
+    });
+    const cfg = pCfg();
+    const t = w.querySelector(".pop-title");
+    if (t) t.textContent = cfg.icon + " " + cfg.title;
+    popKeepInView();
+}
+
+function popKeepInView() {
+    const w = pQ(".pop-world");
+    if (!w) return;
+    const r = w.getBoundingClientRect();
+    if (r.top < -20) { try { w.scrollIntoView({ block: "start" }); } catch (e) { /* لا شيء */ } }
+}
+
+/* ---------- الدخول والخروج ---------- */
+
+function popEnter(kind) {
+    popTeardown();
+    pop.kind = kind;
+    pop.active = true;
+    popBuild(kind);
+    showScreen(POP_KINDS[kind].screen);
+    popShowHub();
+}
+
+function startBalloonGame() { popEnter("letters"); }
+function startNumberBalloonGame() { popEnter("numbers"); }
+
+function popExit() {
+    popTeardown();
+    pop.active = false;
     showScreen("games");
 }
+
+function exitBalloonGame() { popExit(); }
+function exitNumberBalloonGame() { popExit(); }
+
+function popTeardown() {
+    pop.session++;
+    pClearTimers();
+    pop.cur = null;
+    popStopAudio();
+    document.querySelectorAll(".pop-ghost-fly").forEach(n => n.remove());
+    try { popCloseDone(); } catch (e) { /* لا شيء */ }
+}
+
+function popBack() {
+    if (pop.view === "play") { popTeardown(); pop.active = true; popShowLevels(); return; }
+    if (pop.view === "levels") { popShowHub(); return; }
+    popExit();
+}
+
+/* ---------- شاشة البداية ---------- */
+
+function popShowHub() {
+    popTeardown();
+    pop.active = true;
+    popViews("hub");
+    const cfg = pCfg();
+    const hub = pQ(".pop-hub");
+    if (!hub) return;
+    hub.innerHTML = "";
+    const hero = pEl("div", "pop-hero");
+    hero.appendChild(pEl("h1", "pop-hero-title", cfg.title));
+    hero.appendChild(pEl("div", "pop-hero-sub", cfg.sub));
+    const cluster = pEl("div", "pop-cluster");
+    cfg.hubGlyphs.forEach((g, i) => {
+        const b = popMakeBalloon(g, POP_COLORS[(i * 2) % POP_COLORS.length], i);
+        b.classList.add("pop-hubb");
+        b.setAttribute("aria-label", g);
+        b.addEventListener("click", () => popHubTap(b, g));
+        cluster.appendChild(b);
+    });
+    hero.appendChild(cluster);
+    const start = pEl("button", "pop-start", "▶ هيا نبدأ");
+    start.type = "button";
+    start.classList.add("pop-start-btn");
+    start.addEventListener("click", () => popStartLevel(pop.kind, popSuggest(pop.kind)));
+    hero.appendChild(start);
+    const choose = pEl("button", "pop-choose", "🎯 اختر المستوى");
+    choose.type = "button";
+    choose.classList.add("pop-choose-btn");
+    choose.addEventListener("click", () => popShowLevels());
+    hero.appendChild(choose);
+    const total = cfg.levels.length;
+    hero.appendChild(pEl("div", "pop-progress-line", "أنجزت " + pNum(popDoneCount(pop.kind)) + " من " + pNum(total) + " مستويات"));
+    hub.appendChild(hero);
+}
+
+/* بالونات البداية تُفرقَع للّعب وتنطق قيمتها بصوتها الكامل */
+function popHubTap(b, v) {
+    if (b.classList.contains("popping")) return;
+    popSay([popKey(pop.kind, popGlyphToValue(v))]);
+    b.classList.add("popping");
+    popBurst(b);
+    const ses = pop.session;
+    setTimeout(() => { if (ses === pop.session && b.parentNode) b.classList.remove("popping"); }, 1300);
+}
+
+function popGlyphToValue(g) {
+    if (pop.kind === "letters") return g;
+    return "٠١٢٣٤٥٦٧٨٩".indexOf(g);
+}
+
+/* ---------- اختيار المستوى ---------- */
+
+function popShowLevels() {
+    popTeardown();
+    pop.active = true;
+    popViews("levels");
+    const cfg = pCfg();
+    const box = pQ(".pop-levels");
+    if (!box) return;
+    box.innerHTML = "";
+    const p = popLoad()[pop.kind];
+    const sug = popSuggest(pop.kind);
+    box.appendChild(pEl("div", "pop-intro-line", "اختر مستواك وانطلق 🎈"));
+    const list = pEl("div", "pop-level-list");
+    cfg.levels.forEach(l => {
+        const b = pEl("button", "pop-level pop-lv" + l.id + (l.id === sug ? " suggested" : ""));
+        b.type = "button";
+        b.dataset.level = String(l.id);
+        const art = pEl("span", "pop-level-art");
+        art.setAttribute("aria-hidden", "true");
+        for (let i = 0; i < Math.min(l.count, 6); i++) art.appendChild(pEl("i", "pc-" + POP_COLORS[i % POP_COLORS.length]));
+        b.appendChild(art);
+        const done = p.done[l.id];
+        const t = pEl("span", "pop-level-text");
+        t.appendChild(pEl("strong", "", l.name + (done ? " ✓" : "")));
+        t.appendChild(pEl("small", "", l.note + (l.id === sug ? " — مقترح لك 👍" : "")));
+        b.appendChild(t);
+        b.appendChild(pEl("span", "pop-level-stars", done ? "🌟".repeat(Math.min(3, l.id)) : "⭐".repeat(Math.min(3, l.id))));
+        b.addEventListener("click", () => popStartLevel(pop.kind, l.id));
+        list.appendChild(b);
+    });
+    box.appendChild(list);
+}
+
+/* ---------- الجولات ---------- */
+
+function popStartLevel(kind, level) {
+    if (pop.kind !== kind || !pop.built[kind]) { pop.kind = kind; popBuild(kind); }
+    popTeardown();
+    pop.active = true;
+    pop.kind = kind;
+    pop.level = level;
+    pop.round = 0;
+    pop.mistakes = 0;
+    pop.used = [];
+    const sec = document.getElementById(POP_KINDS[kind].screen);
+    if (!sec || !sec.classList.contains("active")) showScreen(POP_KINDS[kind].screen);
+    popViews("play");
+    popRound();
+}
+
+function popLevelCfg() { return pCfg().levels[pop.level - 1]; }
+
+function popUpdateHud() {
+    const lv = popLevelCfg();
+    const lt = pQ(".pop-hud-level");
+    if (lt && lv) lt.textContent = "المستوى " + pNum(pop.level) + " — " + lv.name;
+    const rt = pQ(".pop-round-text");
+    if (rt) rt.textContent = "الجولة " + pNum(pop.round + 1) + " من " + pNum(POP_ROUNDS);
+    const st = pQ(".pop-stars");
+    if (st && typeof stars !== "undefined") st.textContent = pNum(stars);
+    const pips = pQ(".pop-pips");
+    if (pips) {
+        pips.innerHTML = "";
+        for (let i = 0; i < POP_ROUNDS; i++) {
+            const done = i < pop.round || (i === pop.round && pop.solved);
+            pips.appendChild(pEl("i", "pc-" + POP_COLORS[i % POP_COLORS.length] + (done ? " on" : (i === pop.round ? " cur" : ""))));
+        }
+    }
+}
+
+function popMsg(text, kind) {
+    const m = pQ(".pop-message");
+    if (!m) return;
+    m.textContent = text || "";
+    m.className = "pop-message" + (kind ? " " + kind : "");
+}
+
+/* بالونة واحدة: زر كبير بجسم مرسوم بالـCSS وخيط */
+function popMakeBalloon(glyph, color, i) {
+    const b = pEl("button", "pop-balloon pc-" + color);
+    b.type = "button";
+    b.style.setProperty("--i", i);
+    b.style.setProperty("--fd", (4.2 + (i % 4) * 0.7).toFixed(1) + "s");
+    b.style.setProperty("--fl", (-i * 0.9).toFixed(1) + "s");
+    const fl = pEl("span", "pop-float");
+    const body = pEl("span", "pop-body");
+    body.appendChild(pEl("span", "pop-glyph", glyph));
+    fl.appendChild(body);
+    fl.appendChild(pEl("span", "pop-knot"));
+    fl.appendChild(pEl("span", "pop-string"));
+    b.appendChild(fl);
+    return b;
+}
+
+function popPickTarget() {
+    const cfg = pCfg();
+    const lv = popLevelCfg();
+    let pool;
+    if (pop.kind === "letters") {
+        pool = [];
+        LETTER_LEVEL_GROUPS.forEach(g => { if (lv.pool === "all" || g.id <= 2) g.letters.forEach(l => pool.push(l)); });
+    } else {
+        pool = [];
+        for (let n = 1; n <= lv.max; n++) pool.push(n);
+    }
+    const fresh = pool.filter(x => pop.used.indexOf(x) < 0);
+    const src = fresh.length ? fresh : pool;
+    const t = src[Math.floor(Math.random() * src.length)];
+    pop.used.push(t);
+    return t;
+}
+
+function popChoices(target) {
+    const lv = popLevelCfg();
+    const need = lv.count - 1;
+    let out = [];
+    if (pop.kind === "letters") {
+        const all = [];
+        LETTER_LEVEL_GROUPS.forEach(g => { g.letters.forEach(l => { if (lv.pool === "all" || g.id <= 2) all.push(l); }); });
+        if (lv.near && typeof getPhoneticNeighbors === "function") {
+            pShuffle(getPhoneticNeighbors(target) || []).forEach(n => { if (out.length < need && n !== target && all.indexOf(n) >= 0 && out.indexOf(n) < 0) out.push(n); });
+        }
+        pShuffle(all.filter(l => l !== target && out.indexOf(l) < 0)).forEach(l => { if (out.length < need) out.push(l); });
+    } else {
+        const all = [];
+        for (let n = 1; n <= lv.max; n++) if (n !== target) all.push(n);
+        if (lv.near) {
+            pShuffle(all.filter(n => Math.abs(n - target) <= 2)).slice(0, 1).forEach(n => out.push(n));
+        }
+        pShuffle(all.filter(n => out.indexOf(n) < 0)).forEach(n => { if (out.length < need) out.push(n); });
+    }
+    return pShuffle([target].concat(out));
+}
+
+function popDisplay(v) {
+    return pop.kind === "letters" ? v : pNum(v);
+}
+
+function popRound() {
+    pop.session++;
+    pClearTimers();
+    popStopAudio();
+    pop.solved = false;
+    pop.hint = 0;
+    pop.roundStart = Date.now();
+    const lv = popLevelCfg();
+    const target = popPickTarget();
+    pop.target = target;
+    const values = popChoices(target);
+    pop.cur = { target, values, tried: {} };
+    popUpdateHud();
+    popMsg("");
+    const g = pQ(".pop-target-glyph");
+    if (g) {
+        const show = pop.kind === "letters" && lv.show;
+        g.textContent = show ? letterWithFatha(target) : "؟";
+        g.classList.toggle("revealed", false);
+        g.classList.remove("pop-win-glow");
+    }
+    const w = pQ(".pop-word");
+    if (w) w.textContent = "";
+    const arena = pQ(".pop-arena");
+    if (!arena) return;
+    arena.innerHTML = "";
+    arena.className = "pop-arena pop-n" + values.length;
+    values.forEach((v, i) => {
+        const b = popMakeBalloon(popDisplay(v), POP_COLORS[(i + Math.floor(Math.random() * 3)) % POP_COLORS.length], i);
+        b.dataset.v = String(v);
+        b.setAttribute("aria-label", pop.kind === "letters" ? "بالونة حرف" : "بالونة رقم");
+        b.addEventListener("click", () => popTap(b, v));
+        arena.appendChild(b);
+    });
+    popKeepInView();
+    const key = popKey(pop.kind, target);
+    pLater(() => popSay([key]), 550);
+}
+
+function popListen() {
+    if (!pop.active || pop.view !== "play" || pop.cur == null) return;
+    popSay([popKey(pop.kind, pop.cur.target)]);
+}
+
+function popTap(b, v) {
+    if (!pop.active || pop.solved || !pop.cur || b.classList.contains("popping")) return;
+    const key = popKey(pop.kind, v);
+    if (v === pop.cur.target) popCorrect(b, v, key);
+    else popWrong(b, v, key);
+}
+
+function popCorrect(b, v, key) {
+    pop.solved = true;
+    const t0 = Date.now();
+    b.classList.add("popping", "right");
+    popClearHints();
+    const arena = pQ(".pop-arena");
+    if (arena) {
+        arena.classList.add("pop-win");
+        arena.querySelectorAll(".pop-balloon").forEach(x => { if (x !== b) x.classList.add("leaving"); });
+    }
+    popBurst(b);
+    popStarFly(b);
+    try { if (typeof addStars === "function") addStars(1); } catch (e) { /* لا شيء */ }
+    popUpdateHud();
+    const g = pQ(".pop-target-glyph");
+    if (g) { g.textContent = popDisplay(v); if (pop.kind === "letters") g.textContent = letterWithFatha(v); g.classList.add("revealed", "pop-win-glow"); }
+    const w = pQ(".pop-word");
+    if (w) w.textContent = pop.kind === "numbers" ? POP_NUM_WORDS[v] : "";
+    popMsg("أحسنت! 🌟", "ok");
+    const last = pop.round >= POP_ROUNDS - 1;
+    const praise = last ? "صحيح" : POP_PRAISE[pop.round % POP_PRAISE.length];
+    const go = () => {
+        const wait = Math.max(500, 1500 - (Date.now() - t0)) + (pCalm() ? 400 : 0);
+        pLater(() => popNext(), wait);
+    };
+    popSay([key, praise], go);
+}
+
+function popWrong(b, v, key) {
+    const c = pop.cur;
+    const first = !c.tried[v];
+    c.tried[v] = true;
+    if (first) { pop.mistakes++; pop.hint = Math.min(3, pop.hint + 1); }
+    b.classList.remove("wrong");
+    void b.offsetWidth;
+    b.classList.add("wrong");
+    setTimeout(() => b.classList.remove("wrong"), 700);
+    popMsg("هذه «" + popDisplay(v) + "»، جرّب بالونة أخرى 💙");
+    /* تسمع الطفل ما لمسه ثم تعيد المطلوب ليتعلّم الفرق */
+    const tkey = popKey(pop.kind, c.target);
+    popSay([key], () => { if (pop.active && !pop.solved && pop.cur === c) popSay([tkey]); });
+    popApplyHint(pop.hint);
+}
+
+function popClearHints() {
+    document.querySelectorAll("#" + pCfg().screen + " .pop-balloon").forEach(x => x.classList.remove("hint", "hint2", "dim"));
+    document.querySelectorAll(".pop-finger").forEach(n => n.remove());
+}
+
+/* تلميح تدريجي: ١ سماع، ٢ توهّج البالونة الصحيحة، ٣ إخفاء الباقي مع إصبع إرشاد */
+function popApplyHint(level) {
+    if (!pop.cur || pop.solved) return;
+    popClearHints();
+    const arena = pQ(".pop-arena");
+    if (!arena) return;
+    const balloons = Array.from(arena.querySelectorAll(".pop-balloon"));
+    const right = balloons.find(x => x.dataset.v === String(pop.cur.target));
+    if (!right) return;
+    if (level >= 2) right.classList.add("hint");
+    if (level >= 3) {
+        right.classList.add("hint2");
+        balloons.forEach(x => { if (x !== right) x.classList.add("dim"); });
+        if (!pCalm()) { const f = pEl("span", "pop-finger", "👆"); f.setAttribute("aria-hidden", "true"); right.appendChild(f); }
+    }
+}
+
+function popHintBtn() {
+    if (!pop.active || pop.view !== "play" || !pop.cur || pop.solved) return;
+    pop.hint = Math.min(3, pop.hint + 1);
+    if (pop.hint === 1) { popSay([popKey(pop.kind, pop.cur.target)]); popMsg("اسمع جيدًا 👂"); }
+    else { popApplyHint(pop.hint); popMsg(pop.hint === 2 ? "انظر إلى البالونة المضيئة 💡" : "المس البالونة التي أشير إليها 👆"); }
+}
+
+function popNext() {
+    if (!pop.active || !pop.solved) return;
+    if (pop.round >= POP_ROUNDS - 1) { popFinishLevel(); return; }
+    pop.round++;
+    popRound();
+}
+
+/* ---------- المؤثرات ---------- */
+
+const POP_CONFETTI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b", "#b197fc", "#ff922b", "#f783ac"];
+
+/* انفجار نجاح: حلقة + قصاصات + نجوم، قليل ومنظّم، ويُلغى في الوضع الهادئ */
+function popBurst(el) {
+    if (!el || pCalm()) return;
+    const world = pQ(".pop-world");
+    if (!world) return;
+    const w = world.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2 - w.left, cy = r.top + r.height * 0.4 - w.top;
+    const ring = pEl("span", "pop-ring");
+    ring.style.left = cx + "px";
+    ring.style.top = cy + "px";
+    world.appendChild(ring);
+    setTimeout(() => ring.remove(), 700);
+    for (let i = 0; i < 14; i++) {
+        const p = pEl("span", i % 4 === 3 ? "pop-spark-star" : "pop-piece", i % 4 === 3 ? "⭐" : "");
+        const ang = (Math.PI * 2 * i) / 14 + Math.random() * 0.35;
+        const dist = 70 + Math.random() * 70;
+        p.style.left = cx + "px";
+        p.style.top = cy + "px";
+        p.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+        p.style.setProperty("--dy", Math.sin(ang) * dist - 20 + "px");
+        p.style.setProperty("--rot", Math.round(Math.random() * 360) + "deg");
+        if (i % 4 !== 3) p.style.background = POP_CONFETTI[i % POP_CONFETTI.length];
+        p.setAttribute("aria-hidden", "true");
+        world.appendChild(p);
+        setTimeout(() => p.remove(), 1000);
+    }
+}
+
+/* نجمة تطير من البالونة إلى عدّاد النجوم */
+function popStarFly(from) {
+    if (pCalm() || !from || !from.getBoundingClientRect) return;
+    const to = pQ(".pop-starpill");
+    if (!to) return;
+    const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+    const s = pEl("span", "pop-ghost-fly", "⭐");
+    s.setAttribute("aria-hidden", "true");
+    s.style.left = (a.left + a.width / 2 - 20) + "px";
+    s.style.top = (a.top + a.height / 3) + "px";
+    document.body.appendChild(s);
+    const dx = (b.left + b.width / 2) - (a.left + a.width / 2), dy = (b.top + b.height / 2) - (a.top + a.height / 3);
+    if (s.animate) {
+        const an = s.animate([
+            { transform: "translate(0,0) scale(0.6)", opacity: 0 },
+            { transform: "translate(0,-30px) scale(1.4)", opacity: 1, offset: 0.25 },
+            { transform: "translate(" + dx + "px," + dy + "px) scale(0.8)", opacity: 1, offset: 0.9 },
+            { transform: "translate(" + dx + "px," + dy + "px) scale(0.4)", opacity: 0 }
+        ], { duration: 900, easing: "ease-in-out" });
+        an.onfinish = () => s.remove();
+    }
+    setTimeout(() => s.remove(), 1200);
+}
+
+/* ---------- شاشة الإنجاز ---------- */
+
+function popFinishLevel() {
+    const kind = pop.kind;
+    const p = popLoad();
+    const prev = p[kind].done[pop.level];
+    const first = !prev;
+    p[kind].done[pop.level] = { n: (prev ? prev.n : 0) + 1, best: prev ? Math.min(prev.best, pop.mistakes) : pop.mistakes };
+    p[kind].last = { level: pop.level, mistakes: pop.mistakes };
+    popSave(p);
+    try {
+        if (typeof StudentData !== "undefined" && StudentData.logEvent) {
+            StudentData.logEvent({ type: "activity_complete", subject: "games", skill: kind === "letters" ? "pop_letters" : "pop_numbers", activity: "level_" + pop.level, correct: null });
+        }
+    } catch (e) { /* لا شيء */ }
+    const dlg = pQ(".pop-dialog");
+    if (!dlg) { popShowLevels(); return; }
+    const cfg = pCfg();
+    const lv = popLevelCfg();
+    const t = dlg.querySelector(".pop-done-text");
+    if (t) t.textContent = "أتممت «" + cfg.title + "» — " + lv.name + (first ? " ✨ مستوى جديد!" : "");
+    const st = dlg.querySelector(".pop-done-stars");
+    if (st) { st.innerHTML = ""; for (let i = 0; i < POP_ROUNDS; i++) { const s = pEl("span", "", "⭐"); s.style.animationDelay = (i * 0.12) + "s"; st.appendChild(s); } }
+    const db = dlg.querySelector(".pop-done-balloons");
+    if (db) {
+        db.innerHTML = "";
+        const gl = cfg.hubGlyphs;
+        gl.forEach((g, i) => { const bb = popMakeBalloon(g, POP_COLORS[(i * 2 + 1) % POP_COLORS.length], i); bb.tabIndex = -1; bb.disabled = true; db.appendChild(bb); });
+    }
+    const nx = dlg.querySelector(".pop-done-next");
+    if (nx) nx.hidden = pop.level >= cfg.levels.length;
+    dlg.hidden = false;
+    popSetInert(true);
+    popConfettiRain(dlg);
+    popBurst(dlg.querySelector(".pop-trophy"));
+    popSay([POP_LEVEL_DONE]);
+    const focusBtn = (nx && !nx.hidden) ? nx : dlg.querySelector(".pop-done-again");
+    if (focusBtn) focusBtn.focus();
+}
+
+function popConfettiRain(dlg) {
+    if (pCalm()) return;
+    for (let i = 0; i < 26; i++) {
+        const c = pEl("span", "pop-rain");
+        c.style.left = (Math.random() * 100) + "%";
+        c.style.background = POP_CONFETTI[i % POP_CONFETTI.length];
+        c.style.setProperty("--rd", (2.2 + Math.random() * 1.6).toFixed(2) + "s");
+        c.style.setProperty("--rl", (Math.random() * 1.2).toFixed(2) + "s");
+        c.style.setProperty("--rx", ((Math.random() - 0.5) * 80).toFixed(0) + "px");
+        c.setAttribute("aria-hidden", "true");
+        dlg.appendChild(c);
+        setTimeout(() => c.remove(), 4200);
+    }
+}
+
+function popCloseDone() {
+    ["letters", "numbers"].forEach(k => {
+        const sec = document.getElementById(POP_KINDS[k].screen);
+        const dlg = sec && sec.querySelector(".pop-dialog");
+        if (dlg) { dlg.hidden = true; dlg.querySelectorAll(".pop-rain").forEach(n => n.remove()); }
+    });
+    popSetInert(false);
+}
+
+function popSetInert(on) {
+    ["letters", "numbers"].forEach(k => {
+        const sec = document.getElementById(POP_KINDS[k].screen);
+        const world = sec && sec.querySelector(".pop-world");
+        if (!world) return;
+        Array.from(world.children).forEach(c => {
+            if (c.classList.contains("pop-dialog")) return;
+            if (on && k === pop.kind) c.setAttribute("inert", ""); else c.removeAttribute("inert");
+        });
+    });
+}
+
+/* ---------- ربط الشاشات: تنظيف عند مغادرة اللعبتين ---------- */
+
+const originalShowScreenForPop = showScreen;
+
+showScreen = function (screenId) {
+    if (typeof pop !== "undefined" && pop.active && screenId !== POP_KINDS[pop.kind].screen) {
+        popTeardown();
+        pop.active = false;
+    }
+    return originalShowScreenForPop.apply(this, arguments);
+};
+
+/* واجهات قديمة تُستدعى من HTML */
+function repeatBalloonTarget() { popListen(); }
+function repeatNumberBalloonTarget() { popListen(); }
+
+window.startBalloonGame = startBalloonGame;
+window.exitBalloonGame = exitBalloonGame;
+window.startNumberBalloonGame = startNumberBalloonGame;
+window.exitNumberBalloonGame = exitNumberBalloonGame;
+window.pop = pop;
+
+/* =========================================================
+   🔚 نهاية فرقع الحروف والأرقام (الإصدار ٢)
+========================================================= */
+
 const RACE_WORD_BANK = {
     "أ": {
         "final": ["فأر", "كأس", "لجأ", "مرفأ", "ملجأ"],
