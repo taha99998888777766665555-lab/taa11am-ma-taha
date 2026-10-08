@@ -3653,6 +3653,17 @@
             <span id="teacherStudentId" class="teacher-student-id">--</span>
         </div>
 
+        <div class="teacher-students-card">
+            <div class="teacher-students-row">
+                <span>👥 عدد الطلاب: <b id="teacherStudentCount">١</b></span>
+                <button type="button" class="teacher-students-btn" onclick="openStudentManager()">⚙️ إدارة الطلاب</button>
+            </div>
+            <label class="teacher-override-row">
+                <input type="checkbox" id="teacherOverrideToggle" onchange="toggleTeacherOverride(this.checked)">
+                <span>🔓 فتح كل المستويات لهذا الطالب <small>(لا يغيّر تقدّمه الحقيقي)</small></span>
+            </label>
+        </div>
+
         <div class="teacher-stats-grid">
 
             <div class="teacher-stat-box">
