@@ -576,71 +576,77 @@
     class="screen"
 >
 
-<div class="card">
+<div class="wr-wrap">
 
-
-    <h2>
-        ✏️ تدريب الكتابة
-    </h2>
-
-
-    <p>
-        تتبع الحرف بإصبعك 👆
-    </p>
-
-
-    <div
-        class="writing-guide"
-        id="writingGuide"
-    >
-        أ
+    <div class="wr-topbar">
+        <button class="wr-icon-btn" id="wrBackHome" type="button" aria-label="العودة إلى الرئيسية">🏠</button>
+        <h2 class="wr-title">✏️ الكتابة</h2>
+        <span class="wr-spacer" aria-hidden="true"></span>
     </div>
 
+    <div class="wr-cover">
+        <h3>حروفي الجميلة</h3>
+        <p>تدريبات الكتابة</p>
+        <div class="wr-overall-line" id="wrOverall" role="status" aria-live="polite"></div>
+        <div class="wr-bar" aria-hidden="true"><div id="wrOverallBar"></div></div>
+        <button class="wr-big-btn" id="wrContinue" type="button">ابدأ ◀</button>
+    </div>
 
-    <canvas
-        id="writingCanvas"
-    ></canvas>
+    <div class="wr-map" id="wrMap" role="group" aria-label="اختر حرفًا"></div>
 
+</div>
 
-    <button
-        class="danger"
-        onclick="clearCanvas()"
-    >
-        🗑️ مسح
-    </button>
+</section>
 
+<section
+    id="writingPlay"
+    class="screen"
+>
 
-    <button
-        class="success"
-        onclick="finishWriting()"
-    >
-        ✅ انتهيت
-    </button>
+<div class="wr-wrap wr-play">
 
+    <div class="wr-topbar">
+        <button class="wr-icon-btn" id="wrBackHub" type="button" aria-label="العودة إلى الحروف">⬅️</button>
+        <div class="wr-letterbar">
+            <button class="wr-icon-btn" id="wrPrevLetter" type="button" aria-label="الحرف السابق">▶</button>
+            <div class="wr-letter-center">
+                <span class="wr-letter-big" id="wrLetterBig" aria-hidden="true"></span>
+                <span class="wr-keyword" id="wrKeyWord"></span>
+            </div>
+            <button class="wr-icon-btn" id="wrNextLetter" type="button" aria-label="الحرف التالي">◀</button>
+        </div>
+    </div>
 
-    <button
-        class="primary"
-        onclick="newWritingLetter()"
-    >
-        حرف جديد ➡️
-    </button>
+    <div class="wr-tabs" id="wrTabs" role="group" aria-label="تدريبات الحرف"></div>
 
+    <div class="wr-card">
+        <div class="wr-card-head">
+            <h3 id="wrActTitle"></h3>
+            <span class="wr-progress-text" id="wrProgressText"></span>
+        </div>
+        <div class="wr-bar small" aria-hidden="true"><div id="wrUnitBar"></div></div>
+        <div class="wr-message" id="wrMessage" role="status" aria-live="polite"></div>
+        <div class="wr-stage" id="wrStage"></div>
+    </div>
 
-    <div
-        id="writingMessage"
-        class="message"
-        role="status"
-        aria-live="polite"
-    ></div>
+    <div class="wr-controls">
+        <button class="wr-ctl" id="wrBtnListen" type="button">🔊 استمع</button>
+        <button class="wr-ctl" id="wrBtnAssist" type="button">💡 مساعدة</button>
+        <button class="wr-ctl" id="wrBtnAgain" type="button">🔄 من جديد</button>
+        <button class="wr-ctl" id="wrBtnSkip" type="button">⏭️ تخطَّ</button>
+        <button class="wr-ctl wr-next" id="wrBtnNext" type="button" disabled>التالي ◀</button>
+    </div>
 
-
-    <button
-        class="secondary"
-        onclick="showScreen('home')"
-    >
-        🏠 الرئيسية
-    </button>
-
+    <div class="wr-dialog" id="wrDone" role="dialog" aria-modal="true" aria-labelledby="wrDoneTitle" hidden>
+        <div class="wr-dialog-box">
+            <div class="wr-dialog-emoji" aria-hidden="true">🌟</div>
+            <h3 id="wrDoneTitle">أحسنت يا بطل!</h3>
+            <p id="wrDoneText"></p>
+            <button class="wr-big-btn" id="wrDoneNext" type="button">الحرف التالي ◀</button>
+            <button class="wr-ctl" id="wrDoneAgain" type="button">🔄 أعد تدريبات الحرف</button>
+            <button class="wr-ctl" id="wrDoneHub" type="button">🔤 كل الحروف</button>
+        </div>
+    </div>
 
 </div>
 
