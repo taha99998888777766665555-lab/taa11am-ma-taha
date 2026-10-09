@@ -921,6 +921,73 @@ const EDUCATIONAL_AUDIO_MANIFEST = {
     "تبسمك في وجه أخيك لك صدقة.": "assets/audio/educational/hadith/hadith_03.mp3",
     "المسلم من سلم المسلمون من لسانه ويده.": "assets/audio/educational/hadith/hadith_04.mp3",
     "خيركم من تعلم القرآن وعلمه.": "assets/audio/educational/hadith/hadith_05.mp3",
+    /* ── مقاطع تركيب الجمل الديناميكية (الجمع/الطرح/خط الأعداد/إطار العشرة/القصص): ملفاتها من قائمة التسجيل الرئيسية، وتعمل بمجرد رفعها ── */
+    "وَصَلْنَا إِلَى": "assets/audio/educational/math/nl_arrived.mp3",
+    "وَارْجِعْ لِلْخَلْفْ": "assets/audio/educational/math/nl_go_back.mp3",
+    "اِبْدَأْ مِنْ": "assets/audio/educational/math/nl_start_from.mp3",
+    "خُطُوَاتْ": "assets/audio/educational/math/nl_steps.mp3",
+    "نَاقِصْ": "assets/audio/educational/math/op_minus.mp3",
+    "زَائِدْ": "assets/audio/educational/math/op_plus.mp3",
+    "يُسَاوِي كَمْ؟": "assets/audio/educational/math/q_equals_how_many.mp3",
+    "مَا هُوَ العَدَدُ المَفْقُودْ؟": "assets/audio/educational/math/q_missing_number.mp3",
+    "كَمْ مَجْمُوعُ هَذِهِ الصُّوَرْ؟": "assets/audio/educational/math/q_picture_sum.mp3",
+    "كَمْ قُرْصًا بَقِيَ؟": "assets/audio/educational/math/q_tenframe_left.mp3",
+    "كَمْ رَاكِبًا بَقِيَ فِي الحَافِلَة؟": "assets/audio/educational/math/remain_bus.mp3",
+    "كَمْ جَزَرَةً بَقِيَتْ؟": "assets/audio/educational/math/remain_carrot.mp3",
+    "أَزِلْ": "assets/audio/educational/math/remove_only_pre.mp3",
+    "مِنَ البَالُونَاتْ": "assets/audio/educational/math/rm_balloon_post.mp3",
+    "فَرْقِعْ": "assets/audio/educational/math/rm_balloon_pre.mp3",
+    "مِنَ العَصَافِيرِ لِتَطِيرَ بَعِيدًا": "assets/audio/educational/math/rm_bird_post.mp3",
+    "اِضْغَطْ عَلَى": "assets/audio/educational/math/rm_bird_pre.mp3",
+    "مِنَ الرُّكَّابِ مِنَ الحَافِلَة": "assets/audio/educational/math/rm_bus_post.mp3",
+    "أَنْزِلْ": "assets/audio/educational/math/rm_bus_pre.mp3",
+    "مِنَ الجَزَرْ": "assets/audio/educational/math/rm_carrot_post.mp3",
+    "أَطْعِمِ الأَرْنَبَ وَأَزِلْ": "assets/audio/educational/math/rm_carrot_pre.mp3",
+    "عِنْدَ أَحْمَدْ": "assets/audio/educational/math/story_add1_p1.mp3",
+    "تُفَّاحَاتْ، وَأَعْطَتْهُ أُمُّهْ": "assets/audio/educational/math/story_add1_p2.mp3",
+    "تُفَّاحَاتٍ أُخْرَى. كَمْ تُفَّاحَةً أَصْبَحَتْ مَعَهْ؟": "assets/audio/educational/math/story_add1_p3.mp3",
+    "فِي الحَدِيقَة": "assets/audio/educational/math/story_add2_p1.mp3",
+    "عُصْفُورْ، وَجَاءَ": "assets/audio/educational/math/story_add2_p2.mp3",
+    "عُصْفُورٌ آخَرْ. كَمْ عُصْفُورًا فِي الحَدِيقَةِ الآنَ؟": "assets/audio/educational/math/story_add2_p3.mp3",
+    "مَعَ سَارَة": "assets/audio/educational/math/story_add3_p1.mp3",
+    "بَالُونَاتْ، وَاشْتَرَتْ": "assets/audio/educational/math/story_add3_p2.mp3",
+    "بَالُونَاتٍ جَدِيدَة. كَمْ بَالُونَةً أَصْبَحَ مَعَهَا؟": "assets/audio/educational/math/story_add3_p3.mp3",
+    "عِنْدَ البَائِعْ": "assets/audio/educational/math/story_add4_p1.mp3",
+    "كُتُبْ، وَأَحْضَرَ": "assets/audio/educational/math/story_add4_p2.mp3",
+    "كُتُبٍ أُخْرَى. كَمْ كِتَابًا أَصْبَحَ عِنْدَهْ؟": "assets/audio/educational/math/story_add4_p3.mp3",
+    "فِي الحَوْضْ": "assets/audio/educational/math/story_add5_p1.mp3",
+    "سَمَكَة، وَأَضَافَ خَالِدْ": "assets/audio/educational/math/story_add5_p2.mp3",
+    "سَمَكَاتْ. كَمْ سَمَكَةً فِي الحَوْضِ الآنَ؟": "assets/audio/educational/math/story_add5_p3.mp3",
+    "كَانَ فِي الشَّجَرَة": "assets/audio/educational/math/story_sub1_p1.mp3",
+    "عَصَافِيرْ، طَارَ مِنْهَا": "assets/audio/educational/math/story_sub1_p2.mp3",
+    "كَمْ عُصْفُورًا بَقِيَ؟": "assets/audio/educational/math/story_sub1_p3.mp3",
+    "عِنْدَ سَارَة": "assets/audio/educational/math/story_sub2_p1.mp3",
+    "تُفَّاحَاتْ، أَخَذَتْ مِنْهَا أُخْتُهَا": "assets/audio/educational/math/story_sub2_p2.mp3",
+    "كَمْ تُفَّاحَةً بَقِيَتْ مَعَهَا؟": "assets/audio/educational/math/story_sub2_p3.mp3",
+    "كَانَ مَعَ أَحْمَدْ": "assets/audio/educational/math/story_sub3_p1.mp3",
+    "بَالُونَاتْ، اخْتَفَتْ مِنْهَا": "assets/audio/educational/math/story_sub3_p2.mp3",
+    "كَمْ بَالُونَةً بَقِيَتْ؟": "assets/audio/educational/math/story_sub3_p3.mp3",
+    "عِنْدَ خَالِدْ": "assets/audio/educational/math/story_sub4_p1.mp3",
+    "حَلْوَيَاتْ، أَكَلَ مِنْهَا": "assets/audio/educational/math/story_sub4_p2.mp3",
+    "كَمْ حَلْوَى بَقِيَتْ؟": "assets/audio/educational/math/story_sub4_p3.mp3",
+    "كَانَتْ فِي المَوْقِفْ": "assets/audio/educational/math/story_sub5_p1.mp3",
+    "سَيَّارَاتْ، غَادَرَتْ مِنْهَا": "assets/audio/educational/math/story_sub5_p2.mp3",
+    "كَمْ سَيَّارَةً بَقِيَتْ؟": "assets/audio/educational/math/story_sub5_p3.mp3",
+    "إِطَارُ العَشَرَة": "assets/audio/educational/math/tenframe_intro.mp3",
+    "مِنَ الأَقْرَاصِ المُمْتَلِئَة": "assets/audio/educational/math/tenframe_remove_post.mp3",
+    "وَأَرْبَعُونْ": "assets/audio/educational/numbers/and_tens_40.mp3",
+    "وَخَمْسُونْ": "assets/audio/educational/numbers/and_tens_50.mp3",
+    "وَسِتُّونْ": "assets/audio/educational/numbers/and_tens_60.mp3",
+    "وَسَبْعُونْ": "assets/audio/educational/numbers/and_tens_70.mp3",
+    "وَثَمَانُونْ": "assets/audio/educational/numbers/and_tens_80.mp3",
+    "وَتِسْعُونْ": "assets/audio/educational/numbers/and_tens_90.mp3",
+    "صِفْرْ": "assets/audio/educational/numbers/number_00.mp3",
+    "مِئَة": "assets/audio/educational/numbers/number_100.mp3",
+    "خَمْسُونْ": "assets/audio/educational/numbers/number_50.mp3",
+    "سِتُّونْ": "assets/audio/educational/numbers/number_60.mp3",
+    "سَبْعُونْ": "assets/audio/educational/numbers/number_70.mp3",
+    "ثَمَانُونْ": "assets/audio/educational/numbers/number_80.mp3",
+    "تِسْعُونْ": "assets/audio/educational/numbers/number_90.mp3",
 };
 /* =========================================================================
    🆕 =====================================================================
@@ -981,13 +1048,16 @@ const EduAudio = (function () {
     const PUNCT = /[!؟?.,،:؛"'()«»\-–—…]/g;
     const AR_DIGITS = "٠١٢٣٤٥٦٧٨٩";
     const GAP_MS = 120;
+    const PAUSE_MS = 340;      // وقفة بعد الفاصلة/النقطة/علامة الاستفهام داخل الجملة المركّبة
     const FILE_GUARD_MS = 9000;
+    const TENS_WORDS = { 40: "أربعون", 50: "خمسون", 60: "ستون", 70: "سبعون", 80: "ثمانون", 90: "تسعون" };
 
     let el = null;            // عنصر Audio الجاري (واحد فقط)
     let token = 0;
     let busy = false;
     let pending = null;
     let index = null;
+    let indexMaxLen = 1;
     const misses = {};
     const log = [];
 
@@ -1005,11 +1075,16 @@ const EduAudio = (function () {
     }
     function buildIndex() {
         index = {};
+        indexMaxLen = 1;
         const m = manifest();
         Object.keys(m).forEach(k => {
             if (m[k].indexOf("/letters/") >= 0) return;   // الحروف لا تُطابَق بلا حركتها
             const n = norm(k);
-            if (n && !index[n]) index[n] = m[k];
+            if (n && !index[n]) {
+                index[n] = m[k];
+                const c = n.split(" ").length;
+                if (c > indexMaxLen) indexMaxLen = c;
+            }
         });
     }
     function enabled() {
@@ -1048,10 +1123,28 @@ const EduAudio = (function () {
         return index[n] || null;
     }
 
-    /* نص → قائمة مسارات (للتتابع) أو null */
-    function resolve(text) {
+    /* عدد صحيح → قائمة مسارات مقاطعه (٠–٤٠ ملفات مفردة، ٤١–٩٩ = الآحاد + «وأربعون…»، ١٠٠ = مئة) أو null */
+    function numberPaths(n) {
+        if (!(n >= 0 && n <= 100)) return null;
+        const direct = one(String(n));
+        if (direct) return [direct];
+        if (!index) buildIndex();
+        if (n === 0) return index[norm("صفر")] ? [index[norm("صفر")]] : null;
+        if (n === 100) return index[norm("مئة")] ? [index[norm("مئة")]] : null;
+        const t = Math.floor(n / 10) * 10, u = n % 10;
+        if (!TENS_WORDS[t]) return null;
+        if (u === 0) return index[norm(TENS_WORDS[t])] ? [index[norm(TENS_WORDS[t])]] : null;
+        const unit = one(String(u)), tens = index[norm("و" + TENS_WORDS[t])];
+        return (unit && tens) ? [unit, tens] : null;
+    }
+
+    /* نص → خطة تشغيل { paths, gaps } أو null.
+       gaps[i] = الفاصل (م.ث) بعد الملف i. الجملة غير المسجَّلة كاملةً تُركَّب من مقاطع
+       مسجَّلة (عبارات وكلمات وأعداد) بأقل عدد ممكن من الملفات، وبترتيب النص نفسه؛
+       وإن تعذّر تغطية كل كلماتها تُرجَع null (صمت مسجَّل في misses، لا نطق ناقص). */
+    function plan(text) {
         const p = one(text);
-        if (p) return [p];
+        if (p) return { paths: [p], gaps: [] };
         const t = String(text == null ? "" : text).trim();
         const m = manifest();
         /* مقطع من حروف بفتحة فقط (قَرَ، كَتَ): نُركّبه من أصوات الحروف الموجودة */
@@ -1062,20 +1155,66 @@ const EduAudio = (function () {
                 if (!m[k]) return null;
                 out.push(m[k]);
             }
-            return out;
+            return { paths: out, gaps: out.map(() => GAP_MS) };
         }
-        /* عبارة كل كلماتها مسجَّلة منفردة (٢–٦ كلمات) */
-        const toks = norm(t).split(" ").filter(Boolean);
-        if (toks.length >= 2 && toks.length <= 6) {
-            const out = [];
-            for (let i = 0; i < toks.length; i++) {
-                const q = one(toks[i]);
-                if (!q) return null;
-                out.push(q);
+        if (!index) buildIndex();
+        /* كلمات النص مع علامة الوقفة بعد كل كلمة تنتهي بفاصلة/نقطة/استفهام/تعجب */
+        const toks = [];
+        t.split(/\s+/).forEach(w => {
+            const n = norm(w);
+            if (!n) return;
+            n.split(" ").forEach((piece, idx, arr) => {
+                toks.push({ n: piece, pause: idx === arr.length - 1 && /[،,.؟?!:؛]$/.test(w.replace(/[\s"'()«»]+$/g, "")) });
+            });
+        });
+        const N = toks.length;
+        if (N < 1 || N > 40) return null;
+        /* كلمة/حرف واحد مشكَّل لا يُحوَّل هنا إلا إذا كان عددًا (حتى لا تُنطق «مِ» بصوت «مَ»
+           ولا تُتجاوز قائمة NO_FUZZY)؛ والحروف المفردة داخل العبارات تبقى كما كانت (٢–٦ كلمات) */
+        if (N === 1 && !/^\d+$/.test(toks[0].n)) return null;
+        const allowLetters = (N >= 2 && N <= 6);
+        const INF = 1e9;
+        const cost = new Array(N + 1).fill(INF), back = new Array(N + 1).fill(null);
+        cost[0] = 0;
+        const maxL = Math.min(indexMaxLen, 12);
+        for (let i = 0; i < N; i++) {
+            if (cost[i] >= INF) continue;
+            for (let l = 1; l <= Math.min(maxL, N - i); l++) {
+                let seg = null;
+                if (l === 1) {
+                    const q = (allowLetters || toks[i].n.length > 1) ? one(toks[i].n) : null;
+                    if (q) seg = [q];
+                    else if (/^\d+$/.test(toks[i].n)) seg = numberPaths(Number(toks[i].n));
+                } else {
+                    const q = index[toks.slice(i, i + l).map(x => x.n).join(" ")];
+                    if (q) seg = [q];
+                }
+                if (!seg) continue;
+                const c = cost[i] + seg.length;
+                if (c < cost[i + l] || (c === cost[i + l] && back[i + l] && l > back[i + l].l)) {
+                    cost[i + l] = c;
+                    back[i + l] = { from: i, l: l, seg: seg };
+                }
             }
-            return out;
         }
-        return null;
+        if (cost[N] >= INF) return null;
+        const chain = [];
+        for (let j = N; j > 0; j = back[j].from) chain.unshift(back[j]);
+        const paths = [], gaps = [];
+        chain.forEach(b => {
+            const lastTok = toks[b.from + b.l - 1];
+            b.seg.forEach((q, k) => {
+                paths.push(q);
+                gaps.push(k === b.seg.length - 1 && lastTok.pause ? PAUSE_MS : GAP_MS);
+            });
+        });
+        return { paths: paths, gaps: gaps };
+    }
+
+    /* نص → قائمة مسارات (للتتابع) أو null */
+    function resolve(text) {
+        const pl = plan(text);
+        return pl ? pl.paths : null;
     }
 
     function has(text) { return !!resolve(text); }
@@ -1125,7 +1264,7 @@ const EduAudio = (function () {
             const next = () => {
                 if (moved || my !== token) return;
                 moved = true;
-                if (i >= paths.length) finish(); else setTimeout(step, GAP_MS);
+                if (i >= paths.length) finish(); else setTimeout(step, (opts.gaps && opts.gaps[i - 1] != null) ? opts.gaps[i - 1] : GAP_MS);
             };
             try {
                 const a = new Audio(path);
@@ -1137,7 +1276,14 @@ const EduAudio = (function () {
                 a.addEventListener("error", next, { once: true });
                 const pr = a.play();
                 if (pr && typeof pr.catch === "function") pr.catch(next);
-                setTimeout(next, FILE_GUARD_MS);
+                /* مهلة أمان لملف لا يبدأ أو لا ينتهي؛ وبعد معرفة مدة الملف تُضبط على مدته الفعلية
+                   حتى لا يُقطع مقطع طويل ولا يتداخل مع التالي */
+                let guard = setTimeout(next, FILE_GUARD_MS);
+                a.addEventListener("loadedmetadata", () => {
+                    if (!(a.duration > 0) || !isFinite(a.duration)) return;
+                    clearTimeout(guard);
+                    guard = setTimeout(next, Math.ceil(a.duration / a.playbackRate * 1000) + 2500);
+                }, { once: true });
             } catch (e) { next(); }
         };
         step();
@@ -1156,12 +1302,17 @@ const EduAudio = (function () {
         opts = opts || {};
         const list = Array.isArray(what) ? what : [what];
         const paths = [];
+        const gaps = [];
         let ok = true;
         list.forEach(w => {
-            const r = resolve(w);
-            if (r) r.forEach(p => paths.push(p));
+            const pl = plan(w);
+            if (pl) {
+                if (paths.length) gaps[gaps.length - 1] = GAP_MS;
+                pl.paths.forEach((p, k) => { paths.push(p); gaps.push(pl.gaps[k] != null ? pl.gaps[k] : GAP_MS); });
+            }
             else { ok = false; const key = String(w); misses[key] = (misses[key] || 0) + 1; }
         });
+        opts = Object.assign({}, opts, { gaps: gaps });
         if (!enabled()) { defer(opts.done); return false; }
         if (!paths.length) { defer(opts.done); return false; }
         const label = list.join(" + ");
