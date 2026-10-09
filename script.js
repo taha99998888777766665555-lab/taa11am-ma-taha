@@ -906,7 +906,7 @@ const EDUCATIONAL_AUDIO_MANIFEST = {
     "انتهى الوقت": "assets/audio/educational/phrases/time_up.mp3",
     "أحسنت! أتممت هذا الحرف بنجاح": "assets/audio/educational/phrases/letter_completed.mp3",
     "أحسنت يا بطل": "assets/audio/educational/phrases/ahsant_ya_batal.mp3",
-    "أحسنت! أتممت المستوى بنجاح": "assets/audio/educational/phrases/level_completed.mp3",
+    "أحسنت! أكملت المستوى بنجاح": "assets/audio/educational/phrases/level_completed.mp3",
     "محاولة رائعة، لنحاول مرة أخرى": "assets/audio/educational/phrases/great_attempt_retry.mp3",
     "أكمل المستوى السابق أولًا لتفتح هذا المستوى": "assets/audio/educational/phrases/level_locked.mp3",
     "أكمل المجموعة السابقة أولًا لتفتح هذه المجموعة": "assets/audio/educational/phrases/group_locked.mp3",
@@ -931,6 +931,11 @@ const EDUCATIONAL_AUDIO_MANIFEST = {
    speak() العامة، ولا بـ AudioManager، ولا بأي كود خاص بالقرآن أو
    الأدعية والأذكار — تلك كلها تبقى تمامًا كما هي بلا أي تعديل.
 
+   ⚠️ تحديث المرحلة الثانية: لم يعد هناك أي تراجع إلى speak() / صوت
+   المتصفح هنا. كل التشغيل يمرّ من EduAudio (أدناه): MP3 محلي فقط، وإن
+   لم يوجد ملف فالنتيجة صمت + تسجيل النص في EduAudio.misses.
+   (الوصف التالي تاريخي.)
+
    الآلية: تبحث في EDUCATIONAL_AUDIO_MANIFEST عن تطابق حرفي تام مع
    النص المطلوب؛ إن وُجد، تُشغِّل الملف المحلي المقابل مباشرة. إن لم
    يوجد (نص ديناميكي مثل أسئلة الجمع/الطرح، أو أي نص غير مُسجَّل)،
@@ -954,125 +959,238 @@ const EDUCATIONAL_AUDIO_MANIFEST = {
 ========================================================================= */
 
 const EDUCATIONAL_AUDIO_PLAYBACK_RATE = 0.8;
-const EDUCATIONAL_TTS_FALLBACK_RATE = 0.72;
 
-let educationalAudioInstance = null;
-let educationalAudioBusy = false;
-let educationalPendingRequest = null;
+/* =========================================================================
+   🔊 EduAudio — محرك الصوت التعليمي الموحَّد (MP3 المحلي فقط)
+   =========================================================================
+   • كل الأقسام التعليمية (الحروف، الكلمات، الأرقام، الكتابة، الجمع، الطرح،
+     الحديث الشريف، الألعاب) تمرّ من هنا: لا Browser TTS ولا TTS سحابي.
+   • صوت واحد فقط في اللحظة: أي تشغيل جديد يُنهي ما قبله أو يُحفَظ كأحدث
+     طلب منتظِر (mode: queue = الصوت الجاري يكتمل، interrupt = يقاطعه).
+   • مفتاح «الصوت» في الإعدادات يتحكم في كل الـ MP3 التعليمية، وإيقافه يقطع
+     الجاري فورًا.
+   • ما لا ملف له: صمت + تسجيل في EduAudio.misses (لا نطق بديل أبدًا).
+   • القرآن والأدعية والأذكار لا تمرّ من هنا ولم تُمَسّ.
+========================================================================= */
+const EduAudio = (function () {
 
-function stopEducationalAudio() {
-    if (educationalAudioInstance) {
-        try {
-            educationalAudioInstance.pause();
-            educationalAudioInstance.currentTime = 0;
-        } catch (error) {}
+    /* نصوص مشكَّلة تختلف قراءتها عن الكلمة المسجَّلة بنفس الحروف
+       (فعل ≠ اسم، أو مقطع ≠ كلمة): لا تُطابَق بلا تشكيلها — تنتظر تسجيلها */
+    const NO_FUZZY = ["دُبَ", "ذَهَبَ", "خَبَزَ", "عَلِمَ"];
+    const HARAKAT = /[ً-ٰٟـ‌‍]/g;
+    const PUNCT = /[!؟?.,،:؛"'()«»\-–—…]/g;
+    const AR_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+    const GAP_MS = 120;
+    const FILE_GUARD_MS = 9000;
+
+    let el = null;            // عنصر Audio الجاري (واحد فقط)
+    let token = 0;
+    let busy = false;
+    let pending = null;
+    let index = null;
+    const misses = {};
+    const log = [];
+
+    function manifest() {
+        return (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined") ? EDUCATIONAL_AUDIO_MANIFEST : {};
     }
-    educationalAudioInstance = null;
-    educationalAudioBusy = false;
-    educationalPendingRequest = null;
-}
-
-function educationalPlaybackFinished() {
-    educationalAudioBusy = false;
-    educationalAudioInstance = null;
-
-    if (educationalPendingRequest) {
-        const next = educationalPendingRequest;
-        educationalPendingRequest = null;
-        speakEducational(next.text, next.options);
+    function norm(s) {
+        return String(s == null ? "" : s)
+            .replace(HARAKAT, "")
+            .replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF\uFE0F\u2B50]/gu, " ")
+            .replace(/[٠-٩]/g, d => String(AR_DIGITS.indexOf(d)))
+            .replace(PUNCT, " ")
+            .replace(/\s+/g, " ")
+            .trim();
     }
-}
-
-function watchEducationalTTSFallbackCompletion() {
-    /* لا يوجد خطاف مباشر لنهاية speak() دون تعديلها؛ نتحقق دوريًا من
-       الخاصية العامة speechSynthesis.speaking (قراءة فقط، بلا أي
-       تعديل على أي دالة مشتركة) حتى تنتهي، ثم نُحرِّر القفل */
-    if (!("speechSynthesis" in window)) {
-        educationalPlaybackFinished();
-        return;
+    function buildIndex() {
+        index = {};
+        const m = manifest();
+        Object.keys(m).forEach(k => {
+            if (m[k].indexOf("/letters/") >= 0) return;   // الحروف لا تُطابَق بلا حركتها
+            const n = norm(k);
+            if (n && !index[n]) index[n] = m[k];
+        });
+    }
+    function enabled() {
+        try { return !(typeof Settings !== "undefined" && Settings.get().sound === false); } catch (e) { return true; }
     }
 
-    const check = () => {
-        if (!speechSynthesis.speaking) {
-            educationalPlaybackFinished();
-            return;
+    /* نص واحد → مسار واحد أو null */
+    function one(text) {
+        const m = manifest();
+        const t = String(text == null ? "" : text).trim();
+        if (!t) return null;
+        if (m[t]) return m[t];
+        /* حرف مفرد: بلا حركة أو بفتحة فقط → صوت الحرف التعليمي. أي حركة أخرى
+           (ضمة/كسرة/سكون...) لا تُحوَّل إلى الفتحة لأن النطق سيكون خاطئًا */
+        if (/^[ء-ي][ً-ٰٟ]*$/.test(t)) {
+            const base = t[0];
+            const marks = t.slice(1);
+            if (marks === "" || marks === "َ") {
+                const k = base + "َ";
+                if (m[k]) return m[k];
+                if (base === "ا") return m["أَ"] || null;
+            }
+            return null;
         }
-        setTimeout(check, 150);
-    };
+        if (NO_FUZZY.indexOf(t) >= 0) return null;
+        if (!index) buildIndex();
+        const n = norm(t);
+        /* «حرف ب» أو «حرف ب في أول الكلمة» → صوت الحرف نفسه (لا ملف لكلمة «حرف» ولا لمواضع الحرف) */
+        const lm = /^حرف ([\u0621-\u064A])(?: في .+)?$/.exec(n);
+        if (lm) return one(lm[1]);
+        if (/^\d+$/.test(n)) {
+            const w = (typeof numberWords !== "undefined") ? numberWords[Number(n)] : null;
+            if (w && m[w]) return m[w];
+            return index[n] || null;
+        }
+        return index[n] || null;
+    }
 
-    setTimeout(check, 150);
-}
+    /* نص → قائمة مسارات (للتتابع) أو null */
+    function resolve(text) {
+        const p = one(text);
+        if (p) return [p];
+        const t = String(text == null ? "" : text).trim();
+        const m = manifest();
+        /* مقطع من حروف بفتحة فقط (قَرَ، كَتَ): نُركّبه من أصوات الحروف الموجودة */
+        if (/^([ء-ي]َ){2}$/.test(t)) {
+            const out = [];
+            for (let i = 0; i < t.length; i += 2) {
+                const k = t.substr(i, 2);
+                if (!m[k]) return null;
+                out.push(m[k]);
+            }
+            return out;
+        }
+        /* عبارة كل كلماتها مسجَّلة منفردة (٢–٦ كلمات) */
+        const toks = norm(t).split(" ").filter(Boolean);
+        if (toks.length >= 2 && toks.length <= 6) {
+            const out = [];
+            for (let i = 0; i < toks.length; i++) {
+                const q = one(toks[i]);
+                if (!q) return null;
+                out.push(q);
+            }
+            return out;
+        }
+        return null;
+    }
+
+    function has(text) { return !!resolve(text); }
+
+    function clearEl() {
+        const a = el;
+        el = null;
+        if (a) { try { a.pause(); a.currentTime = 0; } catch (e) { /* لا شيء */ } }
+    }
+
+    function stop() {
+        token++;
+        busy = false;
+        pending = null;
+        clearEl();
+    }
+
+    function defer(fn) { if (typeof fn === "function") setTimeout(fn, 0); }
+
+    function run(paths, opts, label) {
+        stopLight();
+        const my = ++token;
+        busy = true;
+        log.push({ text: label, files: paths.map(p => p.split("/").pop()) });
+        if (log.length > 300) log.shift();
+        let i = 0;
+        let finished = false;
+
+        const finish = () => {
+            if (finished || my !== token) return;
+            finished = true;
+            busy = false;
+            clearEl();
+            if (typeof opts.done === "function") { try { opts.done(); } catch (e) { /* لا شيء */ } }
+            if (my === token && pending) {
+                const nx = pending;
+                pending = null;
+                play(nx.what, nx.opts);
+            }
+        };
+
+        const step = () => {
+            if (my !== token) return;
+            if (i >= paths.length) { finish(); return; }
+            const path = paths[i++];
+            let moved = false;
+            const next = () => {
+                if (moved || my !== token) return;
+                moved = true;
+                if (i >= paths.length) finish(); else setTimeout(step, GAP_MS);
+            };
+            try {
+                const a = new Audio(path);
+                clearEl();
+                el = a;
+                a.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined") ? EDUCATIONAL_AUDIO_PLAYBACK_RATE : 0.8;
+                try { a.preservesPitch = true; a.mozPreservesPitch = true; a.webkitPreservesPitch = true; } catch (e) { /* لا شيء */ }
+                a.addEventListener("ended", next, { once: true });
+                a.addEventListener("error", next, { once: true });
+                const pr = a.play();
+                if (pr && typeof pr.catch === "function") pr.catch(next);
+                setTimeout(next, FILE_GUARD_MS);
+            } catch (e) { next(); }
+        };
+        step();
+    }
+
+    function stopLight() {
+        /* إنهاء ما قبله دون مسح الطلب المنتظر */
+        const keep = pending;
+        token++;
+        clearEl();
+        pending = keep;
+    }
+
+    /* what: نص أو مصفوفة نصوص. opts: { mode: "queue"|"interrupt", done } */
+    function play(what, opts) {
+        opts = opts || {};
+        const list = Array.isArray(what) ? what : [what];
+        const paths = [];
+        let ok = true;
+        list.forEach(w => {
+            const r = resolve(w);
+            if (r) r.forEach(p => paths.push(p));
+            else { ok = false; const key = String(w); misses[key] = (misses[key] || 0) + 1; }
+        });
+        if (!enabled()) { defer(opts.done); return false; }
+        if (!paths.length) { defer(opts.done); return false; }
+        const label = list.join(" + ");
+        if (opts.mode !== "interrupt" && busy) {
+            pending = { what: what, opts: opts };
+            return true;
+        }
+        if (opts.mode === "interrupt") pending = null;
+        /* لا يسمع الطفل قرآنًا/دعاء مع الصوت التعليمي */
+        try { if (typeof stopAllAudio === "function") stopAllAudio(); } catch (e) { /* لا شيء */ }
+        run(paths, opts, label);
+        return ok;
+    }
+
+    return {
+        play: play,
+        stop: stop,
+        has: has,
+        resolve: resolve,
+        isBusy: function () { return busy; },
+        misses: misses,
+        log: log
+    };
+})();
+
+function stopEducationalAudio() { EduAudio.stop(); }
 
 function speakEducational(text, options) {
-    options = options || {};
-
-    if (educationalAudioBusy) {
-        /* صوت تعليمي قيد التشغيل الآن — لا نقاطعه أبدًا؛ نحتفظ فقط
-           بأحدث طلب لتشغيله تلقائيًا بعد اكتماله */
-        educationalPendingRequest = { text: text, options: options };
-        return;
-    }
-
-    educationalAudioBusy = true;
-
-    const localPath = EDUCATIONAL_AUDIO_MANIFEST[text];
-
-    if (!localPath) {
-        /* نص ديناميكي أو غير مُسجَّل — الرجوع التلقائي للصوت الحالي
-           بلا أي تغيير في speak() نفسها، بسرعة أبطأ مناسبة للأطفال */
-        const slowerOptions = Object.assign({}, options, { rate: EDUCATIONAL_TTS_FALLBACK_RATE });
-        speak(text, slowerOptions);
-        watchEducationalTTSFallbackCompletion();
-        return;
-    }
-
-    try {
-        const audio = new Audio(localPath);
-        audio.playbackRate = EDUCATIONAL_AUDIO_PLAYBACK_RATE;
-
-        try {
-            audio.preservesPitch = true;
-            audio.mozPreservesPitch = true;
-            audio.webkitPreservesPitch = true;
-        } catch (error) {}
-
-        educationalAudioInstance = audio;
-
-        audio.addEventListener("ended", () => {
-            if (educationalAudioInstance === audio) {
-                educationalPlaybackFinished();
-            }
-        }, { once: true });
-
-        audio.addEventListener("error", () => {
-            if (educationalAudioInstance === audio) {
-                educationalAudioInstance = null;
-            }
-            /* فشل تشغيل الملف المحلي لأي سبب — رجوع فوري للصوت
-               الحالي بدل تعطيل الصوت كليًا */
-            const slowerOptions = Object.assign({}, options, { rate: EDUCATIONAL_TTS_FALLBACK_RATE });
-            speak(text, slowerOptions);
-            watchEducationalTTSFallbackCompletion();
-        }, { once: true });
-
-        const playPromise = audio.play();
-
-        if (playPromise && typeof playPromise.catch === "function") {
-            playPromise.catch(() => {
-                if (educationalAudioInstance === audio) {
-                    educationalAudioInstance = null;
-                }
-                const slowerOptions = Object.assign({}, options, { rate: EDUCATIONAL_TTS_FALLBACK_RATE });
-                speak(text, slowerOptions);
-                watchEducationalTTSFallbackCompletion();
-            });
-        }
-    } catch (error) {
-        educationalAudioInstance = null;
-        const slowerOptions = Object.assign({}, options, { rate: EDUCATIONAL_TTS_FALLBACK_RATE });
-        speak(text, slowerOptions);
-        watchEducationalTTSFallbackCompletion();
-    }
+    EduAudio.play(text, { mode: "queue" });
 }
 
 /* إيقاف الصوت التعليمي المحلي عند تغيير الشاشة — تغليف غير جراحي
@@ -4916,7 +5034,7 @@ const POP_NUM_WORDS = [null, "واحد", "اثنان", "ثلاثة", "أربعة
     "واحد وعشرون", "اثنان وعشرون", "ثلاثة وعشرون", "أربعة وعشرون", "خمسة وعشرون", "ستة وعشرون", "سبعة وعشرون", "ثمانية وعشرون", "تسعة وعشرون", "ثلاثون"];
 
 const POP_PRAISE = ["صحيح", "أحسنت يا بطل", "أحسنت، عمل رائع"];
-const POP_LEVEL_DONE = "أحسنت! أتممت المستوى بنجاح";
+const POP_LEVEL_DONE = "أحسنت! أكملت المستوى بنجاح";
 
 const POP_KINDS = {
     letters: {
@@ -5015,15 +5133,7 @@ function pClearTimers() {
 
 /* ---------- الصوت: ملفات MP3 المحلية فقط، صوت واحد في كل مرة، بلا TTS ---------- */
 
-let popAudio = null;
-let popAudioToken = 0;
-
-function popStopAudio() {
-    popAudioToken++;
-    const a = popAudio;
-    popAudio = null;
-    if (a) { try { a.pause(); a.currentTime = 0; } catch (e) { /* لا شيء */ } }
-}
+function popStopAudio() { EduAudio.stop(); }
 
 /* مفتاح الصوت للقيمة: الحرف بصوته (بفتحة) أو الرقم بكلمته الكاملة */
 function popKey(kind, v) {
@@ -5037,30 +5147,9 @@ function popHas(key) {
 
 /* يشغّل قائمة مفاتيح بالتتابع (كلمة كاملة لكل مفتاح). done تُستدعى بعد آخر ملف أو إن تعذّر التشغيل */
 function popSay(keys, done) {
-    popStopAudio();
-    const token = popAudioToken;
     const list = (Array.isArray(keys) ? keys : [keys]).filter(popHas);
-    let i = 0;
-    const finish = () => { if (token === popAudioToken && done) { const d = done; done = null; d(); } };
-    const step = () => {
-        if (token !== popAudioToken) return;
-        if (i >= list.length) { popAudio = null; finish(); return; }
-        const path = EDUCATIONAL_AUDIO_MANIFEST[list[i++]];
-        let moved = false;
-        const next = () => { if (moved || token !== popAudioToken) return; moved = true; step(); };
-        try {
-            const a = new Audio(path);
-            popAudio = a;
-            a.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined") ? EDUCATIONAL_AUDIO_PLAYBACK_RATE : 0.8;
-            try { a.preservesPitch = true; } catch (e) { /* لا شيء */ }
-            a.addEventListener("ended", next, { once: true });
-            a.addEventListener("error", next, { once: true });
-            const p = a.play();
-            if (p && p.catch) p.catch(next);
-            setTimeout(next, 7000);
-        } catch (e) { next(); }
-    };
-    step();
+    if (!list.length) { EduAudio.stop(); if (done) setTimeout(done, 0); return; }
+    EduAudio.play(list, { mode: "interrupt", done: done });
 }
 
 /* ---------- التقدّم المحفوظ (مستقل) ---------- */
@@ -6291,7 +6380,7 @@ function checkLetterRaceGate() {
    ✅ إجابة صحيحة — الفراغ يمتلئ، تعزيز، نجمة، انتقال واضح
    ========================================================= */
 
-const RACE_SUCCESS_PHRASES = ["أَحْسَنْتَ", "مُمْتَاز", "رَائِع", "بَرَافُو", "شَاطِر"];
+const RACE_SUCCESS_PHRASES = ["أحسنت يا بطل", "أحسنت، عمل رائع", "صحيح"];
 
 function handleLetterRaceCorrect(gate) {
 
@@ -6398,7 +6487,7 @@ function finishRaceLevel() {
 
     if (overlay) overlay.style.display = "flex";
 
-    speakEducational("أحسنت! أتممت المستوى بنجاح");
+    speakEducational("أحسنت! أكملت المستوى بنجاح");
 }
 
 function advanceToNextRaceLevel() {
@@ -6461,9 +6550,10 @@ function clearLetterRaceMessage() {
    ========================================================= */
 
 function speakRaceRoundIntro(word) {
-    if (word) {
+    /* الكلمة بصوتها الكامل إن كانت مسجَّلة، وإلا صوت الحرف المستهدف (لا نطق بديل) */
+    if (word && EduAudio.has(word)) {
         speakEducational(word);
-    } else {
+    } else if (letterRaceGame.target) {
         speakEducational(letterWithFatha(letterRaceGame.target));
     }
 }
@@ -6870,13 +6960,11 @@ function getMatchingModeProgress(mode) {
    🎉 عبارات النجاح
    ========================================================= */
 
+/* عبارات التشجيع = نصوص لها تسجيلات موجودة فقط (الصوت = النص المعروض) */
 const matchingSuccessPhrases = [
-    "أَحْسَنْتَ! 🌟",
-    "مُمْتَاز! 👏",
-    "رَائِع! 🎉",
-    "بَطَل! 💪",
-    "عَمَلٌ جَمِيل! 😍",
-    "بَارِك اللهُ فِيك! ✨"
+    "أحسنت يا بطل 🌟",
+    "أحسنت، عمل رائع 👏",
+    "صحيح 🎉"
 ];
 
 function getMatchingSuccessMessage() {
@@ -6894,10 +6982,7 @@ function getMatchingSuccessMessage() {
    ========================================================= */
 
 function speakMatchingLabel(text) {
-
-    if (typeof speak === "function") {
-        speakEducational(text);
-    }
+    speakEducational(text);
 }
 
 
@@ -9450,12 +9535,7 @@ const olGame = {
    ========================================================= */
 
 function speakOLLocal(text) {
-    if (
-        typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined" &&
-        EDUCATIONAL_AUDIO_MANIFEST[text]
-    ) {
-        speakEducational(text);
-    }
+    speakEducational(text);
 }
 
 /* =========================================================
@@ -10194,12 +10274,7 @@ const pwGame = {
    ========================================================= */
 
 function speakPWLocal(text) {
-    if (
-        typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined" &&
-        EDUCATIONAL_AUDIO_MANIFEST[text]
-    ) {
-        speakEducational(text);
-    }
+    speakEducational(text);
 }
 
 function pwEmojiFor(word) {
@@ -11172,90 +11247,9 @@ function ajEl(tag, className, text, attrs) {
    نظام الصوت العام نفسه لم يُمَسّ.
    ========================================================= */
 
-let ajAudioEl = null;
-let ajAudioBusy = false;
-let ajAudioPending = null;
+function speakAJLocal(text) { EduAudio.play(text, { mode: "queue" }); }
 
-function speakAJLocal(text) {
-
-    const manifest = (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined")
-        ? EDUCATIONAL_AUDIO_MANIFEST
-        : null;
-
-    const path = manifest ? manifest[text] : null;
-
-    if (!path) return;
-
-    if (ajAudioBusy) {
-        ajAudioPending = text;
-        return;
-    }
-
-    let audio;
-
-    try {
-        audio = new Audio(path);
-    } catch (e) {
-        return;
-    }
-
-    ajAudioBusy = true;
-    ajAudioEl = audio;
-
-    audio.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined")
-        ? EDUCATIONAL_AUDIO_PLAYBACK_RATE
-        : 0.8;
-
-    try {
-        audio.preservesPitch = true;
-        audio.mozPreservesPitch = true;
-        audio.webkitPreservesPitch = true;
-    } catch (e) { /* غير مدعوم */ }
-
-    const finish = () => {
-
-        /* صوت قديم أُوقف عمدًا: نتجاهل أحداثه المتأخرة */
-        if (ajAudioEl !== audio) return;
-
-        ajAudioEl = null;
-        ajAudioBusy = false;
-
-        if (ajAudioPending) {
-            const next = ajAudioPending;
-            ajAudioPending = null;
-            speakAJLocal(next);
-        }
-    };
-
-    audio.addEventListener("ended", finish, { once: true });
-    audio.addEventListener("error", finish, { once: true });
-
-    /* حارس: لو لم يُطلق الصوت حدث النهاية لأي سبب لا يبقى القفل مغلقًا */
-    setTimeout(() => { if (ajAudioEl === audio) finish(); }, 5000);
-
-    try {
-        const p = audio.play();
-        if (p && typeof p.catch === "function") p.catch(finish);
-    } catch (e) {
-        finish();
-    }
-}
-
-function ajStopAudio() {
-
-    const a = ajAudioEl;
-
-    ajAudioEl = null;
-    ajAudioBusy = false;
-    ajAudioPending = null;
-
-    if (a) {
-        try {
-            a.pause();
-            a.currentTime = 0;
-        } catch (e) { /* لا شيء */ }
-    }
-}
+function ajStopAudio() { EduAudio.stop(); }
 
 function ajSpeakNumber(n) {
     const word = (typeof numberWords !== "undefined") ? numberWords[n] : null;
@@ -15117,87 +15111,11 @@ function wbPickWord(level) {
    (الصوت الجارٍ يكتمل؛ وأحدث طلب فقط يُحفظ ليُشغَّل بعده). الفشل = صمت.
    ========================================================= */
 
-let wbAudioEl = null;
-let wbAudioBusy = false;
-let wbAudioPending = null;
-
 function speakWBLocal(text, interrupt) {
-
-    const manifest = (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined") ? EDUCATIONAL_AUDIO_MANIFEST : null;
-    const path = manifest ? manifest[text] : null;
-
-    if (!path) return;
-
-    if (interrupt && wbAudioBusy) wbStopAudio();
-
-    if (wbAudioBusy) {
-        wbAudioPending = text;
-        return;
-    }
-
-    let audio;
-
-    try {
-        audio = new Audio(path);
-    } catch (e) {
-        return;
-    }
-
-    wbAudioBusy = true;
-    wbAudioEl = audio;
-
-    audio.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined")
-        ? EDUCATIONAL_AUDIO_PLAYBACK_RATE
-        : 0.8;
-
-    try {
-        audio.preservesPitch = true;
-        audio.mozPreservesPitch = true;
-        audio.webkitPreservesPitch = true;
-    } catch (e) { /* غير مدعوم */ }
-
-    const finish = () => {
-
-        if (wbAudioEl !== audio) return;
-
-        wbAudioEl = null;
-        wbAudioBusy = false;
-
-        if (wbAudioPending) {
-            const next = wbAudioPending;
-            wbAudioPending = null;
-            speakWBLocal(next);
-        }
-    };
-
-    audio.addEventListener("ended", finish, { once: true });
-    audio.addEventListener("error", finish, { once: true });
-
-    setTimeout(() => { if (wbAudioEl === audio) finish(); }, 5000);
-
-    try {
-        const p = audio.play();
-        if (p && typeof p.catch === "function") p.catch(finish);
-    } catch (e) {
-        finish();
-    }
+    EduAudio.play(text, { mode: interrupt ? "interrupt" : "queue" });
 }
 
-function wbStopAudio() {
-
-    const a = wbAudioEl;
-
-    wbAudioEl = null;
-    wbAudioBusy = false;
-    wbAudioPending = null;
-
-    if (a) {
-        try {
-            a.pause();
-            a.currentTime = 0;
-        } catch (e) { /* لا شيء */ }
-    }
-}
+function wbStopAudio() { EduAudio.stop(); }
 
 function wbLetterSoundText(letter) {
 
@@ -15949,6 +15867,7 @@ const Settings = (function () {
 
 function updateSettingFromUI(key, value) {
     Settings.set(key, value);
+    if (key === "sound" && !value) EduAudio.stop();
 }
 
 /* =========================================================
@@ -18920,7 +18839,7 @@ function renderAdditionLevelResultScreen(level, score, passed) {
                 </div>
 
                 <div class="addition-level-result-title">
-                    ${passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة!"}
+                    ${passed ? "أحسنت! أكملت المستوى بنجاح" : "محاولة رائعة!"}
                 </div>
 
                 <div class="addition-level-result-score">
@@ -18951,7 +18870,7 @@ function renderAdditionLevelResultScreen(level, score, passed) {
 
     speakEducational(
         passed
-            ? "أحسنت! أتممت المستوى بنجاح"
+            ? "أحسنت! أكملت المستوى بنجاح"
             : "محاولة رائعة، لنحاول مرة أخرى",
         { rate: 0.8 }
     );
@@ -20312,7 +20231,7 @@ function renderSubtractionLevelResultScreen(level, score, passed) {
                 </div>
 
                 <div class="subtraction-level-result-title">
-                    ${passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة!"}
+                    ${passed ? "أحسنت! أكملت المستوى بنجاح" : "محاولة رائعة!"}
                 </div>
 
                 <div class="subtraction-level-result-score">
@@ -20343,7 +20262,7 @@ function renderSubtractionLevelResultScreen(level, score, passed) {
 
     speakEducational(
         passed
-            ? "أحسنت! أتممت المستوى بنجاح"
+            ? "أحسنت! أكملت المستوى بنجاح"
             : "محاولة رائعة، لنحاول مرة أخرى",
         { rate: 0.8 }
     );
@@ -21358,7 +21277,7 @@ function renderWordsLevelResultScreen(level, score, passed) {
                 </div>
 
                 <div class="words-level-result-title">
-                    ${passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة!"}
+                    ${passed ? "أحسنت! أكملت المستوى بنجاح" : "محاولة رائعة!"}
                 </div>
 
                 <div class="words-level-result-score">
@@ -21388,7 +21307,7 @@ function renderWordsLevelResultScreen(level, score, passed) {
     updateWordsProgressUI();
 
     speakEducational(
-        passed ? "أحسنت! أتممت المستوى بنجاح" : "محاولة رائعة، لنحاول مرة أخرى",
+        passed ? "أحسنت! أكملت المستوى بنجاح" : "محاولة رائعة، لنحاول مرة أخرى",
         { rate: 0.8 }
     );
 }
@@ -24406,30 +24325,11 @@ function wrGapGlyph(word, letter) {
 
 /* ---------- الصوت: ملفات MP3 المحلية فقط، صوت واحد في كل مرة ---------- */
 
-let wrAudio = null;
-
-function wrStopAudio() {
-    const a = wrAudio;
-    wrAudio = null;
-    if (a) { try { a.pause(); a.currentTime = 0; } catch (e) { /* لا شيء */ } }
-}
+function wrStopAudio() { EduAudio.stop(); }
 
 function speakWRLocal(text) {
-    const m = (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined") ? EDUCATIONAL_AUDIO_MANIFEST : null;
-    const path = m ? m[text] : null;
-    if (!path) return false;
-    wrStopAudio();
-    try {
-        const a = new Audio(path);
-        wrAudio = a;
-        a.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined") ? EDUCATIONAL_AUDIO_PLAYBACK_RATE : 0.8;
-        try { a.preservesPitch = true; } catch (e) { /* لا شيء */ }
-        a.addEventListener("ended", () => { if (wrAudio === a) wrAudio = null; }, { once: true });
-        const p = a.play();
-        if (p && p.catch) p.catch(() => { if (wrAudio === a) wrAudio = null; });
-    } catch (e) {
-        wrAudio = null;
-    }
+    if (!EduAudio.has(text)) return false;
+    EduAudio.play(text, { mode: "interrupt" });
     return true;
 }
 
@@ -25421,30 +25321,11 @@ function zMascot(state) {
 
 /* ---------- الصوت المحلي: صوت واحد في كل مرة، الكلمة كاملة، بلا TTS ---------- */
 
-let zooAudio = null;
-
-function zooStopAudio() {
-    const a = zooAudio;
-    zooAudio = null;
-    if (a) { try { a.pause(); a.currentTime = 0; } catch (e) { /* لا شيء */ } }
-}
+function zooStopAudio() { EduAudio.stop(); }
 
 function speakZooLocal(text) {
-    const m = (typeof EDUCATIONAL_AUDIO_MANIFEST !== "undefined") ? EDUCATIONAL_AUDIO_MANIFEST : null;
-    const path = m ? m[text] : null;
-    if (!path) return false;
-    zooStopAudio();
-    try {
-        const a = new Audio(path);
-        zooAudio = a;
-        a.playbackRate = (typeof EDUCATIONAL_AUDIO_PLAYBACK_RATE !== "undefined") ? EDUCATIONAL_AUDIO_PLAYBACK_RATE : 0.8;
-        try { a.preservesPitch = true; } catch (e) { /* لا شيء */ }
-        a.addEventListener("ended", () => { if (zooAudio === a) zooAudio = null; }, { once: true });
-        const p = a.play();
-        if (p && p.catch) p.catch(() => { if (zooAudio === a) zooAudio = null; });
-    } catch (e) {
-        zooAudio = null;
-    }
+    if (!EduAudio.has(text)) return false;
+    EduAudio.play(text, { mode: "interrupt" });
     return true;
 }
 
