@@ -248,10 +248,10 @@ function matchAnswer(value, correct, valueType = "letter", targetLetter = null) 
    الكتابة، الجمع، الطرح، الحديث، الألعاب، والتعليمات — عبر نفس
    دالة speak() العامة الحالية دون أي تغيير في مكان استدعائها.
 
-   القرآن والأدعية والأذكار لا يمرّان من هنا إطلاقًا ولن يتأثرا
-   بأي تبديل مستقبلي لمحرك الصوت — يستخدمان AudioManager.play()
-   مباشرة بملفات MP3 حقيقية كما كانا دائمًا، بمعزل كامل عن هذه
-   الطبقة.
+   سياسة الصوت: القرآن الكريم والأدعية وحدهما القسمان المحميان — لا يمرّان
+   من هنا إطلاقًا ولن يتأثرا بأي تبديل مستقبلي لمحرك الصوت (يستخدمان
+   AudioManager.play() مباشرة بملفات MP3 حقيقية كما كانا دائمًا). الحديث
+   الشريف ليس محميًا: هو صوت تعليمي يمرّ من هنا ويُسجَّل تسجيلًا خاصًا.
 
    الفكرة: أي قسم في التطبيق ينادي speak(text, options) كما هو
    تمامًا. TTSManager هو من يقرر "من يُنطق فعليًا" عبر محرك مسجَّل
@@ -988,6 +988,370 @@ const EDUCATIONAL_AUDIO_MANIFEST = {
     "سَبْعُونْ": "assets/audio/educational/numbers/number_70.mp3",
     "ثَمَانُونْ": "assets/audio/educational/numbers/number_80.mp3",
     "تِسْعُونْ": "assets/audio/educational/numbers/number_90.mp3",
+    /* ── 32 كلمة جديدة (سباق الحروف / مواضع الحرف / المطابقة / الكتابة) — دفعة NAMAA الأولى ── */
+    "اِسْمْ": "assets/audio/educational/words/extra_189.mp3",
+    "بَصّ": "assets/audio/educational/words/extra_190.mp3",
+    "بَطّ": "assets/audio/educational/words/extra_191.mp3",
+    "تُفَّاحَة": "assets/audio/educational/words/extra_192.mp3",
+    "جَزَرَة": "assets/audio/educational/words/extra_193.mp3",
+    "جَوّ": "assets/audio/educational/words/extra_194.mp3",
+    "حَافِلَة": "assets/audio/educational/words/extra_195.mp3",
+    "حَدِيثْ": "assets/audio/educational/words/extra_196.mp3",
+    "حَدِيقَة": "assets/audio/educational/words/extra_197.mp3",
+    "حَقّ": "assets/audio/educational/words/extra_198.mp3",
+    "حَلْوَى": "assets/audio/educational/words/extra_199.mp3",
+    "خَاتَمْ": "assets/audio/educational/words/extra_200.mp3",
+    "خُضَارْ": "assets/audio/educational/words/extra_201.mp3",
+    "خَطّ": "assets/audio/educational/words/extra_202.mp3",
+    "دَمَجَ": "assets/audio/educational/words/extra_203.mp3",
+    "سَبْعْ": "assets/audio/educational/words/extra_204.mp3",
+    "سَرِيعْ": "assets/audio/educational/words/extra_205.mp3",
+    "سُلَّمْ": "assets/audio/educational/words/extra_206.mp3",
+    "سَمَكْ": "assets/audio/educational/words/extra_207.mp3",
+    "شَكْلْ": "assets/audio/educational/words/extra_208.mp3",
+    "صَفّ": "assets/audio/educational/words/extra_209.mp3",
+    "صُوصْ": "assets/audio/educational/words/extra_210.mp3",
+    "طَبَقْ": "assets/audio/educational/words/extra_211.mp3",
+    "فَتَحَ": "assets/audio/educational/words/extra_212.mp3",
+    "قَصّ": "assets/audio/educational/words/extra_213.mp3",
+    "قِطّ": "assets/audio/educational/words/extra_214.mp3",
+    "قِطَّة": "assets/audio/educational/words/extra_215.mp3",
+    "لَفَظَ": "assets/audio/educational/words/extra_216.mp3",
+    "مَثَلْ": "assets/audio/educational/words/extra_217.mp3",
+    "مَنْزِلْ": "assets/audio/educational/words/extra_218.mp3",
+    "نَبِيّ": "assets/audio/educational/words/extra_219.mp3",
+    "نَصّ": "assets/audio/educational/words/extra_220.mp3",
+    /* دفعة 2: حركات ومقاطع وأفعال وكلمات إضافية — مفاتيح للملفات الموجودة فعلًا فقط.
+       harakat/syllables/verbs تُطابَق بنصها المشكَّل حرفيًا ولا تدخل فهرس التطابق بلا تشكيل (انظر buildIndex).
+       letter_29_alef_madd و letter_30_ta_marbuta خارج المانيفست عمدًا حتى توجد شاشة تستدعيهما. */
+    "بُ": "assets/audio/educational/harakat/damma_02.mp3",
+    "تُ": "assets/audio/educational/harakat/damma_03.mp3",
+    "ثُ": "assets/audio/educational/harakat/damma_04.mp3",
+    "خُ": "assets/audio/educational/harakat/damma_07.mp3",
+    "ذُ": "assets/audio/educational/harakat/damma_09.mp3",
+    "رُ": "assets/audio/educational/harakat/damma_10.mp3",
+    "زُ": "assets/audio/educational/harakat/damma_11.mp3",
+    "شُ": "assets/audio/educational/harakat/damma_13.mp3",
+    "صُ": "assets/audio/educational/harakat/damma_14.mp3",
+    "طُ": "assets/audio/educational/harakat/damma_16.mp3",
+    "ظُ": "assets/audio/educational/harakat/damma_17.mp3",
+    "عُ": "assets/audio/educational/harakat/damma_18.mp3",
+    "غُ": "assets/audio/educational/harakat/damma_19.mp3",
+    "فُ": "assets/audio/educational/harakat/damma_20.mp3",
+    "قُ": "assets/audio/educational/harakat/damma_21.mp3",
+    "كُ": "assets/audio/educational/harakat/damma_22.mp3",
+    "لُ": "assets/audio/educational/harakat/damma_23.mp3",
+    "مُ": "assets/audio/educational/harakat/damma_24.mp3",
+    "نُ": "assets/audio/educational/harakat/damma_25.mp3",
+    "هُ": "assets/audio/educational/harakat/damma_26.mp3",
+    "يُ": "assets/audio/educational/harakat/damma_28.mp3",
+    "إِ": "assets/audio/educational/harakat/kasra_01.mp3",
+    "بِ": "assets/audio/educational/harakat/kasra_02.mp3",
+    "تِ": "assets/audio/educational/harakat/kasra_03.mp3",
+    "ثِ": "assets/audio/educational/harakat/kasra_04.mp3",
+    "جِ": "assets/audio/educational/harakat/kasra_05.mp3",
+    "حِ": "assets/audio/educational/harakat/kasra_06.mp3",
+    "خِ": "assets/audio/educational/harakat/kasra_07.mp3",
+    "ذِ": "assets/audio/educational/harakat/kasra_09.mp3",
+    "رِ": "assets/audio/educational/harakat/kasra_10.mp3",
+    "زِ": "assets/audio/educational/harakat/kasra_11.mp3",
+    "سِ": "assets/audio/educational/harakat/kasra_12.mp3",
+    "شِ": "assets/audio/educational/harakat/kasra_13.mp3",
+    "صِ": "assets/audio/educational/harakat/kasra_14.mp3",
+    "ضِ": "assets/audio/educational/harakat/kasra_15.mp3",
+    "طِ": "assets/audio/educational/harakat/kasra_16.mp3",
+    "ظِ": "assets/audio/educational/harakat/kasra_17.mp3",
+    "غِ": "assets/audio/educational/harakat/kasra_19.mp3",
+    "فِ": "assets/audio/educational/harakat/kasra_20.mp3",
+    "قِ": "assets/audio/educational/harakat/kasra_21.mp3",
+    "كِ": "assets/audio/educational/harakat/kasra_22.mp3",
+    "لِ": "assets/audio/educational/harakat/kasra_23.mp3",
+    "هِ": "assets/audio/educational/harakat/kasra_26.mp3",
+    "وِ": "assets/audio/educational/harakat/kasra_27.mp3",
+    "يِ": "assets/audio/educational/harakat/kasra_28.mp3",
+    "آخر الكلمة": "assets/audio/educational/letters/pos_final.mp3",
+    "أول الكلمة": "assets/audio/educational/letters/pos_initial.mp3",
+    "منفصل": "assets/audio/educational/letters/pos_isolated.mp3",
+    "وسط الكلمة": "assets/audio/educational/letters/pos_medial.mp3",
+    "خَطْوَةً وَاحِدَة": "assets/audio/educational/math/nl_step_one.mp3",
+    "خَطْوَتَيْنِ": "assets/audio/educational/math/nl_step_two.mp3",
+    "أَحْسَنْتَ! أَكْمَلْتَ لُعْبَةَ المُطَابَقَة": "assets/audio/educational/phrases/match_game_done.mp3",
+    "أَحْسَنْتَ! أَكْمَلْتَ الجَوْلَة": "assets/audio/educational/phrases/match_round_done.mp3",
+    "أَحْسَنْتَ! أَتْمَمْتَ الجَوْلَةَ بِنَجَاحْ": "assets/audio/educational/phrases/round_completed.mp3",
+    "قَرَ": "assets/audio/educational/syllables/l2_01.mp3",
+    "كَتَ": "assets/audio/educational/syllables/l2_02.mp3",
+    "نَظَ": "assets/audio/educational/syllables/l2_03.mp3",
+    "جَمَ": "assets/audio/educational/syllables/l2_04.mp3",
+    "حَمَ": "assets/audio/educational/syllables/l2_05.mp3",
+    "خَبَ": "assets/audio/educational/syllables/l2_06.mp3",
+    "دَخَ": "assets/audio/educational/syllables/l2_07.mp3",
+    "وَجَ": "assets/audio/educational/syllables/l2_08.mp3",
+    "أَكَ": "assets/audio/educational/syllables/l2_09.mp3",
+    "هَرَ": "assets/audio/educational/syllables/l2_10.mp3",
+    "وَقَ": "assets/audio/educational/syllables/l2_11.mp3",
+    "طَلَ": "assets/audio/educational/syllables/l2_12.mp3",
+    "سَكَ": "assets/audio/educational/syllables/l2_13.mp3",
+    "فَتَ": "assets/audio/educational/syllables/l2_14.mp3",
+    "لَبَ": "assets/audio/educational/syllables/l2_16.mp3",
+    "رَقَ": "assets/audio/educational/syllables/l2_17.mp3",
+    "ضَحَ": "assets/audio/educational/syllables/l2_18.mp3",
+    "طَبَ": "assets/audio/educational/syllables/l2_19.mp3",
+    "بَتُ": "assets/audio/educational/syllables/l5_01.mp3",
+    "كُتَ": "assets/audio/educational/syllables/l5_04.mp3",
+    "دُبَ": "assets/audio/educational/syllables/l5_06.mp3",
+    "رَمُ": "assets/audio/educational/syllables/l5_07.mp3",
+    "شُبَ": "assets/audio/educational/syllables/l5_08.mp3",
+    "نَمُ": "assets/audio/educational/syllables/l5_09.mp3",
+    "تُبَ": "assets/audio/educational/syllables/l5_10.mp3",
+    "لُمَ": "assets/audio/educational/syllables/l5_11.mp3",
+    "بَتِ": "assets/audio/educational/syllables/l8_01.mp3",
+    "مُسَ": "assets/audio/educational/syllables/l8_02.mp3",
+    "كِتُ": "assets/audio/educational/syllables/l8_03.mp3",
+    "سَمِ": "assets/audio/educational/syllables/l8_04.mp3",
+    "دُرِ": "assets/audio/educational/syllables/l8_05.mp3",
+    "فِتُ": "assets/audio/educational/syllables/l8_06.mp3",
+    "لَمِ": "assets/audio/educational/syllables/l8_07.mp3",
+    "نُبَ": "assets/audio/educational/syllables/l8_08.mp3",
+    "رِتُ": "assets/audio/educational/syllables/l8_09.mp3",
+    "حَمِ": "assets/audio/educational/syllables/l8_10.mp3",
+    "ذَهَبَ": "assets/audio/educational/verbs/verb_02.mp3",
+    "قَرَأَ": "assets/audio/educational/verbs/verb_03.mp3",
+    "طَلَعَ": "assets/audio/educational/verbs/verb_04.mp3",
+    "أَخَذَ": "assets/audio/educational/verbs/verb_06.mp3",
+    "خَرَجَ": "assets/audio/educational/verbs/verb_07.mp3",
+    "خَبَزَ": "assets/audio/educational/verbs/verb_08.mp3",
+    "جَمَعَ": "assets/audio/educational/verbs/verb_11.mp3",
+    "كَبُرَ": "assets/audio/educational/verbs/verb_13.mp3",
+    "صَغُرَ": "assets/audio/educational/verbs/verb_15.mp3",
+    "بَعُدَ": "assets/audio/educational/verbs/verb_17.mp3",
+    "عَظُمَ": "assets/audio/educational/verbs/verb_19.mp3",
+    "سَهُلَ": "assets/audio/educational/verbs/verb_20.mp3",
+    "شَرِبَ": "assets/audio/educational/verbs/verb_22.mp3",
+    "عَلِمَ": "assets/audio/educational/verbs/verb_24.mp3",
+    "لَعِبَ": "assets/audio/educational/verbs/verb_26.mp3",
+    "رَكِبَ": "assets/audio/educational/verbs/verb_27.mp3",
+    "حَسِبَ": "assets/audio/educational/verbs/verb_28.mp3",
+    "عَمِلَ": "assets/audio/educational/verbs/verb_29.mp3",
+    "أَخْضَرْ": "assets/audio/educational/words/extra_001.mp3",
+    "أَزْرَقْ": "assets/audio/educational/words/extra_002.mp3",
+    "أُسْتَاذْ": "assets/audio/educational/words/extra_003.mp3",
+    "أَسْمَاكْ": "assets/audio/educational/words/extra_004.mp3",
+    "أَفْعَى": "assets/audio/educational/words/extra_005.mp3",
+    "اِسْتَيْقَظَ": "assets/audio/educational/words/extra_006.mp3",
+    "اِنْتَبَهَ": "assets/audio/educational/words/extra_007.mp3",
+    "بَبَّغَاءْ": "assets/audio/educational/words/extra_008.mp3",
+    "بَحَثَ": "assets/audio/educational/words/extra_009.mp3",
+    "بَحْرْ": "assets/audio/educational/words/extra_010.mp3",
+    "بَخُورْ": "assets/audio/educational/words/extra_011.mp3",
+    "بَخِيلْ": "assets/audio/educational/words/extra_012.mp3",
+    "بُرْجْ": "assets/audio/educational/words/extra_013.mp3",
+    "بُرْغِيّ": "assets/audio/educational/words/extra_014.mp3",
+    "بَرْقْ": "assets/audio/educational/words/extra_015.mp3",
+    "بُرْكَانْ": "assets/audio/educational/words/extra_016.mp3",
+    "بَصَلْ": "assets/audio/educational/words/extra_017.mp3",
+    "بَطْرِيقْ": "assets/audio/educational/words/extra_018.mp3",
+    "بَعْضْ": "assets/audio/educational/words/extra_019.mp3",
+    "بَعُوضَة": "assets/audio/educational/words/extra_020.mp3",
+    "بَغْلْ": "assets/audio/educational/words/extra_021.mp3",
+    "بَقَّالَة": "assets/audio/educational/words/extra_022.mp3",
+    "بَكَرَة": "assets/audio/educational/words/extra_023.mp3",
+    "بَلَدْ": "assets/audio/educational/words/extra_024.mp3",
+    "بَلَغَ": "assets/audio/educational/words/extra_025.mp3",
+    "بُنِّيّ": "assets/audio/educational/words/extra_026.mp3",
+    "بُومَة": "assets/audio/educational/words/extra_027.mp3",
+    "بَيْضْ": "assets/audio/educational/words/extra_028.mp3",
+    "تَارِيخْ": "assets/audio/educational/words/extra_029.mp3",
+    "تِلْفَازْ": "assets/audio/educational/words/extra_030.mp3",
+    "تَلَفَّظَ": "assets/audio/educational/words/extra_031.mp3",
+    "تِلْمِيذْ": "assets/audio/educational/words/extra_032.mp3",
+    "تِمْثَالْ": "assets/audio/educational/words/extra_033.mp3",
+    "تِنِّينْ": "assets/audio/educational/words/extra_034.mp3",
+    "ثَوْبْ": "assets/audio/educational/words/extra_035.mp3",
+    "ثَوْرْ": "assets/audio/educational/words/extra_036.mp3",
+    "جُبْنْ": "assets/audio/educational/words/extra_037.mp3",
+    "جَرَاثِيمْ": "assets/audio/educational/words/extra_038.mp3",
+    "جُرَذْ": "assets/audio/educational/words/extra_039.mp3",
+    "جَرْوْ": "assets/audio/educational/words/extra_040.mp3",
+    "جَلَسَ": "assets/audio/educational/words/extra_041.mp3",
+    "جَمِيعْ": "assets/audio/educational/words/extra_042.mp3",
+    "حَبْلْ": "assets/audio/educational/words/extra_043.mp3",
+    "حَفِظَ": "assets/audio/educational/words/extra_044.mp3",
+    "حِكَايَة": "assets/audio/educational/words/extra_045.mp3",
+    "حَلَزُونْ": "assets/audio/educational/words/extra_046.mp3",
+    "حِمَارْ": "assets/audio/educational/words/extra_047.mp3",
+    "حَمَامَة": "assets/audio/educational/words/extra_048.mp3",
+    "خَرِيطَة": "assets/audio/educational/words/extra_049.mp3",
+    "خَشَبْ": "assets/audio/educational/words/extra_050.mp3",
+    "خَطَأْ": "assets/audio/educational/words/extra_051.mp3",
+    "خُفَّاشْ": "assets/audio/educational/words/extra_052.mp3",
+    "دَلْوْ": "assets/audio/educational/words/extra_053.mp3",
+    "دِمَاغْ": "assets/audio/educational/words/extra_054.mp3",
+    "دَمَغَ": "assets/audio/educational/words/extra_055.mp3",
+    "دَهِشَ": "assets/audio/educational/words/extra_056.mp3",
+    "دِينَاصُورْ": "assets/audio/educational/words/extra_057.mp3",
+    "ذُرَة": "assets/audio/educational/words/extra_058.mp3",
+    "رَاكُونْ": "assets/audio/educational/words/extra_059.mp3",
+    "رَبِيعْ": "assets/audio/educational/words/extra_060.mp3",
+    "رَخُصَ": "assets/audio/educational/words/extra_061.mp3",
+    "رَضِيعْ": "assets/audio/educational/words/extra_062.mp3",
+    "رَقَبَة": "assets/audio/educational/words/extra_063.mp3",
+    "رَكَضَ": "assets/audio/educational/words/extra_064.mp3",
+    "رُمَّانْ": "assets/audio/educational/words/extra_065.mp3",
+    "رَمْزْ": "assets/audio/educational/words/extra_066.mp3",
+    "رِيشْ": "assets/audio/educational/words/extra_067.mp3",
+    "زُهُورْ": "assets/audio/educational/words/extra_068.mp3",
+    "سَاقْ": "assets/audio/educational/words/extra_069.mp3",
+    "سَحَابْ": "assets/audio/educational/words/extra_070.mp3",
+    "سَخَّانْ": "assets/audio/educational/words/extra_071.mp3",
+    "سِكِّينْ": "assets/audio/educational/words/extra_072.mp3",
+    "سُلَحْفَاة": "assets/audio/educational/words/extra_073.mp3",
+    "سَهْمْ": "assets/audio/educational/words/extra_074.mp3",
+    "سَيْفْ": "assets/audio/educational/words/extra_075.mp3",
+    "شَاحِنَة": "assets/audio/educational/words/extra_076.mp3",
+    "شَايْ": "assets/audio/educational/words/extra_077.mp3",
+    "شَبَهْ": "assets/audio/educational/words/extra_078.mp3",
+    "شُرْطِيّ": "assets/audio/educational/words/extra_079.mp3",
+    "شَغَفْ": "assets/audio/educational/words/extra_080.mp3",
+    "شَهْدْ": "assets/audio/educational/words/extra_081.mp3",
+    "شَوْكْ": "assets/audio/educational/words/extra_082.mp3",
+    "شَيْخْ": "assets/audio/educational/words/extra_083.mp3",
+    "صَبَغَ": "assets/audio/educational/words/extra_084.mp3",
+    "صَبِيّ": "assets/audio/educational/words/extra_085.mp3",
+    "صَخْرَة": "assets/audio/educational/words/extra_086.mp3",
+    "صَدِيقْ": "assets/audio/educational/words/extra_087.mp3",
+    "صَغِيرْ": "assets/audio/educational/words/extra_088.mp3",
+    "صَمْغْ": "assets/audio/educational/words/extra_089.mp3",
+    "صِنَّارَة": "assets/audio/educational/words/extra_090.mp3",
+    "صَيْدَلِيَّة": "assets/audio/educational/words/extra_091.mp3",
+    "ضَبُعْ": "assets/audio/educational/words/extra_092.mp3",
+    "ضَحِكَ": "assets/audio/educational/words/extra_093.mp3",
+    "ضَفِيرَة": "assets/audio/educational/words/extra_094.mp3",
+    "طَبَخَ": "assets/audio/educational/words/extra_095.mp3",
+    "طَبْلْ": "assets/audio/educational/words/extra_096.mp3",
+    "طَرِيقْ": "assets/audio/educational/words/extra_097.mp3",
+    "طَمَاطِمْ": "assets/audio/educational/words/extra_098.mp3",
+    "طَيَّارَة": "assets/audio/educational/words/extra_099.mp3",
+    "ظَاهِرَة": "assets/audio/educational/words/extra_100.mp3",
+    "ظَبْيْ": "assets/audio/educational/words/extra_101.mp3",
+    "ظَرْبَانْ": "assets/audio/educational/words/extra_102.mp3",
+    "ظَلَامْ": "assets/audio/educational/words/extra_103.mp3",
+    "ظَهْرْ": "assets/audio/educational/words/extra_104.mp3",
+    "عَشَاءْ": "assets/audio/educational/words/extra_105.mp3",
+    "عَطَشْ": "assets/audio/educational/words/extra_106.mp3",
+    "عَلِقَ": "assets/audio/educational/words/extra_107.mp3",
+    "غَابَة": "assets/audio/educational/words/extra_108.mp3",
+    "غِذَاءْ": "assets/audio/educational/words/extra_109.mp3",
+    "غَزَالْ": "assets/audio/educational/words/extra_110.mp3",
+    "غَوَّاصَة": "assets/audio/educational/words/extra_111.mp3",
+    "غَيْمَة": "assets/audio/educational/words/extra_112.mp3",
+    "فَأْسْ": "assets/audio/educational/words/extra_113.mp3",
+    "فَرِيقْ": "assets/audio/educational/words/extra_114.mp3",
+    "فَهْدْ": "assets/audio/educational/words/extra_115.mp3",
+    "فَوَاكِهْ": "assets/audio/educational/words/extra_116.mp3",
+    "قِرْشْ": "assets/audio/educational/words/extra_117.mp3",
+    "قِطَارْ": "assets/audio/educational/words/extra_119.mp3",
+    "قَمَرْ": "assets/audio/educational/words/extra_120.mp3",
+    "قُنْفُذْ": "assets/audio/educational/words/extra_121.mp3",
+    "كَفّ": "assets/audio/educational/words/extra_122.mp3",
+    "كُمَّثْرَى": "assets/audio/educational/words/extra_123.mp3",
+    "كَنْزْ": "assets/audio/educational/words/extra_124.mp3",
+    "كَهْفْ": "assets/audio/educational/words/extra_125.mp3",
+    "كَيْفْ": "assets/audio/educational/words/extra_126.mp3",
+    "لَبِسَ": "assets/audio/educational/words/extra_127.mp3",
+    "لَجَأَ": "assets/audio/educational/words/extra_128.mp3",
+    "لَحَظَ": "assets/audio/educational/words/extra_129.mp3",
+    "لُغْزْ": "assets/audio/educational/words/extra_130.mp3",
+    "مَاعِزْ": "assets/audio/educational/words/extra_131.mp3",
+    "مُثَلَّثْ": "assets/audio/educational/words/extra_132.mp3",
+    "مُثِيرْ": "assets/audio/educational/words/extra_133.mp3",
+    "مِحْرَاثْ": "assets/audio/educational/words/extra_134.mp3",
+    "مَحْظُوظْ": "assets/audio/educational/words/extra_135.mp3",
+    "مِحْفَظَة": "assets/audio/educational/words/extra_136.mp3",
+    "مِخَدَّة": "assets/audio/educational/words/extra_137.mp3",
+    "مَخْزَنْ": "assets/audio/educational/words/extra_138.mp3",
+    "مُرَبَّعْ": "assets/audio/educational/words/extra_139.mp3",
+    "مَرْفَأْ": "assets/audio/educational/words/extra_140.mp3",
+    "مَرِيضْ": "assets/audio/educational/words/extra_141.mp3",
+    "مُسْتَشْفَى": "assets/audio/educational/words/extra_142.mp3",
+    "مَسَحَ": "assets/audio/educational/words/extra_143.mp3",
+    "مِسْطَرَة": "assets/audio/educational/words/extra_144.mp3",
+    "مُشْطْ": "assets/audio/educational/words/extra_145.mp3",
+    "مِشْمِشْ": "assets/audio/educational/words/extra_146.mp3",
+    "مِضْرَبْ": "assets/audio/educational/words/extra_147.mp3",
+    "مَطْبَخْ": "assets/audio/educational/words/extra_148.mp3",
+    "مِظَلَّة": "assets/audio/educational/words/extra_149.mp3",
+    "مَغَارَة": "assets/audio/educational/words/extra_150.mp3",
+    "مِغْرَفَة": "assets/audio/educational/words/extra_151.mp3",
+    "مَغْسَلَة": "assets/audio/educational/words/extra_152.mp3",
+    "مَكْتَبْ": "assets/audio/educational/words/extra_153.mp3",
+    "مَلْجَأْ": "assets/audio/educational/words/extra_154.mp3",
+    "مِلْحْ": "assets/audio/educational/words/extra_155.mp3",
+    "مَلْعَبْ": "assets/audio/educational/words/extra_156.mp3",
+    "مَلِكْ": "assets/audio/educational/words/extra_157.mp3",
+    "مِنْظَارْ": "assets/audio/educational/words/extra_158.mp3",
+    "مَنْفَذْ": "assets/audio/educational/words/extra_159.mp3",
+    "مُهَرِّجْ": "assets/audio/educational/words/extra_160.mp3",
+    "مِيَاهْ": "assets/audio/educational/words/extra_161.mp3",
+    "نَارْ": "assets/audio/educational/words/extra_162.mp3",
+    "نَبَغَ": "assets/audio/educational/words/extra_163.mp3",
+    "نَبَّهَ": "assets/audio/educational/words/extra_164.mp3",
+    "نَجَحَ": "assets/audio/educational/words/extra_165.mp3",
+    "نَجْمْ": "assets/audio/educational/words/extra_166.mp3",
+    "نُجُومْ": "assets/audio/educational/words/extra_167.mp3",
+    "نَحْلَة": "assets/audio/educational/words/extra_168.mp3",
+    "نَضِجَ": "assets/audio/educational/words/extra_169.mp3",
+    "نَظَّارَة": "assets/audio/educational/words/extra_170.mp3",
+    "نَظِيفْ": "assets/audio/educational/words/extra_171.mp3",
+    "نَفَثَ": "assets/audio/educational/words/extra_172.mp3",
+    "نَفَذَ": "assets/audio/educational/words/extra_173.mp3",
+    "نَقْشْ": "assets/audio/educational/words/extra_174.mp3",
+    "نَمْلْ": "assets/audio/educational/words/extra_175.mp3",
+    "نَمْلَة": "assets/audio/educational/words/extra_176.mp3",
+    "نَهْرْ": "assets/audio/educational/words/extra_177.mp3",
+    "نَهَضَ": "assets/audio/educational/words/extra_178.mp3",
+    "هِرَّة": "assets/audio/educational/words/extra_179.mp3",
+    "وَرَقَة": "assets/audio/educational/words/extra_180.mp3",
+    "وَزَّة": "assets/audio/educational/words/extra_181.mp3",
+    "وَهَجْ": "assets/audio/educational/words/extra_182.mp3",
+    "يَبْحَثْ": "assets/audio/educational/words/extra_183.mp3",
+    "يَسَارْ": "assets/audio/educational/words/extra_184.mp3",
+    "يَعْسُوبْ": "assets/audio/educational/words/extra_185.mp3",
+    "يَقْرَأْ": "assets/audio/educational/words/extra_186.mp3",
+    "يَمِينْ": "assets/audio/educational/words/extra_187.mp3",
+    "بَيْضَة": "assets/audio/educational/words/extra_188.mp3",
+    /* دفعة 3: حركات ومقاطع وأفعال — الملفات الموجودة فعلًا فقط (kasra_01 وkasra_04 وkasra_25 بانتظار إعادة التوليد). */
+    "وُ": "assets/audio/educational/harakat/damma_27.mp3",
+    "مِ": "assets/audio/educational/harakat/kasra_24.mp3",
+    "نِ": "assets/audio/educational/harakat/kasra_25.mp3",
+    "سُ": "assets/audio/educational/harakat/damma_12.mp3",
+    "حُ": "assets/audio/educational/harakat/damma_06.mp3",
+    "ضُ": "assets/audio/educational/harakat/damma_15.mp3",
+    "جُ": "assets/audio/educational/harakat/damma_05.mp3",
+    "أُ": "assets/audio/educational/harakat/damma_01.mp3",
+    "دُ": "assets/audio/educational/harakat/damma_08.mp3",
+    "عِ": "assets/audio/educational/harakat/kasra_18.mp3",
+    "دِ": "assets/audio/educational/harakat/kasra_08.mp3",
+    "مُنَ": "assets/audio/educational/syllables/l5_02.mp3",
+    "جَمُ": "assets/audio/educational/syllables/l5_05.mp3",
+    "سَمُ": "assets/audio/educational/syllables/l5_03.mp3",
+    "كَتَبَ": "assets/audio/educational/verbs/verb_01.mp3",
+    "حَرَثَ": "assets/audio/educational/verbs/verb_05.mp3",
+    "فَهِمَ": "assets/audio/educational/verbs/verb_23.mp3",
+    "دَخَلَ": "assets/audio/educational/verbs/verb_10.mp3",
+    "سَمِعَ": "assets/audio/educational/verbs/verb_25.mp3",
+    "حَسُنَ": "assets/audio/educational/verbs/verb_14.mp3",
+    "وَجَدَ": "assets/audio/educational/verbs/verb_12.mp3",
+    "قَرُبَ": "assets/audio/educational/verbs/verb_18.mp3",
+    "حَمَلَ": "assets/audio/educational/verbs/verb_09.mp3",
+    "كَرُمَ": "assets/audio/educational/verbs/verb_16.mp3",
+    "صَعُبَ": "assets/audio/educational/verbs/verb_21.mp3",
+    "غَسَ": "assets/audio/educational/syllables/l2_15.mp3",
+    /* شرح الأحاديث الخمسة الحالية (زر «اسمع الشرح»): المفتاح يطابق hadiths[i].meaning بعد حذف التشكيل. */
+    "الأَعْمَالُ تَكُونُ بِحَسَبِ نِيَّةِ الإِنْسَانِ وَقَصْدِهْ": "assets/audio/educational/hadith/hadith_01_meaning.mp3",
+    "عَلَيْنَا أَنْ نَرْحَمَ النَّاسَ وَنُحْسِنَ مُعَامَلَتَهُمْ": "assets/audio/educational/hadith/hadith_02_meaning.mp3",
+    "الابْتِسَامَةُ الجَمِيلَةُ صَدَقَة": "assets/audio/educational/hadith/hadith_03_meaning.mp3",
+    "المُسْلِمُ لَا يُؤْذِي الآخَرِينَ بِكَلَامِهِ أَوْ أَفْعَالِهْ": "assets/audio/educational/hadith/hadith_04_meaning.mp3",
+    "مِنْ أَفْضَلِ النَّاسِ مَنْ يَتَعَلَّمُ القُرْآنَ وَيُعَلِّمُهُ لِغَيْرِهْ": "assets/audio/educational/hadith/hadith_05_meaning.mp3",
 };
 /* =========================================================================
    🆕 =====================================================================
@@ -996,7 +1360,7 @@ const EDUCATIONAL_AUDIO_MANIFEST = {
    مخصَّصة حصريًا للأقسام التعليمية (الحروف/الكلمات/الأرقام/الكتابة/
    الجمع/الطرح/الألعاب/الحديث الشريف). لا علاقة لها إطلاقًا بـ
    speak() العامة، ولا بـ AudioManager، ولا بأي كود خاص بالقرآن أو
-   الأدعية والأذكار — تلك كلها تبقى تمامًا كما هي بلا أي تعديل.
+   الأدعية — تلك تبقى تمامًا كما هي بلا أي تعديل (المحميّان: القرآن والأدعية فقط).
 
    ⚠️ تحديث المرحلة الثانية: لم يعد هناك أي تراجع إلى speak() / صوت
    المتصفح هنا. كل التشغيل يمرّ من EduAudio (أدناه): MP3 محلي فقط، وإن
@@ -1037,7 +1401,7 @@ const EDUCATIONAL_AUDIO_PLAYBACK_RATE = 0.8;
    • مفتاح «الصوت» في الإعدادات يتحكم في كل الـ MP3 التعليمية، وإيقافه يقطع
      الجاري فورًا.
    • ما لا ملف له: صمت + تسجيل في EduAudio.misses (لا نطق بديل أبدًا).
-   • القرآن والأدعية والأذكار لا تمرّ من هنا ولم تُمَسّ.
+   • القرآن والأدعية (القسمان المحميان) لا تمرّ من هنا ولم تُمَسّ؛ الحديث الشريف يمرّ من هنا.
 ========================================================================= */
 const EduAudio = (function () {
 
@@ -1078,7 +1442,8 @@ const EduAudio = (function () {
         indexMaxLen = 1;
         const m = manifest();
         Object.keys(m).forEach(k => {
-            if (m[k].indexOf("/letters/") >= 0) return;   // الحروف لا تُطابَق بلا حركتها
+            /* الحروف والحركات والمقاطع والأفعال تُقرأ بتشكيل بعينه: لا تُطابَق بلا تشكيلها (كَتَبَ ≠ كُتُب) */
+            if (/\/(letters|harakat|syllables|verbs)\//.test(m[k])) return;
             const n = norm(k);
             if (n && !index[n]) {
                 index[n] = m[k];
@@ -3740,6 +4105,17 @@ function speakHadith() {
     );
 }
 
+/* شرح الحديث الحالي: تسجيل مخصص لجملة المعنى المعروضة تحت الحديث نفسه */
+function speakHadithMeaning() {
+
+    speakEducational(
+        hadiths[currentHadithIndex].meaning,
+        {
+            rate: 0.72
+        }
+    );
+}
+
 function playHadithAudio() {
     speakHadith();
 }
@@ -5087,6 +5463,9 @@ window.nextSurah =
 window.speakHadith =
     speakHadith;
 
+window.speakHadithMeaning =
+    speakHadithMeaning;
+
 window.playHadithAudio =
     playHadithAudio;
 
@@ -6113,7 +6492,7 @@ const RACE_WORD_BANK = {
     "ض": {
         "final": ["بعض", "مريض", "نهض", "ركض"],
         "initial": ["ضابط", "ضرس", "ضفدع", "ضوء"],
-        "medial": ["نضج", "خضار", "مضرب", "أخضر", "قضيب"],
+        "medial": ["نضج", "خضار", "مضرب", "أخضر", "بيضة"],
     },
     "ط": {
         "final": ["خط", "ضابط", "قط", "بط"],
@@ -19730,6 +20109,15 @@ function appendSubtractionDigit(d) {
     input.value = current + String(d);
 }
 
+/* جملة عدّ الخطوات المنطوقة: المفرد والمثنى بصيغتهما الصحيحة (خطوة واحدة / خطوتين)،
+   وما عدا ذلك (٣ فأكثر) يبقى كما كان بالضبط: «N خطوات» */
+function subtractionStepsInstruction(a, b) {
+    const n = Number(b);
+    if (n === 1) return `ابدأ من ${a} وارجع للخلف خطوة واحدة`;
+    if (n === 2) return `ابدأ من ${a} وارجع للخلف خطوتين`;
+    return `ابدأ من ${a} وارجع للخلف ${b} خطوات`;
+}
+
 function clearSubtractionDigit() {
 
     const input = $("subAnswer");
@@ -20029,7 +20417,7 @@ function renderNumberLineTask(stage, task) {
     }
 
     speakEducational(
-        `ابدأ من ${task.a} وارجع للخلف ${task.b} خطوات`,
+        subtractionStepsInstruction(task.a, task.b),
         { rate: 0.78 }
     );
 }
@@ -20149,7 +20537,7 @@ function speakCurrentSubtractionTask() {
     } else if (level.mode === "ten-frame") {
         speakEducational(`أزل ${task.b} من الأقراص الممتلئة`, { rate: 0.8 });
     } else if (level.mode === "number-line") {
-        speakEducational(`ابدأ من ${task.a} وارجع للخلف ${task.b} خطوات`, { rate: 0.78 });
+        speakEducational(subtractionStepsInstruction(task.a, task.b), { rate: 0.78 });
     } else {
         speakEducational(
             `${task.a} ناقص ${task.b} يساوي كم؟`,
