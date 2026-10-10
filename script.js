@@ -27610,12 +27610,17 @@ window.zoo = zoo;
     };
 
     /* فئتان لا تجتمعان في جولة واحدة (عنصر قد يصحّ في كلتيهما) */
-    const SB_AVOID = [["animals", "sky"], ["food", "fruits"], ["food", "veg"], ["plants", "veg"]];
+    const SB_AVOID = [
+        ["animals", "sky"], ["animals", "food"], ["food", "fruits"], ["food", "veg"], ["plants", "veg"],
+        ["school", "clothes"], ["fruits", "plants"], ["vehicles", "sky"]
+    ];
+    /* عنصر يُستبعد متى وُجدت فئة معيّنة في الجولة نفسها (قد يُفهم أنه منها) */
+    const SB_ITEM_AVOID = [["مفتاح", "vehicles"], ["كرسي", "school"]];
 
     const SB_PACKS = [
         { id: "p1", t: "حيوانات وفواكه ومركبات", icon: "🦁", cats: ["animals", "fruits", "vehicles"] },
-        { id: "p2", t: "ملابس وجسمي ومدرستي",    icon: "👕", cats: ["clothes", "body", "school"] },
-        { id: "p3", t: "بيتي والطبيعة",           icon: "🛏️", cats: ["home", "plants", "sky"] },
+        { id: "p2", t: "ملابسي وجسمي وبيتي",     icon: "👕", cats: ["clothes", "body", "home"] },
+        { id: "p3", t: "مدرستي والطبيعة",         icon: "🎒", cats: ["school", "plants", "sky"] },
         { id: "p4", t: "فرز المحترفين",           icon: "🏅", cats: null }
     ];
 
@@ -27640,6 +27645,13 @@ window.zoo = zoo;
             return { w: s.slice(0, i), e: s.slice(i), c: k };
         });
     });
+
+    /* الكلمات المستبعدة لمجموعة فئات حاضرة في الجولة */
+    function sbExcl(cats) {
+        const out = new Set();
+        SB_ITEM_AVOID.forEach(r => { if (cats.indexOf(r[1]) >= 0) out.add(r[0]); });
+        return out;
+    }
 
     function sbAvoid(a, b) {
         return SB_AVOID.some(p => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a));
@@ -27821,6 +27833,13 @@ window.zoo = zoo;
             for (let i = 0; i < pick.length; i++) for (let j = i + 1; j < pick.length; j++) if (sbAvoid(pick[i], pick[j])) ok = false;
             if (ok) return pick;
         }
+        /* احتياط حتمي: أول تركيبة لا تحوي فئتين متعارضتين */
+        const n = all.length;
+        for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+            if (sbAvoid(all[i], all[j])) continue;
+            if (count === 2) return [all[i], all[j]];
+            for (let k = j + 1; k < n; k++) if (!sbAvoid(all[i], all[k]) && !sbAvoid(all[j], all[k])) return [all[i], all[j], all[k]];
+        }
         return all.slice(0, count);
     }
 
@@ -27846,15 +27865,14 @@ window.zoo = zoo;
         function matchTrial(cats, k, three) {
             const a = cats[k % cats.length];
             const others = cats.filter(c => c !== a);
-            const sample = pick(a);
-            const same = pick(a, new Set([sample.w]));
             const oc = others[k % others.length];
-            const other = pick(oc);
+            const o2 = three ? (others.find(c => c !== oc) || oc) : null;
+            const ex = sbExcl(three ? [a, oc, o2] : [a, oc]);
+            const sample = pick(a, ex);
+            const same = pick(a, new Set(Array.from(ex).concat([sample.w])));
+            const other = pick(oc, ex);
             const choices = [same, other];
-            if (three) {
-                const o2 = others.find(c => c !== oc) || oc;
-                choices.push(pick(o2));
-            }
+            if (three) choices.push(pick(o2, ex));
             return { type: "match", cat: a, sample: sample, choices: sbShuffle(choices, rnd).map(x => ({ w: x.w, e: x.e, c: x.c, ok: x.c === a })) };
         }
         function oddTrial(cats, k) {
@@ -27862,9 +27880,10 @@ window.zoo = zoo;
             const ys = cats.filter(c => c !== x);
             const y = ys[k % ys.length];
             const same = [];
-            const ex = new Set();
+            const base = sbExcl([x, y]);
+            const ex = new Set(base);
             for (let i = 0; i < 3; i++) { const it = pick(x, ex); ex.add(it.w); same.push(it); }
-            const odd = pick(y);
+            const odd = pick(y, base);
             const cards = sbShuffle(same.concat([odd]), rnd).map(z => ({ w: z.w, e: z.e, c: z.c, ok: z.c === y }));
             return { type: "odd", cat: x, oddCat: y, cards: cards };
         }
@@ -27879,7 +27898,8 @@ window.zoo = zoo;
                     if (j > 0) { const t = order[i]; order[i] = order[j]; order[j] = t; }
                 }
             }
-            return order.map(c => ({ type: "basket", cat: c, item: pick(c), baskets: cats.slice() }));
+            const ex = sbExcl(cats);
+            return order.map(c => ({ type: "basket", cat: c, item: pick(c, ex), baskets: cats.slice() }));
         }
 
         if (stage.kind === "match") {
@@ -27900,7 +27920,7 @@ window.zoo = zoo;
                 else trials.push(matchTrial(cats3, m++, true));
             });
         }
-        trials.forEach(t => { t.wrong = 0; t.firstTry = null; });
+        trials.forEach(t => { t.wrong = 0; t.firstTry = null; t.hinted = false; t.outcome = null; });
         return trials;
     }
 
@@ -28156,13 +28176,21 @@ window.zoo = zoo;
         return t.firstTry ? SB_PRAISE[sb.idx % SB_PRAISE.length] : SB_PRAISE[0];
     }
 
-    function sbResolve(t, msg) {
-        /* تم حل الجولة (صحيحة أو بمساعدة): ثبّت النتيجة وانتقل */
+    function sbResolve(t, msg, mode) {
+        /* تم حل الجولة: مستقلة، أو بعد محاولة/تلميح، أو تلقائية (بلا أي صوت تهنئة) */
         sb.busy = true;
-        t.firstTry = t.wrong === 0;
+        if (mode === "auto") t.outcome = "auto";
+        else if (t.wrong === 0) t.outcome = "independent";
+        else if (t.hinted) t.outcome = "hinted";
+        else t.outcome = "retry";
+        t.firstTry = t.outcome === "independent";
         if (t.firstTry) sb.first++;
         sbRenderDots();
         sbSetMsg(msg);
+        if (t.outcome === "auto") {
+            sbLater(() => sbNextTrial(), calmOrReduced() ? 500 : 1000);
+            return;
+        }
         const praise = sbPraiseFor(t);
         sbLater(() => sbSay(praise, () => sbNextTrial(), 2600), calmOrReduced() ? 120 : 520);
     }
@@ -28206,9 +28234,9 @@ window.zoo = zoo;
         const area = $q("sbStageArea");
         if (!area) return;
         const right = area.querySelector('.sb-basket[data-cat="' + t.cat + '"]');
-        if (t.wrong >= 2 && right) right.classList.add("sb-hint");
+        if (t.wrong >= 2 && right) { right.classList.add("sb-hint"); t.hinted = true; }
         if (t.wrong >= 3 && right) {
-            /* وضع هادئ بالمساعدة: لا يُحتسب من أول مرة */
+            /* وضع تلقائي: لا يُحتسب مستقلًا ولا يُسمع «صحيح» */
             sbAnswerBasketAssisted(t, right, itemEl);
         }
     }
@@ -28222,7 +28250,7 @@ window.zoo = zoo;
             itemEl.style.visibility = "hidden";
             right.classList.add("sb-pop");
             sb.busy = false;
-            sbResolve(t, "✅ " + t.item.w + " من " + SB_CATS[t.cat].t);
+            sbResolve(t, "✅ " + t.item.w + " من " + SB_CATS[t.cat].t, "auto");
         }, 300);
     }
 
@@ -28246,11 +28274,11 @@ window.zoo = zoo;
                 const w = c.getAttribute("data-word");
                 return (t.type === "match" ? t.choices : t.cards).some(x => x.w === w && x.ok);
             });
-            if (t.wrong >= 2 && right) right.classList.add("sb-hint");
+            if (t.wrong >= 2 && right) { right.classList.add("sb-hint"); t.hinted = true; }
             if (t.wrong >= 3 && right) {
                 sb.busy = true;
                 right.classList.add("sb-right");
-                sbLater(() => { sb.busy = false; sbResolve(t, "✅ هذه هي الإجابة"); }, 300);
+                sbLater(() => { sb.busy = false; sbResolve(t, "✅ هذه هي الإجابة", "auto"); }, 300);
             }
         }
     }
@@ -28261,20 +28289,37 @@ window.zoo = zoo;
         return r >= 0.9 ? 3 : (r >= 0.7 ? 2 : 1);
     }
 
+    function sbNeed(stage, total) {
+        return stage.kind === "mastery" ? SB_PASS : Math.ceil(total * 0.6);
+    }
+
     function sbFinish() {
         const total = sb.trials.length;
-        const first = sb.first;
+        const tally = { independent: 0, retry: 0, hinted: 0, auto: 0 };
+        let wrongTaps = 0, hints = 0;
+        sb.trials.forEach(t => {
+            if (t.outcome && tally[t.outcome] !== undefined) tally[t.outcome]++;
+            wrongTaps += t.wrong || 0;
+            if (t.hinted) hints++;
+        });
+        const first = tally.independent;
         const prog = sbLoad();
         const pr = prog.packs[sb.pack.id];
         const st = pr.stages[sb.stage.id];
         const isMastery = sb.stage.kind === "mastery";
-        const passed = !isMastery || first >= SB_PASS;
-        const stars = sbStarsFor(first, total);
+        const need = sbNeed(sb.stage, total);
+        /* النجاح يقاس بالإجابات المستقلة فقط؛ التلقائية والمُلمَّح لها لا تكفي */
+        const passed = first >= need;
+        const stars = passed ? sbStarsFor(first, total) : 0;
         let award = 0;
+        let attempt = 0;
 
         if (isMastery) {
             pr.mastery.attempts++;
+            attempt = pr.mastery.attempts;
             if (first > pr.mastery.best) pr.mastery.best = first;
+        } else {
+            attempt = st.plays;
         }
         if (passed) {
             st.done = true;
@@ -28289,14 +28334,20 @@ window.zoo = zoo;
         /* احفظ أولًا ثم امنح النجوم: لو تعذّر الحفظ لا تتكرر المكافأة لاحقًا */
         sbSave(prog);
         if (award > 0) { try { if (typeof addStars === "function") addStars(award); } catch (e) { /* لا شيء */ } }
-        if (passed) {
-            try {
-                if (typeof StudentData !== "undefined" && StudentData.logEvent) {
-                    StudentData.logEvent({ type: "activity_complete", subject: "games", skill: "sort_" + sb.pack.id, activity: "stage_" + sb.stage.id, correct: null });
-                }
-            } catch (e) { /* لا شيء */ }
-        }
-        sbShowDone({ passed: passed, stars: stars, first: first, total: total, award: award, isMastery: isMastery });
+        /* سجل المعلم: حدث واحد لكل محاولة، ناجحة أو لا، في بيانات الطالب الحالي */
+        try {
+            if (typeof StudentData !== "undefined" && StudentData.logEvent) {
+                StudentData.logEvent({
+                    type: passed ? "activity_complete" : "activity_attempt",
+                    subject: "games", skill: "sort_" + sb.pack.id, activity: "stage_" + sb.stage.id,
+                    correct: null,
+                    passed: passed, mastery: isMastery, attempt: attempt, total: total, need: need,
+                    independent: tally.independent, retry: tally.retry, hinted: tally.hinted, auto: tally.auto,
+                    wrongTaps: wrongTaps, hints: hints, stars: stars
+                });
+            }
+        } catch (e) { /* لا شيء */ }
+        sbShowDone({ passed: passed, stars: stars, first: first, total: total, need: need, award: award, isMastery: isMastery, tally: tally });
     }
 
     function sbHideDone() {
@@ -28329,7 +28380,7 @@ window.zoo = zoo;
             const n = SB_STAGES[i + 1];
             return (n && !sbStageLocked(prog, sb.pack.id, n.id)) ? n : null;
         })();
-        const title = r.passed ? (r.isMastery ? "🏅 أتقنتَ هذه الحزمة!" : "🌟 أحسنت يا بطل!") : "💪 قريب جدًا!";
+        const title = r.passed ? (r.isMastery ? "🏅 أتقنتَ هذه الحزمة!" : "🌟 أحسنت يا بطل!") : (r.first >= r.need - 1 ? "💪 قريب جدًا!" : "💪 لنتدرّب مرة أخرى!");
         const body = r.passed
             ? "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة"
             : "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة. نتدرّب قليلًا ثم نحاول مرة أخرى";
@@ -28388,7 +28439,7 @@ window.zoo = zoo;
     window.SortBaskets = {
         _state: sb, _cats: SB_CATS, _packs: SB_PACKS, _stages: SB_STAGES, _avoid: SB_AVOID,
         _load: sbLoad, _normalize: sbNormalize, _build: sbBuildTrials, _pool: sbPool, _key: SB_KEY,
-        _praise: SB_PRAISE, _lines: [SB_STAGE_DONE, SB_RETRY, SB_LOCKED]
+        _praise: SB_PRAISE, _lines: [SB_STAGE_DONE, SB_RETRY, SB_LOCKED], _itemAvoid: SB_ITEM_AVOID, _excl: sbExcl, _need: sbNeed
     };
 })();
 
