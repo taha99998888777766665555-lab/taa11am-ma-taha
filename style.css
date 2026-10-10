@@ -12760,3 +12760,33 @@ body.dark-mode .race-map-summary, body.dark-mode .race-map-hint, body.dark-mode 
 }
 
 .letter-race-gate .gate-letter { font-size: clamp(48px, 12vw, 68px) !important; }
+
+/* ---- سباق الحروف: أزرار رجوع أكبر + هاتف أفقي (الارتفاع القصير) ---- */
+#letterRaceGame .race-top-btn,
+#letterRaceMap .race-top-btn {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+
+    #letterRaceGame .letter-race-command { padding: 6px 10px; }
+    #letterRaceGame .command-badge { display: none; }
+    #letterRaceGame .command-label { font-size: 13px; margin: 0; }
+    #letterRaceGame .letter-race-target { margin: 2px 0; font-size: 40px; }
+    #letterRaceGame .letter-race-target.race-letter-show,
+    #letterRaceGame .letter-race-target.race-sound-icon { font-size: 44px; }
+    #letterRaceGame .race-listen-btn { min-height: 44px; padding: 4px 18px; }
+
+    #letterRaceGame .professional-race-track { height: 176px !important; }
+    #letterRaceGame .letter-race-gate { height: 70px !important; top: 36% !important; }
+    #letterRaceGame .letter-race-gate .gate-letter { font-size: 38px !important; min-height: 38px; }
+    #letterRaceGame .professional-race-car > * { scale: .6; transform-origin: 50% 100%; }
+
+    #letterRaceGame .letter-race-message { min-height: 0; height: 22px; margin: 2px 0; font-size: 14px; }
+    #letterRaceGame .race-controls { margin-top: 4px; gap: 8px; }
+    #letterRaceGame .race-control-btn,
+    #letterRaceGame .race-control-select { min-height: 52px; font-size: 22px; }
+    #letterRaceGame .race-help { display: none; }
+}

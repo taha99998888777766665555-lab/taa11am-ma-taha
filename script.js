@@ -6621,10 +6621,14 @@ function raceFindOccurrence(word, letter, position) {
     return -1;
 }
 
-/* كلمات صالحة (الحرف فعلًا في الموضع + لها تسجيل) بترتيب البنك الثابت */
+/* كلمات صالحة بترتيب البنك الثابت: الحرف فعلًا في الموضع، ولها تسجيل، ولا يتكرر
+   الحرف المطلوب في الكلمة (وإلا ظهر الحرف المخفي في مكان آخر منها وانكشفت الإجابة) */
 function raceValidWords(letter, position) {
     const list = (RACE_WORD_BANK[letter] && RACE_WORD_BANK[letter][position]) || [];
-    return list.filter(w => raceFindOccurrence(w, letter, position) >= 0 && EduAudio.has(w));
+    return list.filter(w =>
+        raceFindOccurrence(w, letter, position) >= 0 &&
+        Array.from(w).filter(c => c === letter).length === 1 &&
+        EduAudio.has(w));
 }
 
 function racePickWord(letter, position, offset, used) {
@@ -6718,15 +6722,80 @@ function raceBuildRounds(letter, stage, seed) {
 
 /* ---------- التقدّم المحفوظ ---------- */
 
+function raceIsObj(x) { return !!x && typeof x === "object" && !Array.isArray(x); }
+
+/* يقبل أي سجل محفوظ ويُرجع نسخة سليمة البنية: الإدخال السليم يبقى كما هو،
+   وما كان تالفًا (null أو نوع خاطئ) يُستبدل بقيمة فارغة فقط دون لمس بقية السجل */
+function raceNormalizeProgress(p) {
+    const out = { v: 2, letters: {}, lastLetter: (p && typeof p.lastLetter === "string") ? p.lastLetter : null };
+    if (p && p.migratedV1 === true) out.migratedV1 = true;
+    const src = (p && raceIsObj(p.letters)) ? p.letters : {};
+    Object.keys(src).forEach(l => {
+        const e = src[l];
+        if (!raceIsObj(e)) return;
+        const stages = {};
+        if (raceIsObj(e.stages)) {
+            Object.keys(e.stages).forEach(id => {
+                const r = e.stages[id];
+                if (!raceIsObj(r)) return;
+                const rec = { done: r.done === true, stars: Math.max(0, Math.min(3, Number(r.stars) || 0)), plays: Math.max(0, Number(r.plays) || 0) };
+                if (r.migrated === true) rec.migrated = true;
+                stages[id] = rec;
+            });
+        }
+        const m = raceIsObj(e.mastery) ? e.mastery : {};
+        out.letters[l] = {
+            stages: stages,
+            mastery: {
+                passed: m.passed === true,
+                best: Math.max(0, Number(m.best) || 0),
+                stars: Math.max(0, Math.min(3, Number(m.stars) || 0)),
+                attempts: Math.max(0, Number(m.attempts) || 0)
+            }
+        };
+    });
+    return out;
+}
+
+/* ترحيل لمرة واحدة من السباق القديم (taha_letterrace_unlocked_level = 1..4).
+   المستوى N المفتوح يعني أن المجموعات ١..N-١ أُنجزت. للحروف فيها فقط تُعدّ مرحلتا
+   «اسمع الحرف» و«اعرف شكله» منجزتين بنجمة واحدة (تُفتح بعدهما «اكتشفه في كلمات»).
+   لا إتقان أبدًا، ولا تُعدَّل مرحلة مُنجزة أصلًا، ولا يُكتب في المفتاح القديم. */
+function raceMigrateLegacy(p) {
+    if (p.migratedV1 === true) return false;
+    p.migratedV1 = true;
+    let level = 0;
+    try { level = parseInt(localStorage.getItem("taha_letterrace_unlocked_level"), 10); } catch (e) { level = 0; }
+    if (!(level >= 2 && level <= 4)) return true;
+    if (typeof LETTER_LEVEL_GROUPS === "undefined") { delete p.migratedV1; return false; }
+    LETTER_LEVEL_GROUPS.slice(0, level - 1).forEach(g => g.letters.forEach(l => {
+        const e = raceLetterEntry(p, l);
+        ["hear", "see"].forEach(id => {
+            if (!(e.stages[id] && e.stages[id].done)) e.stages[id] = { done: true, stars: 1, plays: 0, migrated: true };
+        });
+    }));
+    return true;
+}
+
 function raceLoadProgress() {
+    let p = null, corrupt = false, raw = null;
     try {
-        const raw = localStorage.getItem(RACE_STORAGE_KEY);
+        raw = localStorage.getItem(RACE_STORAGE_KEY);
         if (raw) {
-            const p = JSON.parse(raw);
-            if (p && p.v === 2 && p.letters) return p;
+            try {
+                const parsed = JSON.parse(raw);
+                if (raceIsObj(parsed) && parsed.v === 2) p = raceNormalizeProgress(parsed);
+                else corrupt = true;
+            } catch (e) { corrupt = true; }
         }
     } catch (e) { /* لا شيء */ }
-    return { v: 2, letters: {}, lastLetter: null };
+    if (corrupt && raw) {
+        /* نسخة احتياطية مرة واحدة قبل أن يُكتب فوق سجل غير مفهوم */
+        try { if (!localStorage.getItem(RACE_STORAGE_KEY + "_corrupt_backup")) localStorage.setItem(RACE_STORAGE_KEY + "_corrupt_backup", raw); } catch (e) { /* لا شيء */ }
+    }
+    if (!p) p = { v: 2, letters: {}, lastLetter: null };
+    if (raceMigrateLegacy(p)) raceSaveProgress(p);
+    return p;
 }
 
 function raceSaveProgress(p) {
@@ -6972,7 +7041,24 @@ function renderRaceStageBar() {
    🔄 جولة جديدة
    ========================================================= */
 
+/* الشاشة الحالية هي شاشة السباق؟ (وإلا فالطفل غادرها بطريق آخر غير زر الرجوع) */
+function raceScreenActive() {
+    const el = $("letterRaceGame");
+    return !!(el && el.classList.contains("active"));
+}
+
+/* إنهاء اللعبة بصمت عند مغادرة الشاشة: لا جولة تالية ولا صوت ولا تمرير في الخلفية */
+function raceAbortInBackground() {
+    letterRaceGame.isRunning = false;
+    letterRaceGame.answered = true;
+    letterRaceGame.session++;
+    raceClearTimers();
+    document.removeEventListener("keydown", handleLetterRaceKeyboard);
+}
+
 function startLetterRaceRound() {
+
+    if (!raceScreenActive()) { raceAbortInBackground(); return; }
 
     letterRaceGame.roundIdx++;
     letterRaceGame.answered = false;
@@ -7269,6 +7355,8 @@ function raceStageStars(rounds, firstTry) {
 
 function finishRaceStage() {
 
+    if (!raceScreenActive()) { raceAbortInBackground(); return; }
+
     letterRaceGame.isRunning = false;
 
     const g = letterRaceGame;
@@ -7384,7 +7472,7 @@ function clearLetterRaceMessage() {
 
 function speakRaceRoundIntro() {
     const round = letterRaceGame.cur;
-    if (!round) return;
+    if (!round || !raceScreenActive()) return;
     if (round.kind === "word" && round.word && EduAudio.has(round.word)) {
         EduAudio.play(round.word, { mode: "interrupt" });
     } else {
