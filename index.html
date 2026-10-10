@@ -1383,7 +1383,7 @@
 
             <button
                 class="game-launch-card letter-race-game-card"
-                onclick="startLetterRace()"
+                onclick="openLetterRaceMap()"
             >
 
                 <div class="game-card-icon">
@@ -1395,7 +1395,7 @@
                 </h3>
 
                 <p>
-                    أكمل الكلمة باختيار شكل الحرف الصحيح وانطلق! 🏁
+                    لكل حرف مراحله: اسمعه، اعرف شكله، واكتشفه في الكلمات 🏁
                 </p>
 
                 <span>
@@ -1530,6 +1530,57 @@
 
 
 <!-- =========================================================
+     🗺️ سباق الحروف — خريطة الحروف ومراحل كل حرف
+========================================================= -->
+
+<section
+    id="letterRaceMap"
+    class="screen"
+>
+
+    <div class="race-map-wrapper">
+
+        <!-- عرض ١: كل الحروف -->
+        <div id="raceMapView">
+
+            <div class="race-map-top">
+                <button class="race-top-btn" onclick="leaveLetterRaceMap()" aria-label="العودة للألعاب">⬅️</button>
+                <h2>🏁 سباق الحروف</h2>
+            </div>
+
+            <p id="raceMapSummary" class="race-map-summary"></p>
+
+            <button id="raceMapContinue" class="primary race-map-continue" type="button">▶ تابع</button>
+
+            <p class="race-map-hint">اختر حرفًا لتبدأ مراحله</p>
+
+            <div id="raceMapGrid" class="race-map-grid"></div>
+
+        </div>
+
+        <!-- عرض ٢: مراحل حرف واحد -->
+        <div id="raceStageView" style="display:none;">
+
+            <div class="race-map-top">
+                <button class="race-top-btn" onclick="raceBackFromStages()" aria-label="كل الحروف">⬅️</button>
+                <h2>مراحل الحرف</h2>
+            </div>
+
+            <div class="race-stage-hero">
+                <div id="raceStageLetter" class="race-stage-letter">ب</div>
+                <div id="raceStageForms" class="race-stage-forms"></div>
+            </div>
+
+            <div id="raceStageList" class="race-stage-list"></div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
      🏁🏎️ لعبة سباق الحروف الاحترافية
 ========================================================= -->
 
@@ -1636,14 +1687,18 @@
             <div class="race-level-info">
 
                 <span>
-                    🏆 المرحلة
+                    🔤 الحرف
                 </span>
 
                 <strong id="letterRaceLevel">
-                    ١
+                    ب
                 </strong>
 
+                <span id="raceStageName" class="race-stage-name-label"></span>
+
             </div>
+
+            <div id="raceStageChips" class="race-stage-chips" aria-hidden="true"></div>
 
 
             <div class="race-progress-track">
@@ -1671,6 +1726,8 @@
                     🌟 أحسنت! أكملت المستوى
                 </h3>
 
+                <div id="letterRaceLevelCompleteStars" class="race-complete-stars" aria-hidden="true"></div>
+
                 <p id="letterRaceLevelCompleteBody">
                     المستوى التالي بانتظارك
                 </p>
@@ -1681,6 +1738,15 @@
                     type="button"
                 >
                     ▶ المستوى التالي
+                </button>
+
+                <button
+                    id="letterRaceLevelCompleteMapBtn"
+                    class="secondary"
+                    type="button"
+                    onclick="exitLetterRace()"
+                >
+                    🗺️ مراحل الحرف
                 </button>
 
             </div>
@@ -1695,14 +1761,14 @@
         <div class="letter-race-command">
 
 
-            <div class="command-badge">
+            <div class="command-badge" id="raceCommandBadge">
                 🎧 اسمع واختر
             </div>
 
 
             <div class="command-content">
 
-                <div class="command-label">
+                <div class="command-label" id="raceCommandLabel">
                     أكمل الكلمة
                 </div>
 
@@ -1722,7 +1788,7 @@
 
                     🔊
 
-                    <span>
+                    <span id="raceListenLabel">
                         اسمع الكلمة
                     </span>
 
