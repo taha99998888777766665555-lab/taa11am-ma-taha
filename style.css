@@ -12790,3 +12790,473 @@ body.dark-mode .race-map-summary, body.dark-mode .race-map-hint, body.dark-mode 
     #letterRaceGame .race-control-select { min-height: 52px; font-size: 22px; }
     #letterRaceGame .race-help { display: none; }
 }
+
+/* =========================================================
+   🧺 سلال الفرز — أنماط معزولة (بادئة sb-)
+========================================================= */
+
+.sort-game-card {
+    background: linear-gradient(135deg, #f0fdf4, #fefce8);
+    border: 3px solid #86efac;
+}
+
+.sort-game-card:hover {
+    box-shadow: 0 18px 40px rgba(22, 163, 74, .20);
+}
+
+#sortGame {
+    --sb-bg1: #f0f9ff;
+    --sb-bg2: #fefce8;
+    --sb-card: #ffffff;
+    --sb-ink: #1f2937;
+    --sb-soft: #64748b;
+    --sb-line: #e2e8f0;
+    --sb-ok: #16a34a;
+    --sb-hint: #f59e0b;
+}
+
+body.dark-mode #sortGame {
+    --sb-bg1: #111827;
+    --sb-bg2: #1e1b4b;
+    --sb-card: #1f2740;
+    --sb-ink: #f1f5f9;
+    --sb-soft: #cbd5e1;
+    --sb-line: #3b4668;
+    --sb-ok: #4ade80;
+    --sb-hint: #fbbf24;
+}
+
+#sortGame .sb-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 12px 14px 28px;
+    color: var(--sb-ink);
+    background: linear-gradient(160deg, var(--sb-bg1), var(--sb-bg2));
+    border-radius: 24px;
+    min-height: 70vh;
+    position: relative;
+    font-family: inherit;
+}
+
+#sortGame .sb-hidden { display: none !important; }
+
+#sortGame .sb-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#sortGame .sb-back {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    border: 2px solid var(--sb-line);
+    border-radius: 16px;
+    background: var(--sb-card);
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#sortGame .sb-title {
+    flex: 1;
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--sb-ink);
+    text-align: center;
+}
+
+#sortGame .sb-dots {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 110px;
+    min-width: 8px;
+}
+
+#sortGame .sb-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--sb-line);
+    border: 2px solid var(--sb-soft);
+    box-sizing: border-box;
+}
+#sortGame .sb-dot-now { border-color: #3b82f6; background: #bfdbfe; }
+#sortGame .sb-dot-ok { background: var(--sb-ok); border-color: var(--sb-ok); }
+#sortGame .sb-dot-help { background: #fcd34d; border-color: #f59e0b; }
+
+/* ----- الحزم ----- */
+#sortGame .sb-intro {
+    text-align: center;
+    font-size: 18px;
+    color: var(--sb-soft);
+    margin: 6px 0 14px;
+}
+
+#sortGame .sb-pack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+#sortGame .sb-pack {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-height: 168px;
+    padding: 16px 12px;
+    background: var(--sb-card);
+    color: var(--sb-ink);
+    border: 3px solid var(--sb-line);
+    border-radius: 22px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .06);
+}
+
+#sortGame .sb-pack:focus-visible,
+#sortGame .sb-stage-btn:focus-visible,
+#sortGame .sb-basket:focus-visible,
+#sortGame .sb-card:focus-visible,
+#sortGame .sb-back:focus-visible,
+#sortGame .sb-btn:focus-visible {
+    outline: 4px solid #2563eb;
+    outline-offset: 2px;
+}
+
+#sortGame .sb-pack.sb-recommended,
+#sortGame .sb-stage-btn.sb-recommended { border-color: #60a5fa; }
+#sortGame .sb-pack.sb-mastered { border-color: var(--sb-ok); }
+
+#sortGame .sb-pack-icon { font-size: 44px; line-height: 1; }
+#sortGame .sb-pack-title { font-size: 19px; font-weight: 700; text-align: center; }
+#sortGame .sb-pack-ex { display: flex; gap: 6px; font-size: 26px; }
+#sortGame .sb-pack-meta { font-size: 15px; color: var(--sb-soft); }
+
+#sortGame .sb-badge {
+    position: absolute;
+    top: 10px;
+    inset-inline-start: 10px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    background: #dcfce7;
+    color: #166534;
+}
+#sortGame .sb-badge-next { background: #dbeafe; color: #1e40af; }
+body.dark-mode #sortGame .sb-badge { background: #14532d; color: #bbf7d0; }
+body.dark-mode #sortGame .sb-badge-next { background: #1e3a8a; color: #dbeafe; }
+
+/* ----- المراحل ----- */
+#sortGame .sb-cat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+#sortGame .sb-cat-chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 2px solid var(--c, #94a3b8);
+    background: var(--sb-card);
+    font-size: 15px;
+    color: var(--sb-ink);
+}
+
+#sortGame .sb-stage-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+#sortGame .sb-stage-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-height: 130px;
+    padding: 14px 8px;
+    background: var(--sb-card);
+    color: var(--sb-ink);
+    border: 3px solid var(--sb-line);
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: inherit;
+}
+#sortGame .sb-stage-btn.sb-locked { opacity: .55; }
+#sortGame .sb-stage-btn.sb-done-stage { border-color: var(--sb-ok); }
+#sortGame .sb-stage-num {
+    position: absolute;
+    top: 8px;
+    inset-inline-start: 10px;
+    font-size: 14px;
+    color: var(--sb-soft);
+}
+#sortGame .sb-stage-ico { font-size: 36px; line-height: 1.1; }
+#sortGame .sb-stage-name { font-size: 17px; font-weight: 700; text-align: center; }
+#sortGame .sb-stage-stars { font-size: 17px; color: #d97706; letter-spacing: 2px; }
+#sortGame .sb-mastery-note { text-align: center; font-size: 18px; color: var(--sb-ok); margin: 14px 0 0; font-weight: 700; }
+
+/* ----- اللعب ----- */
+#sortGame .sb-prompt {
+    text-align: center;
+    font-size: 18px;
+    margin: 4px 0 10px;
+    color: var(--sb-soft);
+}
+
+#sortGame .sb-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: stretch;
+}
+
+#sortGame .sb-item-zone {
+    display: flex;
+    justify-content: center;
+    min-height: 168px;
+}
+
+#sortGame .sb-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: var(--sb-card);
+    color: var(--sb-ink);
+    border: 3px solid var(--sb-line);
+    border-radius: 22px;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 10px;
+    min-width: 96px;
+    min-height: 96px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .07);
+    transition: opacity .25s ease, transform .2s ease, border-color .2s ease;
+}
+
+#sortGame .sb-emoji {
+    font-size: 64px;
+    line-height: 1.1;
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+#sortGame .sb-word { font-size: 20px; font-weight: 700; }
+
+#sortGame .sb-item,
+#sortGame .sb-sample {
+    min-width: 170px;
+    min-height: 160px;
+    border-color: #93c5fd;
+}
+#sortGame .sb-item .sb-emoji,
+#sortGame .sb-sample .sb-emoji { font-size: 92px; }
+#sortGame .sb-item .sb-word,
+#sortGame .sb-sample .sb-word { font-size: 24px; }
+#sortGame .sb-speaker {
+    position: absolute;
+    top: 8px;
+    inset-inline-end: 10px;
+    font-size: 20px;
+    opacity: .75;
+}
+
+#sortGame .sb-baskets {
+    display: grid;
+    gap: 12px;
+}
+#sortGame .sb-baskets.sb-n2 { grid-template-columns: repeat(2, 1fr); }
+#sortGame .sb-baskets.sb-n3 { grid-template-columns: repeat(3, 1fr); }
+
+#sortGame .sb-basket {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    min-height: 150px;
+    padding: 12px 6px 10px;
+    border: 4px solid var(--c, #94a3b8);
+    border-radius: 12px 12px 30px 30px;
+    background:
+        repeating-linear-gradient(135deg, transparent 0 9px, rgba(0, 0, 0, .035) 9px 10px),
+        var(--sb-card);
+    color: var(--sb-ink);
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .25s ease, transform .2s ease, box-shadow .2s ease;
+}
+#sortGame .sb-basket-ex { font-size: 36px; line-height: 1.1; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+#sortGame .sb-basket-t { font-size: 17px; font-weight: 700; text-align: center; }
+#sortGame .sb-basket-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; min-height: 26px; font-size: 22px; }
+#sortGame .sb-chip { font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+
+#sortGame .sb-cards {
+    display: grid;
+    gap: 12px;
+}
+#sortGame .sb-cards.sb-n2 { grid-template-columns: repeat(2, 1fr); }
+#sortGame .sb-cards.sb-n3 { grid-template-columns: repeat(3, 1fr); }
+#sortGame .sb-cards.sb-odd-grid { grid-template-columns: repeat(2, 1fr); }
+#sortGame .sb-choice { min-height: 140px; }
+
+#sortGame .sb-faded,
+#sortGame .sb-tried { opacity: .35; pointer-events: none; }
+
+#sortGame .sb-hint {
+    border-color: var(--sb-hint) !important;
+    box-shadow: 0 0 0 5px rgba(245, 158, 11, .35);
+}
+#sortGame .sb-right {
+    border-color: var(--sb-ok) !important;
+    box-shadow: 0 0 0 5px rgba(34, 197, 94, .35);
+}
+#sortGame .sb-pop { transform: scale(1.04); }
+
+#sortGame .sb-shake { animation: sbShake .26s ease; }
+@keyframes sbShake {
+    0%, 100% { transform: translateX(0); }
+    30% { transform: translateX(-5px); }
+    70% { transform: translateX(5px); }
+}
+
+#sortGame .sb-msg {
+    min-height: 28px;
+    margin: 10px 0 0;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--sb-ink);
+}
+
+/* ----- شاشة النهاية ----- */
+#sortGame .sb-done {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(15, 23, 42, .55);
+}
+#sortGame .sb-done-card {
+    width: min(92vw, 420px);
+    padding: 22px 18px;
+    text-align: center;
+    background: var(--sb-card);
+    color: var(--sb-ink);
+    border-radius: 26px;
+    border: 3px solid var(--sb-line);
+    max-height: 92vh;
+    overflow: auto;
+}
+#sortGame .sb-done-title { margin: 0 0 6px; font-size: 26px; color: var(--sb-ink); }
+#sortGame .sb-done-stars { font-size: 38px; color: #f59e0b; letter-spacing: 6px; min-height: 8px; }
+#sortGame .sb-done-body { font-size: 18px; margin: 8px 0; color: var(--sb-soft); }
+#sortGame .sb-done-reward { font-size: 18px; font-weight: 700; margin: 6px 0 12px; color: var(--sb-ok); min-height: 10px; }
+#sortGame .sb-done-acts { display: flex; flex-direction: column; gap: 10px; }
+#sortGame .sb-btn {
+    min-height: 54px;
+    padding: 10px 14px;
+    font-size: 19px;
+    font-weight: 700;
+    border-radius: 16px;
+    border: 2px solid var(--sb-line);
+    background: var(--sb-card);
+    color: var(--sb-ink);
+    cursor: pointer;
+    font-family: inherit;
+}
+#sortGame .sb-btn-main { background: #2563eb; border-color: #1d4ed8; color: #fff; }
+
+#sortGame .sb-fx { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+#sortGame .sb-spark {
+    position: absolute;
+    bottom: 10%;
+    font-size: 30px;
+    animation: sbRise 1.2s ease-out forwards;
+}
+@keyframes sbRise {
+    from { transform: translateY(0) scale(.6); opacity: 1; }
+    to { transform: translateY(-55vh) scale(1.1); opacity: 0; }
+}
+
+/* ----- شاشات صغيرة ----- */
+@media (max-width: 420px) {
+    #sortGame .sb-wrap { padding: 10px 10px 22px; }
+    #sortGame .sb-title { font-size: 19px; }
+    #sortGame .sb-item-zone { min-height: 150px; }
+    #sortGame .sb-item .sb-emoji, #sortGame .sb-sample .sb-emoji { font-size: 78px; }
+    #sortGame .sb-baskets { gap: 8px; }
+    #sortGame .sb-basket { min-height: 128px; padding: 10px 4px 8px; }
+    #sortGame .sb-basket-t { font-size: 14px; }
+    #sortGame .sb-basket-ex { font-size: 30px; }
+    #sortGame .sb-emoji { font-size: 54px; }
+    #sortGame .sb-word { font-size: 17px; }
+    #sortGame .sb-choice { min-height: 120px; }
+}
+
+/* ----- السبورة الكبيرة ----- */
+@media (min-width: 1100px) {
+    #sortGame .sb-wrap { max-width: 1200px; }
+    #sortGame .sb-item .sb-emoji, #sortGame .sb-sample .sb-emoji { font-size: 120px; }
+    #sortGame .sb-item, #sortGame .sb-sample { min-width: 220px; min-height: 200px; }
+    #sortGame .sb-emoji { font-size: 84px; }
+    #sortGame .sb-word { font-size: 24px; }
+    #sortGame .sb-basket { min-height: 190px; }
+    #sortGame .sb-basket-ex { font-size: 48px; }
+    #sortGame .sb-basket-t { font-size: 22px; }
+    #sortGame .sb-choice { min-height: 180px; }
+    #sortGame .sb-title { font-size: 28px; }
+    #sortGame .sb-msg { font-size: 22px; }
+}
+
+/* ----- الوضع الأفقي القصير (جوال أفقي) ----- */
+@media (orientation: landscape) and (max-height: 520px) {
+    #sortGame .sb-wrap { padding: 8px 12px 12px; min-height: 0; }
+    #sortGame .sb-top { margin-bottom: 4px; }
+    #sortGame .sb-title { font-size: 18px; }
+    #sortGame .sb-prompt { margin: 0 0 4px; font-size: 15px; }
+    #sortGame .sb-stage[data-type="basket"] {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 12px;
+        align-items: center;
+    }
+    #sortGame .sb-item-zone { min-height: 0; }
+    #sortGame .sb-item, #sortGame .sb-sample { min-width: 150px; min-height: 130px; }
+    #sortGame .sb-item .sb-emoji, #sortGame .sb-sample .sb-emoji { font-size: 64px; }
+    #sortGame .sb-basket { min-height: 110px; padding: 6px 4px; }
+    #sortGame .sb-basket-ex { font-size: 28px; }
+    #sortGame .sb-basket-items { min-height: 20px; font-size: 18px; }
+    #sortGame .sb-stage[data-type="match"] { display: grid; grid-template-columns: 190px 1fr; gap: 12px; align-items: center; }
+    #sortGame .sb-cards.sb-odd-grid { grid-template-columns: repeat(4, 1fr); }
+    #sortGame .sb-emoji { font-size: 46px; }
+    #sortGame .sb-choice { min-height: 96px; }
+    #sortGame .sb-msg { min-height: 22px; margin-top: 4px; font-size: 15px; }
+    #sortGame .sb-pack { min-height: 130px; }
+    #sortGame .sb-stage-btn { min-height: 100px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #sortGame .sb-card, #sortGame .sb-basket { transition: none; }
+    #sortGame .sb-shake, #sortGame .sb-spark { animation: none; }
+}
+
+/* أثناء اللعب: ارتفاع كافٍ ليتمكن المتصفح من رفع منطقة اللعبة إلى أعلى الشاشة */
+#sortGame[data-view="play"] .sb-wrap { min-height: 100vh; }

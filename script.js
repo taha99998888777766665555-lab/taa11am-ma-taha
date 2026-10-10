@@ -27561,3 +27561,837 @@ window.zoo = zoo;
         }
     });
 })();
+
+/* =========================================================
+   🧺 سلال الفرز — لعبة تصنيف مستقلة (قسم الألعاب)
+   ---------------------------------------------------------
+   فكرتها: يرى الطفل صورة ويسمع اسمها (ملف MP3 محلي موجود أصلًا)
+   ثم يضعها مع أشباهها: فواكه، حيوانات، مركبات، ملابس...
+   تبني مفهوم «الفئة» نفسه عبر مجالات مختلفة (لا تكرر «بيت الحيوان»
+   الذي يخص موطن الحيوان فقط).
+
+   • ٤ حزم × ٥ مراحل: من يشبهني؟ ← سلتان ← ثلاث سلال ← من لا ينتمي؟ ← الإتقان.
+   • بلا مؤقت ولا أرواح ولا عقاب: الإجابة الخاطئة تُخفِت الخيار، وبعد
+     خطأين يُبرَز الصحيح، وبعد ثلاثة يُوضَع بهدوء (ولا يُحتسب من أول مرة).
+   • الصوت: أسماء الكلمات والعبارات المسجَّلة فقط عبر EduAudio — لا نطق آلي،
+     ولا تسجيلات جديدة. نصوص السلال مكتوبة فقط.
+   • التقدّم: taha_sortbaskets_v1 (معزول لكل طالب تلقائيًا عبر StudentStore).
+   • المكافآت: نجمة واحدة لأول إكمال لكل مرحلة، ونجمتان لأول إتقان لكل حزمة؛
+     إعادة المرحلة لا تمنح نجومًا.
+   • التصنيف مُراجَع: استُبعد كل عنصر ملتبس (رمز يحتمل أكثر من فئة).
+   • معزولة بالكامل داخل دالة واحدة، ولا تغلّف showScreen ولا تعدّل أي لعبة.
+========================================================= */
+
+(function () {
+    "use strict";
+
+    const SB_KEY = "taha_sortbaskets_v1";
+    const SB_BACKUP_KEY = "taha_sortbaskets_v1_corrupt_backup";
+    const SB_SCREEN = "sortGame";
+    const SB_PASS = 6;   /* الإتقان: ٦ من ٨ من أول مرة */
+
+    /* ---------------- التصنيف (كلمة + رمز) ----------------
+       كل كلمة لها ملف MP3 محلي. المستبعد لالتباسه (لا يدخل اللعبة):
+       يد ✋ (إشارة)، بيت 🏠 (يلتبس مع أشياء البيت)، قصر/مسجد/مدرسة/خيمة/جسر
+       (فئة أماكن ملتبسة وقليلة)، تاج 👑، ظرف ✉️، قلب ❤️، ثوم 🧄، ساعة ⏰،
+       صحن 🍽️، صندوق 📦، ثلج ❄️، عصير 🧃. */
+    const SB_CATS = {
+        animals:  { t: "حيوانات",      ex: "🦁", col: "#f97316", items: "أرنب🐰 أسد🦁 أخطبوط🐙 بطة🦆 بقرة🐄 تمساح🐊 ثعلب🦊 ثعبان🐍 جمل🐪 حصان🐎 حوت🐳 خروف🐑 دجاجة🐔 دب🐻 ديك🐓 دلفين🐬 ذئب🐺 زرافة🦒 سمكة🐟 ضفدع🐸 طاووس🦚 عصفور🐦 غوريلا🦍 فراشة🦋 فيل🐘 فأر🐭 قرد🐒 كلب🐶 نسر🦅 نحل🐝 نمر🐯" },
+        fruits:   { t: "فواكه",        ex: "🍎", col: "#ef4444", items: "أناناس🍍 برتقال🍊 بطيخ🍉 تفاح🍎 خوخ🍑 عنب🍇 فراولة🍓 كرز🍒 ليمون🍋 موز🍌" },
+        veg:      { t: "خضروات",       ex: "🥕", col: "#22c55e", items: "جزر🥕 خيار🥒 خس🥬" },
+        vehicles: { t: "مركبات",       ex: "🚗", col: "#3b82f6", items: "دراجة🚲 سفينة🚢 سيارة🚗 صاروخ🚀 طائرة✈️" },
+        clothes:  { t: "ملابس",        ex: "👕", col: "#a855f7", items: "حذاء👞 فستان👗 قميص👕 قفاز🧤" },
+        body:     { t: "جسم الإنسان",  ex: "👁️", col: "#ec4899", items: "أذن👂 عين👁️ لسان👅 ضرس🦷" },
+        school:   { t: "أدوات المدرسة", ex: "✏️", col: "#ca8a04", items: "قلم✏️ كتاب📘 دفتر📓 مقص✂️ حقيبة🎒" },
+        home:     { t: "أشياء البيت",  ex: "🛏️", col: "#0d9488", items: "سرير🛏️ كرسي🪑 باب🚪 لمبة💡 مفتاح🔑" },
+        sky:      { t: "في السماء",    ex: "☁️", col: "#0ea5e9", items: "شمس☀️ غيوم☁️ نجمة⭐ هلال🌙" },
+        plants:   { t: "نباتات",       ex: "🌳", col: "#16a34a", items: "شجرة🌳 نخلة🌴 زهرة🌸 وردة🌹 صبار🌵" },
+        food:     { t: "طعام وشراب",   ex: "🍞", col: "#d97706", items: "جبنة🧀 حليب🥛 خبز🍞 عسل🍯 كيك🎂 لحم🥩" }
+    };
+
+    /* فئتان لا تجتمعان في جولة واحدة (عنصر قد يصحّ في كلتيهما) */
+    const SB_AVOID = [["animals", "sky"], ["food", "fruits"], ["food", "veg"], ["plants", "veg"]];
+
+    const SB_PACKS = [
+        { id: "p1", t: "حيوانات وفواكه ومركبات", icon: "🦁", cats: ["animals", "fruits", "vehicles"] },
+        { id: "p2", t: "ملابس وجسمي ومدرستي",    icon: "👕", cats: ["clothes", "body", "school"] },
+        { id: "p3", t: "بيتي والطبيعة",           icon: "🛏️", cats: ["home", "plants", "sky"] },
+        { id: "p4", t: "فرز المحترفين",           icon: "🏅", cats: null }
+    ];
+
+    const SB_STAGES = [
+        { id: "s1", t: "من يشبهني؟",   icon: "🤝", kind: "match",   n: 5, prompt: "اختر الصورة التي تشبه الصورة الكبيرة" },
+        { id: "s2", t: "سلتان",         icon: "🧺", kind: "basket2", n: 6, prompt: "ضع الصورة في السلة المناسبة" },
+        { id: "s3", t: "ثلاث سلال",     icon: "🧺", kind: "basket3", n: 6, prompt: "ضع الصورة في السلة المناسبة" },
+        { id: "s4", t: "من لا ينتمي؟",  icon: "🔍", kind: "odd",     n: 5, prompt: "اختر الصورة التي لا تنتمي للمجموعة" },
+        { id: "s5", t: "الإتقان",       icon: "🏅", kind: "mastery", n: 8, prompt: "اختبر نفسك: صور متنوعة" }
+    ];
+
+    const SB_PRAISE = ["صحيح", "أحسنت يا بطل", "أحسنت، عمل رائع"];
+    const SB_STAGE_DONE = "أحسنت! أكملت المستوى بنجاح";
+    const SB_RETRY = "محاولة رائعة، لنحاول مرة أخرى";
+    const SB_LOCKED = "أكمل المستوى السابق أولًا لتفتح هذا المستوى";
+
+    /* تحليل نص الفئة إلى عناصر {w, e, c} */
+    Object.keys(SB_CATS).forEach(k => {
+        SB_CATS[k].id = k;
+        SB_CATS[k].list = SB_CATS[k].items.split(" ").map(s => {
+            const i = s.search(/[^؀-ۿ]/);
+            return { w: s.slice(0, i), e: s.slice(i), c: k };
+        });
+    });
+
+    function sbAvoid(a, b) {
+        return SB_AVOID.some(p => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a));
+    }
+
+    /* لا يدخل اللعبة عنصر بلا ملف صوت */
+    function sbPool(c) {
+        return SB_CATS[c].list.filter(it => typeof EduAudio === "undefined" ? true : EduAudio.has(it.w));
+    }
+
+    /* ---------------- عشوائية حتمية ---------------- */
+    function sbHash(s) {
+        let h = 2166136261;
+        for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+        return h >>> 0;
+    }
+    function sbRng(seed) {
+        let a = seed >>> 0;
+        return function () {
+            a = (a + 0x6D2B79F5) >>> 0;
+            let t = a;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+    function sbShuffle(arr, rnd) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(rnd() * (i + 1));
+            const t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
+    }
+
+    /* ---------------- التقدّم (آمن ضد القيم التالفة) ---------------- */
+    let sbMemo = null;
+    let sbMemoOnly = false;
+
+    function sbIsObj(x) { return !!x && typeof x === "object" && !Array.isArray(x); }
+    function sbClamp(n, a, b) { n = Number(n); if (!isFinite(n)) n = 0; return Math.max(a, Math.min(b, Math.floor(n))); }
+
+    function sbNormalize(raw) {
+        const out = { v: 1, packs: {}, last: null };
+        const rp = (sbIsObj(raw) && sbIsObj(raw.packs)) ? raw.packs : {};
+        SB_PACKS.forEach(p => {
+            const rpk = sbIsObj(rp[p.id]) ? rp[p.id] : {};
+            const rst = sbIsObj(rpk.stages) ? rpk.stages : {};
+            const o = { stages: {}, mastery: null };
+            SB_STAGES.forEach(s => {
+                const x = sbIsObj(rst[s.id]) ? rst[s.id] : {};
+                o.stages[s.id] = {
+                    done: x.done === true,
+                    stars: x.done === true ? sbClamp(x.stars, 0, 3) : 0,
+                    plays: sbClamp(x.plays, 0, 100000),
+                    rewarded: x.rewarded === true
+                };
+            });
+            const m = sbIsObj(rpk.mastery) ? rpk.mastery : {};
+            o.mastery = {
+                passed: m.passed === true,
+                best: sbClamp(m.best, 0, 8),
+                stars: sbClamp(m.stars, 0, 3),
+                attempts: sbClamp(m.attempts, 0, 100000),
+                rewarded: m.rewarded === true
+            };
+            out.packs[p.id] = o;
+        });
+        out.last = (sbIsObj(raw) && typeof raw.last === "string" && SB_PACKS.some(p => p.id === raw.last)) ? raw.last : null;
+        return out;
+    }
+
+    function sbLoad() {
+        if (sbMemoOnly && sbMemo) return sbMemo;
+        let rawStr = null;
+        try { rawStr = localStorage.getItem(SB_KEY); } catch (e) { rawStr = null; }
+        if (rawStr == null) return sbNormalize(null);
+        let parsed;
+        try { parsed = JSON.parse(rawStr); } catch (e) { parsed = undefined; }
+        if (!sbIsObj(parsed)) {
+            /* قيمة تالفة: نسخة احتياطية واحدة قبل أن يُكتب فوقها أي شيء */
+            try { if (localStorage.getItem(SB_BACKUP_KEY) == null) localStorage.setItem(SB_BACKUP_KEY, String(rawStr)); } catch (e) { /* لا شيء */ }
+            return sbNormalize(null);
+        }
+        return sbNormalize(parsed);
+    }
+
+    function sbSave(p) {
+        sbMemo = p;
+        try { localStorage.setItem(SB_KEY, JSON.stringify(p)); sbMemoOnly = false; }
+        catch (e) { sbMemoOnly = true; }
+    }
+
+    /* ---------------- أدوات DOM ---------------- */
+    function el(tag, cls, text) {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text != null) n.textContent = text;
+        return n;
+    }
+    function $q(id) { return document.getElementById(id); }
+    function num(n) { return (typeof arabicNumber === "function") ? arabicNumber(n) : String(n); }
+    function calmOrReduced() {
+        try {
+            if (document.body.classList.contains("calm-mode")) return true;
+            return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+        } catch (e) { return false; }
+    }
+
+    /* ---------------- الحالة ---------------- */
+    const sb = {
+        session: 0,
+        timers: [],
+        view: "map",
+        pack: null,
+        stage: null,
+        trials: [],
+        idx: -1,
+        first: 0,
+        busy: false,
+        bound: false
+    };
+
+    function sbActive() {
+        const s = $q(SB_SCREEN);
+        return !!(s && s.classList.contains("active"));
+    }
+
+    function sbClearTimers() {
+        sb.timers.forEach(t => clearTimeout(t));
+        sb.timers = [];
+    }
+
+    function sbTeardown() {
+        sb.session++;
+        sbClearTimers();
+        sb.busy = false;
+        try { if (typeof EduAudio !== "undefined") EduAudio.stop(); } catch (e) { /* لا شيء */ }
+        const fx = $q("sbFx"); if (fx) fx.innerHTML = "";
+        sbHideDone();
+    }
+
+    function sbLater(fn, ms) {
+        const session = sb.session;
+        const id = setTimeout(() => {
+            sb.timers = sb.timers.filter(t => t !== id);
+            if (session !== sb.session) return;
+            if (!sbActive()) { sbTeardown(); return; }
+            fn();
+        }, ms);
+        sb.timers.push(id);
+    }
+
+    function sbSay(what, done, maxMs) {
+        const session = sb.session;
+        let fired = false;
+        const fin = () => {
+            if (fired || session !== sb.session) return;
+            fired = true;
+            if (done) done();
+        };
+        if (typeof EduAudio === "undefined") { fin(); return; }
+        try { EduAudio.play(what, { mode: "interrupt", done: fin }); } catch (e) { fin(); return; }
+        if (done) sbLater(fin, maxMs || 3500);
+    }
+
+    /* ---------------- بناء الجولات ---------------- */
+    function sbStageCats(pack, count, rnd, plays) {
+        if (pack.cats) {
+            if (count >= pack.cats.length) return pack.cats.slice();
+            const pairs = [[0, 1], [1, 2], [0, 2]];
+            const pr = pairs[plays % 3];
+            return [pack.cats[pr[0]], pack.cats[pr[1]]];
+        }
+        const all = Object.keys(SB_CATS).filter(c => sbPool(c).length >= 3);
+        for (let a = 0; a < 60; a++) {
+            const pick = sbShuffle(all, rnd).slice(0, count);
+            let ok = true;
+            for (let i = 0; i < pick.length; i++) for (let j = i + 1; j < pick.length; j++) if (sbAvoid(pick[i], pick[j])) ok = false;
+            if (ok) return pick;
+        }
+        return all.slice(0, count);
+    }
+
+    function sbMakePicker(rnd) {
+        const used = new Set();
+        return function (c, exclude) {
+            let pool = sbPool(c).filter(it => !exclude || !exclude.has(it.w));
+            let fresh = pool.filter(it => !used.has(it.w));
+            if (!fresh.length) { pool.forEach(it => used.delete(it.w)); fresh = pool; }
+            const it = fresh[Math.floor(rnd() * fresh.length)];
+            used.add(it.w);
+            return it;
+        };
+    }
+
+    function sbBuildTrials(pack, stage, plays) {
+        const rnd = sbRng(sbHash(pack.id + ":" + stage.id) + plays * 7919 + 1);
+        const pick = sbMakePicker(rnd);
+        const cats3 = sbStageCats(pack, 3, rnd, plays);
+        const cats2 = sbStageCats(pack, 2, rnd, plays);
+        const trials = [];
+
+        function matchTrial(cats, k, three) {
+            const a = cats[k % cats.length];
+            const others = cats.filter(c => c !== a);
+            const sample = pick(a);
+            const same = pick(a, new Set([sample.w]));
+            const oc = others[k % others.length];
+            const other = pick(oc);
+            const choices = [same, other];
+            if (three) {
+                const o2 = others.find(c => c !== oc) || oc;
+                choices.push(pick(o2));
+            }
+            return { type: "match", cat: a, sample: sample, choices: sbShuffle(choices, rnd).map(x => ({ w: x.w, e: x.e, c: x.c, ok: x.c === a })) };
+        }
+        function oddTrial(cats, k) {
+            const x = cats[k % cats.length];
+            const ys = cats.filter(c => c !== x);
+            const y = ys[k % ys.length];
+            const same = [];
+            const ex = new Set();
+            for (let i = 0; i < 3; i++) { const it = pick(x, ex); ex.add(it.w); same.push(it); }
+            const odd = pick(y);
+            const cards = sbShuffle(same.concat([odd]), rnd).map(z => ({ w: z.w, e: z.e, c: z.c, ok: z.c === y }));
+            return { type: "odd", cat: x, oddCat: y, cards: cards };
+        }
+        function basketTrials(cats, per) {
+            const list = [];
+            cats.forEach(c => { for (let i = 0; i < per; i++) list.push(c); });
+            let order = sbShuffle(list, rnd);
+            /* لا ثلاث متتالية من الفئة نفسها */
+            for (let i = 2; i < order.length; i++) {
+                if (order[i] === order[i - 1] && order[i] === order[i - 2]) {
+                    const j = order.findIndex((c, q) => q > i && c !== order[i]);
+                    if (j > 0) { const t = order[i]; order[i] = order[j]; order[j] = t; }
+                }
+            }
+            return order.map(c => ({ type: "basket", cat: c, item: pick(c), baskets: cats.slice() }));
+        }
+
+        if (stage.kind === "match") {
+            for (let k = 0; k < stage.n; k++) trials.push(matchTrial(cats3, k, k >= 3));
+        } else if (stage.kind === "basket2") {
+            basketTrials(cats2, 3).forEach(t => trials.push(t));
+        } else if (stage.kind === "basket3") {
+            basketTrials(cats3, 2).forEach(t => trials.push(t));
+        } else if (stage.kind === "odd") {
+            for (let k = 0; k < stage.n; k++) trials.push(oddTrial(cats3, k));
+        } else {
+            const bt = basketTrials(cats3, 3);
+            const seq = ["basket", "odd", "match", "basket", "odd", "match", "basket", "odd"];
+            let b = 0, o = 0, m = 0;
+            seq.forEach(kind => {
+                if (kind === "basket") trials.push(bt[b++ % bt.length]);
+                else if (kind === "odd") trials.push(oddTrial(cats3, o++));
+                else trials.push(matchTrial(cats3, m++, true));
+            });
+        }
+        trials.forEach(t => { t.wrong = 0; t.firstTry = null; });
+        return trials;
+    }
+
+    /* ---------------- العروض ---------------- */
+    function sbShowView(v) {
+        sb.view = v;
+        ["sbMap", "sbStages", "sbPlay"].forEach(id => {
+            const n = $q(id);
+            if (n) n.classList.toggle("sb-hidden", id !== ("sb" + v.charAt(0).toUpperCase() + v.slice(1)));
+        });
+        const dots = $q("sbDots"); if (dots && v !== "play") dots.innerHTML = "";
+        const title = $q("sbTitle");
+        if (title) {
+            if (v === "map") title.textContent = "🧺 سلال الفرز";
+            else if (v === "stages" && sb.pack) title.textContent = sb.pack.icon + " " + sb.pack.t;
+            else if (v === "play" && sb.pack && sb.stage) title.textContent = sb.stage.icon + " " + sb.stage.t;
+        }
+        const root = $q(SB_SCREEN);
+        if (root) root.setAttribute("data-view", v);
+        try { window.scrollTo({ top: 0, behavior: "instant" }); } catch (e) { /* لا شيء */ }
+    }
+
+    /* أثناء اللعب: ارفع منطقة اللعبة إلى أعلى الشاشة فتظهر الصورة والسلال معًا بلا تمرير */
+    function sbScrollToGame() {
+        const run = () => {
+            try {
+                const root = $q(SB_SCREEN);
+                const wrap = root && root.querySelector(".sb-wrap");
+                if (!wrap || !sbActive()) return;
+                const top = Math.max(0, wrap.getBoundingClientRect().top + (window.pageYOffset || 0) - 6);
+                window.scrollTo({ top: top, behavior: "instant" });
+            } catch (e) { /* لا شيء */ }
+        };
+        run();
+        if (typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+    }
+
+    function sbStageLocked(prog, packId, stageId) {
+        const st = prog.packs[packId].stages;
+        const i = SB_STAGES.findIndex(s => s.id === stageId);
+        if (i <= 0) return false;
+        if (stageId === "s5") return !(st.s1.done && st.s2.done && st.s3.done && st.s4.done);
+        return !st[SB_STAGES[i - 1].id].done;
+    }
+
+    function sbPackSummary(prog, pack) {
+        const pr = prog.packs[pack.id];
+        let done = 0, stars = 0;
+        SB_STAGES.forEach(s => { if (pr.stages[s.id].done) { done++; stars += pr.stages[s.id].stars; } });
+        return { done: done, total: SB_STAGES.length, stars: stars, mastered: pr.mastery.passed };
+    }
+
+    function sbRenderMap() {
+        const box = $q("sbMap");
+        if (!box) return;
+        box.innerHTML = "";
+        const prog = sbLoad();
+        const intro = el("p", "sb-intro", "ضع كل صورة مع ما يشبهها 🧺");
+        box.appendChild(intro);
+        const grid = el("div", "sb-pack-grid");
+        grid.setAttribute("role", "list");
+        let recommended = null;
+        SB_PACKS.forEach(p => { if (!recommended && !sbPackSummary(prog, p).mastered) recommended = p.id; });
+        SB_PACKS.forEach(p => {
+            const sum = sbPackSummary(prog, p);
+            const b = el("button", "sb-pack" + (sum.mastered ? " sb-mastered" : "") + (p.id === recommended ? " sb-recommended" : ""));
+            b.type = "button";
+            b.setAttribute("role", "listitem");
+            b.setAttribute("data-pack", p.id);
+            b.setAttribute("aria-label", p.t + "، " + num(sum.done) + " من " + num(sum.total) + " مراحل" + (sum.mastered ? "، متقن" : ""));
+            b.appendChild(el("span", "sb-pack-icon", p.icon));
+            b.appendChild(el("span", "sb-pack-title", p.t));
+            const ex = el("span", "sb-pack-ex");
+            (p.cats || ["animals", "fruits", "vehicles", "clothes", "sky"]).forEach(c => ex.appendChild(el("span", null, SB_CATS[c].ex)));
+            b.appendChild(ex);
+            const meta = el("span", "sb-pack-meta", num(sum.done) + " من " + num(sum.total) + " مراحل");
+            b.appendChild(meta);
+            if (sum.mastered) b.appendChild(el("span", "sb-badge", "🏅 متقَن"));
+            else if (p.id === recommended) b.appendChild(el("span", "sb-badge sb-badge-next", "ابدأ من هنا"));
+            b.addEventListener("click", () => sbOpenPack(p.id));
+            grid.appendChild(b);
+        });
+        box.appendChild(grid);
+    }
+
+    function sbStars(n) { return "★".repeat(n) + "☆".repeat(3 - n); }
+
+    function sbRenderStages() {
+        const box = $q("sbStages");
+        if (!box || !sb.pack) return;
+        box.innerHTML = "";
+        const prog = sbLoad();
+        const pr = prog.packs[sb.pack.id];
+        const cats = el("div", "sb-cat-row");
+        (sb.pack.cats || Object.keys(SB_CATS)).forEach(c => {
+            const chip = el("span", "sb-cat-chip");
+            chip.style.setProperty("--c", SB_CATS[c].col);
+            chip.textContent = SB_CATS[c].ex + " " + SB_CATS[c].t;
+            cats.appendChild(chip);
+        });
+        box.appendChild(cats);
+        const list = el("div", "sb-stage-list");
+        let next = null;
+        SB_STAGES.forEach(s => { if (!next && !pr.stages[s.id].done && !sbStageLocked(prog, sb.pack.id, s.id)) next = s.id; });
+        SB_STAGES.forEach((s, i) => {
+            const st = pr.stages[s.id];
+            const locked = sbStageLocked(prog, sb.pack.id, s.id);
+            const b = el("button", "sb-stage-btn" + (st.done ? " sb-done-stage" : "") + (locked ? " sb-locked" : "") + (s.id === next ? " sb-recommended" : ""));
+            b.type = "button";
+            b.setAttribute("data-stage", s.id);
+            if (locked) b.setAttribute("aria-disabled", "true");
+            b.setAttribute("aria-label", s.t + (locked ? "، مقفلة" : st.done ? "، مكتملة" : ""));
+            b.appendChild(el("span", "sb-stage-num", num(i + 1)));
+            b.appendChild(el("span", "sb-stage-ico", locked ? "🔒" : s.icon));
+            b.appendChild(el("span", "sb-stage-name", s.t));
+            b.appendChild(el("span", "sb-stage-stars", st.done ? sbStars(st.stars) : (locked ? "" : "جديدة")));
+            b.addEventListener("click", () => {
+                if (locked) {
+                    b.classList.remove("sb-shake"); void b.offsetWidth; b.classList.add("sb-shake");
+                    sbSay(SB_LOCKED);
+                    return;
+                }
+                sbStart(sb.pack.id, s.id);
+            });
+            list.appendChild(b);
+        });
+        box.appendChild(list);
+        if (pr.mastery.passed) box.appendChild(el("p", "sb-mastery-note", "🏅 أتقنتَ هذه الحزمة"));
+    }
+
+    function sbOpenPack(packId) {
+        sbTeardown();
+        sb.pack = SB_PACKS.find(p => p.id === packId) || SB_PACKS[0];
+        sb.stage = null;
+        const prog = sbLoad(); prog.last = sb.pack.id; sbSave(prog);
+        sbShowView("stages");
+        sbRenderStages();
+    }
+
+    /* ---------------- اللعب ---------------- */
+    function sbStart(packId, stageId) {
+        sbTeardown();
+        sb.pack = SB_PACKS.find(p => p.id === packId);
+        sb.stage = SB_STAGES.find(s => s.id === stageId);
+        if (!sb.pack || !sb.stage) return;
+        const prog = sbLoad();
+        const st = prog.packs[sb.pack.id].stages[sb.stage.id];
+        const plays = st.plays;
+        st.plays = plays + 1;
+        prog.last = sb.pack.id;
+        sbSave(prog);
+        sb.trials = sbBuildTrials(sb.pack, sb.stage, plays);
+        sb.idx = -1;
+        sb.first = 0;
+        sbShowView("play");
+        const pr = $q("sbPrompt"); if (pr) pr.textContent = sb.stage.prompt;
+        sbNextTrial();
+    }
+
+    function sbRenderDots() {
+        const d = $q("sbDots");
+        if (!d) return;
+        d.innerHTML = "";
+        sb.trials.forEach((t, i) => {
+            const dot = el("span", "sb-dot" + (t.firstTry === true ? " sb-dot-ok" : t.firstTry === false ? " sb-dot-help" : "") + (i === sb.idx ? " sb-dot-now" : ""));
+            d.appendChild(dot);
+        });
+        d.setAttribute("aria-label", "الجولة " + num(Math.min(sb.idx + 1, sb.trials.length)) + " من " + num(sb.trials.length));
+    }
+
+    function sbSetMsg(text) { const m = $q("sbMsg"); if (m) m.textContent = text || ""; }
+
+    function sbNextTrial() {
+        if (!sbActive()) { sbTeardown(); return; }
+        sb.idx++;
+        sb.busy = false;
+        if (sb.idx >= sb.trials.length) { sbFinish(); return; }
+        sbRenderDots();
+        sbSetMsg("");
+        const t = sb.trials[sb.idx];
+        const area = $q("sbStageArea");
+        if (!area) return;
+        area.innerHTML = "";
+        area.setAttribute("data-type", t.type);
+        if (t.type === "basket") sbRenderBasket(area, t);
+        else if (t.type === "match") sbRenderMatch(area, t);
+        else sbRenderOdd(area, t);
+        if (sb.idx === 0) sbScrollToGame();
+    }
+
+    function sbCard(it, cls) {
+        const b = el("button", "sb-card " + (cls || ""));
+        b.type = "button";
+        b.setAttribute("data-word", it.w);
+        b.setAttribute("aria-label", it.w);
+        b.appendChild(el("span", "sb-emoji", it.e));
+        b.appendChild(el("span", "sb-word", it.w));
+        return b;
+    }
+
+    function sbRenderBasket(area, t) {
+        const item = sbCard(t.item, "sb-item");
+        item.appendChild(el("span", "sb-speaker", "🔊"));
+        item.addEventListener("click", () => { if (!sb.busy) sbSay(t.item.w); });
+        const zone = el("div", "sb-item-zone");
+        zone.appendChild(item);
+        area.appendChild(zone);
+        const row = el("div", "sb-baskets sb-n" + t.baskets.length);
+        t.baskets.forEach(c => {
+            const cat = SB_CATS[c];
+            const b = el("button", "sb-basket");
+            b.type = "button";
+            b.setAttribute("data-cat", c);
+            b.setAttribute("aria-label", "سلة " + cat.t);
+            b.style.setProperty("--c", cat.col);
+            b.appendChild(el("span", "sb-basket-ex", cat.ex));
+            b.appendChild(el("span", "sb-basket-t", cat.t));
+            b.appendChild(el("span", "sb-basket-items"));
+            b.addEventListener("click", () => sbAnswerBasket(t, c, b, item));
+            row.appendChild(b);
+        });
+        area.appendChild(row);
+        sbSay(t.item.w);
+    }
+
+    function sbRenderMatch(area, t) {
+        const top = el("div", "sb-item-zone");
+        const sample = sbCard(t.sample, "sb-sample");
+        sample.addEventListener("click", () => { if (!sb.busy) sbSay(t.sample.w); });
+        top.appendChild(sample);
+        area.appendChild(top);
+        const row = el("div", "sb-cards sb-n" + t.choices.length);
+        t.choices.forEach(ch => {
+            const c = sbCard(ch, "sb-choice");
+            c.addEventListener("click", () => sbAnswerCard(t, ch, c, row));
+            row.appendChild(c);
+        });
+        area.appendChild(row);
+        sbSay(t.sample.w);
+    }
+
+    function sbRenderOdd(area, t) {
+        const row = el("div", "sb-cards sb-odd-grid");
+        t.cards.forEach(ch => {
+            const c = sbCard(ch, "sb-choice");
+            c.addEventListener("click", () => sbAnswerCard(t, ch, c, row));
+            row.appendChild(c);
+        });
+        area.appendChild(row);
+    }
+
+    function sbPraiseFor(t) {
+        return t.firstTry ? SB_PRAISE[sb.idx % SB_PRAISE.length] : SB_PRAISE[0];
+    }
+
+    function sbResolve(t, msg) {
+        /* تم حل الجولة (صحيحة أو بمساعدة): ثبّت النتيجة وانتقل */
+        sb.busy = true;
+        t.firstTry = t.wrong === 0;
+        if (t.firstTry) sb.first++;
+        sbRenderDots();
+        sbSetMsg(msg);
+        const praise = sbPraiseFor(t);
+        sbLater(() => sbSay(praise, () => sbNextTrial(), 2600), calmOrReduced() ? 120 : 520);
+    }
+
+    function sbAnswerBasket(t, catId, btn, itemEl) {
+        if (sb.busy || btn.getAttribute("aria-disabled") === "true") return;
+        if (catId === t.cat) {
+            sb.busy = true;
+            btn.classList.add("sb-right");
+            const reduced = calmOrReduced();
+            if (!reduced) {
+                try {
+                    const a = itemEl.getBoundingClientRect(), b = btn.getBoundingClientRect();
+                    const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+                    const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+                    itemEl.style.transition = "transform .38s ease, opacity .38s ease";
+                    itemEl.style.transform = "translate(" + dx + "px," + dy + "px) scale(.3)";
+                    itemEl.style.opacity = "0";
+                } catch (e) { /* لا شيء */ }
+            }
+            sbLater(() => {
+                const holder = btn.querySelector(".sb-basket-items");
+                if (holder && holder.children.length < 6) holder.appendChild(el("span", "sb-chip", t.item.e));
+                itemEl.style.visibility = "hidden";
+                btn.classList.add("sb-pop");
+                sb.busy = false;
+                sbResolve(t, "✅ " + t.item.w + " من " + SB_CATS[t.cat].t);
+            }, reduced ? 40 : 400);
+        } else {
+            t.wrong++;
+            btn.classList.add("sb-tried");
+            btn.setAttribute("aria-disabled", "true");
+            btn.classList.remove("sb-shake"); void btn.offsetWidth; btn.classList.add("sb-shake");
+            sbSetMsg("جرّب سلة أخرى 🙂");
+            sbSay(t.item.w);
+            sbHelpBasket(t, itemEl);
+        }
+    }
+
+    function sbHelpBasket(t, itemEl) {
+        const area = $q("sbStageArea");
+        if (!area) return;
+        const right = area.querySelector('.sb-basket[data-cat="' + t.cat + '"]');
+        if (t.wrong >= 2 && right) right.classList.add("sb-hint");
+        if (t.wrong >= 3 && right) {
+            /* وضع هادئ بالمساعدة: لا يُحتسب من أول مرة */
+            sbAnswerBasketAssisted(t, right, itemEl);
+        }
+    }
+
+    function sbAnswerBasketAssisted(t, right, itemEl) {
+        sb.busy = true;
+        right.classList.add("sb-right");
+        sbLater(() => {
+            const holder = right.querySelector(".sb-basket-items");
+            if (holder && holder.children.length < 6) holder.appendChild(el("span", "sb-chip", t.item.e));
+            itemEl.style.visibility = "hidden";
+            right.classList.add("sb-pop");
+            sb.busy = false;
+            sbResolve(t, "✅ " + t.item.w + " من " + SB_CATS[t.cat].t);
+        }, 300);
+    }
+
+    function sbAnswerCard(t, ch, btn, row) {
+        if (sb.busy || btn.getAttribute("aria-disabled") === "true") return;
+        if (ch.ok) {
+            sb.busy = true;
+            btn.classList.add("sb-right");
+            const m = t.type === "match"
+                ? "✅ كلاهما من " + SB_CATS[t.cat].t
+                : "✅ " + ch.w + " ليس من " + SB_CATS[t.cat].t;
+            sbResolve(t, m);
+        } else {
+            t.wrong++;
+            btn.classList.add("sb-faded");
+            btn.setAttribute("aria-disabled", "true");
+            btn.classList.remove("sb-shake"); void btn.offsetWidth; btn.classList.add("sb-shake");
+            sbSetMsg("جرّب صورة أخرى 🙂");
+            sbSay(ch.w);
+            const right = Array.prototype.find.call(row.children, c => {
+                const w = c.getAttribute("data-word");
+                return (t.type === "match" ? t.choices : t.cards).some(x => x.w === w && x.ok);
+            });
+            if (t.wrong >= 2 && right) right.classList.add("sb-hint");
+            if (t.wrong >= 3 && right) {
+                sb.busy = true;
+                right.classList.add("sb-right");
+                sbLater(() => { sb.busy = false; sbResolve(t, "✅ هذه هي الإجابة"); }, 300);
+            }
+        }
+    }
+
+    /* ---------------- نهاية المرحلة والمكافأة ---------------- */
+    function sbStarsFor(first, total) {
+        const r = total ? first / total : 0;
+        return r >= 0.9 ? 3 : (r >= 0.7 ? 2 : 1);
+    }
+
+    function sbFinish() {
+        const total = sb.trials.length;
+        const first = sb.first;
+        const prog = sbLoad();
+        const pr = prog.packs[sb.pack.id];
+        const st = pr.stages[sb.stage.id];
+        const isMastery = sb.stage.kind === "mastery";
+        const passed = !isMastery || first >= SB_PASS;
+        const stars = sbStarsFor(first, total);
+        let award = 0;
+
+        if (isMastery) {
+            pr.mastery.attempts++;
+            if (first > pr.mastery.best) pr.mastery.best = first;
+        }
+        if (passed) {
+            st.done = true;
+            if (stars > st.stars) st.stars = stars;
+            if (!st.rewarded) { st.rewarded = true; award += 1; }
+            if (isMastery) {
+                pr.mastery.passed = true;
+                if (stars > pr.mastery.stars) pr.mastery.stars = stars;
+                if (!pr.mastery.rewarded) { pr.mastery.rewarded = true; award += 2; }
+            }
+        }
+        /* احفظ أولًا ثم امنح النجوم: لو تعذّر الحفظ لا تتكرر المكافأة لاحقًا */
+        sbSave(prog);
+        if (award > 0) { try { if (typeof addStars === "function") addStars(award); } catch (e) { /* لا شيء */ } }
+        if (passed) {
+            try {
+                if (typeof StudentData !== "undefined" && StudentData.logEvent) {
+                    StudentData.logEvent({ type: "activity_complete", subject: "games", skill: "sort_" + sb.pack.id, activity: "stage_" + sb.stage.id, correct: null });
+                }
+            } catch (e) { /* لا شيء */ }
+        }
+        sbShowDone({ passed: passed, stars: stars, first: first, total: total, award: award, isMastery: isMastery });
+    }
+
+    function sbHideDone() {
+        const d = $q("sbDone");
+        if (d) d.classList.add("sb-hidden");
+        const w = $q(SB_SCREEN);
+        if (w) w.querySelectorAll(".sb-top,.sb-view").forEach(n => { try { n.inert = false; } catch (e) { /* لا شيء */ } });
+    }
+
+    function sbConfetti() {
+        if (calmOrReduced()) return;
+        const fx = $q("sbFx");
+        if (!fx) return;
+        fx.innerHTML = "";
+        for (let i = 0; i < 8; i++) {
+            const s = el("span", "sb-spark", "⭐");
+            s.style.left = (8 + i * 11) + "%";
+            s.style.animationDelay = (i * 0.07) + "s";
+            fx.appendChild(s);
+        }
+        sbLater(() => { fx.innerHTML = ""; }, 1600);
+    }
+
+    function sbShowDone(r) {
+        const d = $q("sbDone");
+        if (!d) return;
+        const prog = sbLoad();
+        const nextStage = (() => {
+            const i = SB_STAGES.findIndex(s => s.id === sb.stage.id);
+            const n = SB_STAGES[i + 1];
+            return (n && !sbStageLocked(prog, sb.pack.id, n.id)) ? n : null;
+        })();
+        const title = r.passed ? (r.isMastery ? "🏅 أتقنتَ هذه الحزمة!" : "🌟 أحسنت يا بطل!") : "💪 قريب جدًا!";
+        const body = r.passed
+            ? "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة"
+            : "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة. نتدرّب قليلًا ثم نحاول مرة أخرى";
+        $q("sbDoneTitle").textContent = title;
+        $q("sbDoneBody").textContent = body;
+        $q("sbDoneStars").textContent = r.passed ? sbStars(r.stars) : "";
+        $q("sbDoneReward").textContent = r.award > 0 ? "⭐ ربحتَ " + num(r.award) + (r.award === 1 ? " نجمة" : " نجوم") : "";
+        const acts = $q("sbDoneActs");
+        acts.innerHTML = "";
+        const mk = (label, cls, fn) => { const b = el("button", cls, label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; };
+        let primary;
+        if (r.passed && nextStage) primary = mk("▶ " + nextStage.t, "sb-btn sb-btn-main", () => sbStart(sb.pack.id, nextStage.id));
+        else if (!r.passed) primary = mk("🔁 أعد المحاولة", "sb-btn sb-btn-main", () => sbStart(sb.pack.id, sb.stage.id));
+        else primary = mk("🗺️ الحزم", "sb-btn sb-btn-main", () => sbGoMap());
+        if (r.passed) mk("🔁 إعادة", "sb-btn", () => sbStart(sb.pack.id, sb.stage.id));
+        mk("📋 المراحل", "sb-btn", () => { sbTeardown(); sbShowView("stages"); sbRenderStages(); });
+        d.classList.remove("sb-hidden");
+        const w = $q(SB_SCREEN);
+        if (w) w.querySelectorAll(".sb-top,.sb-view").forEach(n => { try { n.inert = true; } catch (e) { /* لا شيء */ } });
+        sbConfetti();
+        sbSay(r.passed ? SB_STAGE_DONE : SB_RETRY);
+        try { primary.focus(); } catch (e) { /* لا شيء */ }
+    }
+
+    /* ---------------- التنقل ---------------- */
+    function sbGoMap() {
+        sbTeardown();
+        sbShowView("map");
+        sbRenderMap();
+    }
+
+    function sbBack() {
+        if (sb.view === "play") { sbTeardown(); sbShowView("stages"); sbRenderStages(); return; }
+        if (sb.view === "stages") { sbGoMap(); return; }
+        sbTeardown();
+        showScreen("games");
+    }
+
+    function sbBind() {
+        if (sb.bound) return;
+        sb.bound = true;
+        const back = $q("sbBack");
+        if (back) back.addEventListener("click", sbBack);
+    }
+
+    function openSortGame() {
+        sbBind();
+        sbTeardown();
+        showScreen(SB_SCREEN);
+        sbShowView("map");
+        sbRenderMap();
+    }
+
+    window.openSortGame = openSortGame;
+    /* واجهة قراءة للاختبارات فقط */
+    window.SortBaskets = {
+        _state: sb, _cats: SB_CATS, _packs: SB_PACKS, _stages: SB_STAGES, _avoid: SB_AVOID,
+        _load: sbLoad, _normalize: sbNormalize, _build: sbBuildTrials, _pool: sbPool, _key: SB_KEY,
+        _praise: SB_PRAISE, _lines: [SB_STAGE_DONE, SB_RETRY, SB_LOCKED]
+    };
+})();
+
+/* =========================================================
+   🔚 نهاية لعبة «سلال الفرز»
+========================================================= */
