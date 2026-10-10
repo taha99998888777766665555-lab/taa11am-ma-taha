@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v8";
+const CACHE_VERSION = "taha-app-v9";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -24,10 +24,23 @@ const APP_SHELL = [
 
 self.addEventListener("install", event => {
 
+    /* cache: "reload" يتجاوز كاش المتصفح (HTTP) فلا تُخزَّن نسخة قديمة من
+       script.js أو style.css بجانب index.html جديد عند التحديث */
     event.waitUntil(
         caches
             .open(CACHE_NAME)
-            .then(cache => cache.addAll(APP_SHELL))
+            .then(cache =>
+                Promise.all(
+                    APP_SHELL.map(url =>
+                        fetch(new Request(url, { cache: "reload" })).then(response => {
+                            if (!response || !response.ok) {
+                                throw new Error("bad response for " + url);
+                            }
+                            return cache.put(url, response);
+                        })
+                    )
+                )
+            )
             .catch(() => {})
     );
 

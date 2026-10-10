@@ -6560,20 +6560,35 @@ const RACE_WORD_BANK = {
     },
 };
 /* =========================================================
-   🏎️ سباق الحروف — نسخة احترافية هادئة (SEN-friendly)
+   🏎️ سباق الحروف ٢ — مستوى مستقل لكل حرف (SEN-friendly)
    =========================================================
-   كلمة ناقص منها حرف ← بوابات بأشكال الحرف الصحيحة (منفصل/
-   أول/وسط/آخر) حسب موقعه الفعلي داخل الكلمة. 4 مستويات
-   (مطابقة LETTER_LEVEL_GROUPS تمامًا، بلا خلط بين مجموعاتها)،
-   7 جولات بكل مستوى (حرف واحد لكل حرف من حروف المجموعة)،
-   بتدرّج صعوبة داخلي حقيقي (عدد البوابات + نوع المشتتات).
-   بلا مؤقت إجباري يقطع الجولة، بلا أرواح، بلا عقاب. بيانات
-   الكلمات ثابتة بالكامل (RACE_WORD_BANK)، مُتحقَّقة برمجيًا
-   مسبقًا — لا اختيار عشوائي للكلمات نفسها، فقط اختيار الجولة
-   يُحدِّد أي كلمة من القائمة الثابتة لذلك الحرف/الموضع تُستخدَم.
+   لكل حرف مسار مراحل متدرّج:
+     ١ اسمع الحرف  ← ٢ اعرف شكله  ← ٣ اكتشفه في كلمات
+     ← (أول الكلمة ← وسطها ← آخرها) أو (منفصل ← آخر) للحروف التي لا تتصل
+     ← اختبار الإتقان (٦ جولات، يُتقَن بـ ٥ من ٦ من أول محاولة)
+   • اختيار الكلمات ثابت ومحدَّد بالترتيب (RACE_WORD_BANK) ويتناوب مع
+     عدد مرات اللعب، لا عشوائية تعليمية؛ والكلمة لا تدخل إلا إذا تحقّق
+     برمجيًا أن الحرف يقع فعلًا في الموضع المطلوب ولها تسجيل صوتي.
+   • بلا مؤقت يقطع الجولة ولا أرواح ولا عقاب: الخطأ يُخفِت البوابة
+     الخاطئة، وبعد خطأين تُضيء الصحيحة (تعلّم بلا خطأ).
+   • الصوت: ملفات MP3 المحلية فقط عبر EduAudio، صوت واحد في اللحظة
+     (كل جولة تقاطع ما قبلها)، ولا يبدأ التالي قبل انتهاء التشجيع.
+   • التقدّم محفوظ لكل حرف ولكل مرحلة (taha_letterrace_v2).
    ========================================================= */
 
 const RACE_NON_CONNECTORS = new Set(["أ", "إ", "آ", "ا", "د", "ذ", "ر", "ز", "و"]);
+const RACE_BREAKERS = new Set(["أ", "إ", "آ", "ا", "د", "ذ", "ر", "ز", "و", "ء", "ؤ"]);
+const RACE_ALPHABET = ["أ","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","ه","و","ي"];
+const RACE_STORAGE_KEY = "taha_letterrace_v2";
+const RACE_MASTERY_PASS = 5;
+
+const RACE_POSITION_TITLES = {
+    initial: "الحرف في أول الكلمة",
+    medial: "الحرف في وسط الكلمة",
+    final: "الحرف في آخر الكلمة",
+    isolated: "الحرف منفصلًا"
+};
+const RACE_POSITION_ICONS = { initial: "▶️", medial: "⏺️", final: "⏹️", isolated: "🔹" };
 
 function raceValidPositionsForLetter(letter) {
     if (RACE_NON_CONNECTORS.has(letter)) return ["isolated", "final"];
@@ -6586,11 +6601,237 @@ function raceShapeForLetterAtPosition(letter, position) {
     return forms[position] || forms.isolated || letter;
 }
 
+/* موضع حرف بعينه داخل كلمة (يُحسب من اتصال الحروف الفعلي) */
+function raceOccurrencePosition(word, i) {
+    const ch = word[i];
+    const prev = i > 0 ? word[i - 1] : "";
+    const next = i < word.length - 1 ? word[i + 1] : "";
+    const connectsBack = !!prev && /^[ء-ي]$/.test(prev) && !RACE_BREAKERS.has(prev);
+    const connectsForward = !!next && /^[ء-ي]$/.test(next) && !RACE_BREAKERS.has(ch);
+    if (connectsBack && connectsForward) return "medial";
+    if (connectsBack) return "final";
+    if (connectsForward) return "initial";
+    return "isolated";
+}
+
+function raceFindOccurrence(word, letter, position) {
+    for (let i = 0; i < word.length; i++) {
+        if (word[i] === letter && raceOccurrencePosition(word, i) === position) return i;
+    }
+    return -1;
+}
+
+/* كلمات صالحة بترتيب البنك الثابت: الحرف فعلًا في الموضع، ولها تسجيل، ولا يتكرر
+   الحرف المطلوب في الكلمة (وإلا ظهر الحرف المخفي في مكان آخر منها وانكشفت الإجابة) */
+function raceValidWords(letter, position) {
+    const list = (RACE_WORD_BANK[letter] && RACE_WORD_BANK[letter][position]) || [];
+    return list.filter(w =>
+        raceFindOccurrence(w, letter, position) >= 0 &&
+        Array.from(w).filter(c => c === letter).length === 1 &&
+        EduAudio.has(w));
+}
+
+function racePickWord(letter, position, offset, used) {
+    const list = raceValidWords(letter, position);
+    if (!list.length) return null;
+    for (let k = 0; k < list.length; k++) {
+        const w = list[(offset + k) % list.length];
+        if (!used.has(w)) return w;
+    }
+    return list[offset % list.length];
+}
+
+function raceLetterOrder() {
+    const out = [];
+    LETTER_LEVEL_GROUPS.forEach(g => g.letters.forEach(l => { if (!out.includes(l)) out.push(l); }));
+    return out.length ? out : RACE_ALPHABET.slice();
+}
+
+/* ---------- المراحل ---------- */
+
+function raceStagesFor(letter) {
+    const P = raceValidPositionsForLetter(letter);
+    const stages = [
+        { id: "hear", icon: "🎧", title: "اسمع الحرف", kind: "hear", rounds: 3, positions: ["isolated"] },
+        { id: "see", icon: "👀", title: "اعرف شكله", kind: "see", rounds: 3, positions: ["isolated"] },
+        { id: "words", icon: "🔎", title: "اكتشفه في كلمات", kind: "word", rounds: 4, positions: P }
+    ];
+    P.forEach(pos => {
+        stages.push({ id: "pos_" + pos, icon: RACE_POSITION_ICONS[pos], title: RACE_POSITION_TITLES[pos], kind: "word", rounds: 3, positions: [pos] });
+    });
+    stages.push({ id: "mastery", icon: "🏆", title: "اختبار الإتقان", kind: "mastery", rounds: 6, positions: P });
+    return stages;
+}
+
+/* ---------- المشتتات (حتمية، تدور بحسب البذرة) ---------- */
+
+function raceRotate(arr, k) {
+    if (!arr.length) return arr;
+    const n = arr.length, s = ((k % n) + n) % n;
+    return arr.map((_, i) => arr[(i + s) % n]);
+}
+
+function raceDistractorShapes(letter, position, count, hard, seed) {
+    const correct = raceShapeForLetterAtPosition(letter, position);
+    const similar = ((typeof LTR_SIMILAR_LETTERS !== "undefined" && LTR_SIMILAR_LETTERS[letter]) || []).filter(l => l !== letter);
+    const needsConnector = position === "initial" || position === "medial";
+    const eligible = RACE_ALPHABET.filter(l => l !== letter && (!needsConnector || !RACE_NON_CONNECTORS.has(l)));
+    const sim = eligible.filter(l => similar.includes(l));
+    const far = eligible.filter(l => !similar.includes(l));
+    const order = hard
+        ? raceRotate(sim, seed).concat(raceRotate(far, seed * 3))
+        : raceRotate(far, seed * 3).concat(raceRotate(sim, seed));
+    const shapes = [];
+    order.forEach(l => {
+        if (shapes.length >= count) return;
+        const s = raceShapeForLetterAtPosition(l, position);
+        if (s && s !== correct && !shapes.includes(s)) shapes.push(s);
+    });
+    return shapes;
+}
+
+/* ---------- بناء جولات المرحلة ---------- */
+
+function raceBuildRounds(letter, stage, seed) {
+    const rounds = [];
+    const used = new Set();
+    const P = stage.positions;
+    for (let r = 0; r < stage.rounds; r++) {
+        let kind = stage.kind === "mastery" ? "word" : stage.kind;
+        let position = (kind === "hear" || kind === "see") ? "isolated" : P[r % P.length];
+        let word = null, occ = -1;
+        if (kind === "word") {
+            word = racePickWord(letter, position, seed + r, used);
+            if (word) { used.add(word); occ = raceFindOccurrence(word, letter, position); }
+            else { kind = "see"; position = "isolated"; }
+        }
+        const hard = stage.kind === "mastery" ? true
+            : kind === "hear" ? false
+            : kind === "see" ? r >= 1
+            : stage.id === "words" ? r >= 2 : r >= 1;
+        const gateCount = kind === "hear" ? 2 : 3;
+        const correctShape = raceShapeForLetterAtPosition(letter, position);
+        const distract = raceDistractorShapes(letter, position, gateCount - 1, hard, seed + r);
+        const correctIndex = (seed + r) % (distract.length + 1);
+        const options = distract.slice();
+        options.splice(correctIndex, 0, correctShape);
+        rounds.push({ kind, letter, position, word, occ, options, correctShape, correctIndex: options.indexOf(correctShape), wrong: 0, hinted: false, firstTry: false });
+    }
+    return rounds;
+}
+
+/* ---------- التقدّم المحفوظ ---------- */
+
+function raceIsObj(x) { return !!x && typeof x === "object" && !Array.isArray(x); }
+
+/* يقبل أي سجل محفوظ ويُرجع نسخة سليمة البنية: الإدخال السليم يبقى كما هو،
+   وما كان تالفًا (null أو نوع خاطئ) يُستبدل بقيمة فارغة فقط دون لمس بقية السجل */
+function raceNormalizeProgress(p) {
+    const out = { v: 2, letters: {}, lastLetter: (p && typeof p.lastLetter === "string") ? p.lastLetter : null };
+    if (p && p.migratedV1 === true) out.migratedV1 = true;
+    const src = (p && raceIsObj(p.letters)) ? p.letters : {};
+    Object.keys(src).forEach(l => {
+        const e = src[l];
+        if (!raceIsObj(e)) return;
+        const stages = {};
+        if (raceIsObj(e.stages)) {
+            Object.keys(e.stages).forEach(id => {
+                const r = e.stages[id];
+                if (!raceIsObj(r)) return;
+                const rec = { done: r.done === true, stars: Math.max(0, Math.min(3, Number(r.stars) || 0)), plays: Math.max(0, Number(r.plays) || 0) };
+                if (r.migrated === true) rec.migrated = true;
+                stages[id] = rec;
+            });
+        }
+        const m = raceIsObj(e.mastery) ? e.mastery : {};
+        out.letters[l] = {
+            stages: stages,
+            mastery: {
+                passed: m.passed === true,
+                best: Math.max(0, Number(m.best) || 0),
+                stars: Math.max(0, Math.min(3, Number(m.stars) || 0)),
+                attempts: Math.max(0, Number(m.attempts) || 0)
+            }
+        };
+    });
+    return out;
+}
+
+/* ترحيل لمرة واحدة من السباق القديم (taha_letterrace_unlocked_level = 1..4).
+   المستوى N المفتوح يعني أن المجموعات ١..N-١ أُنجزت. للحروف فيها فقط تُعدّ مرحلتا
+   «اسمع الحرف» و«اعرف شكله» منجزتين بنجمة واحدة (تُفتح بعدهما «اكتشفه في كلمات»).
+   لا إتقان أبدًا، ولا تُعدَّل مرحلة مُنجزة أصلًا، ولا يُكتب في المفتاح القديم. */
+function raceMigrateLegacy(p) {
+    if (p.migratedV1 === true) return false;
+    p.migratedV1 = true;
+    let level = 0;
+    try { level = parseInt(localStorage.getItem("taha_letterrace_unlocked_level"), 10); } catch (e) { level = 0; }
+    if (!(level >= 2 && level <= 4)) return true;
+    if (typeof LETTER_LEVEL_GROUPS === "undefined") { delete p.migratedV1; return false; }
+    LETTER_LEVEL_GROUPS.slice(0, level - 1).forEach(g => g.letters.forEach(l => {
+        const e = raceLetterEntry(p, l);
+        ["hear", "see"].forEach(id => {
+            if (!(e.stages[id] && e.stages[id].done)) e.stages[id] = { done: true, stars: 1, plays: 0, migrated: true };
+        });
+    }));
+    return true;
+}
+
+function raceLoadProgress() {
+    let p = null, corrupt = false, raw = null;
+    try {
+        raw = localStorage.getItem(RACE_STORAGE_KEY);
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (raceIsObj(parsed) && parsed.v === 2) p = raceNormalizeProgress(parsed);
+                else corrupt = true;
+            } catch (e) { corrupt = true; }
+        }
+    } catch (e) { /* لا شيء */ }
+    if (corrupt && raw) {
+        /* نسخة احتياطية مرة واحدة قبل أن يُكتب فوق سجل غير مفهوم */
+        try { if (!localStorage.getItem(RACE_STORAGE_KEY + "_corrupt_backup")) localStorage.setItem(RACE_STORAGE_KEY + "_corrupt_backup", raw); } catch (e) { /* لا شيء */ }
+    }
+    if (!p) p = { v: 2, letters: {}, lastLetter: null };
+    if (raceMigrateLegacy(p)) raceSaveProgress(p);
+    return p;
+}
+
+function raceSaveProgress(p) {
+    try { localStorage.setItem(RACE_STORAGE_KEY, JSON.stringify(p)); } catch (e) { /* لا شيء */ }
+}
+
+function raceLetterEntry(p, letter) {
+    if (!p.letters[letter]) p.letters[letter] = { stages: {}, mastery: { passed: false, best: 0, stars: 0, attempts: 0 } };
+    return p.letters[letter];
+}
+
+function raceStageDone(entry, id) { return !!(entry && entry.stages && entry.stages[id] && entry.stages[id].done); }
+
+function raceLetterSummary(letter) {
+    const p = raceLoadProgress();
+    const e = p.letters[letter];
+    const stages = raceStagesFor(letter);
+    const done = e ? stages.filter(s => raceStageDone(e, s.id)).length : 0;
+    return { done, total: stages.length, mastered: !!(e && e.mastery && e.mastery.passed), stars: e && e.mastery ? e.mastery.stars : 0, started: done > 0 };
+}
+
+function raceRecommendedLetter() {
+    const order = raceLetterOrder();
+    for (const l of order) { if (!raceLetterSummary(l).mastered) return l; }
+    return order[0];
+}
+
+/* ---------- حالة اللعبة ---------- */
+
 const letterRaceGame = {
-    level: 1,
-    round: 0,
-    roundsPerLevel: 7,
-    letterOrder: [],
+    letter: null,
+    stages: [],
+    stageIdx: 0,
+    rounds: [],
+    roundIdx: -1,
+    cur: null,
     target: null,
     targetPosition: null,
     targetWord: null,
@@ -6599,62 +6840,174 @@ const letterRaceGame = {
     isRunning: false,
     answered: false,
     session: 0,
-    score: 0
+    score: 0,
+    firstTryCount: 0,
+    timers: []
 };
 
-/* =========================================================
-   💾 حفظ/تحميل المستوى المفتوح — مفتاح معزول جديد خاص بهذه
-   اللعبة فقط، بنفس أسلوب مفاتيح التقدّم الأخرى في التطبيق
-   ========================================================= */
-
-function loadRaceUnlockedLevel() {
-    const saved = Number(localStorage.getItem("taha_letterrace_unlocked_level") || 1);
-    return Math.min(Math.max(saved, 1), 4);
+function raceSchedule(fn, ms) {
+    const session = letterRaceGame.session;
+    const id = setTimeout(() => {
+        letterRaceGame.timers = letterRaceGame.timers.filter(t => t !== id);
+        if (session !== letterRaceGame.session) return;
+        fn();
+    }, ms);
+    letterRaceGame.timers.push(id);
+    return id;
 }
 
-function saveRaceUnlockedLevel(level) {
-    const current = loadRaceUnlockedLevel();
-    if (level > current) {
-        localStorage.setItem("taha_letterrace_unlocked_level", String(Math.min(level, 4)));
+function raceClearTimers() {
+    letterRaceGame.timers.forEach(t => clearTimeout(t));
+    letterRaceGame.timers = [];
+}
+
+/* صوت واحد في اللحظة: يقاطع ما قبله، ثم done مرة واحدة فقط (مع مهلة أمان) */
+function raceSay(what, done, maxMs) {
+    const session = letterRaceGame.session;
+    let fired = false;
+    const fin = () => {
+        if (fired || session !== letterRaceGame.session) return;
+        fired = true;
+        if (done) done();
+    };
+    if (typeof EduAudio === "undefined") { fin(); return; }
+    EduAudio.play(what, { mode: "interrupt", done: fin });
+    if (done) raceSchedule(fin, maxMs || 4500);
+}
+
+/* =========================================================
+   🗺️ شاشة الحروف ومراحل كل حرف
+   ========================================================= */
+
+function openLetterRaceMap() {
+    showScreen("letterRaceMap");
+    renderRaceMap();
+}
+
+function leaveLetterRaceMap() {
+    showScreen("games");
+}
+
+function raceMapShow(view) {
+    const grid = $("raceMapView"), st = $("raceStageView");
+    if (grid) grid.style.display = view === "grid" ? "block" : "none";
+    if (st) st.style.display = view === "stages" ? "block" : "none";
+}
+
+function raceStarsText(n, max) {
+    max = max || 3;
+    return "★".repeat(Math.max(0, n)) + "☆".repeat(Math.max(0, max - n));
+}
+
+function renderRaceMap() {
+    raceMapShow("grid");
+    const order = raceLetterOrder();
+    const rec = raceRecommendedLetter();
+    let mastered = 0;
+    const cards = order.map(l => {
+        const s = raceLetterSummary(l);
+        if (s.mastered) mastered++;
+        const cls = "race-map-card" + (s.mastered ? " mastered" : "") + (l === rec ? " recommended" : "") + (s.started && !s.mastered ? " started" : "");
+        const badge = s.mastered ? "🏅" : (l === rec ? "▶" : "");
+        return `<button type="button" class="${cls}" data-letter="${l}" onclick="openRaceLetter('${l}')" aria-label="الحرف ${l}، أنجزت ${s.done} من ${s.total} مراحل">
+            <span class="race-map-badge">${badge}</span>
+            <span class="race-map-letter">${l}</span>
+            <span class="race-map-stars">${raceStarsText(s.stars)}</span>
+            <span class="race-map-count">${arabicNumber(s.done)}/${arabicNumber(s.total)}</span>
+        </button>`;
+    }).join("");
+    const grid = $("raceMapGrid");
+    if (grid) grid.innerHTML = cards;
+    const sum = $("raceMapSummary");
+    if (sum) sum.textContent = `أتقنتَ ${arabicNumber(mastered)} من ${arabicNumber(order.length)} حرفًا`;
+    const cont = $("raceMapContinue");
+    if (cont) {
+        cont.textContent = `▶ تابع حرف ${rec}`;
+        cont.onclick = () => openRaceLetter(rec);
     }
 }
 
-/* =========================================================
-   🧠 تدرّج الصعوبة داخل المستوى — جولة 1-2 سهلة، 3-5 متوسطة،
-   6-7 تحدٍّ (مشتتات بصرية حقيقية متشابهة)
-   ========================================================= */
-
-function raceRoundTier(round) {
-    if (round <= 2) return "easy";
-    if (round <= 5) return "medium";
-    return "hard";
+function openRaceLetter(letter) {
+    letterRaceGame.letter = letter;
+    const p = raceLoadProgress();
+    p.lastLetter = letter;
+    raceSaveProgress(p);
+    renderRaceStages();
+    if (!$("letterRaceMap").classList.contains("active")) showScreen("letterRaceMap");
+    raceMapShow("stages");
 }
 
-function raceGateCountForTier(tier, availablePositionsCount) {
-    const wanted = tier === "easy" ? 2 : tier === "medium" ? 3 : 4;
-    /* 🛠️ إصلاح: الحرف غير المتصل (مواضعه الصالحة = 2 فقط: منفصل/
-       آخر) يبقى بعدد بوابات أبسط (حد أقصى 3) حتى عند التحدي —
-       تمييزًا بصريًا أهدأ يناسب بساطة شكليه، كما وعد التصوّر
-       المعتمد. الحرف المتصل (3 مواضع صالحة) يأخذ التدرّج الكامل */
-    const maxForLetterType = availablePositionsCount <= 2 ? 3 : 4;
-    return Math.min(wanted, maxForLetterType);
+function renderRaceStages() {
+    const letter = letterRaceGame.letter;
+    const stages = raceStagesFor(letter);
+    const p = raceLoadProgress();
+    const entry = p.letters[letter] || { stages: {}, mastery: { passed: false, best: 0, stars: 0, attempts: 0 } };
+    const title = $("raceStageLetter");
+    if (title) title.textContent = letter;
+    const forms = $("raceStageForms");
+    if (forms) {
+        const F = arabicLetterForms[letter] || {};
+        const parts = [];
+        if (!RACE_NON_CONNECTORS.has(letter)) { parts.push(["أول", F.initial]); parts.push(["وسط", F.medial]); }
+        parts.push(["آخر", F.final]); parts.push(["منفصل", F.isolated]);
+        forms.innerHTML = parts.filter(x => x[1]).map(x => `<span class="race-form-chip"><b>${x[1]}</b><small>${x[0]}</small></span>`).join("");
+    }
+    const list = $("raceStageList");
+    if (!list) return;
+    let prevDone = true;
+    list.innerHTML = stages.map((s, i) => {
+        const done = raceStageDone(entry, s.id);
+        const open = i === 0 || prevDone;
+        prevDone = done;
+        const st = entry.stages[s.id];
+        const starsN = s.id === "mastery" ? (entry.mastery.stars || 0) : (st && st.stars) || 0;
+        const state = done ? "done" : (open ? "open" : "locked");
+        const mark = done ? "✅" : (open ? "▶" : "🔒");
+        return `<button type="button" class="race-stage-btn ${state}" data-stage="${s.id}" ${open ? "" : "disabled"} onclick="startRaceStage('${letter}', ${i})">
+            <span class="race-stage-no">${arabicNumber(i + 1)}</span>
+            <span class="race-stage-icon">${s.icon}</span>
+            <span class="race-stage-name">${s.title}</span>
+            <span class="race-stage-stars">${done ? raceStarsText(starsN) : ""}</span>
+            <span class="race-stage-mark">${mark}</span>
+        </button>`;
+    }).join("");
+}
+
+function raceBackFromStages() {
+    renderRaceMap();
 }
 
 /* =========================================================
-   ▶️ بدء اللعبة — تبدأ دائمًا من المستوى المفتوح المحفوظ
+   ▶️ بدء مرحلة
    ========================================================= */
 
 function startLetterRace() {
+    openLetterRaceMap();
+}
 
-    letterRaceGame.level = loadRaceUnlockedLevel();
-    letterRaceGame.round = 0;
-    letterRaceGame.score = 0;
+function startRaceStage(letter, stageIdx) {
+    const stages = raceStagesFor(letter);
+    const stage = stages[stageIdx];
+    if (!stage) return;
+
+    const p = raceLoadProgress();
+    const entry = raceLetterEntry(p, letter);
+    const plays = (entry.stages[stage.id] && entry.stages[stage.id].plays) || 0;
+    const order = raceLetterOrder();
+    const seed = plays * 3 + (order.indexOf(letter) % 3);
+
+    raceClearTimers();
+    letterRaceGame.session++;
+    letterRaceGame.letter = letter;
+    letterRaceGame.stages = stages;
+    letterRaceGame.stageIdx = stageIdx;
+    letterRaceGame.rounds = raceBuildRounds(letter, stage, seed);
+    letterRaceGame.roundIdx = -1;
+    letterRaceGame.cur = null;
     letterRaceGame.isRunning = false;
     letterRaceGame.answered = false;
-    letterRaceGame.session++;
-
-    const group = LETTER_LEVEL_GROUPS[letterRaceGame.level - 1];
-    letterRaceGame.letterOrder = shuffle(group.letters.slice());
+    letterRaceGame.score = 0;
+    letterRaceGame.firstTryCount = 0;
 
     showScreen("letterRaceGame");
 
@@ -6662,108 +7015,108 @@ function startLetterRace() {
     if (overlay) overlay.style.display = "none";
 
     setupLetterRaceControls();
+    renderRaceStageBar();
     updateLetterRaceHUD();
     clearLetterRaceMessage();
 
-    setTimeout(() => {
-        startLetterRaceRound();
-    }, 150);
+    raceSchedule(() => startLetterRaceRound(), 200);
+}
+
+function renderRaceStageBar() {
+    const g = letterRaceGame;
+    const lv = $("letterRaceLevel");
+    if (lv) lv.textContent = g.letter || "";
+    const nm = $("raceStageName");
+    const stage = g.stages[g.stageIdx];
+    if (nm && stage) nm.textContent = stage.icon + " " + stage.title;
+    const chips = $("raceStageChips");
+    if (chips) {
+        const p = raceLoadProgress();
+        const e = p.letters[g.letter];
+        chips.innerHTML = g.stages.map((s, i) => `<span class="race-chip ${i === g.stageIdx ? "current" : (raceStageDone(e, s.id) ? "done" : "")}"></span>`).join("");
+    }
 }
 
 /* =========================================================
-   🔄 بدء جولة جديدة — تختار حرفًا من ترتيب المستوى، موضعًا
-   صالحًا حسب مستوى الصعوبة، وكلمة ثابتة من البنك المُتحقَّق
+   🔄 جولة جديدة
    ========================================================= */
+
+/* الشاشة الحالية هي شاشة السباق؟ (وإلا فالطفل غادرها بطريق آخر غير زر الرجوع) */
+function raceScreenActive() {
+    const el = $("letterRaceGame");
+    return !!(el && el.classList.contains("active"));
+}
+
+/* إنهاء اللعبة بصمت عند مغادرة الشاشة: لا جولة تالية ولا صوت ولا تمرير في الخلفية */
+function raceAbortInBackground() {
+    letterRaceGame.isRunning = false;
+    letterRaceGame.answered = true;
+    letterRaceGame.session++;
+    raceClearTimers();
+    document.removeEventListener("keydown", handleLetterRaceKeyboard);
+}
 
 function startLetterRaceRound() {
 
-    letterRaceGame.round++;
+    if (!raceScreenActive()) { raceAbortInBackground(); return; }
+
+    letterRaceGame.roundIdx++;
     letterRaceGame.answered = false;
 
-    if (letterRaceGame.round > letterRaceGame.roundsPerLevel) {
-        finishRaceLevel();
+    if (letterRaceGame.roundIdx >= letterRaceGame.rounds.length) {
+        finishRaceStage();
         return;
     }
 
-    const letter = letterRaceGame.letterOrder[letterRaceGame.round - 1];
-    const tier = raceRoundTier(letterRaceGame.round);
-    const validPositions = raceValidPositionsForLetter(letter);
-
-    /* اختيار الموضع: عشوائي من المواضع الصالحة لهذا الحرف تحديدًا
-       (الحروف غير المتصلة تُقيَّد تلقائيًا بمنفصل/آخر فقط) */
-    const position = validPositions[Math.floor(Math.random() * validPositions.length)];
-
-    const wordsForSlot = (RACE_WORD_BANK[letter] && RACE_WORD_BANK[letter][position]) || [];
-    const word = wordsForSlot.length
-        ? wordsForSlot[Math.floor(Math.random() * wordsForSlot.length)]
-        : null;
-
-    letterRaceGame.target = letter;
-    letterRaceGame.targetPosition = position;
-    letterRaceGame.targetWord = word;
+    const round = letterRaceGame.rounds[letterRaceGame.roundIdx];
+    letterRaceGame.cur = round;
+    letterRaceGame.target = round.letter;
+    letterRaceGame.targetPosition = round.position;
+    letterRaceGame.targetWord = round.word;
 
     updateLetterRaceHUD();
     clearLetterRaceMessage();
-
-    renderRaceWordWithBlank(word, letter, position);
-    createLetterRaceGates(letter, position, tier);
-
-    speakRaceRoundIntro(word);
+    renderRaceCommand(round);
+    createLetterRaceGates(round);
+    raceScrollToPlay();
+    speakRaceRoundIntro();
 }
 
-/* =========================================================
-   🧩 بناء خيارات البوابات — الشكل الصحيح + مشتتات مناسبة
-   (عند التحدي: أشكال حروف متشابهة بصريًا فعليًا، إعادة استخدام
-   LTR_SIMILAR_LETTERS الموجودة أصلًا في محرك الحروف)
-   ========================================================= */
+/* يُظهر الأمر والمضمار والبوابات والأزرار معًا دون تمرير يدوي من الطفل */
+function raceScrollToPlay() {
+    try {
+        const cmd = document.querySelector("#letterRaceGame .letter-race-command");
+        if (!cmd) return;
+        const top = cmd.getBoundingClientRect().top + window.scrollY - 8;
+        window.scrollTo({ top: Math.max(0, top), behavior: "auto" });
+    } catch (e) { /* لا شيء */ }
+}
 
-function buildRaceGateOptions(letter, position, tier) {
-
-    const correctShape = raceShapeForLetterAtPosition(letter, position);
-
-    const availablePositions = raceValidPositionsForLetter(letter).length;
-    const gateCount = raceGateCountForTier(tier, availablePositions);
-
-    const distractorShapes = [];
-
-    const addShapeIfNew = (candidateLetter) => {
-        if (distractorShapes.length >= gateCount - 1) return;
-        if (candidateLetter === letter) return;
-        const shape = raceShapeForLetterAtPosition(candidateLetter, position);
-        if (shape && shape !== correctShape && !distractorShapes.includes(shape)) {
-            distractorShapes.push(shape);
-        }
-    };
-
-    if (tier === "hard") {
-        const similar = (typeof LTR_SIMILAR_LETTERS !== "undefined" && LTR_SIMILAR_LETTERS[letter]) || [];
-        shuffle(similar.slice()).forEach(addShapeIfNew);
+function renderRaceCommand(round) {
+    const badge = $("raceCommandBadge"), label = $("raceCommandLabel"), listen = $("raceListenLabel");
+    const target = $("letterRaceTarget");
+    if (target) { target.classList.remove("race-word-blank-filled", "race-sound-icon", "race-letter-show"); }
+    if (round.kind === "hear") {
+        if (badge) badge.textContent = "🎧 اسمع الحرف";
+        if (label) label.textContent = "اسمع الصوت ثم اختر الحرف";
+        if (listen) listen.textContent = "اسمع الحرف";
+        if (target) { target.textContent = "🔊"; target.classList.add("race-sound-icon"); }
+    } else if (round.kind === "see") {
+        if (badge) badge.textContent = "👀 انظر";
+        if (label) label.textContent = "اختر الحرف المطابق";
+        if (listen) listen.textContent = "اسمع الحرف";
+        if (target) { target.textContent = round.correctShape; target.classList.add("race-letter-show"); }
+    } else {
+        if (badge) badge.textContent = "🎧 اسمع واختر";
+        if (label) label.textContent = "أكمل الكلمة";
+        if (listen) listen.textContent = "اسمع الكلمة";
+        renderRaceWordWithBlank(round.word, round.letter, round.position, round.occ);
     }
-
-    const allLetters = ["أ","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","ه","و","ي"];
-    shuffle(allLetters.slice()).forEach(addShapeIfNew);
-
-    const options = shuffle([correctShape, ...distractorShapes]);
-    return options;
 }
 
-/* =========================================================
-   📝 عرض الكلمة بفراغ مكان الحرف المطلوب
-   ========================================================= */
+const RACE_TATWEEL = "ـ";
 
-/* 🛠️ تصحيح: الفراغ يحافظ على علامات الاتصال الصحيحة من الجانبين
-   (عبر حرف التطويل ـ Unicode، فيتولى عرض المتصفح الطبيعي للنص
-   العربي رسم الشكل المتصل الصحيح تلقائيًا)، بلا إظهار الحرف
-   المخفي نفسه إطلاقًا قبل اختيار البوابة. القاعدة مبنية على
-   targetPosition المُتحقَّق منه مسبقًا نفسه، لا تخمينًا جديدًا:
-   - medial: تطويل بعد "قبل" + تطويل قبل "بعد" (يتصل الجانبان)
-   - initial: تطويل قبل "بعد" فقط (يتصل للأمام فقط)
-   - final: تطويل بعد "قبل" فقط (يتصل للخلف فقط)
-   - isolated: بلا أي تطويل (لا يتصل بأي جانب) */
-
-const RACE_TATWEEL = "\u0640";
-
-function renderRaceWordWithBlank(word, letter, position) {
+function renderRaceWordWithBlank(word, letter, position, occ) {
 
     const container = $("letterRaceTarget");
     if (!container) return;
@@ -6773,7 +7126,7 @@ function renderRaceWordWithBlank(word, letter, position) {
         return;
     }
 
-    const index = word.indexOf(letter);
+    const index = (typeof occ === "number" && occ >= 0) ? occ : word.indexOf(letter);
     if (index === -1) {
         container.textContent = word;
         return;
@@ -6782,12 +7135,8 @@ function renderRaceWordWithBlank(word, letter, position) {
     let before = word.slice(0, index);
     let after = word.slice(index + 1);
 
-    if ((position === "medial" || position === "final") && before) {
-        before = before + RACE_TATWEEL;
-    }
-    if ((position === "medial" || position === "initial") && after) {
-        after = RACE_TATWEEL + after;
-    }
+    if ((position === "medial" || position === "final") && before) before = before + RACE_TATWEEL;
+    if ((position === "medial" || position === "initial") && after) after = RACE_TATWEEL + after;
 
     container.innerHTML = "";
 
@@ -6806,35 +7155,32 @@ function renderRaceWordWithBlank(word, letter, position) {
     container.appendChild(afterSpan);
 }
 
-function fillRaceWordBlank(letter) {
+function fillRaceWordBlank() {
     const container = $("letterRaceTarget");
     if (!container) return;
-
-    /* الكلمة الكاملة كنص عادي — عرض المتصفح الطبيعي للنص العربي
-       يرسم الاتصال الصحيح تلقائيًا لكلمة حقيقية كاملة، بلا حاجة
-       لأي تطويل أو تدخّل يدوي في هذه الحالة */
-    if (letterRaceGame.targetWord) {
-        container.textContent = letterRaceGame.targetWord;
-    } else {
-        container.textContent = letterWithFatha(letter);
+    const round = letterRaceGame.cur;
+    if (round && round.kind === "word" && round.word) {
+        container.textContent = round.word;
+    } else if (round && round.kind === "see") {
+        container.textContent = round.correctShape;
+    } else if (round && round.kind === "hear") {
+        container.textContent = round.correctShape;
+        container.classList.remove("race-sound-icon");
+        container.classList.add("race-letter-show");
     }
-
     container.classList.add("race-word-blank-filled");
 }
 
 /* =========================================================
-   🚪 إنشاء البوابات — إعادة استخدام كاملة للبنية البصرية
-   الحالية (السيارة/الحارات)، فقط تعرض أشكال الحرف الآن
+   🚪 البوابات
    ========================================================= */
 
-function createLetterRaceGates(letter, position, tier) {
+function createLetterRaceGates(round) {
 
     const container = $("letterRaceOptions");
     if (!container) return;
 
-    const options = buildRaceGateOptions(letter, position, tier);
-    const correctShape = raceShapeForLetterAtPosition(letter, position);
-
+    const options = round.options;
     letterRaceGame.gates = options;
 
     container.innerHTML = "";
@@ -6847,11 +7193,10 @@ function createLetterRaceGates(letter, position, tier) {
         gate.className = "letter-race-gate";
         gate.dataset.index = String(index);
         gate.dataset.shape = shape;
-        gate.dataset.correct = shape === correctShape ? "1" : "0";
+        gate.dataset.correct = shape === round.correctShape ? "1" : "0";
         gate.setAttribute("aria-label", `بوابة الشكل ${shape}`);
 
-        const gatePosition = ((index + 0.5) / options.length) * 100;
-        gate.style.left = `${gatePosition}%`;
+        gate.style.left = `${((index + 0.5) / options.length) * 100}%`;
         gate.style.top = "50%";
         gate.style.transform = "translate(-50%, -50%)";
 
@@ -6861,20 +7206,7 @@ function createLetterRaceGates(letter, position, tier) {
             <div class="gate-base">🚦</div>
         `;
 
-        gate.addEventListener("click", () => {
-
-            if (!letterRaceGame.isRunning || letterRaceGame.answered) return;
-
-            letterRaceGame.selectedLane = index;
-            moveLetterRaceCarToLane(index, true);
-            highlightLetterRaceSelectedGate();
-
-            setTimeout(() => {
-                if (!letterRaceGame.answered && letterRaceGame.isRunning) {
-                    checkLetterRaceGate();
-                }
-            }, 150);
-        });
+        gate.addEventListener("click", () => submitRaceGate(index));
 
         container.appendChild(gate);
     });
@@ -6886,40 +7218,47 @@ function createLetterRaceGates(letter, position, tier) {
     letterRaceGame.isRunning = true;
 }
 
-/* =========================================================
-   🎯 فحص البوابة المختارة
-   ========================================================= */
-
-function checkLetterRaceGate() {
+/* اختيار بوابة: يُقفَل الإدخال فورًا (نقرتان سريعتان لا تُحسبان معًا)،
+   تتحرك السيارة، ثم يُقيَّم الاختيار نفسه بعد لحظة قصيرة */
+function submitRaceGate(index) {
 
     if (!letterRaceGame.isRunning || letterRaceGame.answered) return;
 
-    letterRaceGame.answered = true;
-
     const gates = document.querySelectorAll("#letterRaceOptions .letter-race-gate");
-    const selectedGate = gates[letterRaceGame.selectedLane];
+    const gate = gates[index];
+    if (!gate || gate.classList.contains("dimmed")) return;
 
-    if (selectedGate && selectedGate.dataset.correct === "1") {
-        handleLetterRaceCorrect(selectedGate);
-    } else {
-        handleLetterRaceWrong(selectedGate);
-    }
+    letterRaceGame.answered = true;
+    letterRaceGame.selectedLane = index;
+    moveLetterRaceCarToLane(index, true);
+    highlightLetterRaceSelectedGate();
+
+    raceSchedule(() => {
+        if (gate.dataset.correct === "1") {
+            handleLetterRaceCorrect(gate);
+        } else {
+            handleLetterRaceWrong(gate);
+        }
+    }, 150);
+}
+
+function checkLetterRaceGate() {
+    submitRaceGate(letterRaceGame.selectedLane);
 }
 
 /* =========================================================
-   ✅ إجابة صحيحة — الفراغ يمتلئ، تعزيز، نجمة، انتقال واضح
+   ✅ إجابة صحيحة
    ========================================================= */
 
 const RACE_SUCCESS_PHRASES = ["أحسنت يا بطل", "أحسنت، عمل رائع", "صحيح"];
 
 function handleLetterRaceCorrect(gate) {
 
-    const session = letterRaceGame.session;
-
+    const round = letterRaceGame.cur;
     letterRaceGame.isRunning = false;
 
     if (gate) {
-        gate.classList.remove("selected");
+        gate.classList.remove("selected", "hint");
         gate.classList.add("correct");
     }
 
@@ -6929,138 +7268,190 @@ function handleLetterRaceCorrect(gate) {
         car.classList.add("race-success");
     }
 
-    fillRaceWordBlank(letterRaceGame.target);
+    fillRaceWordBlank();
 
-    if (typeof addStars === "function") addStars(1);
+    const first = round && round.wrong === 0;
+    if (round) round.firstTry = !!first;
+    if (first) {
+        letterRaceGame.firstTryCount++;
+        if (typeof addStars === "function") addStars(1);
+    }
     letterRaceGame.score++;
 
     createLetterRaceConfetti();
     createLetterRaceStarExplosion();
 
-    const phrase = RACE_SUCCESS_PHRASES[Math.floor(Math.random() * RACE_SUCCESS_PHRASES.length)];
+    const phrase = RACE_SUCCESS_PHRASES[(letterRaceGame.roundIdx + letterRaceGame.stageIdx) % RACE_SUCCESS_PHRASES.length];
     showLetterRaceMessage("🎉 " + phrase);
-    speakEducational(phrase);
+    updateLetterRaceHUD(true);
 
-    updateLetterRaceHUD();
-
-    setTimeout(() => {
-        if (session !== letterRaceGame.session) return;
-
-        if (car) {
-            car.classList.remove("race-success");
-            car.style.transform = "translateX(-50%)";
-        }
-
-        startLetterRaceRound();
-
-    }, 1700);
+    /* التشجيع كاملًا، ثم وقفة قصيرة، ثم الجولة التالية — بلا تداخل */
+    raceSay(phrase, () => {
+        raceSchedule(() => {
+            if (car) {
+                car.classList.remove("race-success");
+                car.style.transform = "translateX(-50%)";
+            }
+            startLetterRaceRound();
+        }, 450);
+    }, 4000);
 }
 
 /* =========================================================
-   😊 إجابة خاطئة — تصحيح هادئ، بلا أي عقوبة أو خصم، تبقى نفس
-   الجولة حتى يختار الصحيح
+   😊 إجابة خاطئة — تعلّم بلا خطأ: تُخفَّت الخاطئة، وبعد خطأين
+   تُضيء الصحيحة. لا خصم ولا نهاية للجولة.
    ========================================================= */
 
 function handleLetterRaceWrong(gate) {
 
+    const round = letterRaceGame.cur;
+    if (round) round.wrong++;
+
     if (gate) {
         gate.classList.add("wrong");
+        gate.classList.add("dimmed");
     }
 
     const car = $("letterRaceCar");
-    if (car) {
-        car.classList.add("race-crash");
-    }
+    if (car) car.classList.add("race-crash");
 
     showLetterRaceMessage("😊 حاول مرة أخرى");
-    speakEducational("حاول مرة أخرى");
 
-    setTimeout(() => {
+    const hint = round && round.wrong >= 2;
+    if (hint && !round.hinted) {
+        round.hinted = true;
+        const right = document.querySelector('#letterRaceOptions .letter-race-gate[data-correct="1"]');
+        if (right) right.classList.add("hint");
+    }
 
-        letterRaceGame.answered = false;
+    const again = () => { if (hint) speakRaceRoundIntro(); };
+    raceSay("حاول مرة أخرى", again, 3000);
 
+    raceSchedule(() => {
         if (gate) gate.classList.remove("wrong");
         if (car) car.classList.remove("race-crash");
-
+        letterRaceGame.answered = false;
+        /* ضع السيارة على أول بوابة غير مُخفَّتة */
+        const gates = document.querySelectorAll("#letterRaceOptions .letter-race-gate");
+        let lane = -1;
+        gates.forEach((g, i) => { if (lane < 0 && !g.classList.contains("dimmed")) lane = i; });
+        if (lane >= 0) {
+            letterRaceGame.selectedLane = lane;
+            moveLetterRaceCarToLane(lane, true);
+            highlightLetterRaceSelectedGate();
+        }
     }, 700);
 }
 
 /* =========================================================
-   🏁 إكمال المستوى — شاشة هادئة + فتح المستوى التالي
+   🏁 نهاية المرحلة
    ========================================================= */
 
-function finishRaceLevel() {
+function raceStageStars(rounds, firstTry) {
+    if (firstTry >= rounds) return 3;
+    if (firstTry >= Math.ceil(rounds * 2 / 3)) return 2;
+    return 1;
+}
+
+function finishRaceStage() {
+
+    if (!raceScreenActive()) { raceAbortInBackground(); return; }
 
     letterRaceGame.isRunning = false;
 
-    const isLastLevel = letterRaceGame.level >= 4;
+    const g = letterRaceGame;
+    const stage = g.stages[g.stageIdx];
+    const total = g.rounds.length;
+    const ft = g.firstTryCount;
+    const isMastery = stage.id === "mastery";
+    const p = raceLoadProgress();
+    const entry = raceLetterEntry(p, g.letter);
+    const rec = entry.stages[stage.id] || { done: false, stars: 0, plays: 0 };
+    rec.plays = (rec.plays || 0) + 1;
 
-    saveRaceUnlockedLevel(Math.min(letterRaceGame.level + 1, 4));
+    let passed = true, starsEarned;
+    if (isMastery) {
+        entry.mastery.attempts = (entry.mastery.attempts || 0) + 1;
+        entry.mastery.best = Math.max(entry.mastery.best || 0, ft);
+        passed = ft >= RACE_MASTERY_PASS;
+        starsEarned = passed ? (ft >= total ? 3 : 2) : 0;
+        if (passed) {
+            entry.mastery.passed = true;
+            entry.mastery.stars = Math.max(entry.mastery.stars || 0, starsEarned);
+            rec.done = true;
+            rec.stars = entry.mastery.stars;
+        }
+    } else {
+        starsEarned = raceStageStars(total, ft);
+        rec.done = true;
+        rec.stars = Math.max(rec.stars || 0, starsEarned);
+    }
+    entry.stages[stage.id] = rec;
+    p.lastLetter = g.letter;
+    raceSaveProgress(p);
+    renderRaceStageBar();
 
     const overlay = $("letterRaceLevelComplete");
     const titleEl = $("letterRaceLevelCompleteTitle");
     const bodyEl = $("letterRaceLevelCompleteBody");
+    const starsEl = $("letterRaceLevelCompleteStars");
     const nextBtn = $("letterRaceLevelCompleteNextBtn");
+    const mapBtn = $("letterRaceLevelCompleteMapBtn");
+    const lastStage = g.stageIdx >= g.stages.length - 1;
 
-    if (titleEl) {
-        titleEl.textContent = isLastLevel ? "🎉 أكملت السباق!" : "🌟 أحسنت! أكملت المستوى";
+    let phrase = "أحسنت! أكملت المستوى بنجاح";
+    if (isMastery && passed) {
+        if (titleEl) titleEl.textContent = `🏅 أتقنتَ حرف ${g.letter}!`;
+        if (bodyEl) bodyEl.textContent = `أجبتَ ${arabicNumber(ft)} من ${arabicNumber(total)} من أول مرة`;
+        if (nextBtn) { nextBtn.textContent = "🗺️ اختر حرفًا آخر"; nextBtn.onclick = raceGoToMap; }
+        if (mapBtn) mapBtn.style.display = "none";
+        createLetterRaceConfetti();
+    } else if (isMastery) {
+        if (titleEl) titleEl.textContent = "💪 قريب جدًا!";
+        if (bodyEl) bodyEl.textContent = `أجبتَ ${arabicNumber(ft)} من ${arabicNumber(total)} من أول مرة. نتدرّب قليلًا ثم نحاول مرة أخرى`;
+        if (nextBtn) { nextBtn.textContent = "🔁 أعد الاختبار"; nextBtn.onclick = () => startRaceStage(g.letter, g.stageIdx); }
+        if (mapBtn) { mapBtn.style.display = ""; mapBtn.textContent = "🗺️ مراحل الحرف"; }
+        phrase = "حاول مرة أخرى";
+    } else {
+        if (titleEl) titleEl.textContent = "🌟 أحسنت! أكملت المرحلة";
+        if (bodyEl) bodyEl.textContent = `${stage.title} — ${arabicNumber(ft)} من ${arabicNumber(total)} من أول مرة`;
+        if (nextBtn) {
+            nextBtn.textContent = "▶ المرحلة التالية";
+            nextBtn.onclick = () => startRaceStage(g.letter, g.stageIdx + 1);
+        }
+        if (mapBtn) { mapBtn.style.display = ""; mapBtn.textContent = "🗺️ مراحل الحرف"; }
     }
-    if (bodyEl) {
-        bodyEl.textContent = isLastLevel
-            ? "أتممت كل مستويات سباق الحروف بنجاح"
-            : "المستوى التالي بانتظارك";
-    }
-    if (nextBtn) {
-        nextBtn.textContent = isLastLevel ? "🏠 العودة للألعاب" : "▶ المستوى التالي";
-        nextBtn.onclick = isLastLevel ? exitLetterRace : advanceToNextRaceLevel;
-    }
-
+    if (starsEl) starsEl.textContent = isMastery && !passed ? "" : raceStarsText(starsEarned);
     if (overlay) overlay.style.display = "flex";
 
-    speakEducational("أحسنت! أكملت المستوى بنجاح");
+    raceSay(phrase);
 }
 
-function advanceToNextRaceLevel() {
-
-    letterRaceGame.level = Math.min(letterRaceGame.level + 1, 4);
-    letterRaceGame.round = 0;
-    letterRaceGame.answered = false;
-    letterRaceGame.session++;
-
-    const group = LETTER_LEVEL_GROUPS[letterRaceGame.level - 1];
-    letterRaceGame.letterOrder = shuffle(group.letters.slice());
-
-    const overlay = $("letterRaceLevelComplete");
-    if (overlay) overlay.style.display = "none";
-
-    updateLetterRaceHUD();
-    clearLetterRaceMessage();
-
-    startLetterRaceRound();
+function raceGoToMap() {
+    exitLetterRace(true);
 }
 
 /* =========================================================
-   🖥️ واجهة المعلومات (HUD) — مبسَّطة، بلا أرواح أو مؤقت
+   🖥️ واجهة المعلومات (HUD)
    ========================================================= */
 
-function updateLetterRaceHUD() {
+function updateLetterRaceHUD(afterCorrect) {
 
-    const levelEl = $("letterRaceLevel");
-    if (levelEl) levelEl.textContent = arabicNumber(letterRaceGame.level);
+    const total = letterRaceGame.rounds.length || 1;
 
     const roundEl = $("letterRaceRound");
-    if (roundEl) roundEl.textContent = arabicNumber(Math.min(letterRaceGame.round, letterRaceGame.roundsPerLevel));
+    if (roundEl) roundEl.textContent = arabicNumber(Math.max(1, Math.min(letterRaceGame.roundIdx + 1, total)));
 
     const totalEl = $("letterRaceTotalRounds");
-    if (totalEl) totalEl.textContent = arabicNumber(letterRaceGame.roundsPerLevel);
+    if (totalEl) totalEl.textContent = arabicNumber(total);
 
     const scoreEl = $("letterRaceScore");
     if (scoreEl && typeof stars !== "undefined") scoreEl.textContent = arabicNumber(stars);
 
     const fill = $("letterRaceProgressFill");
     if (fill) {
-        const completedRounds = Math.max(0, letterRaceGame.round - 1);
-        const pct = Math.min(100, Math.round((completedRounds / letterRaceGame.roundsPerLevel) * 100));
+        const completed = afterCorrect ? letterRaceGame.roundIdx + 1 : Math.max(0, letterRaceGame.roundIdx);
+        const pct = Math.min(100, Math.round((completed / total) * 100));
         fill.style.width = pct + "%";
     }
 }
@@ -7076,25 +7467,26 @@ function clearLetterRaceMessage() {
 }
 
 /* =========================================================
-   🔊 نطق الكلمة كاملة عند بداية الجولة + إعادة الاستماع
+   🔊 نطق الجولة (الحرف أو الكلمة) + إعادة الاستماع
    ========================================================= */
 
-function speakRaceRoundIntro(word) {
-    /* الكلمة بصوتها الكامل إن كانت مسجَّلة، وإلا صوت الحرف المستهدف (لا نطق بديل) */
-    if (word && EduAudio.has(word)) {
-        speakEducational(word);
-    } else if (letterRaceGame.target) {
-        speakEducational(letterWithFatha(letterRaceGame.target));
+function speakRaceRoundIntro() {
+    const round = letterRaceGame.cur;
+    if (!round || !raceScreenActive()) return;
+    if (round.kind === "word" && round.word && EduAudio.has(round.word)) {
+        EduAudio.play(round.word, { mode: "interrupt" });
+    } else {
+        EduAudio.play(letterWithFatha(round.letter), { mode: "interrupt" });
     }
 }
 
 function repeatLetterRaceTarget() {
-    speakRaceRoundIntro(letterRaceGame.targetWord);
+    if (!letterRaceGame.cur) return;
+    speakRaceRoundIntro();
 }
 
 /* =========================================================
-   🚗 الحركة والتحكم — إعادة استخدام كاملة للبنية الحالية
-   (حارات/سيارة/لوحة مفاتيح)، فقط بلا أي مؤقت يفرض إجابة
+   🚗 الحركة والتحكم
    ========================================================= */
 
 function moveLetterRaceCarToLane(lane, animate) {
@@ -7113,14 +7505,15 @@ function moveLetterRaceCar(direction) {
 
     if (!letterRaceGame.isRunning || letterRaceGame.answered) return;
 
-    const totalLanes = Math.max(1, letterRaceGame.gates.length);
-    const maxLane = totalLanes - 1;
-    const newLane = letterRaceGame.selectedLane + direction;
+    const gatesEls = document.querySelectorAll("#letterRaceOptions .letter-race-gate");
+    const total = letterRaceGame.gates.length;
+    let lane = letterRaceGame.selectedLane + direction;
+    /* تخطَّ البوابات المُخفَّتة */
+    while (lane >= 0 && lane < total && gatesEls[lane] && gatesEls[lane].classList.contains("dimmed")) lane += direction;
+    if (lane < 0 || lane >= total) return;
 
-    if (newLane < 0 || newLane > maxLane) return;
-
-    letterRaceGame.selectedLane = newLane;
-    moveLetterRaceCarToLane(letterRaceGame.selectedLane, true);
+    letterRaceGame.selectedLane = lane;
+    moveLetterRaceCarToLane(lane, true);
     highlightLetterRaceSelectedGate();
 }
 
@@ -7148,17 +7541,11 @@ function letterRaceLeft() { moveLetterRaceCar(-1); }
 function letterRaceRight() { moveLetterRaceCar(1); }
 
 function letterRaceSelect() {
-    if (!letterRaceGame.isRunning || letterRaceGame.answered) return;
-    setTimeout(() => {
-        if (!letterRaceGame.answered && letterRaceGame.isRunning) {
-            checkLetterRaceGate();
-        }
-    }, 100);
+    submitRaceGate(letterRaceGame.selectedLane);
 }
 
 /* =========================================================
-   🎉 المؤثرات البصرية — إعادة استخدام كاملة بلا أي تعديل
-   جوهري (قصيرة وهادئة أصلًا)
+   🎉 المؤثرات البصرية (قصيرة وهادئة؛ الوضع الهادئ يعطّل الكونفيتي)
    ========================================================= */
 
 function createLetterRaceConfetti() {
@@ -7188,13 +7575,16 @@ function createLetterRaceStarExplosion() {
 }
 
 /* =========================================================
-   🚪 الخروج من السباق
+   🚪 الخروج: من اللعب إلى مراحل الحرف (أو إلى خريطة الحروف)
    ========================================================= */
 
-function exitLetterRace() {
+function exitLetterRace(toGrid) {
 
     letterRaceGame.isRunning = false;
     letterRaceGame.answered = true;
+    letterRaceGame.session++;
+    raceClearTimers();
+    try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
 
     document.removeEventListener("keydown", handleLetterRaceKeyboard);
 
@@ -7211,18 +7601,18 @@ function exitLetterRace() {
         car.style.left = "50%";
     }
 
-    showScreen("games");
+    showScreen("letterRaceMap");
+    if (toGrid === true || !letterRaceGame.letter) {
+        renderRaceMap();
+    } else {
+        renderRaceStages();
+        raceMapShow("stages");
+    }
 }
 
 /* =========================================================
    🔚 نهاية قسم سباق الحروف
    ========================================================= */
-
-
-/* =========================================================
-   🔚 نهاية قسم سباق الحروف
-   ========================================================= */
-
 
 /* =========================================================
    🧩🧩🧩 لعبة المطابقة - Matching Game (10 أنماط)
