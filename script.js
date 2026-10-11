@@ -18208,7 +18208,8 @@ function renderTeacherRecentActivity() {
         const isQuest = e.type === "quest_completed";
         /* سلال الفرز: عرض النتيجة والدقة والتلميحات (وصف جاهز من اللعبة) */
         const sbInfo = (e.skill && String(e.skill).indexOf("sort_") === 0 && window.SortBaskets && window.SortBaskets.describeEvent)
-            ? window.SortBaskets.describeEvent(e) : null;
+            ? window.SortBaskets.describeEvent(e)
+            : ((e.skill === "journey" && window.LetterJourney && window.LetterJourney.describeEvent) ? window.LetterJourney.describeEvent(e) : null);
         const isNeutralComplete = e.type === "activity_complete" && !sbInfo;
 
         const statusClass = sbInfo
@@ -28553,4 +28554,1143 @@ window.zoo = zoo;
 
 /* =========================================================
    🔚 نهاية لعبة «سلال الفرز»
+========================================================= */
+
+/* =========================================================
+   🌟 رحلة الحرف — مسار مهارات متدرّج لكل حرف (قسم الحروف)
+   ---------------------------------------------------------
+   إضافة مستقلة: لا تغيّر شبكة الحروف ولا سباق الحروف ولا بياناتهما.
+   لكل حرف سلّم مهارات، وكل مهارة لها إتقانها المستقل:
+     اسمع ← أشِر ← ميّز ← استخرج ← اشطب ← شكل الحرف في الكلمة
+     ← أكمل الكلمة بالسحب ← ركّب الحرف ونقاطه ← صيد الحرف ← اكتشف الخطأ
+   • الصوت: ملفات MP3 المحلية فقط (صوت الحرف بالفتحة «بَ» لا اسمه، وأصوات
+     الكلمات والتشجيع الموجودة)، بلا نطق آلي. لا تعديل لأي صوت.
+   • الكلمات من بنك سباق الحروف نفسه (متحقَّق برمجيًا من موضع الحرف وقواعد
+     الاتصال، ولها تسجيل صوتي). أسرة الحرف (أ/ا/إ، ي/ى، ه/ة...) لا تظهر
+     كمشتّت حتى لا تصير الإجابة الصحيحة ملتبسة.
+   • بلا مؤقت ولا أرواح ولا عقاب. سلّم المساعدة: خطأ يُخفِت الخيار، وبعد
+     خطأين يُضيء الصحيح، وبعد ثلاثة يُوضع تلقائيًا بلا صوت «صحيح».
+   • النجاح بالإجابات المستقلة فقط (٦٠٪ من جولات المهارة). «تدريب بتلميحات»
+     متاح دائمًا ولا يمنح نجومًا ولا إنجازًا.
+   • التقدّم: taha_letterjourney_v1 (معزول لكل طالب عبر StudentStore).
+========================================================= */
+(function () {
+    "use strict";
+
+    const LJ_KEY = "taha_letterjourney_v1";
+    const LJ_BACKUP_KEY = "taha_letterjourney_v1_corrupt_backup";
+    const LJ_SCREEN = "letterJourney";
+    const LJ_PRAISE = ["صحيح", "أحسنت يا بطل", "أحسنت، عمل رائع"];
+    const LJ_DONE = "أحسنت! أكملت المستوى بنجاح";
+    const LJ_RETRY = "محاولة رائعة، لنحاول مرة أخرى";
+
+    const LJ_SKILLS = [
+        { id: "hear",     t: "اسمع الحرف",           icon: "🎧", n: 4, kind: "pick",    prompt: "اسمع الصوت ثم اختر الحرف" },
+        { id: "point",    t: "أشِر إلى الحرف",        icon: "👆", n: 5, kind: "pick",    prompt: "أين هذا الحرف؟ اضغط عليه" },
+        { id: "odd",      t: "من يختلف؟",             icon: "🔍", n: 5, kind: "pick",    prompt: "اضغط على الحرف المختلف" },
+        { id: "extract",  t: "استخرج الحرف من الكلمة", icon: "🧩", n: 5, kind: "pick",    prompt: "اضغط على الحرف المطلوب داخل الكلمة" },
+        { id: "cross",    t: "اشطب الحرف",            icon: "❌", n: 3, kind: "multi",   prompt: "اضغط كل حرف مثل الحرف المطلوب" },
+        { id: "forms",    t: "شكل الحرف في الكلمة",   icon: "🔤", n: 6, kind: "pick",    prompt: "اختر شكل الحرف المناسب لمكانه" },
+        { id: "complete", t: "أكمل الكلمة",           icon: "✋", n: 5, kind: "drag",    prompt: "اسحب الحرف الناقص إلى مكانه (أو اضغط عليه)" },
+        { id: "compose",  t: "ركّب الحرف ونقاطه",     icon: "🔵", n: 3, kind: "compose", prompt: "ضع النقاط في مكانها لتكمل الحرف" },
+        { id: "fish",     t: "صيد الحرف في الكلمات",  icon: "🎣", n: 3, kind: "multi",   prompt: "اصطد كل كلمة فيها الحرف المطلوب" },
+        { id: "spot",     t: "اكتشف الخطأ",           icon: "🕵️", n: 4, kind: "pick",    prompt: "تغيّر حرف في كلمة واحدة. أيّها ليس فيها الحرف المطلوب؟" }
+    ];
+
+    /* نقاط الحروف: الهيكل بلا نقاط + عدد النقاط وجهتها (فوق/تحت) */
+    const LJ_DOTS = {
+        "ب": { base: "ٮ", n: 1, side: "below" }, "ت": { base: "ٮ", n: 2, side: "above" }, "ث": { base: "ٮ", n: 3, side: "above" },
+        "ج": { base: "ح", n: 1, side: "below" }, "خ": { base: "ح", n: 1, side: "above" }, "ذ": { base: "د", n: 1, side: "above" },
+        "ز": { base: "ر", n: 1, side: "above" }, "ش": { base: "س", n: 3, side: "above" }, "ض": { base: "ص", n: 1, side: "above" },
+        "ظ": { base: "ط", n: 1, side: "above" }, "غ": { base: "ع", n: 1, side: "above" }, "ف": { base: "ڡ", n: 1, side: "above" },
+        "ق": { base: "ٯ", n: 2, side: "above" }, "ن": { base: "ں", n: 1, side: "above" }, "ي": { base: "ى", n: 2, side: "below" }
+    };
+
+    /* أسرة الحرف: صور مختلفة لصوت واحد تقريبًا، فلا تُستعمل كمشتّت للحرف نفسه */
+    const LJ_FAMILY = {
+        "أ": "أإآا", "ا": "أإآا", "ي": "يى", "ه": "هة", "ت": "تة", "و": "وؤ", "ء": "ءأإؤئ"
+    };
+    function ljFam(L) { return LJ_FAMILY[L] || L; }
+    function ljFamCount(word, L) { const f = ljFam(L); return Array.from(word).filter(c => f.indexOf(c) >= 0).length; }
+
+    /* كلمات صورتها الإيموجي ملتبسة (قرار سابق): تُعرض بصوتها لا بصورتها */
+    const LJ_NO_PIC = new Set(["يد", "بيت", "تاج", "ظرف", "قلب", "ثوم", "ساعة", "صحن", "صندوق", "ثلج", "عصير"]);
+
+    /* ---------------- أدوات عامة ---------------- */
+    function $q(id) { return document.getElementById(id); }
+    function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+    function num(n) { return (typeof arabicNumber === "function") ? arabicNumber(n) : String(n); }
+    function isObj(x) { return !!x && typeof x === "object" && !Array.isArray(x); }
+    function clamp(n, a, b) { n = Number(n); if (!isFinite(n)) n = 0; return Math.max(a, Math.min(b, Math.floor(n))); }
+    function calmOrReduced() {
+        try {
+            if (document.body.classList.contains("calm-mode")) return true;
+            return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+        } catch (e) { return false; }
+    }
+    function stars(n) { return "★".repeat(n) + "☆".repeat(3 - n); }
+
+    function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+    function rng(seed) {
+        let a = seed >>> 0;
+        return function () {
+            a = (a + 0x6D2B79F5) >>> 0;
+            let t = a;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+    function shuffle(arr, rnd) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; }
+        return a;
+    }
+
+    /* ---------------- بيانات الحروف والكلمات ---------------- */
+    let emojiMap = null;
+    function emojiOf(word) {
+        if (!emojiMap) {
+            emojiMap = {};
+            try { Object.keys(PW_WORD_BANK).forEach(l => PW_WORD_BANK[l].forEach(e => { if (e && e.word && e.emoji) emojiMap[e.word] = e.emoji; })); } catch (e) { /* لا شيء */ }
+        }
+        return LJ_NO_PIC.has(word) ? null : (emojiMap[word] || null);
+    }
+    function letters() { return raceLetterOrder(); }
+    function positionsOf(L) { return raceValidPositionsForLetter(L); }
+    function snd(L) { return letterWithFatha(L); }
+    function hasSnd(L) { try { return EduAudio.has(snd(L)); } catch (e) { return false; } }
+
+    /* كلمات صالحة للحرف في موضع: الحرف مرة واحدة من أسرته، ولها صوت */
+    function wordsAt(L, pos) {
+        return raceValidWords(L, pos).filter(w => ljFamCount(w, L) === 1);
+    }
+    function allWordsFor(L) {
+        const out = [];
+        positionsOf(L).forEach(p => wordsAt(L, p).forEach(w => { if (out.indexOf(w) < 0) out.push(w); }));
+        return out;
+    }
+    let knownWords = null;
+    function isKnown(w) {
+        if (!knownWords) {
+            knownWords = new Set();
+            try { Object.keys(RACE_WORD_BANK).forEach(l => Object.keys(RACE_WORD_BANK[l]).forEach(p => RACE_WORD_BANK[l][p].forEach(x => knownWords.add(x)))); } catch (e) { /* لا شيء */ }
+            try { Object.keys(PW_WORD_BANK).forEach(l => PW_WORD_BANK[l].forEach(e => knownWords.add(e.word))); } catch (e) { /* لا شيء */ }
+        }
+        return knownWords.has(w);
+    }
+    function pickWord(L, pos, k, used, preferPic) {
+        let list = wordsAt(L, pos);
+        if (!list.length) return null;
+        if (preferPic) {
+            const pic = list.filter(w => emojiOf(w));
+            if (pic.length) list = pic;
+        }
+        for (let i = 0; i < list.length; i++) {
+            const w = list[(k + i) % list.length];
+            if (!used.has(w)) return w;
+        }
+        return list[k % list.length];
+    }
+    function occOf(word, L, pos) { return raceFindOccurrence(word, L, pos); }
+
+    function simOf(L) { const f = ljFam(L); return (LTR_SIMILAR_LETTERS[L] || []).filter(x => f.indexOf(x) < 0 && RACE_ALPHABET.indexOf(x) >= 0); }
+    function farOf(L, rnd, count, exclude) {
+        const f = ljFam(L), sim = simOf(L);
+        const pool = RACE_ALPHABET.filter(x => f.indexOf(x) < 0 && sim.indexOf(x) < 0 && !(exclude && exclude.has(x)) && hasSnd(x));
+        return shuffle(pool, rnd).slice(0, count);
+    }
+
+    /* ---------------- التقدّم ---------------- */
+    let memo = null, memoOnly = false;
+
+    function normalize(raw) {
+        const out = { v: 1, letters: {}, last: null };
+        const rl = (isObj(raw) && isObj(raw.letters)) ? raw.letters : {};
+        RACE_ALPHABET.forEach(L => {
+            const e = isObj(rl[L]) ? rl[L] : {};
+            const sk = isObj(e.skills) ? e.skills : {};
+            const o = { skills: {}, rewarded: e.rewarded === true };
+            LJ_SKILLS.forEach(s => {
+                const x = isObj(sk[s.id]) ? sk[s.id] : {};
+                o.skills[s.id] = {
+                    done: x.done === true,
+                    stars: x.done === true ? clamp(x.stars, 1, 3) : 0,
+                    best: clamp(x.best, 0, 20),
+                    plays: clamp(x.plays, 0, 100000),
+                    fails: clamp(x.fails, 0, 100000),
+                    practice: clamp(x.practice, 0, 100000),
+                    rewarded: x.rewarded === true
+                };
+            });
+            out.letters[L] = o;
+        });
+        out.last = (isObj(raw) && typeof raw.last === "string" && RACE_ALPHABET.indexOf(raw.last) >= 0) ? raw.last : null;
+        return out;
+    }
+    function load() {
+        if (memoOnly && memo) return memo;
+        let rawStr = null;
+        try { rawStr = localStorage.getItem(LJ_KEY); } catch (e) { rawStr = null; }
+        if (rawStr == null) return normalize(null);
+        let parsed;
+        try { parsed = JSON.parse(rawStr); } catch (e) { parsed = undefined; }
+        if (!isObj(parsed)) {
+            try { if (localStorage.getItem(LJ_BACKUP_KEY) == null) localStorage.setItem(LJ_BACKUP_KEY, String(rawStr)); } catch (e) { /* لا شيء */ }
+            return normalize(null);
+        }
+        return normalize(parsed);
+    }
+    function save(p) {
+        memo = p;
+        try { localStorage.setItem(LJ_KEY, JSON.stringify(p)); memoOnly = false; }
+        catch (e) { memoOnly = true; }
+    }
+
+    function skillsFor(L) { return LJ_SKILLS.filter(s => s.id !== "compose" || !!LJ_DOTS[L]); }
+    function need(skill) { return Math.ceil(skill.n * 0.6); }
+    function locked(prog, L, skillId) {
+        const list = skillsFor(L);
+        const i = list.findIndex(s => s.id === skillId);
+        if (i <= 0) return false;
+        return !prog.letters[L].skills[list[i - 1].id].done;
+    }
+    function summary(prog, L) {
+        const list = skillsFor(L);
+        const sk = prog.letters[L].skills;
+        let done = 0;
+        list.forEach(s => { if (sk[s.id].done) done++; });
+        return { done: done, total: list.length, complete: done === list.length };
+    }
+    function starsFor(first, total) { const r = total ? first / total : 0; return r >= 0.9 ? 3 : (r >= 0.7 ? 2 : 1); }
+
+    /* ---------------- الحالة والجلسة ---------------- */
+    const lj = {
+        session: 0, timers: [], view: "map", letter: null, skill: null,
+        trials: [], idx: -1, first: 0, busy: false, practice: false, bound: false, sel: null
+    };
+    function active() { const s = $q(LJ_SCREEN); return !!(s && s.classList.contains("active")); }
+    function clearTimers() { lj.timers.forEach(t => clearTimeout(t)); lj.timers = []; }
+    function teardown() {
+        lj.session++;
+        clearTimers();
+        lj.busy = false;
+        lj.sel = null;
+        try { if (typeof EduAudio !== "undefined") EduAudio.stop(); } catch (e) { /* لا شيء */ }
+        const fx = $q("ljFx"); if (fx) fx.innerHTML = "";
+        hideDone();
+    }
+    function later(fn, ms) {
+        const session = lj.session;
+        const id = setTimeout(() => {
+            lj.timers = lj.timers.filter(t => t !== id);
+            if (session !== lj.session) return;
+            if (!active()) { teardown(); return; }
+            fn();
+        }, ms);
+        lj.timers.push(id);
+    }
+    function say(what, done, maxMs) {
+        const session = lj.session;
+        let fired = false;
+        const fin = () => { if (fired || session !== lj.session) return; fired = true; if (done) done(); };
+        if (typeof EduAudio === "undefined") { fin(); return; }
+        try { EduAudio.play(what, { mode: "interrupt", done: fin }); } catch (e) { fin(); return; }
+        if (done) later(fin, maxMs || 3500);
+    }
+    function setMsg(t) { const m = $q("ljMsg"); if (m) m.textContent = t || ""; }
+
+    /* ---------------- بناء الجولات ---------------- */
+    function build(L, skill, plays) {
+        const rnd = rng(hash(L + ":" + skill.id) + plays * 7919 + 1);
+        const P = positionsOf(L);
+        const trials = [];
+        const used = new Set();
+        const sndTxt = snd(L);
+        const off = Math.floor(rnd() * 997);   /* يغيّر الكلمات المختارة مع كل محاولة */
+
+        function pickTrial(opts, extra) {
+            const t = Object.assign({ type: "pick", options: opts }, extra);
+            return t;
+        }
+        function faceOpt(ch) { return { face: ch, ok: ch === L, say: snd(ch) }; }
+
+        for (let r = 0; r < skill.n; r++) {
+            if (skill.id === "hear") {
+                const o = shuffle([L].concat(farOf(L, rnd, 2)), rnd).map(faceOpt);
+                trials.push(pickTrial(o, { stim: "sound", sound: sndTxt }));
+            } else if (skill.id === "point") {
+                const sim = shuffle(simOf(L), rnd).slice(0, 1);
+                const far = farOf(L, rnd, 3 - sim.length, new Set(sim));
+                const o = shuffle([L].concat(sim, far), rnd).map(faceOpt);
+                trials.push(pickTrial(o, { stim: "sound", sound: sndTxt }));
+            } else if (skill.id === "odd") {
+                const sim = simOf(L);
+                const S = sim.length ? sim[(r + Math.floor(rnd() * 3)) % sim.length] : farOf(L, rnd, 1)[0];
+                /* الحرف المختلف هو الشبيه، والثلاثة الباقية هي الحرف نفسه */
+                const o = shuffle([L, L, L, S], rnd).map((ch, i) => ({ face: ch, ok: ch === S, say: snd(ch), k: i }));
+                trials.push(pickTrial(o, { stim: "none", sound: sndTxt, oddOf: L }));
+            } else if (skill.id === "extract") {
+                const pos = P[r % P.length];
+                const w = pickWord(L, pos, off + r, used, false);
+                if (!w) continue;
+                used.add(w);
+                const occ = occOf(w, L, pos);
+                const o = Array.from(w).map((ch, i) => ({ face: ch, ok: i === occ, say: (hasSnd(ch) ? snd(ch) : null), k: i }));
+                trials.push(pickTrial(o, { stim: "word", word: w, pic: emojiOf(w), sound: sndTxt, tiles: true }));
+            } else if (skill.id === "forms") {
+                const pos = P[r % P.length];
+                const w = pickWord(L, pos, off + r, used, false);
+                if (!w) continue;
+                used.add(w);
+                const occ = occOf(w, L, pos);
+                const correct = raceShapeForLetterAtPosition(L, pos);
+                const forms = arabicLetterForms[L] || {};
+                const others = shuffle(Object.keys(forms).filter(k => k !== pos).map(k => forms[k]).filter(g => g && g !== correct), rnd);
+                const sims = simOf(L).concat(farOf(L, rnd, 3)).map(x => raceShapeForLetterAtPosition(x, pos)).filter(g => g && g !== correct && others.indexOf(g) < 0);
+                const wrong = others.slice(0, 2);
+                for (let i = 0; wrong.length < 2 && i < sims.length; i++) if (wrong.indexOf(sims[i]) < 0) wrong.push(sims[i]);
+                const o = shuffle([correct].concat(wrong), rnd).map(g => ({ face: g, ok: g === correct, say: null }));
+                trials.push(pickTrial(o, { stim: "blankword", word: w, pic: emojiOf(w), pos: pos, occ: occ, sound: sndTxt, shapes: true }));
+            } else if (skill.id === "spot") {
+                const mine = [];
+                for (let k = 0; k < 3; k++) {
+                    const pos = P[(r + k) % P.length];
+                    const w = pickWord(L, pos, off + r + k, new Set(mine), false);
+                    if (w && mine.indexOf(w) < 0) mine.push(w);
+                }
+                const pool = allWordsFor(L).filter(w => mine.indexOf(w) < 0);
+                while (mine.length < 3 && pool.length) mine.push(pool.shift());
+                if (mine.length < 3) continue;
+                /* كلمة خاطئة: نبدّل الحرف بشبيهه فتخلو من الحرف المطلوب ولا تكون كلمة معروفة */
+                const base = mine[0];
+                const pos0 = P.find(p => occOf(base, L, p) >= 0) || P[0];
+                const i0 = occOf(base, L, pos0);
+                const cands = simOf(L).concat(farOf(L, rnd, 3));
+                let bad = null;
+                for (let c = 0; c < cands.length && !bad; c++) {
+                    const m = base.slice(0, i0) + cands[c] + base.slice(i0 + 1);
+                    if (!isKnown(m) && ljFamCount(m, L) === 0) bad = m;
+                }
+                if (!bad) continue;
+                const o = shuffle(mine.map(w => ({ face: w, ok: false })).concat([{ face: bad, ok: true }]), rnd);
+                trials.push(pickTrial(o, { stim: "sound", sound: sndTxt, words: true, showLetter: L }));
+            } else if (skill.id === "cross") {
+                const simN = r === 0 ? 1 : (r === 1 ? 2 : 3);
+                const sim = shuffle(simOf(L), rnd).slice(0, simN);
+                const far = farOf(L, rnd, 7 - sim.length, new Set(sim));
+                const items = shuffle([L, L, L].concat(sim, far).slice(0, 10).map(ch => ({ face: ch, ok: ch === L, say: snd(ch) })), rnd);
+                trials.push({ type: "multi", items: items, stim: "sound", sound: sndTxt, left: 3, showLetter: L });
+            } else if (skill.id === "fish") {
+                const targets = [];
+                for (let k = 0; k < 3; k++) {
+                    const pos = P[(r + k) % P.length];
+                    const w = pickWord(L, pos, off + r * 2 + k, new Set(targets), false);
+                    if (w && targets.indexOf(w) < 0) targets.push(w);
+                }
+                const tp = allWordsFor(L).filter(w => targets.indexOf(w) < 0);
+                while (targets.length < 3 && tp.length) targets.push(tp.shift());
+                const f = ljFam(L);
+                const simSet = simOf(L);
+                let pool = [];
+                try { Object.keys(RACE_WORD_BANK).forEach(l => Object.keys(RACE_WORD_BANK[l]).forEach(p => RACE_WORD_BANK[l][p].forEach(w => { if (pool.indexOf(w) < 0) pool.push(w); }))); } catch (e) { /* لا شيء */ }
+                pool = pool.filter(w => EduAudio.has(w) && Array.from(w).every(c => f.indexOf(c) < 0));
+                const withSim = pool.filter(w => Array.from(w).some(c => simSet.indexOf(c) >= 0));
+                const rest = pool.filter(w => withSim.indexOf(w) < 0);
+                const dec = shuffle(withSim, rnd).slice(0, 2).concat(shuffle(rest, rnd)).slice(0, 3);
+                if (targets.length < 3 || dec.length < 3) continue;
+                const items = shuffle(targets.map(w => ({ face: w, ok: true })).concat(dec.map(w => ({ face: w, ok: false }))), rnd);
+                trials.push({ type: "multi", items: items, stim: "sound", sound: sndTxt, left: 3, words: true, showLetter: L });
+            } else if (skill.id === "complete") {
+                const pos = P[r % P.length];
+                const w = pickWord(L, pos, off + r, used, true);
+                if (!w) continue;
+                used.add(w);
+                const occ = occOf(w, L, pos);
+                const sim = shuffle(simOf(L), rnd).slice(0, 1);
+                const far = farOf(L, rnd, 2 - sim.length, new Set(sim));
+                const tray = shuffle([L].concat(sim, far), rnd).map(ch => ({ face: ch, ok: ch === L, say: snd(ch) }));
+                trials.push({ type: "drag", word: w, pic: emojiOf(w), pos: pos, occ: occ, tray: tray, sound: sndTxt });
+            } else if (skill.id === "compose") {
+                const d = LJ_DOTS[L];
+                trials.push({ type: "compose", letter: L, dots: d, sound: sndTxt, model: r < 2, tokens: [1, 2, 3] });
+            }
+        }
+        trials.forEach(t => { t.wrong = 0; t.firstTry = null; t.hinted = false; t.outcome = null; });
+        return trials;
+    }
+
+    /* هل يمكن بناء المهارة لهذا الحرف بعدد الجولات الكامل؟ */
+    function buildable(L, skill) {
+        if (skill.id === "compose") return !!LJ_DOTS[L];
+        try { return build(L, skill, 0).length === skill.n; } catch (e) { return false; }
+    }
+
+    /* ---------------- العروض ---------------- */
+    function showView(v) {
+        lj.view = v;
+        ["ljMap", "ljSkills", "ljForms", "ljPlay"].forEach(id => {
+            const n = $q(id);
+            if (n) n.classList.toggle("lj-hidden", id !== ("lj" + v.charAt(0).toUpperCase() + v.slice(1)));
+        });
+        const dots = $q("ljDots"); if (dots && v !== "play") dots.innerHTML = "";
+        const title = $q("ljTitle");
+        if (title) {
+            if (v === "map") title.textContent = "🌟 رحلة الحرف";
+            else if (lj.letter && (v === "skills" || v === "forms")) title.textContent = "الحرف " + lj.letter;
+            else if (v === "play" && lj.skill) title.textContent = lj.skill.icon + " " + lj.skill.t;
+        }
+        const root = $q(LJ_SCREEN);
+        if (root) root.setAttribute("data-view", v);
+        try { window.scrollTo({ top: 0, behavior: "instant" }); } catch (e) { /* لا شيء */ }
+    }
+
+    function renderMap() {
+        const box = $q("ljMap");
+        if (!box) return;
+        box.innerHTML = "";
+        const prog = load();
+        box.appendChild(el("p", "lj-intro", "اختر حرفًا وسنتعلّمه خطوة بخطوة ✨"));
+        const order = letters();
+        let rec = null;
+        order.forEach(L => { if (!rec && !summary(prog, L).complete) rec = L; });
+        let complete = 0;
+        const grid = el("div", "lj-letter-grid");
+        grid.setAttribute("role", "list");
+        order.forEach(L => {
+            const s = summary(prog, L);
+            if (s.complete) complete++;
+            const b = el("button", "lj-letter" + (s.complete ? " lj-complete" : "") + (L === rec ? " lj-recommended" : ""));
+            b.type = "button";
+            b.setAttribute("role", "listitem");
+            b.setAttribute("data-letter", L);
+            b.setAttribute("aria-label", "الحرف " + L + "، " + num(s.done) + " من " + num(s.total) + " مهارات" + (s.complete ? "، مكتمل" : ""));
+            b.appendChild(el("span", "lj-letter-glyph", L));
+            b.appendChild(el("span", "lj-letter-meta", num(s.done) + "/" + num(s.total)));
+            if (s.complete) b.appendChild(el("span", "lj-badge", "🏅"));
+            else if (L === rec) b.appendChild(el("span", "lj-badge lj-badge-next", "▶"));
+            b.addEventListener("click", () => openLetter(L));
+            grid.appendChild(b);
+        });
+        box.appendChild(grid);
+        box.appendChild(el("p", "lj-summary", "أكملتَ " + num(complete) + " من " + num(order.length) + " حرفًا"));
+    }
+
+    function openLetter(L) {
+        teardown();
+        lj.letter = L;
+        lj.skill = null;
+        const prog = load(); prog.last = L; save(prog);
+        showView("skills");
+        renderSkills();
+    }
+
+    function renderSkills() {
+        const box = $q("ljSkills");
+        if (!box || !lj.letter) return;
+        box.innerHTML = "";
+        const L = lj.letter;
+        const prog = load();
+        const lp = prog.letters[L];
+        const head = el("div", "lj-head");
+        const big = el("button", "lj-head-letter", L);
+        big.type = "button";
+        big.setAttribute("aria-label", "اسمع الحرف " + L);
+        big.addEventListener("click", () => { if (hasSnd(L)) say(snd(L)); });
+        head.appendChild(big);
+        const fb = el("button", "lj-btn lj-forms-btn", "🔤 أشكال الحرف في الكلمة");
+        fb.type = "button";
+        fb.addEventListener("click", () => { teardown(); showView("forms"); renderForms(); });
+        head.appendChild(fb);
+        box.appendChild(head);
+
+        const list = el("div", "lj-skill-list");
+        let next = null;
+        const sl = skillsFor(L);
+        sl.forEach(s => { if (!next && !lp.skills[s.id].done && !locked(prog, L, s.id)) next = s.id; });
+        sl.forEach((s, i) => {
+            const st = lp.skills[s.id];
+            const lk = locked(prog, L, s.id);
+            const b = el("button", "lj-skill-btn" + (st.done ? " lj-done-skill" : "") + (lk ? " lj-locked" : "") + (s.id === next ? " lj-recommended" : ""));
+            b.type = "button";
+            b.setAttribute("data-skill", s.id);
+            if (lk) b.setAttribute("aria-disabled", "true");
+            b.setAttribute("aria-label", s.t + (lk ? "، مقفلة" : st.done ? "، مكتملة" : ""));
+            b.appendChild(el("span", "lj-skill-num", num(i + 1)));
+            b.appendChild(el("span", "lj-skill-ico", lk ? "🔒" : s.icon));
+            b.appendChild(el("span", "lj-skill-name", s.t));
+            b.appendChild(el("span", "lj-skill-stars", st.done ? stars(st.stars) : (lk ? "" : "جديدة")));
+            b.addEventListener("click", () => {
+                if (lk) {
+                    b.classList.remove("lj-shake"); void b.offsetWidth; b.classList.add("lj-shake");
+                    say("أكمل المستوى السابق أولًا لتفتح هذا المستوى");
+                    return;
+                }
+                start(L, s.id);
+            });
+            list.appendChild(b);
+        });
+        box.appendChild(list);
+        const failing = sl.find(s => s.id === next && lp.skills[s.id].fails >= 1);
+        if (failing) {
+            const pb = el("button", "lj-btn lj-practice-btn", "🌱 تدريب بتلميحات: " + failing.t);
+            pb.type = "button";
+            pb.setAttribute("data-practice", failing.id);
+            pb.addEventListener("click", () => start(L, failing.id, true));
+            box.appendChild(pb);
+        }
+        if (summary(prog, L).complete) box.appendChild(el("p", "lj-complete-note", "🏅 أكملتَ كل مهارات هذا الحرف"));
+    }
+
+    /* شكل الحرف منفصلًا ومتصلًا مع مثال حقيقي لكل موضع (للتعلّم، بلا نجوم) */
+    const LJ_POS_LABEL = { isolated: "منفصل", initial: "أول الكلمة", medial: "وسط الكلمة", final: "آخر الكلمة" };
+    function formText(L, pos) {
+        const T = "ـ";
+        if (pos === "initial") return L + T;
+        if (pos === "medial") return T + L + T;
+        if (pos === "final") return T + L;
+        return L;
+    }
+    function renderForms() {
+        const box = $q("ljForms");
+        if (!box || !lj.letter) return;
+        box.innerHTML = "";
+        const L = lj.letter;
+        const nonConn = RACE_NON_CONNECTORS.has(L);
+        box.appendChild(el("p", "lj-intro", nonConn ? "هذا الحرف لا يتصل بما بعده" : "للحرف أربعة أشكال حسب مكانه"));
+        const grid = el("div", "lj-forms-grid");
+        ["isolated"].concat(positionsOf(L)).forEach(pos => {
+            const card = el("button", "lj-form-card");
+            card.type = "button";
+            card.setAttribute("data-pos", pos);
+            const w = pos === "isolated" ? (wordsAt(L, "isolated")[0] || null) : (wordsAt(L, pos).find(x => emojiOf(x)) || wordsAt(L, pos)[0] || null);
+            card.setAttribute("aria-label", LJ_POS_LABEL[pos] + (w ? "، مثال " + w : ""));
+            card.appendChild(el("span", "lj-form-shape", formText(L, pos)));
+            card.appendChild(el("span", "lj-form-label", LJ_POS_LABEL[pos]));
+            if (w) {
+                const ex = el("span", "lj-form-ex");
+                const pic = emojiOf(w);
+                if (pic) ex.appendChild(el("span", "lj-form-pic", pic));
+                const i = occOf(w, L, pos);
+                const wd = el("span", "lj-form-word");
+                if (i >= 0) {
+                    wd.appendChild(document.createTextNode(w.slice(0, i)));
+                    wd.appendChild(el("span", "lj-hl", w[i]));
+                    wd.appendChild(document.createTextNode(w.slice(i + 1)));
+                } else wd.textContent = w;
+                ex.appendChild(wd);
+                card.appendChild(ex);
+                card.addEventListener("click", () => say(w));
+            } else {
+                card.addEventListener("click", () => { if (hasSnd(L)) say(snd(L)); });
+            }
+            grid.appendChild(card);
+        });
+        box.appendChild(grid);
+        const back = el("button", "lj-btn", "⬅️ المهارات");
+        back.type = "button";
+        back.addEventListener("click", () => { teardown(); showView("skills"); renderSkills(); });
+        box.appendChild(back);
+    }
+
+    /* ---------------- اللعب ---------------- */
+    function start(L, skillId, practice) {
+        teardown();
+        lj.practice = practice === true;
+        lj.letter = L;
+        lj.skill = LJ_SKILLS.find(s => s.id === skillId);
+        if (!lj.skill) return;
+        const prog = load();
+        const st = prog.letters[L].skills[skillId];
+        const plays = st.plays;
+        if (lj.practice) st.practice++; else st.plays = plays + 1;
+        prog.last = L;
+        save(prog);
+        lj.trials = build(L, lj.skill, lj.practice ? plays + 1000 + st.practice : plays);
+        lj.idx = -1;
+        lj.first = 0;
+        showView("play");
+        const pr = $q("ljPrompt"); if (pr) pr.textContent = lj.skill.prompt;
+        nextTrial();
+    }
+
+    function renderDots() {
+        const d = $q("ljDots");
+        if (!d) return;
+        d.innerHTML = "";
+        lj.trials.forEach((t, i) => {
+            d.appendChild(el("span", "lj-dot" + (t.firstTry === true ? " lj-dot-ok" : t.firstTry === false ? " lj-dot-help" : "") + (i === lj.idx ? " lj-dot-now" : "")));
+        });
+        d.setAttribute("aria-label", "الجولة " + num(Math.min(lj.idx + 1, lj.trials.length)) + " من " + num(lj.trials.length));
+    }
+
+    function nextTrial() {
+        if (!active()) { teardown(); return; }
+        lj.idx++;
+        lj.busy = false;
+        lj.sel = null;
+        if (lj.idx >= lj.trials.length) { finish(); return; }
+        renderDots();
+        setMsg("");
+        const t = lj.trials[lj.idx];
+        const area = $q("ljStageArea");
+        if (!area) return;
+        area.innerHTML = "";
+        area.setAttribute("data-type", t.type);
+        if (t.type === "pick") renderPick(area, t);
+        else if (t.type === "multi") renderMulti(area, t);
+        else if (t.type === "drag") renderDrag(area, t);
+        else renderCompose(area, t);
+        if (lj.practice) practiceHint(t);
+        if (lj.idx === 0) scrollToGame();
+    }
+
+    function scrollToGame() {
+        const run = () => {
+            try {
+                const root = $q(LJ_SCREEN);
+                const wrap = root && root.querySelector(".lj-wrap");
+                if (!wrap || !active()) return;
+                const top = Math.max(0, wrap.getBoundingClientRect().top + (window.pageYOffset || 0) - 6);
+                window.scrollTo({ top: top, behavior: "instant" });
+            } catch (e) { /* لا شيء */ }
+        };
+        run();
+        if (typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+    }
+
+    /* صندوق المثير: مكبّر الصوت + الكلمة/الصورة */
+    function speaker(what) {
+        const b = el("button", "lj-speaker", "🔊");
+        b.type = "button";
+        b.setAttribute("aria-label", "اسمع مرة أخرى");
+        b.addEventListener("click", () => { if (!lj.busy) say(what); });
+        return b;
+    }
+    function wordWithBlank(word, pos, occ, filled) {
+        const box = el("div", "lj-word");
+        if (filled) { box.textContent = word; return box; }
+        const T = "ـ";
+        let before = word.slice(0, occ), after = word.slice(occ + 1);
+        if ((pos === "medial" || pos === "final") && before) before += T;
+        if ((pos === "medial" || pos === "initial") && after) after = T + after;
+        box.appendChild(document.createTextNode(before));
+        const blank = el("span", "lj-blank");
+        blank.setAttribute("data-drop", "blank");
+        blank.setAttribute("aria-label", "مكان الحرف الناقص");
+        box.appendChild(blank);
+        box.appendChild(document.createTextNode(after));
+        return box;
+    }
+    function stimulusZone(t) {
+        const z = el("div", "lj-stim");
+        if (t.stim === "word" || t.stim === "blankword") {
+            if (t.pic) z.appendChild(el("span", "lj-pic", t.pic));
+            if (t.stim === "word") z.appendChild(el("div", "lj-word", t.word));
+            else z.appendChild(wordWithBlank(t.word, t.pos, t.occ, false));
+            z.appendChild(speaker(t.word));
+        } else if (t.stim === "sound") {
+            /* المطلوب يُرى ويُسمع معًا في المهارات التي لا تختبر ربط الصوت بالشكل */
+            if (t.showLetter) z.appendChild(el("span", "lj-target-letter", t.showLetter));
+            else z.appendChild(el("span", "lj-sound-ico", "🎧"));
+            z.appendChild(speaker(t.sound));
+        } else if (t.oddOf) {
+            z.appendChild(el("span", "lj-sound-ico", "🔍"));
+        }
+        return z;
+    }
+
+    function scheduleStimSound(t) {
+        if (t.stim === "word" || t.stim === "blankword") say(t.word);
+        else if (t.sound && hasSnd(t.oddOf || lj.letter)) say(t.sound);
+    }
+
+    /* ----- اختيار واحد ----- */
+    function renderPick(area, t) {
+        area.appendChild(stimulusZone(t));
+        const row = el("div", "lj-options lj-n" + t.options.length + (t.words ? " lj-words" : "") + (t.tiles ? " lj-tiles" : "") + (t.oddOf ? " lj-odd" : ""));
+        t.options.forEach((o, i) => {
+            const b = el("button", "lj-opt" + (t.shapes ? " lj-shape" : "") + (t.words ? " lj-wordopt" : ""));
+            b.type = "button";
+            b.setAttribute("data-i", String(i));
+            b.setAttribute("aria-label", o.face);
+            b.appendChild(el("span", "lj-opt-face", o.face));
+            b.addEventListener("click", () => answerPick(t, o, b, row));
+            row.appendChild(b);
+        });
+        area.appendChild(row);
+        scheduleStimSound(t);
+    }
+
+    function answerPick(t, o, btn, row) {
+        if (lj.busy || btn.getAttribute("aria-disabled") === "true") return;
+        if (o.ok) {
+            lj.busy = true;
+            btn.classList.add("lj-right");
+            if (t.shapes) fillWordBlank(t);
+            resolve(t, "✅ أحسنت");
+            return;
+        }
+        t.wrong++;
+        btn.classList.add("lj-faded");
+        btn.setAttribute("aria-disabled", "true");
+        btn.classList.remove("lj-shake"); void btn.offsetWidth; btn.classList.add("lj-shake");
+        setMsg("جرّب مرة أخرى 🙂");
+        if (o.say && EduAudio.has(o.say)) say(o.say);
+        const right = Array.prototype.find.call(row.children, c => { const i = Number(c.getAttribute("data-i")); return t.options[i] && t.options[i].ok; });
+        if (t.wrong >= 2 && right) { right.classList.add("lj-hint"); t.hinted = true; }
+        if (t.wrong >= 3 && right) {
+            lj.busy = true;
+            right.classList.add("lj-right");
+            if (t.shapes) fillWordBlank(t);
+            later(() => { lj.busy = false; resolve(t, "✅ هذه هي الإجابة", "auto"); }, 300);
+        }
+    }
+
+    function fillWordBlank(t) {
+        const w = document.querySelector("#ljStageArea .lj-stim .lj-word");
+        if (w && t.word) w.textContent = t.word;
+    }
+
+    /* ----- تحديد عدة عناصر (اشطب / صيد) ----- */
+    function renderMulti(area, t) {
+        area.appendChild(stimulusZone(t));
+        const row = el("div", "lj-options lj-multi" + (t.words ? " lj-words" : " lj-grid10"));
+        t.items.forEach((o, i) => {
+            const b = el("button", "lj-opt" + (t.words ? " lj-wordopt" : ""));
+            b.type = "button";
+            b.setAttribute("data-i", String(i));
+            b.setAttribute("aria-label", o.face);
+            const pic = t.words ? emojiOf(o.face) : null;
+            if (pic) b.appendChild(el("span", "lj-opt-pic", pic));
+            b.appendChild(el("span", "lj-opt-face", o.face));
+            b.addEventListener("click", () => tapMulti(t, o, b, row));
+            row.appendChild(b);
+        });
+        area.appendChild(row);
+        setMsg("باقي " + num(t.left) + " 🎯");
+        scheduleStimSound(t);
+    }
+
+    function markMulti(btn, t) {
+        btn.classList.add("lj-right", "lj-crossed");
+        btn.setAttribute("aria-disabled", "true");
+        btn.appendChild(el("span", "lj-x", "✖"));
+    }
+
+    function tapMulti(t, o, btn, row) {
+        if (lj.busy || btn.getAttribute("aria-disabled") === "true") return;
+        if (o.ok) {
+            o.done = true;
+            markMulti(btn, t);
+            t.left--;
+            btn.classList.remove("lj-hint");
+            if (t.left <= 0) { lj.busy = true; resolve(t, "✅ وجدتَها كلها"); return; }
+            setMsg("باقي " + num(t.left) + " 🎯");
+            return;
+        }
+        t.wrong++;
+        btn.classList.add("lj-faded");
+        btn.setAttribute("aria-disabled", "true");
+        btn.classList.remove("lj-shake"); void btn.offsetWidth; btn.classList.add("lj-shake");
+        if (!t.words && o.say && EduAudio.has(o.say)) say(o.say);
+        setMsg("جرّب مرة أخرى 🙂");
+        const remaining = () => Array.prototype.filter.call(row.children, c => { const x = t.items[Number(c.getAttribute("data-i"))]; return x.ok && !x.done; });
+        if (t.wrong >= 2) { const r = remaining()[0]; if (r) { r.classList.add("lj-hint"); t.hinted = true; } }
+        if (t.wrong >= 3) {
+            lj.busy = true;
+            remaining().forEach(c => { t.items[Number(c.getAttribute("data-i"))].done = true; markMulti(c, t); });
+            t.left = 0;
+            later(() => { lj.busy = false; resolve(t, "✅ هذه هي الإجابات", "auto"); }, 300);
+        }
+    }
+
+    /* ----- السحب (أكمل الكلمة / النقاط) ----- */
+    function makeDraggable(node, onDrop, onTap) {
+        let sx = 0, sy = 0, dragging = false, down = false, ignoreClick = false, pid = null;
+        node.addEventListener("pointerdown", e => {
+            if (lj.busy || node.getAttribute("aria-disabled") === "true") return;
+            down = true; dragging = false; sx = e.clientX; sy = e.clientY; pid = e.pointerId;
+            try { node.setPointerCapture(e.pointerId); } catch (x) { /* لا شيء */ }
+        });
+        node.addEventListener("pointermove", e => {
+            if (!down) return;
+            const dx = e.clientX - sx, dy = e.clientY - sy;
+            if (!dragging && Math.abs(dx) + Math.abs(dy) > 10) { dragging = true; node.classList.add("lj-dragging"); }
+            if (dragging) node.style.transform = "translate(" + dx + "px," + dy + "px)";
+        });
+        const end = e => {
+            if (!down) return;
+            down = false;
+            try { node.releasePointerCapture(pid); } catch (x) { /* لا شيء */ }
+            if (dragging) {
+                dragging = false;
+                ignoreClick = true;
+                let zone = null;
+                try {
+                    const hits = document.elementsFromPoint(e.clientX, e.clientY);
+                    zone = hits.find(h => h.getAttribute && h.getAttribute("data-drop")) || null;
+                } catch (x) { zone = null; }
+                node.classList.remove("lj-dragging");
+                node.style.transform = "";
+                if (zone) onDrop(zone.getAttribute("data-drop"));
+            } else if (e.type === "pointerup") {
+                ignoreClick = true;
+                onTap();
+            }
+        };
+        node.addEventListener("pointerup", end);
+        node.addEventListener("pointercancel", e => { down = false; dragging = false; node.classList.remove("lj-dragging"); node.style.transform = ""; });
+        node.addEventListener("click", () => {
+            if (ignoreClick) { ignoreClick = false; return; }
+            onTap();     /* لوحة المفاتيح */
+        });
+    }
+
+    function renderDrag(area, t) {
+        const z = el("div", "lj-stim");
+        if (t.pic) z.appendChild(el("span", "lj-pic", t.pic));
+        z.appendChild(wordWithBlank(t.word, t.pos, t.occ, false));
+        z.appendChild(speaker(t.word));
+        area.appendChild(z);
+        const tray = el("div", "lj-tray lj-n" + t.tray.length);
+        t.tray.forEach((o, i) => {
+            const b = el("button", "lj-opt lj-token");
+            b.type = "button";
+            b.setAttribute("data-i", String(i));
+            b.setAttribute("aria-label", "الحرف " + o.face);
+            b.appendChild(el("span", "lj-opt-face", o.face));
+            makeDraggable(b, zone => { if (zone === "blank") placeLetter(t, o, b, tray); else b.classList.remove("lj-dragging"); }, () => placeLetter(t, o, b, tray));
+            tray.appendChild(b);
+        });
+        area.appendChild(tray);
+        say(t.word);
+    }
+
+    function placeLetter(t, o, btn, tray) {
+        if (lj.busy || btn.getAttribute("aria-disabled") === "true") return;
+        if (o.ok) {
+            lj.busy = true;
+            const w = document.querySelector("#ljStageArea .lj-word");
+            if (w) { w.textContent = t.word; w.classList.add("lj-filled"); }
+            btn.classList.add("lj-right");
+            btn.setAttribute("aria-disabled", "true");
+            resolve(t, "✅ " + t.word);
+            return;
+        }
+        t.wrong++;
+        btn.classList.add("lj-faded");
+        btn.setAttribute("aria-disabled", "true");
+        btn.classList.remove("lj-shake"); void btn.offsetWidth; btn.classList.add("lj-shake");
+        setMsg("جرّب حرفًا آخر 🙂");
+        if (o.say && EduAudio.has(o.say)) say(o.say);
+        const right = Array.prototype.find.call(tray.children, c => t.tray[Number(c.getAttribute("data-i"))].ok);
+        if (t.wrong >= 2 && right) { right.classList.add("lj-hint"); t.hinted = true; }
+        if (t.wrong >= 3 && right) {
+            lj.busy = true;
+            const w = document.querySelector("#ljStageArea .lj-word");
+            if (w) { w.textContent = t.word; w.classList.add("lj-filled"); }
+            right.classList.add("lj-right");
+            later(() => { lj.busy = false; resolve(t, "✅ " + t.word, "auto"); }, 300);
+        }
+    }
+
+    function renderCompose(area, t) {
+        const d = t.dots;
+        const card = el("div", "lj-comp");
+        if (t.model) {
+            const m = el("div", "lj-comp-model");
+            m.appendChild(el("span", "lj-comp-model-g", t.letter));
+            m.appendChild(el("span", "lj-comp-model-l", "هذا هو الحرف"));
+            card.appendChild(m);
+        }
+        const board = el("div", "lj-comp-board");
+        const above = el("div", "lj-zone lj-zone-above");
+        above.setAttribute("data-drop", "above"); above.setAttribute("role", "button"); above.tabIndex = 0;
+        above.setAttribute("aria-label", "فوق الحرف");
+        const base = el("div", "lj-comp-base", d.base);
+        const below = el("div", "lj-zone lj-zone-below");
+        below.setAttribute("data-drop", "below"); below.setAttribute("role", "button"); below.tabIndex = 0;
+        below.setAttribute("aria-label", "تحت الحرف");
+        board.appendChild(above); board.appendChild(base); board.appendChild(below);
+        card.appendChild(board);
+        area.appendChild(card);
+        const zones = { above: above, below: below };
+        const trayBox = el("div", "lj-tray lj-n3");
+        t.tokens.forEach(n => {
+            const b = el("button", "lj-opt lj-token lj-dotsrow");
+            b.type = "button";
+            b.setAttribute("data-n", String(n));
+            b.setAttribute("aria-label", num(n) + (n === 1 ? " نقطة" : " نقاط"));
+            b.appendChild(el("span", "lj-opt-face", "●".repeat(n)));
+            const tryPlace = zone => composePlace(t, n, zone, b, zones, trayBox);
+            makeDraggable(b, zone => tryPlace(zone), () => {
+                /* ضغط: اختر النقاط ثم اضغط المكان */
+                if (lj.sel === b) { lj.sel = null; b.classList.remove("lj-selected"); return; }
+                Array.prototype.forEach.call(trayBox.children, c => c.classList.remove("lj-selected"));
+                lj.sel = b; b.classList.add("lj-selected");
+                setMsg("الآن اضغط فوق الحرف أو تحته");
+            });
+            trayBox.appendChild(b);
+        });
+        area.appendChild(trayBox);
+        ["above", "below"].forEach(zn => {
+            const z = zones[zn];
+            const act = () => {
+                if (lj.busy || !lj.sel) { if (!lj.sel) setMsg("اختر النقاط أولًا"); return; }
+                const b = lj.sel;
+                lj.sel = null;
+                b.classList.remove("lj-selected");
+                composePlace(t, Number(b.getAttribute("data-n")), zn, b, zones, trayBox);
+            };
+            z.addEventListener("click", act);
+            z.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } });
+        });
+        if (hasSnd(t.letter)) say(t.sound);
+    }
+
+    function composePlace(t, n, zone, btn, zones, trayBox) {
+        if (lj.busy) return;
+        const d = t.dots;
+        if (n === d.n && zone === d.side) {
+            lj.busy = true;
+            zones[zone].textContent = "●".repeat(n);
+            zones[zone].classList.add("lj-zone-ok");
+            btn.classList.add("lj-right");
+            const m = document.querySelector("#ljStageArea .lj-comp-base");
+            if (m) m.textContent = t.letter;
+            const zs = document.querySelectorAll("#ljStageArea .lj-zone");
+            Array.prototype.forEach.call(zs, z => { if (z !== zones[zone]) z.textContent = ""; });
+            resolve(t, "✅ حرف " + t.letter);
+            return;
+        }
+        t.wrong++;
+        btn.classList.remove("lj-selected", "lj-shake"); void btn.offsetWidth; btn.classList.add("lj-shake");
+        setMsg("جرّب مرة أخرى 🙂");
+        lj.sel = null;
+        if (t.wrong >= 2) {
+            const right = Array.prototype.find.call(trayBox.children, c => Number(c.getAttribute("data-n")) === d.n);
+            if (right) right.classList.add("lj-hint");
+            zones[d.side].classList.add("lj-hint");
+            t.hinted = true;
+        }
+        if (t.wrong >= 3) {
+            lj.busy = true;
+            zones[d.side].textContent = "●".repeat(d.n);
+            zones[d.side].classList.add("lj-zone-ok");
+            const m = document.querySelector("#ljStageArea .lj-comp-base");
+            if (m) m.textContent = t.letter;
+            later(() => { lj.busy = false; resolve(t, "✅ حرف " + t.letter, "auto"); }, 300);
+        }
+    }
+
+    /* تدريب: الإجابة الصحيحة مضيئة من البداية */
+    function practiceHint(t) {
+        const area = $q("ljStageArea");
+        if (!area) return;
+        const mark = n => { if (n) n.classList.add("lj-hint"); };
+        if (t.type === "pick" || t.type === "multi") {
+            const list = t.type === "pick" ? t.options : t.items;
+            Array.prototype.forEach.call(area.querySelectorAll(".lj-opt"), c => { const o = list[Number(c.getAttribute("data-i"))]; if (o && o.ok) mark(c); });
+        } else if (t.type === "drag") {
+            Array.prototype.forEach.call(area.querySelectorAll(".lj-token"), c => { if (t.tray[Number(c.getAttribute("data-i"))].ok) mark(c); });
+            mark(area.querySelector(".lj-blank"));
+        } else if (t.type === "compose") {
+            Array.prototype.forEach.call(area.querySelectorAll(".lj-token"), c => { if (Number(c.getAttribute("data-n")) === t.dots.n) mark(c); });
+            mark(area.querySelector(".lj-zone-" + t.dots.side));
+        }
+        setMsg("🌱 تدريب: اختر المضيء");
+    }
+
+    /* ---------------- حل الجولة ---------------- */
+    function praiseFor(t) { return t.firstTry ? LJ_PRAISE[lj.idx % LJ_PRAISE.length] : LJ_PRAISE[0]; }
+
+    function resolve(t, msg, mode) {
+        lj.busy = true;
+        if (mode === "auto") t.outcome = "auto";
+        else if (t.wrong === 0) t.outcome = "independent";
+        else if (t.hinted) t.outcome = "hinted";
+        else t.outcome = "retry";
+        t.firstTry = t.outcome === "independent";
+        if (t.firstTry) lj.first++;
+        renderDots();
+        setMsg(msg);
+        if (t.outcome === "auto") { later(() => nextTrial(), calmOrReduced() ? 500 : 1000); return; }
+        const praise = praiseFor(t);
+        later(() => say(praise, () => nextTrial(), 2600), calmOrReduced() ? 120 : 520);
+    }
+
+    /* ---------------- نهاية المهارة والمكافأة ---------------- */
+    function tally() {
+        const o = { independent: 0, retry: 0, hinted: 0, auto: 0 };
+        let wrongTaps = 0, hints = 0;
+        lj.trials.forEach(t => { if (t.outcome && o[t.outcome] !== undefined) o[t.outcome]++; wrongTaps += t.wrong || 0; if (t.hinted) hints++; });
+        return { t: o, wrongTaps: wrongTaps, hints: hints };
+    }
+
+    function logEvent(type, extra) {
+        try {
+            if (typeof StudentData !== "undefined" && StudentData.logEvent) {
+                StudentData.logEvent(Object.assign({ type: type, subject: "letters", skill: "journey", letter: lj.letter, activity: "skill_" + lj.skill.id, correct: null }, extra));
+            }
+        } catch (e) { /* لا شيء */ }
+    }
+
+    function finishPractice() {
+        const a = tally();
+        logEvent("activity_practice", { passed: false, practice: true, total: lj.trials.length, independent: a.t.independent, retry: a.t.retry, hinted: a.t.hinted, auto: a.t.auto, wrongTaps: a.wrongTaps });
+        showDone({ practice: true, passed: false, stars: 0, first: a.t.independent, total: lj.trials.length, need: 0, award: 0, fails: 0 });
+    }
+
+    function finish() {
+        if (lj.practice) { finishPractice(); return; }
+        const total = lj.trials.length;
+        const a = tally();
+        const first = a.t.independent;
+        const prog = load();
+        const lp = prog.letters[lj.letter];
+        const st = lp.skills[lj.skill.id];
+        const nd = need(lj.skill);
+        const passed = first >= nd;
+        const starsN = passed ? starsFor(first, total) : 0;
+        let award = 0;
+        if (first > st.best) st.best = first;
+        if (passed) st.fails = 0; else st.fails = Math.min(100000, st.fails + 1);
+        if (passed) {
+            st.done = true;
+            if (starsN > st.stars) st.stars = starsN;
+            if (!st.rewarded) { st.rewarded = true; award += 1; }
+            if (summary(prog, lj.letter).complete && !lp.rewarded) { lp.rewarded = true; award += 2; }
+        }
+        save(prog);
+        if (award > 0) { try { if (typeof addStars === "function") addStars(award); } catch (e) { /* لا شيء */ } }
+        logEvent(passed ? "activity_complete" : "activity_attempt", {
+            passed: passed, attempt: st.plays, total: total, need: nd,
+            independent: a.t.independent, retry: a.t.retry, hinted: a.t.hinted, auto: a.t.auto,
+            wrongTaps: a.wrongTaps, hints: a.hints, stars: starsN, fails: st.fails
+        });
+        showDone({ passed: passed, stars: starsN, first: first, total: total, need: nd, award: award, fails: st.fails, letterDone: passed && summary(prog, lj.letter).complete });
+    }
+
+    function hideDone() {
+        const d = $q("ljDone");
+        if (d) d.classList.add("lj-hidden");
+        const w = $q(LJ_SCREEN);
+        if (w) w.querySelectorAll(".lj-top,.lj-view").forEach(n => { try { n.inert = false; } catch (e) { /* لا شيء */ } });
+    }
+
+    function confetti() {
+        if (calmOrReduced()) return;
+        const fx = $q("ljFx");
+        if (!fx) return;
+        fx.innerHTML = "";
+        for (let i = 0; i < 8; i++) {
+            const s = el("span", "lj-spark", "⭐");
+            s.style.left = (8 + i * 11) + "%";
+            s.style.animationDelay = (i * 0.07) + "s";
+            fx.appendChild(s);
+        }
+        later(() => { fx.innerHTML = ""; }, 1600);
+    }
+
+    function nextSkillOf(L, prog) {
+        const list = skillsFor(L);
+        const i = list.findIndex(s => s.id === lj.skill.id);
+        const n = list[i + 1];
+        return (n && !locked(prog, L, n.id)) ? n : null;
+    }
+
+    function showDone(r) {
+        const d = $q("ljDone");
+        if (!d) return;
+        const prog = load();
+        const L = lj.letter;
+        const nextS = nextSkillOf(L, prog);
+        const repeated = !r.passed && !r.practice && r.fails >= 2;
+        const title = r.practice ? "🌱 أحسنت التدريب!"
+            : r.passed ? (r.letterDone ? "🏅 أكملتَ حرف " + L + "!" : "🌟 أحسنت يا بطل!")
+            : (r.first >= r.need - 1 ? "💪 قريب جدًا!" : "💪 لنتدرّب مرة أخرى!");
+        const body = r.practice ? "تدرّبنا معًا. الآن جرّب المهارة بنفسك"
+            : r.passed ? "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة"
+            : (repeated ? "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة. نتدرّب معًا بتلميحات، ثم نجرّب وحدنا"
+                        : "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة. نتدرّب قليلًا ثم نحاول مرة أخرى");
+        $q("ljDoneTitle").textContent = title;
+        $q("ljDoneBody").textContent = body;
+        $q("ljDoneStars").textContent = r.passed ? stars(r.stars) : "";
+        $q("ljDoneReward").textContent = r.award > 0 ? "⭐ ربحتَ " + num(r.award) + (r.award === 1 ? " نجمة" : " نجوم") : "";
+        const acts = $q("ljDoneActs");
+        acts.innerHTML = "";
+        const mk = (label, cls, fn) => { const b = el("button", cls, label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; };
+        const practiceFn = () => start(L, lj.skill.id, true);
+        const retryFn = () => start(L, lj.skill.id);
+        let primary;
+        if (r.practice) { primary = mk("▶ جرّب المهارة بنفسك", "lj-btn lj-btn-main", retryFn); mk("🌱 تدريب آخر", "lj-btn", practiceFn); }
+        else if (!r.passed && repeated) { primary = mk("🌱 تدريب بتلميحات", "lj-btn lj-btn-main", practiceFn); mk("🔁 أعد المحاولة", "lj-btn", retryFn); }
+        else if (r.passed && nextS) primary = mk("▶ " + nextS.t, "lj-btn lj-btn-main", () => start(L, nextS.id));
+        else if (!r.passed) { primary = mk("🔁 أعد المحاولة", "lj-btn lj-btn-main", retryFn); mk("🌱 تدريب بتلميحات", "lj-btn", practiceFn); }
+        else primary = mk("🗺️ الحروف", "lj-btn lj-btn-main", () => goMap());
+        if (r.passed && !r.practice) mk("🔁 إعادة", "lj-btn", retryFn);
+        mk("📋 المهارات", "lj-btn", () => { teardown(); showView("skills"); renderSkills(); });
+        d.classList.remove("lj-hidden");
+        const w = $q(LJ_SCREEN);
+        if (w) w.querySelectorAll(".lj-top,.lj-view").forEach(n => { try { n.inert = true; } catch (e) { /* لا شيء */ } });
+        confetti();
+        say(r.practice ? LJ_PRAISE[2] : (r.passed ? LJ_DONE : LJ_RETRY));
+        try { primary.focus(); } catch (e) { /* لا شيء */ }
+    }
+
+    /* ---------------- التنقل ---------------- */
+    function goMap() { teardown(); showView("map"); renderMap(); }
+    function back() {
+        if (lj.view === "play") { teardown(); showView("skills"); renderSkills(); return; }
+        if (lj.view === "forms") { teardown(); showView("skills"); renderSkills(); return; }
+        if (lj.view === "skills") { goMap(); return; }
+        teardown();
+        showScreen("letters");
+    }
+    function bind() {
+        if (lj.bound) return;
+        lj.bound = true;
+        const b = $q("ljBack");
+        if (b) b.addEventListener("click", back);
+    }
+    function openLetterJourney() {
+        bind();
+        teardown();
+        showScreen(LJ_SCREEN);
+        showView("map");
+        renderMap();
+    }
+
+    /* وصف حدث المعلم (للعرض فقط): من قوائم ثابتة وأرقام لا من نص مخزَّن */
+    function describeEvent(e) {
+        if (!isObj(e) || e.skill !== "journey") return null;
+        const sk = LJ_SKILLS.find(s => "skill_" + s.id === e.activity);
+        const L = (typeof e.letter === "string" && RACE_ALPHABET.indexOf(e.letter) >= 0) ? e.letter : null;
+        if (!sk || !L) return null;
+        const n = v => num(clamp(v, 0, 999));
+        const kind = e.type === "activity_complete" ? "pass" : e.type === "activity_practice" ? "practice" : "fail";
+        const head = "🌟 رحلة الحرف — " + L + " — " + sk.t + ": " + (kind === "pass" ? "نجح" : kind === "practice" ? "تدريب بتلميحات" : "لم ينجح بعد");
+        const parts = [];
+        if (kind !== "practice") {
+            parts.push("مستقل " + n(e.independent) + " من " + n(e.total));
+            parts.push("بعد محاولة " + n(e.retry));
+            parts.push("بعد تلميح " + n(e.hinted));
+            parts.push("تلقائي " + n(e.auto));
+        }
+        parts.push("أخطاء " + n(e.wrongTaps));
+        return { kind: kind, text: head + " (" + parts.join("، ") + ")" };
+    }
+
+    window.openLetterJourney = openLetterJourney;
+    /* واجهة قراءة للاختبارات فقط */
+    window.LetterJourney = {
+        _state: lj, _skills: LJ_SKILLS, _dots: LJ_DOTS, _build: build, _buildable: buildable, _skillsFor: skillsFor,
+        _load: load, _normalize: normalize, _key: LJ_KEY, _need: need, _fam: ljFam, _famCount: ljFamCount,
+        _wordsAt: wordsAt, _simOf: simOf, _praise: LJ_PRAISE, describeEvent: describeEvent
+    };
+})();
+
+/* =========================================================
+   🔚 نهاية «رحلة الحرف»
 ========================================================= */

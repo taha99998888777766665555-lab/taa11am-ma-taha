@@ -249,6 +249,10 @@
         role="list"
     ></div>
 
+    <button type="button" class="lj-hub-btn" onclick="openLetterJourney()">
+        🌟 رحلة الحرف — مهارات متدرّجة لكل حرف
+    </button>
+
 </div>
 
 
@@ -3658,6 +3662,51 @@
                 <p id="sbDoneBody" class="sb-done-body"></p>
                 <p id="sbDoneReward" class="sb-done-reward"></p>
                 <div id="sbDoneActs" class="sb-done-acts"></div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ==========================================
+     🌟 رحلة الحرف (قسم الحروف)
+========================================== -->
+
+<section
+    id="letterJourney"
+    class="screen"
+    data-view="map"
+>
+    <div class="lj-wrap">
+
+        <div class="lj-top">
+            <button type="button" id="ljBack" class="lj-back" aria-label="رجوع">⬅️</button>
+            <h2 id="ljTitle" class="lj-title">🌟 رحلة الحرف</h2>
+            <div id="ljDots" class="lj-dots" role="img" aria-label=""></div>
+        </div>
+
+        <div id="ljMap" class="lj-view"></div>
+
+        <div id="ljSkills" class="lj-view lj-hidden"></div>
+
+        <div id="ljForms" class="lj-view lj-hidden"></div>
+
+        <div id="ljPlay" class="lj-view lj-hidden">
+            <p id="ljPrompt" class="lj-prompt"></p>
+            <div id="ljStageArea" class="lj-stage"></div>
+            <p id="ljMsg" class="lj-msg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div id="ljFx" class="lj-fx" aria-hidden="true"></div>
+
+        <div id="ljDone" class="lj-done lj-hidden" role="dialog" aria-modal="true" aria-labelledby="ljDoneTitle">
+            <div class="lj-done-card">
+                <h3 id="ljDoneTitle" class="lj-done-title"></h3>
+                <div id="ljDoneStars" class="lj-done-stars" aria-hidden="true"></div>
+                <p id="ljDoneBody" class="lj-done-body"></p>
+                <p id="ljDoneReward" class="lj-done-reward"></p>
+                <div id="ljDoneActs" class="lj-done-acts"></div>
             </div>
         </div>
 
