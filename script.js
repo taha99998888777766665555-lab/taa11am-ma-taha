@@ -18206,19 +18206,28 @@ function renderTeacherRecentActivity() {
             : (TEACHER_SUBJECT_LABELS[e.subject] || "📌").split(" ")[0];
 
         const isQuest = e.type === "quest_completed";
-        const isNeutralComplete = e.type === "activity_complete";
+        /* سلال الفرز: عرض النتيجة والدقة والتلميحات (وصف جاهز من اللعبة) */
+        const sbInfo = (e.skill && String(e.skill).indexOf("sort_") === 0 && window.SortBaskets && window.SortBaskets.describeEvent)
+            ? window.SortBaskets.describeEvent(e) : null;
+        const isNeutralComplete = e.type === "activity_complete" && !sbInfo;
 
-        const statusClass = isQuest
+        const statusClass = sbInfo
+            ? (sbInfo.kind === "pass" ? "correct" : "neutral")
+            : isQuest
             ? "correct"
             : (isNeutralComplete ? "neutral" : (e.correct ? "correct" : "wrong"));
 
-        const statusIcon = isQuest
+        const statusIcon = sbInfo
+            ? (sbInfo.kind === "pass" ? "✅" : "🔁")
+            : isQuest
             ? "🎉"
             : (isNeutralComplete ? "▫️" : (e.correct ? "✅" : "❌"));
 
         const subjectFull = (TEACHER_SUBJECT_LABELS[e.subject] || e.subject || "").replace(/^\S+\s/, "");
 
-        const label = isQuest
+        const label = sbInfo
+            ? sbInfo.text
+            : isQuest
             ? ("أكمل مهمة: " + (e.activity || e.skill || ""))
             : ((e.skill ? e.skill + " — " : "") + subjectFull);
 
@@ -27575,7 +27584,8 @@ window.zoo = zoo;
      خطأين يُبرَز الصحيح، وبعد ثلاثة يُوضَع بهدوء (ولا يُحتسب من أول مرة).
    • الصوت: أسماء الكلمات والعبارات المسجَّلة فقط عبر EduAudio — لا نطق آلي،
      ولا تسجيلات جديدة. نصوص السلال مكتوبة فقط.
-   • التقدّم: taha_sortbaskets_v1 (معزول لكل طالب تلقائيًا عبر StudentStore).
+   • التقدّم: taha_sortbaskets_v2 (معزول لكل طالب تلقائيًا عبر StudentStore).
+     المفتاح القديم v1 لا يُمسّ ولا يُحذف؛ يُنقل منه علم «سبق منح النجمة» فقط.
    • المكافآت: نجمة واحدة لأول إكمال لكل مرحلة، ونجمتان لأول إتقان لكل حزمة؛
      إعادة المرحلة لا تمنح نجومًا.
    • التصنيف مُراجَع: استُبعد كل عنصر ملتبس (رمز يحتمل أكثر من فئة).
@@ -27585,8 +27595,9 @@ window.zoo = zoo;
 (function () {
     "use strict";
 
-    const SB_KEY = "taha_sortbaskets_v1";
-    const SB_BACKUP_KEY = "taha_sortbaskets_v1_corrupt_backup";
+    const SB_KEY = "taha_sortbaskets_v2";
+    const SB_OLD_KEY = "taha_sortbaskets_v1";   /* نسخة سابقة: قواعد نجاح أسهل وتركيب حزم مختلف */
+    const SB_BACKUP_KEY = "taha_sortbaskets_v2_corrupt_backup";
     const SB_SCREEN = "sortGame";
     const SB_PASS = 6;   /* الإتقان: ٦ من ٨ من أول مرة */
 
@@ -27695,7 +27706,7 @@ window.zoo = zoo;
     function sbClamp(n, a, b) { n = Number(n); if (!isFinite(n)) n = 0; return Math.max(a, Math.min(b, Math.floor(n))); }
 
     function sbNormalize(raw) {
-        const out = { v: 1, packs: {}, last: null };
+        const out = { v: 2, packs: {}, last: null };
         const rp = (sbIsObj(raw) && sbIsObj(raw.packs)) ? raw.packs : {};
         SB_PACKS.forEach(p => {
             const rpk = sbIsObj(rp[p.id]) ? rp[p.id] : {};
@@ -27707,7 +27718,9 @@ window.zoo = zoo;
                     done: x.done === true,
                     stars: x.done === true ? sbClamp(x.stars, 0, 3) : 0,
                     plays: sbClamp(x.plays, 0, 100000),
-                    rewarded: x.rewarded === true
+                    rewarded: x.rewarded === true,
+                    fails: sbClamp(x.fails, 0, 100000),       /* محاولات فاشلة متتالية منذ آخر نجاح */
+                    practice: sbClamp(x.practice, 0, 100000)  /* عدد جلسات التدريب بالتلميحات */
                 };
             });
             const m = sbIsObj(rpk.mastery) ? rpk.mastery : {};
@@ -27724,11 +27737,25 @@ window.zoo = zoo;
         return out;
     }
 
+    /* من v1 ننقل علم «سبق منح النجمة» فقط (لئلا تتكرر المكافأة)؛ أما done والنجوم فتبدأ من جديد
+       لأن v1 كانت تجيز النجاح بلا إجابة صحيحة، ولأن محتوى الحزمتين ٢ و٣ تغيّر. v1 تبقى كما هي. */
+    function sbMigrateOld() {
+        const fresh = sbNormalize(null);
+        let old = null;
+        try { const r = localStorage.getItem(SB_OLD_KEY); if (r != null) old = sbNormalize(JSON.parse(r)); } catch (e) { old = null; }
+        if (!old) return fresh;
+        SB_PACKS.forEach(p => {
+            SB_STAGES.forEach(s => { if (old.packs[p.id].stages[s.id].rewarded) fresh.packs[p.id].stages[s.id].rewarded = true; });
+            if (old.packs[p.id].mastery.rewarded) fresh.packs[p.id].mastery.rewarded = true;
+        });
+        return fresh;
+    }
+
     function sbLoad() {
         if (sbMemoOnly && sbMemo) return sbMemo;
         let rawStr = null;
         try { rawStr = localStorage.getItem(SB_KEY); } catch (e) { rawStr = null; }
-        if (rawStr == null) return sbNormalize(null);
+        if (rawStr == null) return sbMigrateOld();
         let parsed;
         try { parsed = JSON.parse(rawStr); } catch (e) { parsed = undefined; }
         if (!sbIsObj(parsed)) {
@@ -28048,6 +28075,14 @@ window.zoo = zoo;
             list.appendChild(b);
         });
         box.appendChild(list);
+        const failing = SB_STAGES.find(s => s.id === next && pr.stages[s.id].fails >= 1);
+        if (failing) {
+            const pb = el("button", "sb-btn sb-practice-btn", "🌱 تدريب بتلميحات: " + failing.t);
+            pb.type = "button";
+            pb.setAttribute("data-practice", failing.id);
+            pb.addEventListener("click", () => sbStart(sb.pack.id, failing.id, true));
+            box.appendChild(pb);
+        }
         if (pr.mastery.passed) box.appendChild(el("p", "sb-mastery-note", "🏅 أتقنتَ هذه الحزمة"));
     }
 
@@ -28061,18 +28096,20 @@ window.zoo = zoo;
     }
 
     /* ---------------- اللعب ---------------- */
-    function sbStart(packId, stageId) {
+    function sbStart(packId, stageId, practice) {
         sbTeardown();
+        sb.practice = practice === true;
         sb.pack = SB_PACKS.find(p => p.id === packId);
         sb.stage = SB_STAGES.find(s => s.id === stageId);
         if (!sb.pack || !sb.stage) return;
         const prog = sbLoad();
         const st = prog.packs[sb.pack.id].stages[sb.stage.id];
         const plays = st.plays;
-        st.plays = plays + 1;
+        if (sb.practice) st.practice++; else st.plays = plays + 1;
         prog.last = sb.pack.id;
         sbSave(prog);
-        sb.trials = sbBuildTrials(sb.pack, sb.stage, plays);
+        /* التدريب يستعمل جولات مستقلة عن المحاولات المحتسبة */
+        sb.trials = sbBuildTrials(sb.pack, sb.stage, sb.practice ? plays + 1000 + st.practice : plays);
         sb.idx = -1;
         sb.first = 0;
         sbShowView("play");
@@ -28108,7 +28145,22 @@ window.zoo = zoo;
         if (t.type === "basket") sbRenderBasket(area, t);
         else if (t.type === "match") sbRenderMatch(area, t);
         else sbRenderOdd(area, t);
+        if (sb.practice) sbPracticeHint(t);
         if (sb.idx === 0) sbScrollToGame();
+    }
+
+    /* تدريب: الإجابة الصحيحة مضيئة من البداية. لا نجوم ولا إتقان ولا إنجاز من هذا الوضع. */
+    function sbPracticeHint(t) {
+        const area = $q("sbStageArea");
+        if (!area) return;
+        let right = null;
+        if (t.type === "basket") right = area.querySelector('.sb-basket[data-cat="' + t.cat + '"]');
+        else {
+            const ok = (t.type === "match" ? t.choices : t.cards).find(x => x.ok);
+            right = ok ? Array.prototype.find.call(area.querySelectorAll(".sb-choice"), c => c.getAttribute("data-word") === ok.w) : null;
+        }
+        if (right) right.classList.add("sb-hint");
+        sbSetMsg("🌱 تدريب: اختر المضيء");
     }
 
     function sbCard(it, cls) {
@@ -28293,7 +28345,25 @@ window.zoo = zoo;
         return stage.kind === "mastery" ? SB_PASS : Math.ceil(total * 0.6);
     }
 
+    function sbFinishPractice() {
+        const total = sb.trials.length;
+        const tally = { independent: 0, retry: 0, hinted: 0, auto: 0 };
+        let wrongTaps = 0;
+        sb.trials.forEach(t => { if (t.outcome && tally[t.outcome] !== undefined) tally[t.outcome]++; wrongTaps += t.wrong || 0; });
+        try {
+            if (typeof StudentData !== "undefined" && StudentData.logEvent) {
+                StudentData.logEvent({
+                    type: "activity_practice", subject: "games", skill: "sort_" + sb.pack.id, activity: "stage_" + sb.stage.id,
+                    correct: null, passed: false, practice: true, mastery: sb.stage.kind === "mastery", total: total,
+                    independent: tally.independent, retry: tally.retry, hinted: tally.hinted, auto: tally.auto, wrongTaps: wrongTaps
+                });
+            }
+        } catch (e) { /* لا شيء */ }
+        sbShowDone({ practice: true, passed: false, stars: 0, first: tally.independent, total: total, need: 0, award: 0, isMastery: sb.stage.kind === "mastery", tally: tally, fails: 0 });
+    }
+
     function sbFinish() {
+        if (sb.practice) { sbFinishPractice(); return; }
         const total = sb.trials.length;
         const tally = { independent: 0, retry: 0, hinted: 0, auto: 0 };
         let wrongTaps = 0, hints = 0;
@@ -28321,6 +28391,7 @@ window.zoo = zoo;
         } else {
             attempt = st.plays;
         }
+        if (passed) st.fails = 0; else st.fails = Math.min(100000, st.fails + 1);
         if (passed) {
             st.done = true;
             if (stars > st.stars) st.stars = stars;
@@ -28343,11 +28414,11 @@ window.zoo = zoo;
                     correct: null,
                     passed: passed, mastery: isMastery, attempt: attempt, total: total, need: need,
                     independent: tally.independent, retry: tally.retry, hinted: tally.hinted, auto: tally.auto,
-                    wrongTaps: wrongTaps, hints: hints, stars: stars
+                    wrongTaps: wrongTaps, hints: hints, stars: stars, fails: st.fails
                 });
             }
         } catch (e) { /* لا شيء */ }
-        sbShowDone({ passed: passed, stars: stars, first: first, total: total, need: need, award: award, isMastery: isMastery, tally: tally });
+        sbShowDone({ passed: passed, stars: stars, first: first, total: total, need: need, award: award, isMastery: isMastery, tally: tally, fails: st.fails });
     }
 
     function sbHideDone() {
@@ -28380,10 +28451,15 @@ window.zoo = zoo;
             const n = SB_STAGES[i + 1];
             return (n && !sbStageLocked(prog, sb.pack.id, n.id)) ? n : null;
         })();
-        const title = r.passed ? (r.isMastery ? "🏅 أتقنتَ هذه الحزمة!" : "🌟 أحسنت يا بطل!") : (r.first >= r.need - 1 ? "💪 قريب جدًا!" : "💪 لنتدرّب مرة أخرى!");
-        const body = r.passed
+        const repeated = !r.passed && !r.practice && r.fails >= 2;
+        const title = r.practice ? "🌱 أحسنت التدريب!" : r.passed ? (r.isMastery ? "🏅 أتقنتَ هذه الحزمة!" : "🌟 أحسنت يا بطل!") : (r.first >= r.need - 1 ? "💪 قريب جدًا!" : "💪 لنتدرّب مرة أخرى!");
+        const body = r.practice
+            ? "تدرّبنا معًا. الآن جرّب المرحلة بنفسك"
+            : r.passed
             ? "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة"
-            : "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة. نتدرّب قليلًا ثم نحاول مرة أخرى";
+            : (repeated
+                ? "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة. نتدرّب معًا بتلميحات، ثم نجرّب وحدنا"
+                : "أجبتَ " + num(r.first) + " من " + num(r.total) + " من أول مرة. نتدرّب قليلًا ثم نحاول مرة أخرى");
         $q("sbDoneTitle").textContent = title;
         $q("sbDoneBody").textContent = body;
         $q("sbDoneStars").textContent = r.passed ? sbStars(r.stars) : "";
@@ -28392,16 +28468,26 @@ window.zoo = zoo;
         acts.innerHTML = "";
         const mk = (label, cls, fn) => { const b = el("button", cls, label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; };
         let primary;
-        if (r.passed && nextStage) primary = mk("▶ " + nextStage.t, "sb-btn sb-btn-main", () => sbStart(sb.pack.id, nextStage.id));
-        else if (!r.passed) primary = mk("🔁 أعد المحاولة", "sb-btn sb-btn-main", () => sbStart(sb.pack.id, sb.stage.id));
+        const practiceFn = () => sbStart(sb.pack.id, sb.stage.id, true);
+        if (r.practice) {
+            primary = mk("▶ جرّب المرحلة بنفسك", "sb-btn sb-btn-main", () => sbStart(sb.pack.id, sb.stage.id));
+            mk("🌱 تدريب آخر", "sb-btn", practiceFn);
+        } else if (!r.passed && repeated) {
+            primary = mk("🌱 تدريب بتلميحات", "sb-btn sb-btn-main", practiceFn);
+            mk("🔁 أعد المحاولة", "sb-btn", () => sbStart(sb.pack.id, sb.stage.id));
+        } else if (r.passed && nextStage) primary = mk("▶ " + nextStage.t, "sb-btn sb-btn-main", () => sbStart(sb.pack.id, nextStage.id));
+        else if (!r.passed) {
+            primary = mk("🔁 أعد المحاولة", "sb-btn sb-btn-main", () => sbStart(sb.pack.id, sb.stage.id));
+            mk("🌱 تدريب بتلميحات", "sb-btn", practiceFn);
+        }
         else primary = mk("🗺️ الحزم", "sb-btn sb-btn-main", () => sbGoMap());
-        if (r.passed) mk("🔁 إعادة", "sb-btn", () => sbStart(sb.pack.id, sb.stage.id));
+        if (r.passed && !r.practice) mk("🔁 إعادة", "sb-btn", () => sbStart(sb.pack.id, sb.stage.id));
         mk("📋 المراحل", "sb-btn", () => { sbTeardown(); sbShowView("stages"); sbRenderStages(); });
         d.classList.remove("sb-hidden");
         const w = $q(SB_SCREEN);
         if (w) w.querySelectorAll(".sb-top,.sb-view").forEach(n => { try { n.inert = true; } catch (e) { /* لا شيء */ } });
         sbConfetti();
-        sbSay(r.passed ? SB_STAGE_DONE : SB_RETRY);
+        sbSay(r.practice ? SB_PRAISE[2] : (r.passed ? SB_STAGE_DONE : SB_RETRY));
         try { primary.focus(); } catch (e) { /* لا شيء */ }
     }
 
@@ -28434,12 +28520,34 @@ window.zoo = zoo;
         sbRenderMap();
     }
 
+    /* وصف حدث المعلم (للعرض فقط): يعتمد على قوائم ثابتة وأرقام، لا على نص مخزَّن */
+    function sbDescribeEvent(e) {
+        if (!sbIsObj(e)) return null;
+        const pk = SB_PACKS.find(p => "sort_" + p.id === e.skill);
+        const sg = SB_STAGES.find(s => "stage_" + s.id === e.activity);
+        if (!pk || !sg) return null;
+        const n = v => num(sbClamp(v, 0, 999));
+        const kind = e.type === "activity_complete" ? "pass" : e.type === "activity_practice" ? "practice" : "fail";
+        const head = "🧺 سلال الفرز — " + pk.t + " — " + sg.t + ": " + (kind === "pass" ? "نجح" : kind === "practice" ? "تدريب بتلميحات" : "لم ينجح بعد");
+        const parts = [];
+        /* التدريب مُضاء بالتلميح فلا تُعرض له «دقة»: أخطاء فقط */
+        if (kind !== "practice") {
+            parts.push("مستقل " + n(e.independent) + " من " + n(e.total));
+            parts.push("بعد محاولة " + n(e.retry));
+            parts.push("بعد تلميح " + n(e.hinted));
+            parts.push("تلقائي " + n(e.auto));
+        }
+        parts.push("أخطاء " + n(e.wrongTaps));
+        if (e.mastery === true && kind !== "practice") parts.push("إتقان، محاولة " + n(e.attempt));
+        return { kind: kind, text: head + " (" + parts.join("، ") + ")" };
+    }
+
     window.openSortGame = openSortGame;
     /* واجهة قراءة للاختبارات فقط */
     window.SortBaskets = {
         _state: sb, _cats: SB_CATS, _packs: SB_PACKS, _stages: SB_STAGES, _avoid: SB_AVOID,
         _load: sbLoad, _normalize: sbNormalize, _build: sbBuildTrials, _pool: sbPool, _key: SB_KEY,
-        _praise: SB_PRAISE, _lines: [SB_STAGE_DONE, SB_RETRY, SB_LOCKED], _itemAvoid: SB_ITEM_AVOID, _excl: sbExcl, _need: sbNeed
+        _praise: SB_PRAISE, _lines: [SB_STAGE_DONE, SB_RETRY, SB_LOCKED], _itemAvoid: SB_ITEM_AVOID, _excl: sbExcl, _need: sbNeed, describeEvent: sbDescribeEvent
     };
 })();
 
