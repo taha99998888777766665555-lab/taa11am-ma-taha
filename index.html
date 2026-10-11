@@ -1489,6 +1489,34 @@
             </button>
 
 
+            <!-- =====================================
+                 🧺 سلال الفرز
+            ====================================== -->
+
+            <button
+                class="game-launch-card sort-game-card"
+                onclick="openSortGame()"
+            >
+
+                <div class="game-card-icon">
+                    🧺
+                </div>
+
+                <h3>
+                    سلال الفرز
+                </h3>
+
+                <p>
+                    ضع كل صورة مع ما يشبهها: فواكه، حيوانات، مركبات وأكثر
+                </p>
+
+                <span>
+                    ابدأ الفرز ▶
+                </span>
+
+            </button>
+
+
 
         </div>
 
@@ -3592,6 +3620,50 @@
 <!-- =========================================================
      👤 الملف الشخصي
 ========================================================= -->
+
+<!-- =========================================================
+     🧺 سلال الفرز — لعبة تصنيف مستقلة (قسم الألعاب)
+     يُبنى المحتوى برمجيًا (sb-*). بلا مؤقت ولا أرواح ولا عقاب.
+========================================================= -->
+
+<section
+    id="sortGame"
+    class="screen"
+    data-view="map"
+>
+    <div class="sb-wrap">
+
+        <div class="sb-top">
+            <button type="button" id="sbBack" class="sb-back" aria-label="رجوع">⬅️</button>
+            <h2 id="sbTitle" class="sb-title">🧺 سلال الفرز</h2>
+            <div id="sbDots" class="sb-dots" role="img" aria-label=""></div>
+        </div>
+
+        <div id="sbMap" class="sb-view"></div>
+
+        <div id="sbStages" class="sb-view sb-hidden"></div>
+
+        <div id="sbPlay" class="sb-view sb-hidden">
+            <p id="sbPrompt" class="sb-prompt"></p>
+            <div id="sbStageArea" class="sb-stage"></div>
+            <p id="sbMsg" class="sb-msg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div id="sbFx" class="sb-fx" aria-hidden="true"></div>
+
+        <div id="sbDone" class="sb-done sb-hidden" role="dialog" aria-modal="true" aria-labelledby="sbDoneTitle">
+            <div class="sb-done-card">
+                <h3 id="sbDoneTitle" class="sb-done-title"></h3>
+                <div id="sbDoneStars" class="sb-done-stars" aria-hidden="true"></div>
+                <p id="sbDoneBody" class="sb-done-body"></p>
+                <p id="sbDoneReward" class="sb-done-reward"></p>
+                <div id="sbDoneActs" class="sb-done-acts"></div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
 
 <section id="profile" class="screen">
 
