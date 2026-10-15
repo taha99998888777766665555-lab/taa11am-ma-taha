@@ -29313,6 +29313,27 @@ function add2Celebrate() {
     setTimeout(() => { if (box.parentNode) box.parentNode.removeChild(box); }, 1100);
 }
 
+/* بعد الخطأ الثاني تُفتح خانة المساعدة: نُظهرها كاملة في الشاشة بأقل تمرير ممكن (بلا تغطية لشيء)
+   ونُبرزها بوميض هادئ مرتين فقط (يُلغى في الوضع الهادئ) */
+function add2RevealHelp() {
+    const slot = $("addHelpSlot");
+    if (!slot) return;
+    slot.classList.remove("add2-help-flash");
+    void slot.offsetWidth;
+    slot.classList.add("add2-help-flash");
+    setTimeout(() => slot.classList.remove("add2-help-flash"), 2600);
+    const settle = () => {
+        try {
+            const r = slot.getBoundingClientRect();
+            const vh = window.innerHeight || document.documentElement.clientHeight;
+            if (r.bottom > vh - 8) window.scrollBy({ top: r.bottom - vh + 12, left: 0, behavior: "instant" });
+            else if (r.top < 0) window.scrollBy({ top: r.top - 12, left: 0, behavior: "instant" });
+        } catch (e) { /* لا شيء */ }
+    };
+    settle();
+    setTimeout(settle, 120);
+}
+
 function add2AfterWrong(level, task) {
 
     const msg = $("addMessage");
@@ -29324,6 +29345,7 @@ function add2AfterWrong(level, task) {
         if (wrong === 2) {
             if (msg) { msg.textContent = "💡 لنعدّ معًا"; msg.className = "message"; }
             add2AutoCount();
+            add2RevealHelp();
         }
     }
 
