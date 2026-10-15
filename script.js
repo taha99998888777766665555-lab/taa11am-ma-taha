@@ -24973,6 +24973,8 @@ finishAdditionChoiceTask = function (isCorrect, button) {
         ? ADDITION_LEVELS[additionLevelState.levelId - 1]
         : null;
 
+    const taskForLog = (typeof additionLevelState !== "undefined") ? additionLevelState.currentTask : null;
+
     originalFinishAdditionChoiceTaskForLog(isCorrect, button);
 
     StudentData.logEvent({
@@ -24980,7 +24982,9 @@ finishAdditionChoiceTask = function (isCorrect, button) {
         subject: "addition",
         skill: level ? level.title : null,
         activity: level ? String(level.id) : null,
-        correct: !!isCorrect
+        correct: !!isCorrect,
+        tries: taskForLog ? (taskForLog.wrong || 0) + (isCorrect ? 1 : 0) : null,
+        help: taskForLog ? (taskForLog.helpLevel || 0) : 0
     });
 };
 
@@ -28700,4 +28704,516 @@ window.zoo = zoo;
 
 /* =========================================================
    🔚 نهاية لعبة «سلال الفرز»
+========================================================= */
+
+
+/* =========================================================================
+   🎨 قسم «الجمع» — الطبقة الاحترافية (تصميم + أدوات عدّ محسوسة + تلميحات)
+   إضافية بالكامل: تغلّف دوال محرك الجمع الموجودة ولا تحذف منها شيئًا
+   (التوليد، النجوم، التقدم، سجل المعلم تبقى كما هي).
+   كل الأصوات من ملفات EduAudio المحلية فقط — لا TTS ولا أصوات متصفح.
+   لا مؤقتات ضغط ولا أرواح ولا عقوبات؛ المساعدة تدريجية بلا أخطاء.
+========================================================================= */
+
+const ADD2_META = {
+    1:  { phase: "concrete", tray: "objects", open: true },
+    2:  { phase: "concrete", tray: "frame",   open: true },
+    3:  { phase: "abstract", tray: "auto",    open: false },
+    4:  { phase: "visual",   tray: "objects", open: false },
+    5:  { phase: "abstract", tray: "auto",    open: false },
+    6:  { phase: "abstract", tray: "auto",    open: false },
+    7:  { phase: "visual",   tray: "objects", open: true },
+    8:  { phase: "visual",   tray: "objects", open: true },
+    9:  { phase: "abstract", tray: "blocks",  open: false },
+    10: { phase: "abstract", tray: "blocks",  open: false }
+};
+
+const ADD2_PHASE_LABEL = {
+    concrete: "🧸 محسوس",
+    visual: "🖼️ بصري",
+    abstract: "🔢 مجرد"
+};
+
+const ADD2_STATE = { token: 0, count: 0, counting: false };
+
+function add2StarsFromScore(score) {
+    if (score >= ADDITION_TASKS_PER_LEVEL) return 3;
+    if (score >= ADDITION_PASS_SCORE) return 2;
+    if (score > 0) return 1;
+    return 0;
+}
+
+function add2StarRow(n) {
+    let out = "";
+    for (let i = 1; i <= 3; i++) {
+        out += `<span class="add2-star${i <= n ? " on" : ""}">★</span>`;
+    }
+    return out;
+}
+
+/* ---------- شاشة اختيار المستويات ---------- */
+
+renderAdditionLevelsHub = function () {
+
+    const grid = $("additionLevelsGrid");
+    if (!grid) return;
+
+    const best = loadAdditionLevelBest();
+    const completed = ADDITION_LEVELS.filter(l => (best[l.id] || 0) >= ADDITION_PASS_SCORE).length;
+    const recommended = (ADDITION_LEVELS.find(l => (best[l.id] || 0) < ADDITION_PASS_SCORE) || {}).id;
+
+    const stats = $("addHubStats");
+    if (stats) {
+        stats.innerHTML =
+            `<span class="add2-stat">⭐ ${arabicNumber(getStars())}</span>` +
+            `<span class="add2-stat">✅ ${arabicNumber(completed)}/${arabicNumber(ADDITION_LEVELS.length)}</span>`;
+    }
+
+    grid.innerHTML = ADDITION_LEVELS.map(level => {
+
+        const meta = ADD2_META[level.id] || ADD2_META[1];
+        const score = best[level.id] || 0;
+        const done = score >= ADDITION_PASS_SCORE;
+
+        return `
+            <button
+                class="addition-level-card-btn add2-card add2-phase-${meta.phase}${done ? " completed" : ""}${level.id === recommended ? " recommended" : ""}"
+                type="button"
+                role="listitem"
+                onclick="openAdditionLevel(${level.id})"
+                aria-label="المستوى ${arabicNumber(level.id)}: ${level.title}${done ? "، مكتمل" : ""}"
+            >
+                ${level.id === recommended ? `<span class="add2-reco">مقترح لك</span>` : ""}
+                <span class="add2-card-num">${arabicNumber(level.id)}</span>
+                <span class="add2-card-icon" aria-hidden="true">${level.icon}</span>
+                <span class="add2-card-title">${level.title}</span>
+                <span class="add2-card-phase">${ADD2_PHASE_LABEL[meta.phase]}</span>
+                <span class="add2-stars" aria-hidden="true">${add2StarRow(add2StarsFromScore(score))}</span>
+                ${score ? `<span class="add2-card-best">${arabicNumber(score)}/١٠</span>` : ""}
+            </button>
+        `;
+    }).join("");
+};
+
+/* ---------- شريط التقدم بنقاط ---------- */
+
+const add2PrevUpdateProgress = updateAdditionProgressUI;
+
+updateAdditionProgressUI = function () {
+    add2PrevUpdateProgress();
+
+    const dots = $("addDots");
+    if (!dots) return;
+
+    const idx = additionLevelState.taskIndex;
+
+    if (idx >= ADDITION_TASKS_PER_LEVEL) {
+        const lbl = $("additionProgressLabel");
+        if (lbl) lbl.textContent = "اكتمل المستوى ✨";
+    }
+    let html = "";
+    for (let i = 0; i < ADDITION_TASKS_PER_LEVEL; i++) {
+        const cls = i < idx ? "done" : (i === idx ? "now" : "");
+        html += `<span class="add2-dot ${cls}"></span>`;
+    }
+    dots.innerHTML = html;
+};
+
+/* ---------- أدوات العدّ المحسوسة ---------- */
+
+function add2StopCounting() {
+    ADD2_STATE.token++;
+    ADD2_STATE.counting = false;
+}
+
+function add2ObjectEmoji(task) {
+    if (task.emoji) return task.emoji;
+    if (task.storyEmoji) return task.storyEmoji;
+    const list = (typeof ADDITION_PICTURE_EMOJIS !== "undefined" && ADDITION_PICTURE_EMOJIS.length)
+        ? ADDITION_PICTURE_EMOJIS : ["🍎"];
+    return list[(task.a * 3 + task.b + additionLevelState.taskIndex) % list.length];
+}
+
+function add2TrayKind(level, task) {
+    const meta = ADD2_META[level.id] || ADD2_META[1];
+    if (meta.tray !== "auto") return meta.tray;
+    return task.a + task.b <= 20 ? "frame" : "blocks";
+}
+
+function add2Say(n) {
+    /* صوت العدّ من ملفات الأرقام المحلية فقط، يقاطع السابق دون تراكم */
+    try { EduAudio.play(String(n), { mode: "interrupt" }); } catch (e) { /* لا شيء */ }
+}
+
+function add2UpdateCount(total) {
+    const el = $("add2Count");
+    if (el) el.textContent = arabicNumber(ADD2_STATE.count) + (total && ADD2_STATE.count === total ? " ✨" : "");
+}
+
+function add2CountItem(item) {
+    if (!item || item.classList.contains("counted")) return false;
+    item.classList.add("counted");
+    ADD2_STATE.count += Number(item.dataset.w) || 1;
+    add2Say(ADD2_STATE.count);
+    add2UpdateCount(Number(($("additionTray") || {}).dataset ? $("additionTray").dataset.total : 0));
+    const badge = item.querySelector(".add2-n");
+    if (badge) badge.textContent = arabicNumber(ADD2_STATE.count);
+    return true;
+}
+
+function add2ResetCount() {
+    add2StopCounting();
+    ADD2_STATE.count = 0;
+    document.querySelectorAll("#additionTray .add2-count-item").forEach(i => {
+        i.classList.remove("counted");
+        const b = i.querySelector(".add2-n");
+        if (b) b.textContent = "";
+    });
+    add2UpdateCount(0);
+}
+
+function add2AutoCount() {
+    add2ResetCount();
+    const my = ++ADD2_STATE.token;
+    ADD2_STATE.counting = true;
+    const items = [...document.querySelectorAll("#additionTray .add2-count-item")];
+    let i = 0;
+    const step = () => {
+        if (my !== ADD2_STATE.token) return;
+        if (i >= items.length) { ADD2_STATE.counting = false; return; }
+        add2CountItem(items[i++]);
+        setTimeout(step, 900);
+    };
+    step();
+}
+
+function add2MakeItem(kind, group, weight, emoji) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "add2-count-item add2-" + kind + " g-" + group;
+    b.dataset.w = String(weight);
+    b.setAttribute("aria-label", "المس لتعدّ");
+    if (kind === "obj") b.innerHTML = `<span class="add2-emo">${emoji}</span><span class="add2-n"></span>`;
+    else b.innerHTML = `<span class="add2-n"></span>`;
+    b.onclick = () => { add2StopCounting(); add2CountItem(b); };
+    return b;
+}
+
+function add2BuildTray(level, task) {
+
+    const tray = $("additionTray");
+    if (!tray) return;
+
+    const kind = add2TrayKind(level, task);
+    ADD2_STATE.count = 0;
+
+    const head = document.createElement("div");
+    head.className = "add2-tray-head";
+    head.innerHTML = `
+        <span class="add2-tray-title">👆 المس كل شيء لتعدّه</span>
+        <span class="add2-count" id="add2Count" aria-live="polite">٠</span>
+        <button type="button" class="add2-mini-btn" onclick="add2AutoCount()">🔢 عدّ معي</button>
+        <button type="button" class="add2-mini-btn" onclick="add2ResetCount()" aria-label="ابدأ العدّ من جديد">↺</button>
+    `;
+
+    const body = document.createElement("div");
+    body.className = "add2-tray-body add2-kind-" + kind;
+
+    let total = task.a + task.b;
+
+    if (kind === "objects") {
+        const emoji = add2ObjectEmoji(task);
+        const mk = (n, g, ghost) => {
+            const wrap = document.createElement("div");
+            wrap.className = "add2-group g-" + g + (ghost ? " ghost" : "");
+            for (let i = 0; i < n; i++) wrap.appendChild(add2MakeItem("obj", g, 1, emoji));
+            return wrap;
+        };
+        if (level.mode === "missing-number") {
+            const known = task.missingSide === "a" ? task.b : task.a;
+            const missing = task.missingSide === "a" ? task.a : task.b;
+            body.appendChild(mk(known, "a"));
+            const plus = document.createElement("div"); plus.className = "add2-plus"; plus.textContent = "+"; body.appendChild(plus);
+            body.appendChild(mk(missing, "b", true));
+        } else {
+            body.appendChild(mk(task.a, "a"));
+            const plus = document.createElement("div"); plus.className = "add2-plus"; plus.textContent = "+"; body.appendChild(plus);
+            body.appendChild(mk(task.b, "b"));
+        }
+    } else if (kind === "frame") {
+        const frames = Math.ceil(total / 10);
+        let placed = 0;
+        for (let f = 0; f < frames; f++) {
+            const fr = document.createElement("div");
+            fr.className = "add2-frame";
+            for (let c = 0; c < 10; c++) {
+                if (placed < total) {
+                    const g = placed < task.a ? "a" : "b";
+                    fr.appendChild(add2MakeItem("cell", g, 1));
+                    placed++;
+                } else {
+                    const e = document.createElement("span");
+                    e.className = "add2-cell-empty";
+                    fr.appendChild(e);
+                }
+            }
+            body.appendChild(fr);
+        }
+    } else {
+        const addGroup = (n, g) => {
+            const wrap = document.createElement("div");
+            wrap.className = "add2-group blocks g-" + g;
+            for (let i = 0; i < Math.floor(n / 10); i++) wrap.appendChild(add2MakeItem("rod", g, 10));
+            for (let i = 0; i < n % 10; i++) wrap.appendChild(add2MakeItem("cube", g, 1));
+            return wrap;
+        };
+        body.appendChild(addGroup(task.a, "a"));
+        const plus = document.createElement("div"); plus.className = "add2-plus"; plus.textContent = "+"; body.appendChild(plus);
+        body.appendChild(addGroup(task.b, "b"));
+    }
+
+    tray.innerHTML = "";
+    tray.dataset.total = String(total);
+    tray.appendChild(head);
+    tray.appendChild(body);
+}
+
+function add2SetTrayOpen(open) {
+    const tray = $("additionTray");
+    const card = $("additionLevelCard");
+    const btn = $("addHintBtn");
+    if (!tray) return;
+    tray.style.display = open ? "block" : "none";
+    if (card) card.classList.toggle("add2-tray-open", !!open);
+    if (btn) {
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        btn.classList.toggle("active", !!open);
+    }
+    if (!open) add2StopCounting();
+}
+
+function add2ToggleHint() {
+    const tray = $("additionTray");
+    const task = additionLevelState.currentTask;
+    if (!tray || !task) return;
+    const willOpen = tray.style.display === "none";
+    add2SetTrayOpen(willOpen);
+    if (willOpen) task.helpLevel = Math.max(task.helpLevel || 0, 1);
+}
+
+/* ---------- ربط عرض المهمة ---------- */
+
+const add2PrevRenderCurrent = renderCurrentAdditionTask;
+
+renderCurrentAdditionTask = function () {
+
+    add2StopCounting();
+
+    {
+        /* مستويات لوحة الأرقام لا تستعمل منصّة الاختيار: نفرّغها حتى لا يبقى زرّ قديم */
+        const lv = ADDITION_LEVELS[additionLevelState.levelId - 1];
+        const st = $("additionTaskStage");
+        if (st && lv && (lv.mode === "digit-pad" || lv.mode === "vertical")) st.innerHTML = "";
+    }
+
+    add2PrevRenderCurrent();
+
+    const level = ADDITION_LEVELS[additionLevelState.levelId - 1];
+    const task = additionLevelState.currentTask;
+    if (!level || !task) return;
+
+    const meta = ADD2_META[level.id] || ADD2_META[1];
+    const card = $("additionLevelCard");
+    const actions = $("addActions");
+    const hintLabel = document.querySelector("#addHintBtn span:last-child");
+
+    if (card) {
+        card.classList.remove("add2-done");
+        card.setAttribute("data-phase", meta.phase);
+        card.setAttribute("data-mode", level.mode);
+    }
+    if (actions) actions.style.display = "";
+    if (hintLabel) hintLabel.textContent = meta.open ? "عدّ معي" : "تلميح";
+
+    add2BuildTray(level, task);
+    add2SetTrayOpen(!!meta.open);
+};
+
+/* ---------- تدرّج المساعدة بلا أخطاء + الاحتفال ---------- */
+
+function add2CorrectValue(level, task) {
+    return level.mode === "missing-number"
+        ? (task.missingSide === "a" ? task.a : task.b)
+        : task.correct;
+}
+
+function add2Celebrate() {
+    if (document.body.classList.contains("calm-mode")) return;
+    try {
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    } catch (e) { /* لا شيء */ }
+    const card = $("additionLevelCard");
+    if (!card) return;
+    const box = document.createElement("div");
+    box.className = "add2-burst";
+    box.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < 8; i++) {
+        const s = document.createElement("span");
+        const ang = (i / 8) * Math.PI * 2;
+        s.style.setProperty("--dx", Math.round(Math.cos(ang) * 90) + "px");
+        s.style.setProperty("--dy", Math.round(Math.sin(ang) * 70) + "px");
+        s.textContent = i % 2 ? "⭐" : "✨";
+        box.appendChild(s);
+    }
+    card.appendChild(box);
+    setTimeout(() => { if (box.parentNode) box.parentNode.removeChild(box); }, 1100);
+}
+
+function add2AfterWrong(level, task) {
+
+    const msg = $("addMessage");
+    const wrong = task.wrong || 0;
+
+    if (wrong >= 2) {
+        add2SetTrayOpen(true);
+        task.helpLevel = Math.max(task.helpLevel || 0, 1);
+        if (wrong === 2) {
+            if (msg) { msg.textContent = "💡 لنعدّ معًا"; msg.className = "message"; }
+            add2AutoCount();
+        }
+    }
+
+    const grid = document.querySelector("#additionTaskStage .addition-choice-grid");
+    const correct = add2CorrectValue(level, task);
+
+    if (wrong >= 3 && grid) {
+        const btns = [...grid.querySelectorAll(".addition-choice-btn")];
+        if (!grid.querySelector(".faded")) {
+            const wrongBtn = btns.find(b => b.textContent.trim() !== arabicNumber(correct) && !b.classList.contains("wrong"));
+            if (wrongBtn) { wrongBtn.classList.add("faded"); wrongBtn.disabled = true; }
+            task.helpLevel = Math.max(task.helpLevel || 0, 2);
+        }
+    }
+    /* مع ٣ خيارات فقط لا يبقى بعد خطأين إلا الصحيح؛ فنبرزه بلطف منذ الخطأ الثاني */
+    if (wrong >= 2 && grid) {
+        const good = [...grid.querySelectorAll(".addition-choice-btn")].find(b => b.textContent.trim() === arabicNumber(correct));
+        if (good) good.classList.add("glow");
+        task.helpLevel = Math.max(task.helpLevel || 0, 3);
+    }
+
+    if (wrong >= 3 && !grid) {
+        const digits = String(correct).split("");
+        document.querySelectorAll("#additionDigitPad .addition-digit-btn").forEach(b => {
+            if (digits.indexOf(String.fromCharCode(48 + "٠١٢٣٤٥٦٧٨٩".indexOf(b.textContent.trim()))) >= 0) b.classList.add("glow");
+        });
+        task.helpLevel = Math.max(task.helpLevel || 0, 3);
+    }
+}
+
+const add2PrevFinishChoice = finishAdditionChoiceTask;
+
+finishAdditionChoiceTask = function (isCorrect, button) {
+
+    const level = ADDITION_LEVELS[additionLevelState.levelId - 1];
+    const task = additionLevelState.currentTask;
+
+    if (task && task.solved) return;
+
+    if (!isCorrect && task) task.wrong = (task.wrong || 0) + 1;
+
+    add2PrevFinishChoice(isCorrect, button);
+
+    if (!task || !level) return;
+
+    if (isCorrect) {
+        add2StopCounting();
+        add2Celebrate();
+    } else {
+        add2AfterWrong(level, task);
+    }
+};
+
+const add2PrevCheck = checkAddition;
+
+checkAddition = function () {
+
+    const task = additionLevelState.currentTask;
+    const level = ADDITION_LEVELS[additionLevelState.levelId - 1];
+
+    if (!additionLevelModeActive || !task || !level || task.solved || additionTimer) {
+        add2PrevCheck();
+        return;
+    }
+
+    const input = $("addAnswer");
+    const answer = parseNumber(input ? input.value : "");
+    const finite = Number.isFinite(answer);
+    const isRight = finite && answer === task.correct;
+
+    if (finite && !isRight) task.wrong = (task.wrong || 0) + 1;
+
+    add2PrevCheck();
+
+    if (!finite) return;
+
+    try {
+        StudentData.logEvent({
+            type: "activity_answer",
+            subject: "addition",
+            skill: level.title,
+            activity: String(level.id),
+            correct: isRight,
+            tries: (task.wrong || 0) + (isRight ? 1 : 0),
+            help: task.helpLevel || 0
+        });
+    } catch (e) { /* لا يوقف النشاط */ }
+
+    if (isRight) {
+        add2StopCounting();
+        add2Celebrate();
+    } else {
+        add2AfterWrong(level, task);
+    }
+};
+
+/* ---------- شاشة النتيجة ---------- */
+
+const add2PrevResult = renderAdditionLevelResultScreen;
+
+renderAdditionLevelResultScreen = function (level, score, passed) {
+
+    add2StopCounting();
+    add2PrevResult(level, score, passed);
+
+    const card = $("additionLevelCard");
+    const actions = $("addActions");
+    if (card) card.classList.add("add2-done");
+    if (actions) actions.style.display = "none";
+    add2SetTrayOpen(false);
+
+    const resultCard = document.querySelector("#additionTaskStage .addition-level-result-card");
+    if (resultCard) {
+        const row = document.createElement("div");
+        row.className = "add2-result-stars";
+        row.setAttribute("aria-label", add2StarsFromScore(score) + " من ٣ نجوم");
+        row.innerHTML = add2StarRow(add2StarsFromScore(score));
+        resultCard.insertBefore(row, resultCard.firstChild);
+    }
+
+    add2Celebrate();
+};
+
+const add2PrevBack = backToAdditionLevels;
+
+backToAdditionLevels = function () {
+    add2StopCounting();
+    add2PrevBack();
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    if ($("additionLevelsGrid")) renderAdditionLevelsHub();
+});
+
+/* =========================================================
+   🔚 نهاية الطبقة الاحترافية لقسم الجمع
 ========================================================= */
