@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v13";
+const CACHE_VERSION = "taha-app-v14";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [

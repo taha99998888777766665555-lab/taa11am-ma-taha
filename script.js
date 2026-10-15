@@ -18963,18 +18963,28 @@ function letterWithKasra(letter) {
    📋 تعريف المستويات العشرة
 ========================================================= */
 
+/* ترتيب العرض والتدريس: id = الموضع الظاهر (١–١٠) ويُستعمل في التنقل والعرض.
+   key = المفتاح الثابت التاريخي لكل مستوى، ويُستعمل وحده في التخزين وسجل المعلم
+   (تقدّم الطلاب ونجومهم وبياناتهم القديمة مرتبطة به، فلا يختلط شيء عند إعادة الترتيب).
+   «جمع بالصور» (key 7 سابقًا) صار أول مستوى. */
 const ADDITION_LEVELS = [
-    { id: 1, title: "جمع ضمن ٥", icon: "🍎", max: 5, mode: "choice-result" },
-    { id: 2, title: "جمع ضمن ١٠", icon: "🔟", max: 10, mode: "digit-pad" },
-    { id: 3, title: "جمع ضمن ٢٠", icon: "🔢", max: 20, mode: "digit-pad" },
-    { id: 4, title: "العدد المفقود", icon: "❓", max: 10, mode: "missing-number" },
-    { id: 5, title: "جمع أفقي", icon: "➡️", max: 20, mode: "digit-pad" },
-    { id: 6, title: "جمع رأسي", icon: "⬇️", max: 20, mode: "vertical" },
-    { id: 7, title: "جمع بالصور", icon: "🖼️", max: 10, mode: "picture-choice" },
-    { id: 8, title: "مسائل متنوعة", icon: "📖", max: 15, mode: "word-problem" },
-    { id: 9, title: "جمع ضمن ٥٠", icon: "5️⃣0️⃣", max: 50, mode: "digit-pad" },
-    { id: 10, title: "جمع ضمن ١٠٠", icon: "💯", max: 100, mode: "digit-pad" }
+    { id: 1,  key: 7,  title: "جمع بالصور", icon: "🖼️", max: 10, mode: "picture-choice" },
+    { id: 2,  key: 1,  title: "جمع ضمن ٥", icon: "🍎", max: 5, mode: "choice-result" },
+    { id: 3,  key: 2,  title: "جمع ضمن ١٠", icon: "🔟", max: 10, mode: "digit-pad" },
+    { id: 4,  key: 3,  title: "جمع ضمن ٢٠", icon: "🔢", max: 20, mode: "digit-pad" },
+    { id: 5,  key: 4,  title: "العدد المفقود", icon: "❓", max: 10, mode: "missing-number" },
+    { id: 6,  key: 5,  title: "جمع أفقي", icon: "➡️", max: 20, mode: "digit-pad" },
+    { id: 7,  key: 6,  title: "جمع رأسي", icon: "⬇️", max: 20, mode: "vertical" },
+    { id: 8,  key: 8,  title: "مسائل متنوعة", icon: "📖", max: 15, mode: "word-problem" },
+    { id: 9,  key: 9,  title: "جمع ضمن ٥٠", icon: "5️⃣0️⃣", max: 50, mode: "digit-pad" },
+    { id: 10, key: 10, title: "جمع ضمن ١٠٠", icon: "💯", max: 100, mode: "digit-pad" }
 ];
+
+/* المفتاح الثابت للتخزين من موضع المستوى الظاهر */
+function additionLevelKey(levelId) {
+    const l = ADDITION_LEVELS[Number(levelId) - 1];
+    return l ? l.key : Number(levelId);
+}
 
 const ADDITION_PICTURE_EMOJIS = [
     "🍎", "⭐", "🎈", "🌸", "🐟", "🍬", "🧸", "🍇"
@@ -19039,8 +19049,8 @@ function readLegacyAdditionBest() {
     const out = {};
     if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         ADDITION_LEVELS.forEach(level => {
-            const sc = additionSafeScore(raw[level.id]);
-            if (sc > 0) out[level.id] = sc;
+            const sc = additionSafeScore(raw[level.key]);
+            if (sc > 0) out[level.key] = sc;
         });
     }
     return out;
@@ -19063,11 +19073,11 @@ function sanitizeAdditionProgress(raw) {
     const levels = {};
     if (raw && typeof raw === "object" && raw.levels && typeof raw.levels === "object") {
         ADDITION_LEVELS.forEach(level => {
-            const e = raw.levels[level.id];
+            const e = raw.levels[level.key];
             if (!e || typeof e !== "object") return;
             const best = additionSafeScore(e.best);
             const paid = Math.max(additionSafeScore(e.paid), 0);
-            levels[level.id] = {
+            levels[level.key] = {
                 best: best,
                 paid: Math.max(paid, 0),
                 rewarded: e.rewarded === true
@@ -19118,19 +19128,21 @@ function loadAdditionProgress() {
 }
 
 function getAdditionLevelEntry(progress, levelId) {
-    const key = String(levelId);
+    /* levelId = موضع المستوى الظاهر؛ التخزين بالمفتاح الثابت */
+    const key = String(additionLevelKey(levelId));
     if (!progress.levels[key]) {
         progress.levels[key] = { best: 0, paid: 0, rewarded: false };
     }
     return progress.levels[key];
 }
 
-/* واجهة متوافقة: خريطة أفضل النتائج { id: score } */
+/* خريطة أفضل النتائج مفهرسة بموضع المستوى الظاهر { position: score } */
 function loadAdditionLevelBest() {
     const progress = loadAdditionProgress();
     const out = {};
-    Object.keys(progress.levels).forEach(id => {
-        if (progress.levels[id].best > 0) out[id] = progress.levels[id].best;
+    ADDITION_LEVELS.forEach(level => {
+        const e = progress.levels[level.key];
+        if (e && e.best > 0) out[level.id] = e.best;
     });
     return out;
 }
@@ -24981,7 +24993,7 @@ finishAdditionChoiceTask = function (isCorrect, button) {
         type: "activity_answer",
         subject: "addition",
         skill: level ? level.title : null,
-        activity: level ? String(level.id) : null,
+        activity: level ? String(level.key) : null,
         correct: !!isCorrect,
         tries: taskForLog ? (taskForLog.wrong || 0) + (isCorrect ? 1 : 0) : null,
         help: taskForLog ? (taskForLog.helpLevel || 0) : 0
@@ -28771,7 +28783,7 @@ renderAdditionLevelsHub = function () {
 
     grid.innerHTML = ADDITION_LEVELS.map(level => {
 
-        const meta = ADD2_META[level.id] || ADD2_META[1];
+        const meta = ADD2_META[level.key] || ADD2_META[1];
         const score = best[level.id] || 0;
         const done = score >= ADDITION_PASS_SCORE;
 
@@ -28835,7 +28847,7 @@ function add2ObjectEmoji(task) {
 }
 
 function add2TrayKind(level, task) {
-    const meta = ADD2_META[level.id] || ADD2_META[1];
+    const meta = ADD2_META[level.key] || ADD2_META[1];
     if (meta.tray !== "auto") return meta.tray;
     return task.a + task.b <= 20 ? "frame" : "blocks";
 }
@@ -29022,7 +29034,7 @@ renderCurrentAdditionTask = function () {
     const task = additionLevelState.currentTask;
     if (!level || !task) return;
 
-    const meta = ADD2_META[level.id] || ADD2_META[1];
+    const meta = ADD2_META[level.key] || ADD2_META[1];
     const card = $("additionLevelCard");
     const actions = $("addActions");
     const hintLabel = document.querySelector("#addHintBtn span:last-child");
@@ -29161,7 +29173,7 @@ checkAddition = function () {
             type: "activity_answer",
             subject: "addition",
             skill: level.title,
-            activity: String(level.id),
+            activity: String(level.key),
             correct: isRight,
             tries: (task.wrong || 0) + (isRight ? 1 : 0),
             help: task.helpLevel || 0
