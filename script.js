@@ -20680,45 +20680,72 @@ function highlightCorrectSubtractionChoice() {
 function applySubtractionPrompting() {
 
     const level = getSubtractionPromptLevel(subtractionWrongStreak);
+    const lvl = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+    const task = subtractionLevelState.currentTask;
+
+    const hasChoices = document.querySelectorAll(
+        "#subtractionTaskStage .subtraction-choice-btn, #subConcreteChoiceGrid .subtraction-choice-btn"
+    ).length > 0;
+
+    if (task) task.helpLevel = Math.max(task.helpLevel || 0, level);
 
     if (level === 1) {
 
         showSubtractionHint(
+            (task && task.hint1) ||
             "🌟 خذ وقتك، فكّر جيدًا: كم بقي بعد أن أخذنا هذا العدد؟"
         );
 
     } else if (level === 2) {
 
         showSubtractionHint(
+            (task && task.hint2) ||
             "🌟 لنعدّ معًا ببطء... أنت قريب جدًا، حاول مرة أخرى!"
         );
 
         highlightCorrectSubtractionChoice();
+        highlightSubtractionNumberLineStep(lvl);
 
     } else if (level >= 3) {
 
-        showSubtractionHint(
-            "🌟 لا بأس أبدًا! سأساعدك: هذه هي الإجابة الصحيحة ✅"
-        );
+        if (hasChoices || (lvl && lvl.mode === "number-line")) {
+            showSubtractionHint(
+                "🌟 لا بأس أبدًا! سأساعدك: هذه هي الإجابة الصحيحة ✅"
+            );
+        } else if (task) {
+            const shown = task.relation || (lvl && lvl.mode === "missing-number")
+                ? (task.missingSide === "a" ? task.a : task.correct)
+                : task.correct;
+            showSubtractionHint(
+                `🌟 لا بأس أبدًا! الإجابة هي ${arabicNumber(shown)} — اكتبها وستنجح 😊`
+            );
+        }
 
         highlightCorrectSubtractionChoice();
+        highlightSubtractionNumberLineStep(lvl);
     }
+}
+
+/* خط الأعداد: تلميح بصري للخطوة التالية الصحيحة */
+function highlightSubtractionNumberLineStep(lvl) {
+
+    if (!lvl || lvl.mode !== "number-line") return;
+
+    const marker = $("subNumberLineMarker");
+    const point = marker ? marker.parentElement : null;
+    if (!point) return;
+
+    const next = Number(point.dataset.value) - 1;
+    const target = document.querySelector(`#subNumberLine [data-value="${next}"]`);
+
+    document.querySelectorAll("#subNumberLine .hinted").forEach(el => el.classList.remove("hinted"));
+    if (target) target.classList.add("hinted");
 }
 
 /* =========================================================
    🎲 توليد مهام كل مستوى (تكرار ذكي: إعادة إدراج الأزواج
    التي أخطأ فيها الطفل سابقًا ضمن الجولة الجديدة)
 ========================================================= */
-
-function generateSubtractionPairForLevel(level) {
-
-    const max = Math.max(level.max, 2);
-
-    const a = 2 + Math.floor(Math.random() * (max - 1));
-    const b = 1 + Math.floor(Math.random() * a);
-
-    return { a, b };
-}
 
 function buildSubtractionChoices(correctValue, max) {
 
@@ -20764,16 +20791,411 @@ function pickSubtractionWordProblem(a, b) {
     };
 }
 
-function buildSubtractionTaskObject(level, a, b) {
+/* =========================================================
+   🎯 وصفات المستويات العشرة (المرحلة ب)
+   لكل مستوى: هدف + نمط أسئلة + تدرّج ثابت من الأسهل إلى الأصعب.
+   الجولة = ١٠ أسئلة مختلفة الأزواج (a-b) تُسحب بلا إرجاع من مجموعات
+   كل درجة بالترتيب. الناتج ≥ ١ دائمًا ما عدا خانات الصفر المقصودة
+   (zero:true) وهي سؤال واحد فقط في آخر الجولة حيث تُدرَّس فكرة «لم يبقَ شيء».
+========================================================= */
 
-    const correct = a - b;
-    const task = { a, b, correct };
+const SUBTRACTION_ROUND_SIZE = 10;
+
+function subRange(lo, hi) {
+    const out = [];
+    for (let i = lo; i <= hi; i++) out.push(i);
+    return out;
+}
+
+function subOnes(n) { return n % 10; }
+function subTens(n) { return Math.floor(n / 10); }
+function subIsRound(n) { return n % 10 === 0; }
+
+/* مجموعة أزواج [a,b] من قائمة مطروح منه ودالة تُرجع قيم b، مع شرط اختياري */
+function subPool(aList, bFn, filter) {
+    const out = [];
+    aList.forEach(a => {
+        bFn(a).forEach(b => {
+            if (b >= 1 && b <= a && (!filter || filter(a, b))) out.push([a, b]);
+        });
+    });
+    return out;
+}
+
+function subNonRound(lo, hi) {
+    return subRange(lo, hi).filter(n => !subIsRound(n));
+}
+
+const SUBTRACTION_RECIPES = {
+
+    /* ١: طرح محسوس ضمن ٥ — إزالة الأغراض ولمسها ثم عدّ المتبقي */
+    1: [
+        { tier: 1, kind: "remove-one",  count: 3, pool: () => subPool(subRange(2, 5), a => [1]) },
+        { tier: 2, kind: "remove-two",  count: 3, pool: () => subPool(subRange(3, 5), a => [2]) },
+        { tier: 3, kind: "remove-many", count: 3, pool: () => [[4, 3], [5, 3], [5, 4]] },
+        { tier: 4, kind: "remove-all",  count: 1, zero: true, pool: () => subRange(2, 5).map(a => [a, a]) }
+    ],
+
+    /* ٢: إطار العشرة — أزل من الأقراص ثم سمِّ ما أُزيل وما تبقّى */
+    2: [
+        { tier: 1, kind: "from-full-ten", count: 3, pool: () => subPool([10], a => subRange(1, 5)) },
+        { tier: 2, kind: "down-to-five",  count: 3, pool: () => [[6, 1], [7, 2], [8, 3], [9, 4]] },
+        { tier: 3, kind: "mixed-frame",   count: 4,
+          pool: () => subPool(subRange(6, 10), a => subRange(1, a - 1),
+              (a, b) => !(a === 10 && b <= 5) && b !== a - 5) }
+    ],
+
+    /* ٣: الطرح ضمن ٢٠ — من دون عبور العشرة ثم مع عبورها */
+    3: [
+        { tier: 1, kind: "teen-no-cross", count: 3,
+          pool: () => subPool(subRange(12, 19), a => subRange(1, Math.min(subOnes(a) - 1, 4))) },
+        { tier: 2, kind: "to-ten", count: 1, pool: () => subPool(subRange(12, 19), a => [subOnes(a)]) },
+        { tier: 2, kind: "minus-ten", count: 1, pool: () => subPool(subRange(11, 20), a => [10]) },
+        { tier: 3, kind: "cross-small", count: 3,
+          pool: () => subPool(subRange(11, 18), a => subRange(subOnes(a) + 1, 9), (a, b) => b - subOnes(a) <= 2) },
+        { tier: 4, kind: "cross-big", count: 2,
+          pool: () => subPool(subRange(11, 18), a => subRange(subOnes(a) + 1, 9), (a, b) => b - subOnes(a) >= 3)
+              .concat(subPool([20], a => subRange(3, 9))) }
+    ],
+
+    /* ٤: العدد المفقود — [a,b,side] حيث side = المجهول (a أو b) */
+    4: [
+        { tier: 1, kind: "missing-subtrahend-small", count: 3,
+          pool: () => subPool(subRange(3, 6), a => subRange(1, a - 1)).map(p => [p[0], p[1], "b"]) },
+        { tier: 2, kind: "missing-minuend-small", count: 3,
+          pool: () => subPool(subRange(4, 7), a => subRange(1, 3)).map(p => [p[0], p[1], "a"]) },
+        { tier: 3, kind: "missing-subtrahend-big", count: 2,
+          pool: () => subPool(subRange(7, 10), a => subRange(2, a - 1)).map(p => [p[0], p[1], "b"]) },
+        { tier: 4, kind: "missing-minuend-big", count: 1,
+          pool: () => subPool(subRange(8, 10), a => subRange(3, 6)).map(p => [p[0], p[1], "a"]) },
+        { tier: 5, kind: "missing-zero", count: 1, zero: true,
+          pool: () => subRange(4, 8).map(a => [a, a, Math.random() < 0.5 ? "a" : "b"]) }
+    ],
+
+    /* ٥: الطرح الأفقي — طلاقة، علاقة الطرح بالجمع، والتحقق */
+    5: [
+        { tier: 1, kind: "fluency-ten", count: 2, pool: () => subPool(subRange(6, 10), a => subRange(2, a - 2)) },
+        { tier: 2, kind: "relation-ten", count: 2, pool: () => subPool(subRange(5, 10), a => subRange(1, a - 1)) },
+        { tier: 3, kind: "double", count: 2, pool: () => subRange(4, 10).map(n => [2 * n, n]) },
+        { tier: 4, kind: "relation-teen", count: 2,
+          pool: () => subPool(subRange(11, 20), a => subRange(2, 9), (a, b) => a - b >= 2) },
+        { tier: 5, kind: "ten-bridge", count: 2,
+          pool: () => subPool([20], a => subRange(3, 9)).concat(subPool(subRange(13, 19), a => [subOnes(a)])) }
+    ],
+
+    /* ٦: الطرح الرأسي — محاذاة الآحاد والعشرات ثم الاستلاف تدريجيًا */
+    6: [
+        { tier: 1, kind: "vertical-teen", count: 2,
+          pool: () => subPool(subRange(13, 19), a => subRange(1, subOnes(a) - 1)) },
+        { tier: 2, kind: "vertical-no-borrow", count: 3,
+          pool: () => subPool(subNonRound(21, 39), a => subRange(1, subOnes(a) - 1)) },
+        { tier: 3, kind: "vertical-two-digit", count: 2,
+          pool: () => subPool(subNonRound(21, 39), a => subRange(11, a - 1),
+              (a, b) => !subIsRound(b) && subOnes(b) <= subOnes(a) && subTens(b) <= subTens(a)) },
+        { tier: 4, kind: "vertical-borrow", count: 2,
+          pool: () => subPool(subNonRound(21, 39), a => subRange(subOnes(a) + 1, 9)) },
+        { tier: 5, kind: "vertical-borrow-two", count: 1,
+          pool: () => subPool(subNonRound(31, 39), a => subRange(11, a - 1),
+              (a, b) => subOnes(b) > subOnes(a) && subTens(b) < subTens(a)) }
+    ],
+
+    /* ٧: خط الأعداد — رجوع خطوة بخطوة، وخطأ الخطوة يُسجَّل */
+    7: [
+        { tier: 1, kind: "back-short", count: 3, pool: () => subPool(subRange(3, 6), a => [1, 2]) },
+        { tier: 2, kind: "back-medium", count: 3, pool: () => subPool(subRange(5, 8), a => [3, 4]) },
+        { tier: 3, kind: "back-far", count: 2, pool: () => subPool(subRange(7, 10), a => [5, 6]) },
+        { tier: 4, kind: "back-long", count: 1, pool: () => subPool(subRange(8, 10), a => subRange(7, a - 1)) },
+        { tier: 5, kind: "back-to-zero", count: 1, zero: true, pool: () => subRange(3, 6).map(a => [a, a]) }
+    ],
+
+    /* ٨: مسائل لفظية — القصص كما هي؛ الأعداد ضمن ١٠ لتبقى الصياغة الحالية سليمة */
+    8: [
+        { tier: 1, kind: "story-small", count: 3, pool: () => subPool(subRange(3, 6), a => [1, 2]) },
+        { tier: 2, kind: "story-medium", count: 3, pool: () => subPool(subRange(6, 8), a => subRange(2, 4)) },
+        { tier: 3, kind: "story-large", count: 3, pool: () => subPool(subRange(8, 10), a => subRange(3, 6)) },
+        { tier: 4, kind: "story-big-take", count: 1, pool: () => subPool(subRange(9, 10), a => subRange(6, 8)) }
+    ],
+
+    /* ٩: الطرح ضمن ٥٠ — العشرات والآحاد */
+    9: [
+        { tier: 1, kind: "tens-only", count: 2,
+          pool: () => subPool([20, 30, 40, 50], a => subRange(1, a / 10 - 1).map(k => k * 10)) },
+        { tier: 2, kind: "minus-tens", count: 2,
+          pool: () => subPool(subNonRound(21, 49), a => [10, 20, 30], (a, b) => b < a) },
+        { tier: 3, kind: "one-digit-no-borrow", count: 1,
+          pool: () => subPool(subNonRound(21, 49), a => subRange(1, subOnes(a)), (a, b) => subOnes(a) >= 3) },
+        { tier: 3, kind: "two-digit-no-borrow", count: 1,
+          pool: () => subPool(subNonRound(31, 49), a => subRange(11, a - 1),
+              (a, b) => !subIsRound(b) && subOnes(b) <= subOnes(a) && subTens(b) < subTens(a)) },
+        { tier: 4, kind: "borrow-one-digit", count: 1,
+          pool: () => subPool(subNonRound(22, 49), a => subRange(subOnes(a) + 1, 9)) },
+        { tier: 4, kind: "borrow-two-digit", count: 1,
+          pool: () => subPool(subNonRound(31, 49), a => subRange(11, a - 1),
+              (a, b) => subOnes(b) > subOnes(a) && subTens(b) < subTens(a)) },
+        { tier: 5, kind: "round-minus-one-digit", count: 1, pool: () => subPool([30, 40, 50], a => subRange(1, 9)) },
+        { tier: 5, kind: "round-minus-two-digit", count: 1,
+          pool: () => subPool([40, 50], a => subRange(11, a - 1), (a, b) => !subIsRound(b)) }
+    ],
+
+    /* ١٠: الطرح ضمن ١٠٠ — البنية نفسها بتدرّج، مع الاستلاف من المئة وبلا سند بصري */
+    10: [
+        { tier: 1, kind: "tens-only", count: 2,
+          pool: () => subPool([30, 40, 50, 60, 70, 80, 90, 100], a => subRange(1, a / 10 - 1).map(k => k * 10)) },
+        { tier: 2, kind: "minus-tens", count: 2,
+          pool: () => subPool(subNonRound(41, 99), a => [20, 30, 40, 50, 60, 70, 80, 90], (a, b) => b < a) },
+        { tier: 3, kind: "one-digit-no-borrow", count: 1,
+          pool: () => subPool(subNonRound(52, 99), a => subRange(1, subOnes(a)), (a, b) => subOnes(a) >= 3) },
+        { tier: 3, kind: "two-digit-no-borrow", count: 1,
+          pool: () => subPool(subNonRound(52, 99), a => subRange(11, a - 1),
+              (a, b) => !subIsRound(b) && subOnes(b) <= subOnes(a) && subTens(b) < subTens(a)) },
+        { tier: 4, kind: "borrow-one-digit", count: 1,
+          pool: () => subPool(subNonRound(52, 99), a => subRange(subOnes(a) + 1, 9)) },
+        { tier: 4, kind: "borrow-two-digit", count: 1,
+          pool: () => subPool(subNonRound(52, 99), a => subRange(11, a - 1),
+              (a, b) => subOnes(b) > subOnes(a) && subTens(b) < subTens(a)) },
+        { tier: 5, kind: "round-minus-one-digit", count: 1, pool: () => subPool([60, 70, 80, 90], a => subRange(1, 9)) },
+        { tier: 5, kind: "from-hundred", count: 1,
+          pool: () => subPool([100], a => subRange(11, 99), (a, b) => !subIsRound(b)) }
+    ]
+};
+
+function subPairKey(a, b) { return a + "-" + b; }
+
+function makeSubtractionSpec(recipe, rIdx, item) {
+    return {
+        a: item[0], b: item[1], side: item[2] || null,
+        kind: recipe.kind, tier: recipe.tier, rIdx: rIdx,
+        zero: !!recipe.zero, review: false
+    };
+}
+
+function sortSubtractionPlan(plan) {
+    plan.sort((x, y) => (x.rIdx - y.rIdx) || (x.b - y.b) || (x.a - y.a));
+}
+
+/* خطة جولة واحدة: ١٠ مواصفات مرتّبة من الأسهل إلى الأصعب بلا تكرار زوج */
+function buildSubtractionPlan(level) {
+
+    const recipes = SUBTRACTION_RECIPES[level.key] || [];
+    const used = new Set();
+    const plan = [];
+
+    recipes.forEach((recipe, rIdx) => {
+        const candidates = shuffle(
+            recipe.pool().filter(p => !used.has(subPairKey(p[0], p[1])))
+        );
+        candidates.slice(0, recipe.count).forEach(p => {
+            used.add(subPairKey(p[0], p[1]));
+            plan.push(makeSubtractionSpec(recipe, rIdx, p));
+        });
+    });
+
+    /* تعويض أي نقص (مجموعة صغيرة) من درجات غير صفرية بالترتيب نفسه */
+    if (plan.length < SUBTRACTION_ROUND_SIZE) {
+        recipes.forEach((recipe, rIdx) => {
+            if (recipe.zero) return;
+            shuffle(recipe.pool().filter(p => !used.has(subPairKey(p[0], p[1]))))
+                .forEach(p => {
+                    if (plan.length >= SUBTRACTION_ROUND_SIZE) return;
+                    used.add(subPairKey(p[0], p[1]));
+                    plan.push(makeSubtractionSpec(recipe, rIdx, p));
+                });
+        });
+    }
+
+    sortSubtractionPlan(plan);
+    return plan;
+}
+
+/* التكرار الذكي: حتى زوجين أخطأ فيهما الطفل سابقًا يحلّان محل سؤال من الدرجة نفسها
+   (لا يُدخَل إلا زوج ينتمي فعلًا لوصفة هذا المستوى، فلا يتغير التدرّج) */
+function injectSubtractionDifficultPairs(level, plan) {
+
+    const entry = loadSubtractionAdaptive()[level.key];
+    const pairs = (entry && entry.difficultPairs) || [];
+    if (!pairs.length) return;
+
+    const recipes = SUBTRACTION_RECIPES[level.key] || [];
+    const inPlan = new Set(plan.map(s => subPairKey(s.a, s.b)));
+    let injected = 0;
+
+    shuffle([...pairs]).forEach(str => {
+
+        if (injected >= 2) return;
+
+        const parts = String(str).split("-").map(Number);
+        if (parts.length !== 2 || !Number.isInteger(parts[0]) || !Number.isInteger(parts[1])) return;
+        const key = subPairKey(parts[0], parts[1]);
+        if (inPlan.has(key)) return;
+
+        for (let r = 0; r < recipes.length; r++) {
+
+            const item = recipes[r].pool().find(p => p[0] === parts[0] && p[1] === parts[1]);
+            if (!item) continue;
+
+            const slot = plan.findIndex(s => s.tier === recipes[r].tier && !s.review && !s.zero &&
+                !pairs.includes(subPairKey(s.a, s.b)));
+            if (slot === -1) break;
+
+            inPlan.delete(subPairKey(plan[slot].a, plan[slot].b));
+            plan[slot] = makeSubtractionSpec(recipes[r], r, item);
+            plan[slot].review = true;
+            inPlan.add(key);
+            injected++;
+            break;
+        }
+    });
+}
+
+/* ترتيب الشكل الظاهر: سمات المستوى الأول وقوالب القصص لا تتكرر متتاليتين */
+function assignSubtractionPresentation(level, plan) {
+
+    function noAdjacentRepeat(values) {
+        for (let i = 1; i < values.length; i++) if (values[i] === values[i - 1]) return false;
+        return true;
+    }
 
     if (level.mode === "concrete-removal") {
-        task.theme =
-            CONCRETE_REMOVAL_THEMES[
-                Math.floor(Math.random() * CONCRETE_REMOVAL_THEMES.length)
-            ];
+        const n = CONCRETE_REMOVAL_THEMES.length;
+        const seq = [];
+        for (let i = 0; i < plan.length; i++) {
+            let pick;
+            do {
+                pick = Math.floor(Math.random() * n);
+            } while (n > 1 && i > 0 && pick === seq[i - 1]);
+            seq.push(pick);
+        }
+        plan.forEach((s, i) => { s.themeIdx = seq[i]; });
+    }
+
+    if (level.mode === "word-problem") {
+        const n = SUBTRACTION_WORD_PROBLEM_TEMPLATES.length;
+        let seq, guard = 0;
+        do {
+            seq = shuffle(subRange(0, n - 1)).concat(shuffle(subRange(0, n - 1))).slice(0, plan.length);
+            guard++;
+        } while (!noAdjacentRepeat(seq) && guard < 100);
+        plan.forEach((s, i) => { s.tpl = seq[i]; });
+    }
+}
+
+function findSubtractionSpec(level, a, b) {
+    const recipes = SUBTRACTION_RECIPES[level.key] || [];
+    for (let r = 0; r < recipes.length; r++) {
+        const item = recipes[r].pool().find(p => p[0] === a && p[1] === b);
+        if (item) return makeSubtractionSpec(recipes[r], r, item);
+    }
+    return { a, b, side: null, kind: "free", tier: 0, rIdx: 0, zero: a === b, review: false };
+}
+
+/* مواد المساعدة والتمثيل البصري لكل نوع سؤال (النصوص للتلميح فقط، لا صوت جديد) */
+function subtractionTensOnesPicture(n) {
+    return "🔟".repeat(subTens(n)) + "🔵".repeat(subOnes(n));
+}
+
+function subtractionPlaceBlocks(n) {
+    const t = "🟦".repeat(subTens(n));
+    const o = "🔹".repeat(subOnes(n));
+    return t + (t && o ? " " : "") + o;
+}
+
+function subtractionHintsFor(level, task) {
+
+    const a = task.a, b = task.b, c = task.correct;
+    const N = arabicNumber;
+    const au = subOnes(a), bu = subOnes(b);
+    const k = task.kind;
+
+    switch (k) {
+
+        case "teen-no-cross":
+            return [`🌟 اترك العشرة كما هي، واطرح ${N(b)} من الآحاد`,
+                    `🌟 ${N(au)} ناقص ${N(b)} يساوي ${N(au - b)}، ومعها العشرة`];
+        case "to-ten":
+            return [`🌟 اطرح الآحاد كلها فتبقى العشرة`,
+                    `🌟 ${N(a)} ناقص ${N(b)} يساوي ${N(10)}`];
+        case "minus-ten":
+            if (a <= 20 && b === 10) {
+                return [`🌟 اطرح عشرة كاملة واترك الآحاد كما هي`,
+                        `🌟 العشرات تنقص واحدة: ${N(a)} ناقص ${N(10)}`];
+            }
+            break;
+        case "cross-small":
+        case "cross-big":
+            if (au === 0) {
+                return [`🌟 ${N(20)} هي عشرتان: خذ ${N(b)} من إحدى العشرتين`,
+                        `🌟 ${N(10)} ناقص ${N(b)} يساوي ${N(10 - b)}، ثم أضف العشرة الباقية`];
+            }
+            return [`🌟 اطرح ${N(au)} أولًا لنصل إلى ${N(10)}، ثم اطرح الباقي ${N(b - au)}`,
+                    `🌟 ${N(10)} ناقص ${N(b - au)} يساوي ${N(10 - (b - au))}`];
+
+        case "fluency-ten":
+        case "double":
+        case "ten-bridge":
+            return [`🌟 فكّر: ما العدد الذي نضيفه إلى ${N(b)} لنصل إلى ${N(a)}؟`,
+                    `🌟 ${N(b)} + ؟ = ${N(a)} ... عدّ إلى الأمام من ${N(b)}`];
+        case "relation-ten":
+        case "relation-teen":
+            return [`🌟 الطرح يعاكس الجمع: اطرح ${N(b)} من ${N(a)}`,
+                    `🌟 ${N(a)} - ${N(b)} = ؟ هو نفس السؤال`];
+
+        case "vertical-teen":
+        case "vertical-no-borrow":
+        case "vertical-two-digit":
+            return [`🌟 ابدأ بعمود الآحاد، ثم انتقل إلى عمود العشرات`,
+                    `🌟 الآحاد: ${N(au)} ناقص ${N(bu)} يساوي ${N(au - bu)}`];
+        case "vertical-borrow":
+        case "vertical-borrow-two":
+        case "borrow-one-digit":
+        case "borrow-two-digit":
+            return [`🌟 الآحاد ${N(au)} أصغر من ${N(bu)}: نستلف عشرة من خانة العشرات`,
+                    `🌟 بعد الاستلاف: ${N(au + 10)} ناقص ${N(bu)} يساوي ${N(au + 10 - bu)}، وتنقص العشرات واحدة`];
+
+        case "tens-only":
+            return [`🌟 اطرح العشرات فقط: ${N(subTens(a))} ناقص ${N(subTens(b))}`,
+                    `🌟 ${N(subTens(a))} ناقص ${N(subTens(b))} يساوي ${N(subTens(a) - subTens(b))}، أي ${N(c)}`];
+        case "minus-tens":
+            return [`🌟 اطرح العشرات وابقِ الآحاد كما هي`,
+                    `🌟 ${N(subTens(a))} ناقص ${N(subTens(b))} يساوي ${N(subTens(a) - subTens(b))} عشرات، والآحاد ${N(au)}`];
+        case "one-digit-no-borrow":
+            return [`🌟 اطرح من الآحاد فقط والعشرات تبقى`,
+                    `🌟 ${N(au)} ناقص ${N(b)} يساوي ${N(au - b)}`];
+        case "two-digit-no-borrow":
+            return [`🌟 اطرح الآحاد ثم العشرات`,
+                    `🌟 الآحاد: ${N(au)} ناقص ${N(bu)} يساوي ${N(au - bu)}`];
+        case "round-minus-one-digit":
+            return [`🌟 افتح عشرة من ${N(a)}: ${N(a - 10)} و${N(10)}`,
+                    `🌟 ${N(10)} ناقص ${N(b)} يساوي ${N(10 - b)}، ثم أضف ${N(a - 10)}`];
+        case "round-minus-two-digit":
+        case "from-hundred":
+            return [`🌟 اطرح العشرات أولًا ثم الآحاد (الاستلاف من العشرات)`,
+                    `🌟 ${N(a)} ناقص ${N(subTens(b) * 10)} يساوي ${N(a - subTens(b) * 10)}، ثم اطرح ${N(bu)}`];
+    }
+
+    return [null, null];
+}
+
+function buildSubtractionTaskObject(level, specOrA, maybeB) {
+
+    const spec = (specOrA && typeof specOrA === "object")
+        ? specOrA
+        : findSubtractionSpec(level, specOrA, maybeB);
+
+    const a = spec.a, b = spec.b;
+    const correct = a - b;
+
+    const task = {
+        a, b, correct,
+        kind: spec.kind, tier: spec.tier,
+        zero: !!spec.zero, review: !!spec.review,
+        wrong: 0, helpLevel: 0
+    };
+
+    if (level.mode === "concrete-removal") {
+        const idx = Number.isInteger(spec.themeIdx)
+            ? spec.themeIdx
+            : Math.floor(Math.random() * CONCRETE_REMOVAL_THEMES.length);
+        task.theme = CONCRETE_REMOVAL_THEMES[idx];
         task.choices = buildSubtractionChoices(correct, level.max);
     }
 
@@ -20782,77 +21204,51 @@ function buildSubtractionTaskObject(level, a, b) {
     }
 
     if (level.mode === "missing-number") {
-        task.missingSide = Math.random() < 0.5 ? "a" : "b";
+        task.missingSide = spec.side || (Math.random() < 0.5 ? "a" : "b");
         const missingValue = task.missingSide === "a" ? a : b;
         task.choices = buildSubtractionChoices(missingValue, level.max);
+        task.itemEmoji = ["🍎", "🥕", "🎈", "⭐"][Math.floor(Math.random() * 4)];
     }
 
     if (level.mode === "word-problem") {
-        const problem = pickSubtractionWordProblem(a, b);
-        task.story = problem.text;
-        task.storyEmoji = problem.emoji;
+        const idx = Number.isInteger(spec.tpl)
+            ? spec.tpl
+            : Math.floor(Math.random() * SUBTRACTION_WORD_PROBLEM_TEMPLATES.length);
+        const tpl = SUBTRACTION_WORD_PROBLEM_TEMPLATES[idx];
+        task.story = tpl.text(a, b);
+        task.storyEmoji = tpl.emoji;
+        task.tpl = idx;
         task.choices = buildSubtractionChoices(correct, level.max);
     }
+
+    if (level.mode === "digit-pad" || level.mode === "vertical") {
+        task.relation = /^relation/.test(spec.kind);
+        if (level.key === 3) task.pictures = `${subtractionTensOnesPicture(a)}  −  ${subtractionTensOnesPicture(b)}`;
+        if (level.key === 9) task.pictures = `${subtractionPlaceBlocks(a)}  −  ${subtractionPlaceBlocks(b)}`;
+    }
+
+    const hints = subtractionHintsFor(level, task);
+    task.hint1 = hints[0];
+    task.hint2 = hints[1];
 
     return task;
 }
 
 function generateSubtractionTasksForLevel(level) {
 
-    const tasks = [];
-    let lastPair = null;
+    const plan = buildSubtractionPlan(level);
 
-    const adaptive = loadSubtractionAdaptive();
-    const entry = adaptive[level.id];
-    const difficultPairs = (entry && entry.difficultPairs) || [];
+    injectSubtractionDifficultPairs(level, plan);
+    assignSubtractionPresentation(level, plan);
 
-    const injectCount = Math.min(2, difficultPairs.length);
-    const injectedIndexes = new Set();
+    return plan.map(spec => buildSubtractionTaskObject(level, spec));
+}
 
-    if (injectCount > 0) {
-        shuffle([...Array(10).keys()])
-            .slice(0, injectCount)
-            .forEach(i => injectedIndexes.add(i));
-    }
-
-    const chosenDifficult = shuffle(difficultPairs).slice(0, injectCount);
-
-    for (let i = 0; i < 10; i++) {
-
-        let a, b;
-
-        if (injectedIndexes.has(i) && chosenDifficult.length) {
-
-            const pairStr = chosenDifficult.pop();
-            const parts = pairStr.split("-").map(Number);
-
-            a = parts[0];
-            b = parts[1];
-
-        } else {
-
-            let pair;
-            let attempts = 0;
-
-            do {
-                pair = generateSubtractionPairForLevel(level);
-                attempts++;
-            } while (
-                lastPair &&
-                pair.a === lastPair.a &&
-                pair.b === lastPair.b &&
-                attempts < 8
-            );
-
-            a = pair.a;
-            b = pair.b;
-        }
-
-        lastPair = { a, b };
-        tasks.push(buildSubtractionTaskObject(level, a, b));
-    }
-
-    return tasks;
+/* توافق: زوج واحد من وصفة المستوى (يُستخدم عند طلب سؤال بديل) */
+function generateSubtractionPairForLevel(level) {
+    const plan = buildSubtractionPlan(level);
+    const spec = plan[Math.floor(Math.random() * plan.length)];
+    return { a: spec.a, b: spec.b };
 }
 
 /* =========================================================
@@ -21107,9 +21503,16 @@ function renderLegacySubtractionDisplay(level, task) {
     const answer = $("subAnswer");
 
     if (answer) answer.value = "";
-    if (pictures) pictures.textContent = "";
+    if (pictures) pictures.textContent = task.pictures || "";
 
-    if (level.mode === "vertical") {
+    if (task.relation) {
+
+        if (question) {
+            question.textContent =
+                `${arabicNumber(task.b)} + ؟ = ${arabicNumber(task.a)}`;
+        }
+
+    } else if (level.mode === "vertical") {
 
         if (question) {
             question.innerHTML = `
@@ -21330,9 +21733,19 @@ function renderNumberLineTask(stage, task) {
         line.appendChild(point);
     }
 
+    let lineDone = false;
+
     function handleNumberLineStep(targetValue) {
 
-        if (targetValue !== currentPos - 1) return;
+        if (lineDone) return;
+
+        if (targetValue !== currentPos - 1) {
+            /* خطوة غير الخطوة التالية مباشرة: خطأ يُسجَّل ويُساعد بتدرّج */
+            finishSubtractionChoiceTask(false, null);
+            return;
+        }
+
+        document.querySelectorAll("#subNumberLine .hinted").forEach(el => el.classList.remove("hinted"));
 
         currentPos = targetValue;
         stepsUsed++;
@@ -21354,6 +21767,8 @@ function renderNumberLineTask(stage, task) {
         }
 
         if (stepsUsed >= task.b) {
+
+            lineDone = true;
 
             const qEl = stage.querySelector("#subNumberLineQuestion");
             if (qEl) qEl.style.display = "block";
@@ -21377,8 +21792,15 @@ function renderSubtractionMissingNumberTask(stage, task) {
     const displayA = task.missingSide === "a" ? "؟" : arabicNumber(task.a);
     const displayB = task.missingSide === "b" ? "؟" : arabicNumber(task.b);
 
+    const em = task.itemEmoji || "🍎";
+    const items = n => n > 0 ? em.repeat(n) : "∅";
+    const visual = task.missingSide === "b"
+        ? `${items(task.a)} ← أخذنا ؟ ← بقي ${items(task.correct)}`
+        : `كان معنا ؟ ← أخذنا ${items(task.b)} ← بقي ${items(task.correct)}`;
+
     stage.innerHTML = `
         <div class="operation">${displayA} - ${displayB} = ${arabicNumber(task.correct)}</div>
+        <div class="subtraction-concrete-instruction" aria-hidden="true">${visual}</div>
         <div class="subtraction-level-title" style="font-size:18px;">
             ما هو العدد المفقود؟
         </div>
@@ -21478,7 +21900,7 @@ function speakCurrentSubtractionTask() {
 
     if (!task) return;
 
-    if (level.mode === "missing-number") {
+    if (level.mode === "missing-number" || task.relation) {
         speakEducational("ما هو العدد المفقود؟", { rate: 0.8 });
     } else if (level.mode === "word-problem") {
         speakEducational(task.story, { rate: 0.78 });
@@ -21502,14 +21924,27 @@ function retryCurrentSubtractionTask() {
 
     if (!level) return;
 
-    const pair = generateSubtractionPairForLevel(level);
-    const task = buildSubtractionTaskObject(level, pair.a, pair.b);
+    /* سؤال بديل من نفس الدرجة والنوع، غير مكرَّر داخل الجولة */
+    const cur = subtractionLevelState.tasks[subtractionLevelState.taskIndex];
+    const recipes = SUBTRACTION_RECIPES[level.key] || [];
+    const taken = new Set(subtractionLevelState.tasks.map(t => subPairKey(t.a, t.b)));
+    let spec = null;
 
-    subtractionLevelState.tasks[subtractionLevelState.taskIndex] = task;
+    for (let r = 0; r < recipes.length && !spec; r++) {
+        if (cur && (recipes[r].tier !== cur.tier || recipes[r].kind !== cur.kind)) continue;
+        const cands = shuffle(recipes[r].pool().filter(p => !taken.has(subPairKey(p[0], p[1]))));
+        if (cands.length) spec = makeSubtractionSpec(recipes[r], r, cands[0]);
+    }
+
+    if (!spec) {
+        const pair = generateSubtractionPairForLevel(level);
+        spec = findSubtractionSpec(level, pair.a, pair.b);
+    }
+
+    subtractionLevelState.tasks[subtractionLevelState.taskIndex] = buildSubtractionTaskObject(level, spec);
 
     renderCurrentSubtractionTask();
 }
-
 /* =========================================================
    🏆 معالج نتيجة المهام القائمة على الاختيار/المحسوسة
    (يستخدم نفس نظام النجوم والتقدم بالضبط — لا نظام منفصل)
@@ -21656,6 +22091,13 @@ checkSubtraction = function () {
         if (answer === correct) {
 
             hideSubtractionHint();
+
+            /* الطرح الأفقي: التحقق بالجمع بعد الإجابة الصحيحة */
+            const checkMsg = $("subMessage");
+            if (level.key === 5 && checkMsg) {
+                checkMsg.textContent =
+                    `🎉 أحسنت! تحقّق: ${arabicNumber(correct)} + ${arabicNumber(task.b)} = ${arabicNumber(task.a)} ⭐`;
+            }
 
             logSubtractionAnswer(level, task, true);
 
@@ -25435,6 +25877,16 @@ finishSubtractionChoiceTask = function (isCorrect, button) {
     const task = (typeof subtractionLevelState !== "undefined") ? subtractionLevelState.currentTask : null;
 
     originalFinishSubtractionChoiceTaskForLog(isCorrect, button);
+
+    /* المحسوس وإطار العشرة: تسمية ما أُزيل وما تبقّى بعد الإجابة الصحيحة */
+    if (isCorrect && task && level && (level.mode === "concrete-removal" || level.mode === "ten-frame")) {
+        const prog = $("subConcreteProgress");
+        if (prog) {
+            prog.textContent = task.correct === 0
+                ? `أزلنا ${arabicNumber(task.b)} • لم يبقَ شيء`
+                : `أزلنا ${arabicNumber(task.b)} • وبقي ${arabicNumber(task.correct)}`;
+        }
+    }
 
     if (!isCorrect && task) {
         task.wrong = (task.wrong || 0) + 1;

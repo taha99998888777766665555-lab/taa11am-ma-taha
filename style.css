@@ -14138,3 +14138,10 @@ body.calm-mode #additionLevelCard *, body.calm-mode #additionLevelsHub * { anima
     .add2-tray-head .add2-count { min-width: 54px; font-size: 26px; padding: 2px 10px; }
     #additionLevelCard .addition-level-title { font-size: clamp(18px, 5vw, 24px); white-space: nowrap; }
 }
+
+/* خط الأعداد: تلميح بصري للخطوة التالية (المرحلة ب) */
+.subtraction-number-line-point.hinted .subtraction-number-line-label {
+    background: #fff59d;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px #ffd54f;
+}
