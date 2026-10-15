@@ -28965,7 +28965,7 @@ const ADD2_META = {
     4:  { phase: "visual",   tray: "objects", open: false },
     5:  { phase: "abstract", tray: "auto",    open: false, chip: "⚡ طلاقة وتبديل" },
     6:  { phase: "abstract", tray: "auto",    open: false },
-    7:  { phase: "visual",   tray: "objects", open: true, chip: "🖼️ عدّ وضمّ بالصور" },
+    7:  { phase: "visual",   tray: "objects", open: false, hintLabel: "عدّ معي", chip: "🖼️ عدّ وضمّ بالصور" },
     8:  { phase: "visual",   tray: "objects", open: true },
     9:  { phase: "abstract", tray: "blocks",  open: false },
     10: { phase: "abstract", tray: "blocks",  open: false }
@@ -29277,7 +29277,7 @@ renderCurrentAdditionTask = function () {
     }
     if (actions) actions.style.display = "";
     const trayOpen = typeof task.trayOpen === "boolean" ? task.trayOpen : !!meta.open;
-    if (hintLabel) hintLabel.textContent = trayOpen ? "عدّ معي" : "تلميح";
+    if (hintLabel) hintLabel.textContent = (trayOpen || meta.hintLabel) ? "عدّ معي" : "تلميح";
 
     add2BuildTray(level, task);
     add2SetTrayOpen(trayOpen);

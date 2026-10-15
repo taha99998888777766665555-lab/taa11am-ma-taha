@@ -13666,7 +13666,7 @@ body.dark-mode #additionLevelCard {
 /* ---------- المنصّة والأسئلة ---------- */
 
 #additionLevelCard .addition-task-stage { margin-bottom: 8px; }
-#additionLevelCard.add2-tray-open .addition-picture-groups { display: none; }
+/* صور المستوى الأول هي السؤال نفسه: تبقى ظاهرة دائمًا، وتفتح خانة المساعدة للعدّ باللمس عند الطلب */
 
 #additionLevelCard .operation {
     font-size: clamp(34px, 9vw, 52px);
@@ -13891,4 +13891,240 @@ body.calm-mode #additionLevelCard *, body.calm-mode #additionLevelsHub * { anima
     border-radius: 8px;
     padding: 4px 8px;
     line-height: 1.6;
+}
+
+
+/* =========================================================================
+   🖥️ راحة الواجهة للسبورة الذكية (قسم الجمع فقط)
+   - أحجام تتبع ارتفاع الشاشة وعرضها فتتّسع على السبورة وتبقى مريحة على الهاتف
+   - خانة المساعدة ثابتة أسفل النشاط وتتمدّد للأسفل فقط
+   لا تغيير في الأسئلة ولا النجوم ولا السجلات
+========================================================================= */
+
+@media (min-width: 1000px) {
+    #additionLevelsHub, #additionLevelCard { max-width: min(1080px, 94vw); }
+}
+
+#additionLevelCard.add2-level { padding: clamp(12px, 2vh, 24px) clamp(12px, 3vw, 32px) clamp(16px, 2.4vh, 28px); }
+
+/* التنقل */
+.add2-icon-btn {
+    width: clamp(56px, 8vh, 76px);
+    height: clamp(56px, 8vh, 76px);
+    min-width: 56px;
+    font-size: clamp(26px, 3.6vh, 34px);
+    border-radius: 20px;
+}
+#additionLevelCard .addition-level-title { font-size: clamp(20px, 3.4vh, 32px); }
+.add2-dot { width: clamp(16px, 2.4vh, 24px); height: clamp(16px, 2.4vh, 24px); }
+.add2-progress-meta,
+#additionLevelCard .addition-progress-label,
+#additionLevelCard .addition-score-label { font-size: clamp(15px, 2.1vh, 20px); }
+
+/* السؤال هو العنصر الأبرز */
+#additionLevelCard .operation {
+    font-size: clamp(44px, min(13vw, 10vh), 104px);
+    padding: clamp(10px, 1.8vh, 22px) clamp(14px, 3vw, 32px);
+    margin: clamp(6px, 1.2vh, 14px) auto clamp(10px, 1.8vh, 22px);
+    max-width: min(100%, 780px);
+    line-height: 1.25;
+}
+#additionLevelCard .addition-word-problem-box {
+    font-size: clamp(22px, min(5.4vw, 4vh), 38px);
+    line-height: 1.8;
+    padding: clamp(14px, 2vh, 26px);
+    margin-bottom: clamp(12px, 2vh, 22px);
+}
+#additionLevelCard .addition-word-problem-emoji { font-size: clamp(40px, 6vh, 64px); }
+#additionLevelCard .addition-picture-groups { font-size: clamp(36px, min(9vw, 7vh), 72px); gap: clamp(10px, 2vw, 26px); margin: clamp(6px, 1.2vh, 14px) 0; }
+#additionLevelCard .addition-picture-group { max-width: min(100%, 340px); }
+#additionLevelCard .addition-plus-sign { font-size: clamp(36px, 6vh, 60px); }
+#additionLevelCard .addition-level-title[style] { font-size: clamp(22px, 3.4vh, 34px) !important; }
+#additionLevelCard .addition-vertical-row { font-size: clamp(40px, min(11vw, 8vh), 84px); }
+
+/* أزرار الإجابة */
+#additionLevelCard .addition-choice-grid {
+    max-width: min(100%, 760px);
+    gap: clamp(12px, 2.4vw, 24px);
+    margin: clamp(8px, 1.4vh, 16px) auto clamp(6px, 1vh, 12px);
+}
+#additionLevelCard .addition-choice-btn {
+    min-height: clamp(84px, 12vh, 128px);
+    font-size: clamp(40px, 6.4vh, 68px);
+    border-radius: 26px;
+    border-width: 4px;
+}
+/* خطأ هادئ بدل الأحمر الحاد القديم */
+#additionLevelCard .addition-choice-btn.wrong {
+    background: #fff3dc !important;
+    border-color: #f2b45a !important;
+    color: var(--a2-ink);
+}
+#additionLevelCard .addition-choice-btn.correct { background: #dcfce7 !important; border-color: var(--a2-ok) !important; }
+
+/* لوحة الأرقام */
+#additionLevelCard #addAnswer {
+    width: min(100%, 320px);
+    font-size: clamp(40px, 6vh, 68px);
+    min-height: clamp(68px, 9vh, 100px);
+    margin-bottom: clamp(10px, 1.6vh, 18px);
+}
+#additionLevelCard .addition-digit-pad {
+    max-width: clamp(300px, 44vw, 460px);
+    gap: clamp(10px, 1.6vh, 16px);
+    margin-bottom: clamp(10px, 1.6vh, 18px);
+}
+#additionLevelCard .addition-digit-btn {
+    min-height: clamp(62px, 8.4vh, 96px);
+    font-size: clamp(30px, 4.6vh, 48px);
+    border-radius: 22px;
+}
+#additionLevelCard .addition-legacy-wrapper > button.success {
+    min-height: clamp(64px, 8.6vh, 92px);
+    width: min(100%, clamp(300px, 44vw, 460px));
+    font-size: clamp(22px, 3vh, 30px);
+    border-radius: 22px;
+}
+#additionLevelCard .message { min-height: clamp(28px, 4vh, 42px); font-size: clamp(18px, 2.8vh, 28px); margin: 6px 0; }
+
+/* خانة المساعدة الثابتة (أسفل النشاط) */
+.add2-help-slot { margin-top: clamp(6px, 1vh, 12px); }
+
+.add2-help-idle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(52px, 7vh, 72px);
+    border: 2px dashed var(--a2-line);
+    border-radius: 22px;
+    background: var(--a2-soft);
+    color: var(--a2-sub);
+    font-size: clamp(16px, 2.3vh, 22px);
+    font-weight: 700;
+    text-align: center;
+    padding: 0 12px;
+}
+#additionLevelCard:not(.add2-tray-open) .add2-help-idle { display: flex; }
+
+.add2-tray { margin-bottom: 0; padding: clamp(12px, 1.8vh, 20px); border-radius: 26px; }
+.add2-tray-title { font-size: clamp(16px, 2.3vh, 22px); }
+.add2-count { font-size: clamp(26px, 3.8vh, 40px); min-width: 64px; }
+.add2-mini-btn { min-height: clamp(56px, 7vh, 72px); min-width: 56px; font-size: clamp(16px, 2.2vh, 22px); border-radius: 18px; padding: 6px 18px; }
+.add2-tray-body { gap: clamp(10px, 1.6vh, 18px); }
+.add2-obj { width: clamp(56px, 8.4vh, 84px); height: clamp(56px, 8.4vh, 84px); font-size: clamp(34px, 5.2vh, 52px); }
+.add2-plus { font-size: clamp(32px, 4.6vh, 48px); }
+.add2-cell, .add2-cell-empty { min-height: clamp(48px, 6.4vh, 68px); }
+.add2-frame { width: min(100%, clamp(300px, 40vw, 440px)); }
+.add2-rod { width: 36px; height: clamp(110px, 15vh, 150px); }
+.add2-cube { width: 36px; height: 36px; }
+
+/* أزرار الإجراءات السفلية */
+.add2-actions { gap: clamp(10px, 1.6vw, 18px); margin-top: clamp(12px, 2vh, 22px); }
+.add2-action-btn {
+    min-height: clamp(68px, 9.4vh, 96px);
+    font-size: clamp(16px, 2.4vh, 26px);
+    border-radius: 22px;
+    border-width: 3px;
+    gap: 8px;
+}
+.add2-action-ico { font-size: clamp(22px, 3.4vh, 36px); }
+@media (max-width: 420px) { .add2-action-btn { font-size: 15px; padding: 0 4px; } }
+
+/* الشاشات العريضة: اتّساع أكبر لقسم الجمع فقط (دون المساس بباقي الأقسام) */
+@media (min-width: 1000px) {
+    main.container:has(#addition.active) { max-width: min(1240px, 96vw); }
+    .add2-tray-title { flex: 1 1 auto; }
+    .add2-tray-head { flex-wrap: nowrap; }
+    #additionLevelCard .addition-digit-btn { min-height: clamp(58px, 7.2vh, 84px); }
+    #additionLevelCard .addition-legacy-wrapper > button.success { min-height: clamp(60px, 7.6vh, 80px); }
+}
+
+/* على الشاشات العريضة: لوحة الأرقام في صفّين (١–٦ ثم ٧–٩ و٠ والمسح) لتقصير الارتفاع دون تغيير ترتيب الأزرار */
+@media (min-width: 1000px) and (orientation: landscape) {
+    #additionLevelCard .addition-digit-pad { grid-template-columns: repeat(6, 1fr); max-width: min(100%, 780px); }
+    #additionLevelCard .addition-legacy-wrapper > button.success { width: min(100%, 420px); }
+}
+
+/* السبورة والحاسوب (عرض أفقي): النشاط في عمود والمساعدة وأزرار الإجراءات في عمود جانبي ثابت،
+   فيتّسع النشاط كله في الشاشة دون تمرير؛ على الهاتف والجهاز اللوحي الرأسي تبقى المساعدة أسفل النشاط */
+@media (min-width: 1000px) and (orientation: landscape) {
+    #additionLevelCard.add2-level:not([style*="display: none"]) {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 38%);
+        column-gap: clamp(18px, 2.4vw, 36px);
+        align-items: start;
+    }
+    #additionLevelCard.add2-level > .add2-topbar,
+    #additionLevelCard.add2-level > .add2-progress { grid-column: 1 / -1; }
+    #additionLevelCard.add2-level > #additionTaskStage,
+    #additionLevelCard.add2-level > #additionFreePlayLegacy { grid-column: 1; grid-row: 3 / span 2; }
+    #additionLevelCard.add2-level > #addMessage { grid-column: 1; grid-row: 5; }
+    #additionLevelCard.add2-level > .add2-help-slot { grid-column: 2; grid-row: 3; margin-top: 0; }
+    #additionLevelCard.add2-level > .add2-actions { grid-column: 2; grid-row: 4; align-self: start; flex-wrap: wrap; }
+    #additionLevelCard.add2-level > .add2-actions .add2-action-btn { flex: 1 1 140px; }
+    #additionLevelCard.add2-level.add2-done > #additionTaskStage { grid-column: 1 / -1; }
+    #additionLevelCard.add2-level.add2-done > .add2-help-slot { display: none; }
+    .add2-tray-head { flex-wrap: wrap; }
+    .add2-tray-title { flex: 1 1 100%; }
+    .add2-frame { width: min(100%, 360px); }
+    #additionLevelCard .addition-digit-pad { max-width: min(100%, 720px); }
+}
+
+/* إطار العشرة يبقى داخل خانة المساعدة مهما كان العرض */
+.add2-frame .add2-cell, .add2-frame .add2-cell-empty { min-height: 0; min-width: 0; }
+.add2-frame { box-sizing: border-box; }
+
+@media (min-width: 1000px) and (orientation: landscape) {
+    /* أزرار الإجراءات: عمودية بعرض العمود الجانبي (أهداف لمس كبيرة بلا تزاحم) */
+    #additionLevelCard.add2-level > .add2-actions { flex-direction: column; flex-wrap: nowrap; gap: 12px; margin-top: 14px; }
+    #additionLevelCard.add2-level > .add2-actions .add2-action-btn { flex: 0 0 auto; width: 100%; min-height: clamp(64px, 8.2vh, 84px); font-size: clamp(18px, 2.4vh, 24px); }
+    /* ضغط خفيف للارتفاع ليتّسع النشاط كاملًا في شاشة ١٠٨٠ */
+    body:has(#addition.active) header p { display: none; }
+    body:has(#addition.active) header { padding-top: 14px; padding-bottom: 14px; }
+    #additionLevelCard .operation { font-size: clamp(44px, min(13vw, 8.6vh), 96px); }
+    #additionLevelCard #addAnswer { min-height: clamp(60px, 7.4vh, 84px); font-size: clamp(36px, 5vh, 56px); margin-bottom: 12px; }
+    #additionLevelCard .addition-digit-btn { min-height: clamp(54px, 6.4vh, 76px); }
+    #additionLevelCard .addition-legacy-wrapper > button.success { min-height: clamp(56px, 6.6vh, 74px); }
+    #additionLevelCard .addition-choice-btn { min-height: clamp(84px, 11vh, 120px); }
+    .add2-icon-btn { width: clamp(56px, 6.6vh, 68px); height: clamp(56px, 6.6vh, 68px); }
+}
+
+@media (min-width: 1000px) and (orientation: landscape) {
+    #additionLevelCard.add2-level { grid-template-rows: auto auto auto auto 1fr auto; }
+    #additionLevelCard.add2-level > #additionTaskStage,
+    #additionLevelCard.add2-level > #additionFreePlayLegacy { grid-row: 3 / span 3; }
+    #additionLevelCard.add2-level > #addMessage { grid-row: 6; }
+    .add2-frame { width: min(100%, 300px); }
+}
+
+@media (min-width: 1000px) and (orientation: landscape) {
+    /* محتوى المساعدة داخل العمود الجانبي أصغر قليلًا حتى لا يطول العمود عن النشاط */
+    .add2-obj { width: 54px; height: 54px; font-size: 34px; }
+    .add2-group { padding: 6px; gap: 4px; }
+    .add2-rod { width: 32px; height: clamp(90px, 12vh, 120px); }
+    .add2-cube { width: 32px; height: 32px; }
+    .add2-tray { padding: 12px; }
+    .add2-tray-title { font-size: 16px; }
+    .add2-tray-body { gap: 10px; }
+    #additionLevelCard .addition-word-problem-box { font-size: clamp(22px, 3.4vh, 34px); padding: 16px; }
+    #additionLevelCard .addition-word-problem-emoji { display: block; margin-bottom: 4px; }
+}
+
+@media (min-width: 1000px) and (orientation: landscape) {
+    #additionLevelCard.add2-level > .add2-actions { flex-direction: row; gap: 10px; margin-top: 12px; }
+    #additionLevelCard.add2-level > .add2-actions .add2-action-btn {
+        flex: 1 1 0; width: auto; min-width: 0; flex-direction: column; gap: 2px;
+        min-height: clamp(78px, 10vh, 96px); font-size: clamp(16px, 2.1vh, 21px); padding: 6px 4px;
+    }
+}
+
+@media (min-width: 1000px) and (orientation: landscape) {
+    #additionLevelCard .operation { font-size: clamp(44px, min(13vw, 7.8vh), 92px); padding: 8px 20px; margin: 4px auto 10px; }
+    #additionLevelCard #addAnswer { min-height: clamp(56px, 6.6vh, 78px); margin-bottom: 10px; }
+    #additionLevelCard .addition-digit-btn { min-height: clamp(52px, 5.8vh, 72px); }
+    #additionLevelCard .addition-digit-pad { gap: 10px; margin-bottom: 10px; }
+    #additionLevelCard .addition-legacy-wrapper > button.success { min-height: clamp(54px, 6vh, 70px); }
+    .add2-progress { margin-bottom: 8px; }
+    .add2-topbar { margin-bottom: 6px; }
+    #additionLevelCard.add2-level { padding-top: 10px; padding-bottom: 14px; }
 }

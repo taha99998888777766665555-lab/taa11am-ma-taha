@@ -753,12 +753,6 @@
     </div>
 
     <div
-        id="additionTray"
-        class="add2-tray"
-        style="display:none;"
-    ></div>
-
-    <div
         id="additionTaskStage"
         class="addition-task-stage"
     ></div>
@@ -823,6 +817,17 @@
         role="status"
         aria-live="polite"
     ></div>
+
+    <!-- خانة المساعدة: ثابتة أسفل النشاط وأعلى أزرار الإجراءات (على نمط الألعاب التعليمية)،
+         تتمدّد للأسفل فقط فلا تُحرّك السؤال ولا أزرار الإجابة -->
+    <div class="add2-help-slot" id="addHelpSlot">
+        <div class="add2-help-idle" aria-hidden="true">💡 تظهر المساعدة هنا عند الحاجة</div>
+        <div
+            id="additionTray"
+            class="add2-tray"
+            style="display:none;"
+        ></div>
+    </div>
 
     <div class="add2-actions" id="addActions">
 
