@@ -2479,7 +2479,8 @@ function checkSubtraction() {
 
         saveCounters();
 
-        addStars(5);
+        /* في المستويات تُمنح النجوم مرة واحدة عند الاستحقاق (awardSubtractionTaskStars) */
+        if (!subtractionLevelModeActive) addStars(5);
 
         speakEducational(
             "أحسنت! إجابة صحيحة",
@@ -20264,16 +20265,16 @@ document.addEventListener("DOMContentLoaded", () => {
 ========================================================= */
 
 const SUBTRACTION_LEVELS = [
-    { id: 1, title: "طرح ضمن ٥", icon: "🥕", max: 5, mode: "concrete-removal" },
-    { id: 2, title: "طرح ضمن ١٠ + إطار العشرة", icon: "🔟", max: 10, mode: "ten-frame" },
-    { id: 3, title: "طرح ضمن ٢٠", icon: "🔢", max: 20, mode: "digit-pad" },
-    { id: 4, title: "العدد المفقود", icon: "❓", max: 10, mode: "missing-number" },
-    { id: 5, title: "طرح أفقي", icon: "➡️", max: 20, mode: "digit-pad" },
-    { id: 6, title: "طرح رأسي", icon: "⬇️", max: 20, mode: "vertical" },
-    { id: 7, title: "خط الأعداد", icon: "🐇", max: 10, mode: "number-line" },
-    { id: 8, title: "مسائل متنوعة", icon: "📖", max: 15, mode: "word-problem" },
-    { id: 9, title: "طرح ضمن ٥٠", icon: "5️⃣0️⃣", max: 50, mode: "digit-pad" },
-    { id: 10, title: "طرح ضمن ١٠٠", icon: "💯", max: 100, mode: "digit-pad" }
+    { id: 1, key: 1, title: "طرح ضمن ٥", icon: "🥕", max: 5, mode: "concrete-removal" },
+    { id: 2, key: 2, title: "طرح ضمن ١٠ + إطار العشرة", icon: "🔟", max: 10, mode: "ten-frame" },
+    { id: 3, key: 3, title: "طرح ضمن ٢٠", icon: "🔢", max: 20, mode: "digit-pad" },
+    { id: 4, key: 4, title: "العدد المفقود", icon: "❓", max: 10, mode: "missing-number" },
+    { id: 5, key: 5, title: "طرح أفقي", icon: "➡️", max: 20, mode: "digit-pad" },
+    { id: 6, key: 6, title: "طرح رأسي", icon: "⬇️", max: 20, mode: "vertical" },
+    { id: 7, key: 7, title: "خط الأعداد", icon: "🐇", max: 10, mode: "number-line" },
+    { id: 8, key: 8, title: "مسائل متنوعة", icon: "📖", max: 15, mode: "word-problem" },
+    { id: 9, key: 9, title: "طرح ضمن ٥٠", icon: "5️⃣0️⃣", max: 50, mode: "digit-pad" },
+    { id: 10, key: 10, title: "طرح ضمن ١٠٠", icon: "💯", max: 100, mode: "digit-pad" }
 ];
 
 /* =========================================================
@@ -20344,42 +20345,187 @@ const SUBTRACTION_WORD_PROBLEM_TEMPLATES = [
    💾 حفظ التقدم وفتح المستويات (localStorage معزول)
 ========================================================= */
 
-function loadSubtractionUnlockedLevel() {
-    return Number(
-        localStorage.getItem("taha_subtraction_unlocked_level") || 1
-    );
+/* كل المستويات العشرة مفتوحة دائمًا لكل طالب (التدرج إرشادي فقط).
+   التقدم يُحفظ لكل مستوى بمفتاحه الثابت (level.key) لا بموضعه، داخل مفتاح
+   واحد معزول لكل طالب (taha_*):
+   best = أفضل نتيجة (٠–١٠)، paid = أعلى عدد إجابات دُفعت عنه نجوم،
+   rewarded = هل مُنحت مكافأة إكمال المستوى مرة واحدة. */
+
+const SUBTRACTION_PROGRESS_KEY = "taha_subtraction_progress_v2";
+const SUBTRACTION_PROGRESS_CORRUPT_KEY = "taha_subtraction_progress_v2_corrupt_backup";
+const SUBTRACTION_ADAPTIVE_CORRUPT_KEY = "taha_subtraction_adaptive_v1_corrupt_backup";
+const SUBTRACTION_TASKS_PER_LEVEL = 10;
+const SUBTRACTION_PASS_SCORE = 8;
+
+function subtractionLevelKey(levelId) {
+    const level = SUBTRACTION_LEVELS[levelId - 1];
+    return level ? level.key : levelId;
 }
 
-function saveSubtractionUnlockedLevel(n) {
-    localStorage.setItem("taha_subtraction_unlocked_level", String(n));
+function subtractionSafeScore(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return 0;
+    return Math.min(SUBTRACTION_TASKS_PER_LEVEL, Math.max(0, Math.floor(n)));
 }
 
-function unlockSubtractionLevel(n) {
-    if (n > loadSubtractionUnlockedLevel() && n - 1 <= loadSubtractionUnlockedLevel()) {
-        saveSubtractionUnlockedLevel(n);
-    }
-}
-
-function loadSubtractionLevelBest() {
+function readLegacySubtractionBest() {
+    let raw;
     try {
-        return JSON.parse(
-            localStorage.getItem("taha_subtraction_level_best") || "{}"
-        );
+        raw = JSON.parse(localStorage.getItem("taha_subtraction_level_best") || "{}");
     } catch (error) {
         return {};
     }
+    const out = {};
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        SUBTRACTION_LEVELS.forEach(level => {
+            const sc = subtractionSafeScore(raw[level.key]);
+            if (sc > 0) out[level.key] = sc;
+        });
+    }
+    return out;
+}
+
+function readLegacySubtractionUnlocked() {
+    let n = 1;
+    try {
+        n = Math.floor(Number(localStorage.getItem("taha_subtraction_unlocked_level") || 1));
+    } catch (error) { n = 1; }
+    if (!Number.isFinite(n) || n < 1) n = 1;
+    return Math.min(n, SUBTRACTION_LEVELS.length);
+}
+
+function buildSubtractionProgressFromLegacy() {
+    const best = readLegacySubtractionBest();
+    const unlocked = readLegacySubtractionUnlocked();
+    const levels = {};
+    Object.keys(best).forEach(id => {
+        levels[id] = {
+            best: best[id],
+            paid: best[id],
+            rewarded: best[id] >= SUBTRACTION_PASS_SCORE
+        };
+    });
+    /* مستويات قبل أعلى مستوى مفتوح سابقًا كانت مُجتازة (والنجوم دُفعت) */
+    SUBTRACTION_LEVELS.forEach(level => {
+        if (level.id < unlocked) {
+            const e = levels[level.key] || { best: 0, paid: 0, rewarded: false };
+            e.paid = Math.max(e.paid, SUBTRACTION_PASS_SCORE);
+            e.rewarded = true;
+            levels[level.key] = e;
+        }
+    });
+    return { v: 2, levels: levels };
+}
+
+function sanitizeSubtractionProgress(raw) {
+    const levels = {};
+    if (raw && typeof raw === "object" && raw.levels && typeof raw.levels === "object") {
+        SUBTRACTION_LEVELS.forEach(level => {
+            const e = raw.levels[level.key];
+            if (!e || typeof e !== "object") return;
+            levels[level.key] = {
+                best: subtractionSafeScore(e.best),
+                paid: subtractionSafeScore(e.paid),
+                rewarded: e.rewarded === true
+            };
+        });
+    }
+    return { v: 2, levels: levels };
+}
+
+function saveSubtractionProgress(progress) {
+    try {
+        localStorage.setItem(SUBTRACTION_PROGRESS_KEY, JSON.stringify(progress));
+        /* نسخة متوافقة للقراءة القديمة (أفضل النتائج فقط) */
+        const legacy = {};
+        Object.keys(progress.levels).forEach(id => {
+            if (progress.levels[id].best > 0) legacy[id] = progress.levels[id].best;
+        });
+        localStorage.setItem("taha_subtraction_level_best", JSON.stringify(legacy));
+    } catch (error) { /* التخزين ممتلئ أو ممنوع: لا نعطّل القسم */ }
+}
+
+function loadSubtractionProgress() {
+    let stored = null;
+    try {
+        stored = localStorage.getItem(SUBTRACTION_PROGRESS_KEY);
+    } catch (error) {
+        return buildSubtractionProgressFromLegacy();
+    }
+
+    if (stored === null || stored === "") {
+        const migrated = buildSubtractionProgressFromLegacy();
+        saveSubtractionProgress(migrated);
+        return migrated;
+    }
+
+    try {
+        const parsed = JSON.parse(stored);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("bad");
+        if (!parsed.levels || typeof parsed.levels !== "object" || Array.isArray(parsed.levels)) throw new Error("bad");
+        return sanitizeSubtractionProgress(parsed);
+    } catch (error) {
+        try { localStorage.setItem(SUBTRACTION_PROGRESS_CORRUPT_KEY, String(stored).slice(0, 4000)); } catch (e) { /* لا شيء */ }
+        const rebuilt = buildSubtractionProgressFromLegacy();
+        saveSubtractionProgress(rebuilt);
+        return rebuilt;
+    }
+}
+
+function getSubtractionLevelEntry(progress, levelId) {
+    /* levelId = موضع المستوى الظاهر؛ التخزين بالمفتاح الثابت */
+    const key = String(subtractionLevelKey(levelId));
+    if (!progress.levels[key]) {
+        progress.levels[key] = { best: 0, paid: 0, rewarded: false };
+    }
+    return progress.levels[key];
+}
+
+/* خريطة أفضل النتائج مفهرسة بموضع المستوى الظاهر { position: score } */
+function loadSubtractionLevelBest() {
+    const progress = loadSubtractionProgress();
+    const out = {};
+    SUBTRACTION_LEVELS.forEach(level => {
+        const e = progress.levels[level.key];
+        if (e && e.best > 0) out[level.id] = e.best;
+    });
+    return out;
 }
 
 function saveSubtractionLevelBest(levelId, score) {
-    const data = loadSubtractionLevelBest();
-
-    if (!data[levelId] || score > data[levelId]) {
-        data[levelId] = score;
-        localStorage.setItem(
-            "taha_subtraction_level_best",
-            JSON.stringify(data)
-        );
+    const progress = loadSubtractionProgress();
+    const entry = getSubtractionLevelEntry(progress, levelId);
+    const sc = subtractionSafeScore(score);
+    if (sc > entry.best) {
+        entry.best = sc;
+        saveSubtractionProgress(progress);
     }
+}
+
+/* ⭐ نجمة المهمة: ٥ نجوم فقط عند تجاوز أعلى عدد إجابات سبق أن دُفع عنه،
+   فلا يمكن جمع نجوم بإعادة المستوى */
+function awardSubtractionTaskStars(levelId, runCorrect) {
+    const progress = loadSubtractionProgress();
+    const entry = getSubtractionLevelEntry(progress, levelId);
+    const count = subtractionSafeScore(runCorrect);
+    if (count > entry.paid) {
+        entry.paid = count;
+        saveSubtractionProgress(progress);
+        addStars(5);
+        return 5;
+    }
+    return 0;
+}
+
+/* 🏆 مكافأة إكمال المستوى (+١٠) مرة واحدة فقط لكل طالب ولكل مستوى */
+function awardSubtractionCompletionStars(levelId) {
+    const progress = loadSubtractionProgress();
+    const entry = getSubtractionLevelEntry(progress, levelId);
+    if (entry.rewarded) return 0;
+    entry.rewarded = true;
+    saveSubtractionProgress(progress);
+    addStars(10);
+    return 10;
 }
 
 /* =========================================================
@@ -20389,11 +20535,34 @@ function saveSubtractionLevelBest(levelId, score) {
 ========================================================= */
 
 function loadSubtractionAdaptive() {
+    let stored = null;
     try {
-        return JSON.parse(
-            localStorage.getItem("taha_subtraction_adaptive_v1") || "{}"
-        );
+        stored = localStorage.getItem("taha_subtraction_adaptive_v1");
+        if (stored === null || stored === "") return {};
+        const raw = JSON.parse(stored);
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("bad");
+        const out = {};
+        Object.keys(raw).forEach(k => {
+            const e = raw[k];
+            if (!e || typeof e !== "object") return;
+            const pu = (e.promptUsage && typeof e.promptUsage === "object") ? e.promptUsage : {};
+            out[k] = {
+                correctCount: Math.max(0, Math.floor(Number(e.correctCount)) || 0),
+                wrongCount: Math.max(0, Math.floor(Number(e.wrongCount)) || 0),
+                promptUsage: {
+                    0: Math.max(0, Math.floor(Number(pu[0])) || 0),
+                    1: Math.max(0, Math.floor(Number(pu[1])) || 0),
+                    2: Math.max(0, Math.floor(Number(pu[2])) || 0),
+                    3: Math.max(0, Math.floor(Number(pu[3])) || 0)
+                },
+                difficultPairs: Array.isArray(e.difficultPairs)
+                    ? e.difficultPairs.filter(x => typeof x === "string").slice(-10)
+                    : []
+            };
+        });
+        return out;
     } catch (error) {
+        try { if (stored) localStorage.setItem(SUBTRACTION_ADAPTIVE_CORRUPT_KEY, String(stored).slice(0, 4000)); } catch (e) { /* لا شيء */ }
         return {};
     }
 }
@@ -20710,13 +20879,12 @@ function renderSubtractionLevelsHub() {
 
     if (!grid) return;
 
-    const unlocked = StudentStore.eff(loadSubtractionUnlockedLevel());
     const bestScores = loadSubtractionLevelBest();
 
     grid.innerHTML = SUBTRACTION_LEVELS.map(level => {
 
-        const isUnlocked = level.id <= unlocked;
-        const isCompleted = (bestScores[level.id] || 0) >= 8;
+        const isUnlocked = true; /* كل المستويات مفتوحة دائمًا */
+        const isCompleted = (bestScores[level.id] || 0) >= SUBTRACTION_PASS_SCORE;
 
         const classes = ["subtraction-level-card-btn"];
         if (!isUnlocked) classes.push("locked");
@@ -20759,13 +20927,6 @@ function showSubtractionLockedMessage() {
 ========================================================= */
 
 function openSubtractionLevel(levelId) {
-
-    const unlocked = StudentStore.eff(loadSubtractionUnlockedLevel());
-
-    if (levelId > unlocked) {
-        showSubtractionLockedMessage();
-        return;
-    }
 
     const level = SUBTRACTION_LEVELS[levelId - 1];
 
@@ -21366,7 +21527,6 @@ function finishSubtractionChoiceTask(isCorrect, button) {
 
         correctSubtraction++;
         saveCounters();
-        addStars(5);
 
         if (messageEl) {
             messageEl.textContent = "🎉 أحسنت! إجابة صحيحة ⭐";
@@ -21388,13 +21548,14 @@ function finishSubtractionChoiceTask(isCorrect, button) {
         hideSubtractionHint();
 
         recordSubtractionOutcome(
-            level.id, task.a, task.b, true,
+            level.key, task.a, task.b, true,
             getSubtractionPromptLevel(subtractionWrongStreak)
         );
 
         subtractionWrongStreak = 0;
 
         onSubtractionLevelTaskCorrect();
+        awardSubtractionTaskStars(level.id, subtractionLevelState.correctCount);
 
         setTimeout(() => {
             advanceSubtractionLevelTask();
@@ -21414,7 +21575,7 @@ function finishSubtractionChoiceTask(isCorrect, button) {
         subtractionWrongStreak++;
 
         recordSubtractionOutcome(
-            level.id, task.a, task.b, false,
+            level.key, task.a, task.b, false,
             getSubtractionPromptLevel(subtractionWrongStreak)
         );
 
@@ -21432,6 +21593,22 @@ function onSubtractionLevelTaskCorrect() {
    (تغليف فقط، بدون أي تعديل لمنطقهما الأصلي — تُستخدمان فعليًا
    في مستويات: ضمن ٢٠/٥٠/١٠٠، الأفقي، والرأسي)
 ========================================================= */
+
+/* 🧾 سجل المعلم: كل إجابة في أي مستوى (اختيار أو لوحة أرقام) —
+   المحاولات = الأخطاء + الإجابة الصحيحة، والمساعدة = أعلى مستوى تلميح ظهر */
+function logSubtractionAnswer(level, task, isCorrect) {
+    try {
+        StudentData.logEvent({
+            type: "activity_answer",
+            subject: "subtraction",
+            skill: level ? level.title : null,
+            activity: level ? String(level.key) : null,
+            correct: !!isCorrect,
+            tries: task ? (task.wrong || 0) + (isCorrect ? 1 : 0) : null,
+            help: task ? (task.helpLevel || 0) : 0
+        });
+    } catch (e) { /* لا يوقف النشاط */ }
+}
 
 const originalNewSubtractionForLevels = newSubtraction;
 
@@ -21465,33 +21642,48 @@ checkSubtraction = function () {
     const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
     const task = subtractionLevelState.currentTask;
 
+    /* ضغطة "تحقق" ثانية أثناء انتظار المهمة التالية لا تُحسب مرة أخرى */
+    if (subtractionTimer) return;
+
     originalCheckSubtractionForLevels();
 
     if (wasAnswered) {
+
+        const isRightPad = answer === correct;
+
+        if (!isRightPad && task) task.wrong = (task.wrong || 0) + 1;
 
         if (answer === correct) {
 
             hideSubtractionHint();
 
+            logSubtractionAnswer(level, task, true);
+
             recordSubtractionOutcome(
-                level.id, task.a, task.b, true,
+                level.key, task.a, task.b, true,
                 getSubtractionPromptLevel(subtractionWrongStreak)
             );
 
             subtractionWrongStreak = 0;
 
             onSubtractionLevelTaskCorrect();
+            awardSubtractionTaskStars(level.id, subtractionLevelState.correctCount);
 
         } else {
 
             subtractionWrongStreak++;
 
             recordSubtractionOutcome(
-                level.id, task.a, task.b, false,
+                level.key, task.a, task.b, false,
                 getSubtractionPromptLevel(subtractionWrongStreak)
             );
 
             applySubtractionPrompting();
+
+            if (task) {
+                task.helpLevel = Math.max(task.helpLevel || 0, getSubtractionPromptLevel(subtractionWrongStreak));
+            }
+            logSubtractionAnswer(level, task, false);
         }
     }
 };
@@ -21523,8 +21715,7 @@ function finishSubtractionLevel() {
     saveSubtractionLevelBest(level.id, score);
 
     if (passed) {
-        addStars(10);
-        unlockSubtractionLevel(level.id + 1);
+        awardSubtractionCompletionStars(level.id);
     }
 
     renderSubtractionLevelResultScreen(level, score, passed);
@@ -25133,7 +25324,7 @@ const StudentData = (function () {
             unlockedLevels: {
                 words: Number(localStorage.getItem("taha_words_unlocked_level") || 1),
                 addition: ADDITION_LEVELS.length, /* كل مستويات الجمع مفتوحة دائمًا */
-                subtraction: Number(localStorage.getItem("taha_subtraction_unlocked_level") || 1)
+                subtraction: SUBTRACTION_LEVELS.length /* كل مستويات الطرح مفتوحة دائمًا */
             },
 
             questsCompletedTotal: Number(localStorage.getItem("taha_quests_completed_total") || 0),
@@ -25241,15 +25432,16 @@ finishSubtractionChoiceTask = function (isCorrect, button) {
         ? SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1]
         : null;
 
+    const task = (typeof subtractionLevelState !== "undefined") ? subtractionLevelState.currentTask : null;
+
     originalFinishSubtractionChoiceTaskForLog(isCorrect, button);
 
-    StudentData.logEvent({
-        type: "activity_answer",
-        subject: "subtraction",
-        skill: level ? level.title : null,
-        activity: level ? String(level.id) : null,
-        correct: !!isCorrect
-    });
+    if (!isCorrect && task) {
+        task.wrong = (task.wrong || 0) + 1;
+        task.helpLevel = Math.max(task.helpLevel || 0, getSubtractionPromptLevel(subtractionWrongStreak));
+    }
+
+    logSubtractionAnswer(level, task, !!isCorrect);
 };
 
 /* --- إكمال مهمة اليوم --- */
