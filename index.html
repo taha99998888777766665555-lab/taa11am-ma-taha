@@ -666,21 +666,29 @@
 ============================================================ -->
 
 <div
-    class="card"
+    class="card add2-hub"
     id="additionLevelsHub"
 >
 
-    <h2>
-        ➕ الجمع
-    </h2>
+    <div class="add2-hero">
+        <div class="add2-hero-text">
+            <h2>➕ الجمع</h2>
+            <p class="addition-hub-subtitle">
+                اختر المستوى الذي يناسبك، كل المستويات مفتوحة 🌟
+            </p>
+        </div>
+        <div class="add2-hero-stats" id="addHubStats" aria-live="polite"></div>
+    </div>
 
-    <p class="addition-hub-subtitle">
-        اختر مستوى لتبدأ التدريب 🌟
-    </p>
+    <div class="add2-legend" aria-hidden="true">
+        <span class="add2-chip add2-phase-concrete">🧸 محسوس</span>
+        <span class="add2-chip add2-phase-visual">🖼️ بصري</span>
+        <span class="add2-chip add2-phase-abstract">🔢 مجرد</span>
+    </div>
 
     <div
         id="additionLevelsGrid"
-        class="addition-levels-grid"
+        class="addition-levels-grid add2-grid"
         role="list"
     ></div>
 
@@ -692,84 +700,57 @@
 ============================================================ -->
 
 <div
-    class="card"
+    class="card add2-level"
     id="additionLevelCard"
     style="display:none;"
 >
 
-    <div class="addition-toolbar">
+    <div class="add2-topbar">
 
         <button
-            class="addition-toolbar-btn"
+            class="add2-icon-btn"
             onclick="showScreen('home')"
             aria-label="الرئيسية"
             type="button"
-        >
-            🏠
-            <span>الرئيسية</span>
-        </button>
+        >🏠</button>
+
+        <div
+            class="addition-level-title"
+            id="additionLevelTitle"
+        ></div>
 
         <button
-            class="addition-toolbar-btn"
+            class="add2-icon-btn"
             onclick="backToAdditionLevels()"
             aria-label="رجوع للمستويات"
             type="button"
-        >
-            ⬅️
-            <span>رجوع</span>
-        </button>
-
-        <button
-            class="addition-toolbar-btn"
-            id="additionSpeakBtn"
-            onclick="speakCurrentAdditionTask()"
-            aria-label="استمع للسؤال"
-            type="button"
-        >
-            🔊
-            <span>الصوت</span>
-        </button>
-
-        <button
-            class="addition-toolbar-btn"
-            onclick="retryCurrentAdditionTask()"
-            aria-label="إعادة المحاولة"
-            type="button"
-        >
-            🔁
-            <span>إعادة</span>
-        </button>
+        >⬅️</button>
 
     </div>
 
+    <div class="add2-progress">
 
-    <div
-        class="addition-level-title"
-        id="additionLevelTitle"
-    ></div>
+        <div class="add2-dots" id="addDots" aria-hidden="true"></div>
 
+        <div class="add2-progress-meta">
+            <span
+                class="addition-progress-label"
+                id="additionProgressLabel"
+            >المهمة ١ من ١٠</span>
+            <span
+                class="addition-score-label"
+                id="additionScoreLabel"
+            >✅ ٠ / ١٠</span>
+        </div>
 
-    <div
-        class="addition-progress-label"
-        id="additionProgressLabel"
-    >
-        المهمة ١ من ١٠
+        <div class="addition-progress-bar add2-hidden-bar" aria-hidden="true">
+            <div
+                class="addition-progress-fill"
+                id="additionProgressFill"
+            ></div>
+        </div>
+
     </div>
-
-    <div class="addition-progress-bar">
-        <div
-            class="addition-progress-fill"
-            id="additionProgressFill"
-        ></div>
-    </div>
-
-    <div
-        class="addition-score-label"
-        id="additionScoreLabel"
-    >
-        ✅ ٠ / ١٠
-    </div>
-
 
     <div
         id="additionTaskStage"
@@ -837,6 +818,52 @@
         aria-live="polite"
     ></div>
 
+    <!-- خانة المساعدة: ثابتة أسفل النشاط وأعلى أزرار الإجراءات (على نمط الألعاب التعليمية)،
+         تتمدّد للأسفل فقط فلا تُحرّك السؤال ولا أزرار الإجابة -->
+    <div class="add2-help-slot" id="addHelpSlot">
+        <div class="add2-help-idle" aria-hidden="true">💡 تظهر المساعدة هنا عند الحاجة</div>
+        <div
+            id="additionTray"
+            class="add2-tray"
+            style="display:none;"
+        ></div>
+    </div>
+
+    <div class="add2-actions" id="addActions">
+
+        <button
+            class="add2-action-btn add2-hint-btn"
+            id="addHintBtn"
+            onclick="add2ToggleHint()"
+            type="button"
+            aria-expanded="false"
+        >
+            <span class="add2-action-ico">💡</span>
+            <span>تلميح</span>
+        </button>
+
+        <button
+            class="add2-action-btn"
+            id="additionSpeakBtn"
+            onclick="speakCurrentAdditionTask()"
+            aria-label="استمع للسؤال"
+            type="button"
+        >
+            <span class="add2-action-ico">🔊</span>
+            <span>اسمع</span>
+        </button>
+
+        <button
+            class="add2-action-btn"
+            onclick="retryCurrentAdditionTask()"
+            aria-label="سؤال آخر"
+            type="button"
+        >
+            <span class="add2-action-ico">🔁</span>
+            <span>سؤال آخر</span>
+        </button>
+
+    </div>
 
 </div>
 
@@ -3871,6 +3898,7 @@
                 <span>➕ الجمع</span>
                 <b id="teacherAddition">٠</b>
                 <small id="teacherAdditionSub" class="teacher-progress-sub"></small>
+                <small id="teacherAdditionNote" class="teacher-progress-sub add2-stale-note" style="display:none"></small>
             </div>
 
             <div class="teacher-progress-row">
