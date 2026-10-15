@@ -17683,6 +17683,7 @@ function renderProfileStudentCard() {
                 <span>➕ الجمع</span>
                 <b>${arabicNumber(profile.counters.addition)}</b>
                 <small class="teacher-progress-sub">مستوى مفتوح ${arabicNumber(profile.unlockedLevels.addition)}/١٠</small>
+                ${additionStaleNoteText() ? `<small class="teacher-progress-sub add2-stale-note">${additionStaleNoteText()}</small>` : ""}
             </div>
             <div class="teacher-progress-row">
                 <span>➖ الطرح</span>
@@ -17973,6 +17974,13 @@ function renderTeacherStats() {
     const additionSub = $("teacherAdditionSub");
     if (additionSub) {
         additionSub.textContent = "مستوى مفتوح " + arabicNumber(profile.unlockedLevels.addition) + "/١٠";
+    }
+
+    const additionNote = $("teacherAdditionNote");
+    if (additionNote) {
+        const noteText = additionStaleNoteText();
+        additionNote.textContent = noteText;
+        additionNote.style.display = noteText ? "" : "none";
     }
 
     const subtractionSub = $("teacherSubtractionSub");
@@ -18968,7 +18976,7 @@ function letterWithKasra(letter) {
    (تقدّم الطلاب ونجومهم وبياناتهم القديمة مرتبطة به، فلا يختلط شيء عند إعادة الترتيب).
    «جمع بالصور» (key 7 سابقًا) صار أول مستوى. */
 const ADDITION_LEVELS = [
-    { id: 1,  key: 7,  title: "جمع بالصور", icon: "🖼️", max: 10, mode: "picture-choice" },
+    { id: 1,  key: 7,  title: "جمع بالصور", icon: "🖼️", max: 5, mode: "picture-choice" },
     { id: 2,  key: 1,  title: "جمع ضمن ٥", icon: "🍎", max: 5, mode: "choice-result" },
     { id: 3,  key: 2,  title: "جمع ضمن ١٠", icon: "🔟", max: 10, mode: "digit-pad" },
     { id: 4,  key: 3,  title: "جمع ضمن ٢٠", icon: "🔢", max: 20, mode: "digit-pad" },
@@ -18980,6 +18988,15 @@ const ADDITION_LEVELS = [
     { id: 10, key: 10, title: "جمع ضمن ١٠٠", icon: "💯", max: 100, mode: "digit-pad" }
 ];
 
+/* إصدار محتوى كل مستوى (للتنبيه فقط، لا يغيّر أي نتيجة محفوظة):
+   النتائج المحفوظة قبل تعديل المحتوى تبقى كما هي دون إعادة حساب،
+   ويُنبَّه المعلم أنها تخص الإصدار السابق من المستوى. */
+const ADDITION_CONTENT_VERSION = { 7: 2, 3: 2, 5: 2, 8: 2 };
+
+function additionContentVersion(key) {
+    return ADDITION_CONTENT_VERSION[key] || 1;
+}
+
 /* المفتاح الثابت للتخزين من موضع المستوى الظاهر */
 function additionLevelKey(levelId) {
     const l = ADDITION_LEVELS[Number(levelId) - 1];
@@ -18990,31 +19007,62 @@ const ADDITION_PICTURE_EMOJIS = [
     "🍎", "⭐", "🎈", "🌸", "🐟", "🍬", "🧸", "🍇"
 ];
 
+/* صياغة العدد مع المعدود بالمفرد والمثنى والجمع الصحيحة:
+   ١ ← «تفاحة واحدة»، ٢ ← «تفاحتان/تفاحتين»، ٣–١٠ ← جمع، ≥١١ ← مفرد منصوب.
+   cs = حالة الإعراب: "n" رفع، "a" نصب. adj = صفة تتبع المعدود (آخر/جديد). */
+const ADD_NOUN_APPLE = { g: "f", one: "تفاحة", oneA: "تفاحة", dualN: "تفاحتان", dualA: "تفاحتين", pl: "تفاحات", tam: "تفاحة" };
+const ADD_NOUN_BIRD = { g: "m", one: "عصفور", oneA: "عصفورًا", dualN: "عصفوران", dualA: "عصفورين", pl: "عصافير", tam: "عصفورًا" };
+const ADD_NOUN_BALLOON = { g: "f", one: "بالونة", oneA: "بالونة", dualN: "بالونتان", dualA: "بالونتين", pl: "بالونات", tam: "بالونة" };
+const ADD_NOUN_BOOK = { g: "m", one: "كتاب", oneA: "كتابًا", dualN: "كتابان", dualA: "كتابين", pl: "كتب", tam: "كتابًا" };
+const ADD_NOUN_FISH = { g: "f", one: "سمكة", oneA: "سمكة", dualN: "سمكتان", dualA: "سمكتين", pl: "سمكات", tam: "سمكة" };
+const ADD_ADJ_OTHER = { m: ["آخر", "آخران", "آخرين"], f: ["أخرى", "أخريان", "أخريين"] };
+const ADD_ADJ_NEW = { m: ["جديد", "جديدان", "جديدين"], f: ["جديدة", "جديدتان", "جديدتين"] };
+
+function additionCountPhrase(n, d, cs, adj) {
+    const acc = cs === "a";
+    const parts = [];
+    if (n === 1) {
+        parts.push(acc ? d.oneA : d.one);
+        parts.push(d.g === "f" ? "واحدة" : (acc ? "واحدًا" : "واحد"));
+        if (adj) parts.push(adj[d.g][0]);
+    } else if (n === 2) {
+        parts.push(acc ? d.dualA : d.dualN);
+        if (adj) parts.push(adj[d.g][acc ? 2 : 1]);
+    } else if (n <= 10) {
+        parts.push(arabicNumber(n), d.pl);
+        if (adj) parts.push(adj.f[0]);
+    } else {
+        parts.push(arabicNumber(n), d.tam);
+        if (adj) parts.push(adj[d.g][0]);
+    }
+    return parts.join(" ");
+}
+
 const ADDITION_WORD_PROBLEM_TEMPLATES = [
     {
         emoji: "🍎",
         text: (a, b) =>
-            `عند أحمد ${arabicNumber(a)} تفاحات، وأعطته أمه ${arabicNumber(b)} تفاحات أخرى. كم تفاحة أصبحت معه؟`
+            `عند أحمد ${additionCountPhrase(a, ADD_NOUN_APPLE, "n")}، وأعطته أمه ${additionCountPhrase(b, ADD_NOUN_APPLE, "a", ADD_ADJ_OTHER)}. كم تفاحة أصبحت معه؟`
     },
     {
         emoji: "🐦",
         text: (a, b) =>
-            `في الحديقة ${arabicNumber(a)} عصفور، وجاء ${arabicNumber(b)} عصفور آخر. كم عصفورًا في الحديقة الآن؟`
+            `في الحديقة ${additionCountPhrase(a, ADD_NOUN_BIRD, "n")}، وجاء ${additionCountPhrase(b, ADD_NOUN_BIRD, "n", ADD_ADJ_OTHER)}. كم عصفورًا في الحديقة الآن؟`
     },
     {
         emoji: "🎈",
         text: (a, b) =>
-            `مع سارة ${arabicNumber(a)} بالونات، واشترت ${arabicNumber(b)} بالونات جديدة. كم بالونة أصبح معها؟`
+            `مع سارة ${additionCountPhrase(a, ADD_NOUN_BALLOON, "n")}، واشترت ${additionCountPhrase(b, ADD_NOUN_BALLOON, "a", ADD_ADJ_NEW)}. كم بالونة أصبح معها؟`
     },
     {
         emoji: "📘",
         text: (a, b) =>
-            `عند البائع ${arabicNumber(a)} كتب، وأحضر ${arabicNumber(b)} كتب أخرى. كم كتابًا أصبح عنده؟`
+            `عند البائع ${additionCountPhrase(a, ADD_NOUN_BOOK, "n")}، وأحضر ${additionCountPhrase(b, ADD_NOUN_BOOK, "a", ADD_ADJ_OTHER)}. كم كتابًا أصبح عنده؟`
     },
     {
         emoji: "🐟",
         text: (a, b) =>
-            `في الحوض ${arabicNumber(a)} سمكة، وأضاف خالد ${arabicNumber(b)} سمكات. كم سمكة في الحوض الآن؟`
+            `في الحوض ${additionCountPhrase(a, ADD_NOUN_FISH, "n")}، وأضاف خالد ${additionCountPhrase(b, ADD_NOUN_FISH, "a")}. كم سمكة في الحوض الآن؟`
     }
 ];
 
@@ -19063,7 +19111,8 @@ function buildAdditionProgressFromLegacy() {
         levels[id] = {
             best: best[id],
             paid: best[id],
-            rewarded: best[id] >= ADDITION_PASS_SCORE
+            rewarded: best[id] >= ADDITION_PASS_SCORE,
+            cv: 1
         };
     });
     return { v: 2, levels: levels };
@@ -19077,10 +19126,13 @@ function sanitizeAdditionProgress(raw) {
             if (!e || typeof e !== "object") return;
             const best = additionSafeScore(e.best);
             const paid = Math.max(additionSafeScore(e.paid), 0);
+            const cvRaw = Math.floor(Number(e.cv));
             levels[level.key] = {
                 best: best,
                 paid: Math.max(paid, 0),
-                rewarded: e.rewarded === true
+                rewarded: e.rewarded === true,
+                /* غياب cv = نتيجة قديمة من الإصدار الأول للمحتوى (لا تُعاد حسابها) */
+                cv: Number.isFinite(cvRaw) && cvRaw >= 1 ? cvRaw : 1
             };
         });
     }
@@ -19131,7 +19183,7 @@ function getAdditionLevelEntry(progress, levelId) {
     /* levelId = موضع المستوى الظاهر؛ التخزين بالمفتاح الثابت */
     const key = String(additionLevelKey(levelId));
     if (!progress.levels[key]) {
-        progress.levels[key] = { best: 0, paid: 0, rewarded: false };
+        progress.levels[key] = { best: 0, paid: 0, rewarded: false, cv: additionContentVersion(Number(key)) };
     }
     return progress.levels[key];
 }
@@ -19153,8 +19205,30 @@ function saveAdditionLevelBest(levelId, score) {
     const sc = additionSafeScore(score);
     if (sc > entry.best) {
         entry.best = sc;
+        /* النتيجة الجديدة جاءت من المحتوى الحالي */
+        entry.cv = additionContentVersion(additionLevelKey(levelId));
         saveAdditionProgress(progress);
     }
+}
+
+/* مستويات لها نتيجة محفوظة من إصدار أقدم للمحتوى (للتنبيه فقط) */
+function additionStaleScores() {
+    const progress = loadAdditionProgress();
+    const out = [];
+    ADDITION_LEVELS.forEach(level => {
+        const e = progress.levels[level.key];
+        if (e && e.best > 0 && (e.cv || 1) < additionContentVersion(level.key)) {
+            out.push({ title: level.title, best: e.best });
+        }
+    });
+    return out;
+}
+
+function additionStaleNoteText() {
+    const list = additionStaleScores();
+    if (!list.length) return "";
+    return "ℹ️ النتيجة السابقة تخص محتوى المستوى قبل تعديله (محفوظة كما هي دون إعادة حساب): " +
+        list.map(x => "«" + x.title + "» " + arabicNumber(x.best) + "/١٠").join("، ");
 }
 
 /* ⭐ نجمة المهمة: ٥ نجوم فقط عند تجاوز أعلى عدد إجابات سبق أن دُفع عنه،
@@ -19187,6 +19261,142 @@ function awardAdditionCompletionStars(levelId) {
    🎲 توليد مهام كل مستوى (تكرار ذكي: تجنّب نفس السؤال مرتين
    على التوالي)
 ========================================================= */
+
+/* ===== خطط مهام المستويات المتمايزة =====
+   كل خطة تُرجع ١٠ أزواج {a,b,kind,tier}؛ وتُستعمل نفس الدالة لإعادة المحاولة
+   بنفس النوع/الدرجة حتى لا يتغير مستوى صعوبة المهمة عند "مهمة جديدة". */
+
+function addRandInt(lo, hi) {
+    return lo + Math.floor(Math.random() * (hi - lo + 1));
+}
+
+function addPickOne(list) {
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+/* المستوى الأول: مجموع ٢ ثم ٣ ثم ٤ ثم ٥ بترتيب ثابت (١+٢+٣+٤ = ١٠ مهام) */
+function additionPicturePlan() {
+    const plan = [];
+    for (let sum = 2; sum <= 5; sum++) {
+        const pairs = [];
+        for (let a = 1; a < sum; a++) pairs.push({ a: a, b: sum - a, kind: "sum" + sum, tier: sum });
+        const group = shuffle(pairs).slice(0, sum - 1);
+        group.forEach(x => plan.push(x));
+    }
+    return plan;
+}
+
+function additionPictureRetry(task) {
+    const sum = task.tier;
+    const pairs = [];
+    for (let a = 1; a < sum; a++) pairs.push({ a: a, b: sum - a, kind: "sum" + sum, tier: sum });
+    const others = pairs.filter(p => !(p.a === task.a && p.b === task.b));
+    return addPickOne(others.length ? others : pairs);
+}
+
+/* جمع ضمن ٢٠: بناء مفهوم العدد وتكوين العشرة */
+function additionTeenPair(kind) {
+    if (kind === "ten") {
+        const a = addRandInt(1, 9);
+        return { a: a, b: 10 - a, kind: "ten" };
+    }
+    if (kind === "tenplus") {
+        const n = addRandInt(1, 9);
+        return Math.random() < 0.5 ? { a: 10, b: n, kind: "tenplus" } : { a: n, b: 10, kind: "tenplus" };
+    }
+    /* عبور العشرة: الجمع يتجاوز ١٠ ويصل حتى ١٨ */
+    let a, b, guard = 0;
+    do {
+        a = addRandInt(3, 9);
+        b = addRandInt(3, 9);
+        guard++;
+    } while ((a + b <= 10 || a + b > 18) && guard < 60);
+    return { a: a, b: b, kind: "bridge" };
+}
+
+function additionTeenPlan() {
+    const kinds = ["ten", "ten", "tenplus", "tenplus", "bridge", "bridge", "bridge", "bridge", "bridge", "bridge"];
+    const seen = new Set();
+    return kinds.map((kind, i) => {
+        let pair, guard = 0;
+        do {
+            pair = additionTeenPair(kind);
+            guard++;
+        } while (seen.has(pair.a + "+" + pair.b) && guard < 30);
+        seen.add(pair.a + "+" + pair.b);
+        /* الصينية مفتوحة في أول ٧ مهام ثم تصير تلميحًا اختياريًا */
+        pair.trayOpen = i < 7;
+        return pair;
+    });
+}
+
+/* جمع أفقي: طلاقة حسابية (مضاعفات، شبه مضاعفات، تبديل، صفر، متنوع) */
+function additionFluencyPair(kind) {
+    if (kind === "double") {
+        const n = addRandInt(2, 10);
+        return { a: n, b: n, kind: "double" };
+    }
+    if (kind === "near") {
+        const n = addRandInt(3, 9);
+        return Math.random() < 0.5 ? { a: n, b: n + 1, kind: "near" } : { a: n + 1, b: n, kind: "near" };
+    }
+    if (kind === "zero") {
+        const n = addRandInt(3, 15);
+        return Math.random() < 0.5 ? { a: n, b: 0, kind: "zero" } : { a: 0, b: n, kind: "zero" };
+    }
+    if (kind === "comm") {
+        let a, b;
+        do { a = addRandInt(2, 9); b = addRandInt(2, 9); } while (a === b);
+        return { a: a, b: b, kind: "comm" };
+    }
+    let a, b;
+    do { a = addRandInt(4, 12); b = addRandInt(3, 12); } while (a + b > 20 || a === b || Math.abs(a - b) === 1);
+    return { a: a, b: b, kind: "mixed" };
+}
+
+function additionFluencyPlan() {
+    const plan = [];
+    const d1 = additionFluencyPair("double"), d2 = additionFluencyPair("double");
+    if (d2.a === d1.a) d2.a = d2.b = d1.a === 10 ? 4 : d1.a + 1;
+    plan.push(d1, d2);
+    const c = additionFluencyPair("comm");
+    plan.push(c, { a: c.b, b: c.a, kind: "comm" });
+    plan.push(additionFluencyPair("zero"), additionFluencyPair("zero"));
+    plan.push(additionFluencyPair("near"), additionFluencyPair("near"));
+    plan.push(additionFluencyPair("mixed"), additionFluencyPair("mixed"));
+    return plan;
+}
+
+function additionPlanForLevel(level) {
+    if (level.key === 7) return additionPicturePlan();
+    if (level.key === 3) return additionTeenPlan();
+    if (level.key === 5) return additionFluencyPlan();
+    return null;
+}
+
+/* بديل لمهمة واحدة بنفس النوع (لزرّ مهمة جديدة) أو null للمستويات العادية */
+function additionRetryPair(level, task) {
+    if (level.key === 7 && task && task.tier) return additionPictureRetry(task);
+    if (level.key === 3 && task && task.kind) {
+        let p, guard = 0;
+        do { p = additionTeenPair(task.kind); guard++; } while (p.a === task.a && p.b === task.b && guard < 20);
+        p.trayOpen = task.trayOpen;
+        return p;
+    }
+    if (level.key === 5 && task && task.kind) {
+        let p, guard = 0;
+        do { p = additionFluencyPair(task.kind); guard++; } while (p.a === task.a && p.b === task.b && guard < 20);
+        return p;
+    }
+    return null;
+}
+
+/* خيارات المستوى الأول: المجموع + أقرب أعداد محتملة (≥١) دون تشتيت */
+function buildPictureSumChoices(sum) {
+    const pool = [sum - 1, sum + 1, sum + 2, sum - 2].filter(v => v >= 1 && v !== sum);
+    const wrong = shuffle(pool).slice(0, 2);
+    return shuffle([sum, wrong[0], wrong[1]]);
+}
 
 function generateAdditionPairForLevel(level) {
 
@@ -19242,17 +19452,25 @@ function pickAdditionWordProblem(a, b) {
     };
 }
 
-function buildAdditionTaskObject(level, a, b) {
+function buildAdditionTaskObject(level, a, b, extra) {
 
     const correct = a + b;
     const task = { a, b, correct };
+
+    if (extra && typeof extra === "object") {
+        if (extra.kind) task.kind = extra.kind;
+        if (extra.tier) task.tier = extra.tier;
+        if (typeof extra.trayOpen === "boolean") task.trayOpen = extra.trayOpen;
+    }
 
     if (level.mode === "choice-result") {
         task.choices = buildAdditionChoices(correct, level.max);
     }
 
     if (level.mode === "picture-choice") {
-        task.choices = buildAdditionChoices(correct, level.max);
+        task.choices = level.key === 7
+            ? buildPictureSumChoices(correct)
+            : buildAdditionChoices(correct, level.max);
         task.emoji =
             ADDITION_PICTURE_EMOJIS[
                 Math.floor(Math.random() * ADDITION_PICTURE_EMOJIS.length)
@@ -19276,6 +19494,12 @@ function buildAdditionTaskObject(level, a, b) {
 }
 
 function generateAdditionTasksForLevel(level) {
+
+    const planned = additionPlanForLevel(level);
+
+    if (planned) {
+        return planned.map(p => buildAdditionTaskObject(level, p.a, p.b, p));
+    }
 
     const tasks = [];
     let lastPair = null;
@@ -19702,7 +19926,13 @@ function speakCurrentAdditionTask() {
     if (level.mode === "missing-number") {
         speakEducational("ما هو العدد المفقود؟", { rate: 0.8 });
     } else if (level.mode === "word-problem") {
-        speakEducational(task.story, { rate: 0.78 });
+        /* القصة المصحّحة لغويًا قد لا تُركَّب من المقاطع المسجّلة (لا تسجيلات جديدة)؛
+           فنقرأ الجملة العددية المسجّلة بدل الصمت التام */
+        if (EduAudio.has(task.story)) {
+            speakEducational(task.story, { rate: 0.78 });
+        } else {
+            speakEducational(`${task.a} زائد ${task.b} يساوي كم؟`, { rate: 0.8 });
+        }
     } else if (level.mode === "picture-choice") {
         speakEducational("كم مجموع هذه الصور؟", { rate: 0.8 });
     } else {
@@ -19722,8 +19952,9 @@ function retryCurrentAdditionTask() {
     /* لا إعادة توليد لمهمة حُلّت بالفعل (كانت تتيح عدّ المهمة مرتين) */
     if (additionLevelState.currentTask && additionLevelState.currentTask.solved) return;
 
-    const pair = generateAdditionPairForLevel(level);
-    const task = buildAdditionTaskObject(level, pair.a, pair.b);
+    const retried = additionRetryPair(level, additionLevelState.currentTask);
+    const pair = retried || generateAdditionPairForLevel(level);
+    const task = buildAdditionTaskObject(level, pair.a, pair.b, retried || null);
 
     additionLevelState.tasks[additionLevelState.taskIndex] = task;
 
@@ -28730,11 +28961,11 @@ window.zoo = zoo;
 const ADD2_META = {
     1:  { phase: "concrete", tray: "objects", open: true },
     2:  { phase: "concrete", tray: "frame",   open: true },
-    3:  { phase: "abstract", tray: "auto",    open: false },
+    3:  { phase: "abstract", tray: "auto",    open: false, chip: "🔟 تكوين العشرة" },
     4:  { phase: "visual",   tray: "objects", open: false },
-    5:  { phase: "abstract", tray: "auto",    open: false },
+    5:  { phase: "abstract", tray: "auto",    open: false, chip: "⚡ طلاقة وتبديل" },
     6:  { phase: "abstract", tray: "auto",    open: false },
-    7:  { phase: "visual",   tray: "objects", open: true },
+    7:  { phase: "visual",   tray: "objects", open: true, chip: "🖼️ عدّ وضمّ بالصور" },
     8:  { phase: "visual",   tray: "objects", open: true },
     9:  { phase: "abstract", tray: "blocks",  open: false },
     10: { phase: "abstract", tray: "blocks",  open: false }
@@ -28799,7 +29030,7 @@ renderAdditionLevelsHub = function () {
                 <span class="add2-card-num">${arabicNumber(level.id)}</span>
                 <span class="add2-card-icon" aria-hidden="true">${level.icon}</span>
                 <span class="add2-card-title">${level.title}</span>
-                <span class="add2-card-phase">${ADD2_PHASE_LABEL[meta.phase]}</span>
+                <span class="add2-card-phase">${meta.chip || ADD2_PHASE_LABEL[meta.phase]}</span>
                 <span class="add2-stars" aria-hidden="true">${add2StarRow(add2StarsFromScore(score))}</span>
                 ${score ? `<span class="add2-card-best">${arabicNumber(score)}/١٠</span>` : ""}
             </button>
@@ -29045,10 +29276,11 @@ renderCurrentAdditionTask = function () {
         card.setAttribute("data-mode", level.mode);
     }
     if (actions) actions.style.display = "";
-    if (hintLabel) hintLabel.textContent = meta.open ? "عدّ معي" : "تلميح";
+    const trayOpen = typeof task.trayOpen === "boolean" ? task.trayOpen : !!meta.open;
+    if (hintLabel) hintLabel.textContent = trayOpen ? "عدّ معي" : "تلميح";
 
     add2BuildTray(level, task);
-    add2SetTrayOpen(!!meta.open);
+    add2SetTrayOpen(trayOpen);
 };
 
 /* ---------- تدرّج المساعدة بلا أخطاء + الاحتفال ---------- */

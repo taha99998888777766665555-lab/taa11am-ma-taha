@@ -13884,3 +13884,11 @@ body.calm-mode #additionLevelCard *, body.calm-mode #additionLevelsHub * { anima
 .add2-actions { flex-wrap: nowrap; gap: 8px; }
 .add2-action-btn { flex: 1 1 0; min-width: 0; max-width: none; }
 @media (max-width: 420px) { .add2-action-btn { font-size: 14px; padding: 0 4px; } .add2-action-ico { font-size: 18px; } }
+
+.add2-stale-note {
+    color: #8a5a00;
+    background: #fff6dd;
+    border-radius: 8px;
+    padding: 4px 8px;
+    line-height: 1.6;
+}
