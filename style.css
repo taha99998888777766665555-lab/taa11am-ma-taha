@@ -4998,18 +4998,6 @@ body.theme-forest {
     background: linear-gradient(160deg, #e8f5e9, #c8f7d2);
 }
 
-.addition-level-card-btn.locked {
-    opacity: 0.55;
-    cursor: not-allowed;
-    background: #eceff1;
-    filter: grayscale(0.6);
-}
-
-.addition-level-card-btn.locked:hover {
-    transform: none;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-
 .addition-level-lock-icon {
     position: absolute;
     top: -6px;
@@ -5308,10 +5296,6 @@ body.dark-mode .addition-picture-group,
 body.dark-mode .addition-word-problem-box {
     background: #232946;
     color: #e8eaf6;
-}
-
-body.dark-mode .addition-level-card-btn.locked {
-    background: #1a1d2e;
 }
 
 body.calm-mode .addition-level-card-btn:hover,

@@ -19012,42 +19012,163 @@ const ADDITION_WORD_PROBLEM_TEMPLATES = [
    💾 حفظ التقدم وفتح المستويات (localStorage معزول)
 ========================================================= */
 
-function loadAdditionUnlockedLevel() {
-    return Number(
-        localStorage.getItem("taha_addition_unlocked_level") || 1
-    );
+/* كل المستويات العشرة مفتوحة دائمًا لكل طالب (التدرج إرشادي فقط).
+   التقدم يُحفظ لكل مستوى على حدة داخل مفتاح واحد معزول لكل طالب:
+   best = أفضل نتيجة (٠–١٠)، paid = أعلى عدد إجابات دُفعت عنه نجوم،
+   rewarded = هل مُنحت مكافأة إكمال المستوى مرة واحدة. */
+
+const ADDITION_PROGRESS_KEY = "taha_addition_progress_v2";
+const ADDITION_PROGRESS_CORRUPT_KEY = "taha_addition_progress_v2_corrupt_backup";
+const ADDITION_TASKS_PER_LEVEL = 10;
+const ADDITION_PASS_SCORE = 8;
+
+function additionSafeScore(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return 0;
+    return Math.min(ADDITION_TASKS_PER_LEVEL, Math.max(0, Math.floor(n)));
 }
 
-function saveAdditionUnlockedLevel(n) {
-    localStorage.setItem("taha_addition_unlocked_level", String(n));
-}
-
-function unlockAdditionLevel(n) {
-    if (n > loadAdditionUnlockedLevel() && n - 1 <= loadAdditionUnlockedLevel()) {
-        saveAdditionUnlockedLevel(n);
-    }
-}
-
-function loadAdditionLevelBest() {
+/* قراءة best القديم (taha_addition_level_best) بأمان */
+function readLegacyAdditionBest() {
+    let raw;
     try {
-        return JSON.parse(
-            localStorage.getItem("taha_addition_level_best") || "{}"
-        );
+        raw = JSON.parse(localStorage.getItem("taha_addition_level_best") || "{}");
     } catch (error) {
         return {};
     }
+    const out = {};
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        ADDITION_LEVELS.forEach(level => {
+            const sc = additionSafeScore(raw[level.id]);
+            if (sc > 0) out[level.id] = sc;
+        });
+    }
+    return out;
+}
+
+function buildAdditionProgressFromLegacy() {
+    const best = readLegacyAdditionBest();
+    const levels = {};
+    Object.keys(best).forEach(id => {
+        levels[id] = {
+            best: best[id],
+            paid: best[id],
+            rewarded: best[id] >= ADDITION_PASS_SCORE
+        };
+    });
+    return { v: 2, levels: levels };
+}
+
+function sanitizeAdditionProgress(raw) {
+    const levels = {};
+    if (raw && typeof raw === "object" && raw.levels && typeof raw.levels === "object") {
+        ADDITION_LEVELS.forEach(level => {
+            const e = raw.levels[level.id];
+            if (!e || typeof e !== "object") return;
+            const best = additionSafeScore(e.best);
+            const paid = Math.max(additionSafeScore(e.paid), 0);
+            levels[level.id] = {
+                best: best,
+                paid: Math.max(paid, 0),
+                rewarded: e.rewarded === true
+            };
+        });
+    }
+    return { v: 2, levels: levels };
+}
+
+function saveAdditionProgress(progress) {
+    try {
+        localStorage.setItem(ADDITION_PROGRESS_KEY, JSON.stringify(progress));
+        /* نسخة متوافقة للقراءة القديمة (أفضل النتائج فقط) */
+        const legacy = {};
+        Object.keys(progress.levels).forEach(id => {
+            if (progress.levels[id].best > 0) legacy[id] = progress.levels[id].best;
+        });
+        localStorage.setItem("taha_addition_level_best", JSON.stringify(legacy));
+    } catch (error) { /* التخزين ممتلئ أو ممنوع: لا نعطّل القسم */ }
+}
+
+function loadAdditionProgress() {
+    let stored = null;
+    try {
+        stored = localStorage.getItem(ADDITION_PROGRESS_KEY);
+    } catch (error) {
+        return buildAdditionProgressFromLegacy();
+    }
+
+    if (stored === null || stored === "") {
+        /* أول تشغيل بعد التحديث: ترحيل التقدم القديم دون فقد */
+        const migrated = buildAdditionProgressFromLegacy();
+        saveAdditionProgress(migrated);
+        return migrated;
+    }
+
+    try {
+        const parsed = JSON.parse(stored);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("bad");
+        return sanitizeAdditionProgress(parsed);
+    } catch (error) {
+        /* بيانات تالفة: نحتفظ بنسخة ونعيد البناء من القديم دون تعطيل القسم */
+        try { localStorage.setItem(ADDITION_PROGRESS_CORRUPT_KEY, String(stored).slice(0, 4000)); } catch (e) { /* لا شيء */ }
+        const rebuilt = buildAdditionProgressFromLegacy();
+        saveAdditionProgress(rebuilt);
+        return rebuilt;
+    }
+}
+
+function getAdditionLevelEntry(progress, levelId) {
+    const key = String(levelId);
+    if (!progress.levels[key]) {
+        progress.levels[key] = { best: 0, paid: 0, rewarded: false };
+    }
+    return progress.levels[key];
+}
+
+/* واجهة متوافقة: خريطة أفضل النتائج { id: score } */
+function loadAdditionLevelBest() {
+    const progress = loadAdditionProgress();
+    const out = {};
+    Object.keys(progress.levels).forEach(id => {
+        if (progress.levels[id].best > 0) out[id] = progress.levels[id].best;
+    });
+    return out;
 }
 
 function saveAdditionLevelBest(levelId, score) {
-    const data = loadAdditionLevelBest();
-
-    if (!data[levelId] || score > data[levelId]) {
-        data[levelId] = score;
-        localStorage.setItem(
-            "taha_addition_level_best",
-            JSON.stringify(data)
-        );
+    const progress = loadAdditionProgress();
+    const entry = getAdditionLevelEntry(progress, levelId);
+    const sc = additionSafeScore(score);
+    if (sc > entry.best) {
+        entry.best = sc;
+        saveAdditionProgress(progress);
     }
+}
+
+/* ⭐ نجمة المهمة: ٥ نجوم فقط عند تجاوز أعلى عدد إجابات سبق أن دُفع عنه،
+   فلا يمكن جمع نجوم بإعادة المستوى، ولا يُحرم الطفل من اللعب أو التعلم */
+function awardAdditionTaskStars(levelId, runCorrect) {
+    const progress = loadAdditionProgress();
+    const entry = getAdditionLevelEntry(progress, levelId);
+    const count = additionSafeScore(runCorrect);
+    if (count > entry.paid) {
+        entry.paid = count;
+        saveAdditionProgress(progress);
+        addStars(5);
+        return 5;
+    }
+    return 0;
+}
+
+/* 🏆 مكافأة إكمال المستوى (+١٠) مرة واحدة فقط لكل طالب ولكل مستوى */
+function awardAdditionCompletionStars(levelId) {
+    const progress = loadAdditionProgress();
+    const entry = getAdditionLevelEntry(progress, levelId);
+    if (entry.rewarded) return 0;
+    entry.rewarded = true;
+    saveAdditionProgress(progress);
+    addStars(10);
+    return 10;
 }
 
 /* =========================================================
@@ -19193,19 +19314,14 @@ function renderAdditionLevelsHub() {
 
     if (!grid) return;
 
-    const unlocked = StudentStore.eff(loadAdditionUnlockedLevel());
     const bestScores = loadAdditionLevelBest();
 
     grid.innerHTML = ADDITION_LEVELS.map(level => {
 
-        const isUnlocked = level.id <= unlocked;
-        const isCompleted = (bestScores[level.id] || 0) >= 8;
+        const isCompleted = (bestScores[level.id] || 0) >= ADDITION_PASS_SCORE;
 
         const classes = ["addition-level-card-btn"];
-        if (!isUnlocked) classes.push("locked");
         if (isCompleted) classes.push("completed");
-
-        const lockIcon = isCompleted ? "✅" : (isUnlocked ? "🔓" : "🔒");
 
         const bestText = bestScores[level.id]
             ? `أفضل نتيجة: ${arabicNumber(bestScores[level.id])}/١٠`
@@ -19215,11 +19331,9 @@ function renderAdditionLevelsHub() {
             <button
                 class="${classes.join(" ")}"
                 type="button"
-                ${isUnlocked
-                    ? `onclick="openAdditionLevel(${level.id})"`
-                    : `onclick="showAdditionLockedMessage()"`}
+                onclick="openAdditionLevel(${level.id})"
             >
-                <span class="addition-level-lock-icon">${lockIcon}</span>
+                ${isCompleted ? `<span class="addition-level-lock-icon" aria-label="مكتمل">✅</span>` : ""}
                 <span class="addition-level-icon">${level.icon}</span>
                 <span class="addition-level-name">
                     ${arabicNumber(level.id)}. ${level.title}
@@ -19230,29 +19344,22 @@ function renderAdditionLevelsHub() {
     }).join("");
 }
 
-function showAdditionLockedMessage() {
-    speakEducational(
-        "أكمل المستوى السابق أولًا لتفتح هذا المستوى",
-        { rate: 0.85 }
-    );
-}
-
 /* =========================================================
    🚪 التنقل: فتح مستوى / الرجوع للمستويات
 ========================================================= */
 
 function openAdditionLevel(levelId) {
 
-    const unlocked = StudentStore.eff(loadAdditionUnlockedLevel());
-
-    if (levelId > unlocked) {
-        showAdditionLockedMessage();
-        return;
-    }
+    levelId = Number(levelId);
 
     const level = ADDITION_LEVELS[levelId - 1];
 
     if (!level) return;
+
+    if (additionTimer) {
+        clearTimeout(additionTimer);
+        additionTimer = null;
+    }
 
     additionLevelModeActive = true;
 
@@ -19261,6 +19368,8 @@ function openAdditionLevel(levelId) {
         taskIndex: 0,
         correctCount: 0,
         currentTask: null,
+        finished: false,
+        starsEarned: 0,
         tasks: generateAdditionTasksForLevel(level)
     };
 
@@ -19598,6 +19707,9 @@ function retryCurrentAdditionTask() {
 
     if (!level) return;
 
+    /* لا إعادة توليد لمهمة حُلّت بالفعل (كانت تتيح عدّ المهمة مرتين) */
+    if (additionLevelState.currentTask && additionLevelState.currentTask.solved) return;
+
     const pair = generateAdditionPairForLevel(level);
     const task = buildAdditionTaskObject(level, pair.a, pair.b);
 
@@ -19614,14 +19726,28 @@ function retryCurrentAdditionTask() {
 function finishAdditionChoiceTask(isCorrect, button) {
 
     const messageEl = $("addMessage");
+    const state = additionLevelState;
+    const task = state.currentTask;
+
+    /* مهمة حُلّت بالفعل: نتجاهل أي ضغط إضافي (لا مكافأة ولا عدّ مضاعف) */
+    if (task && task.solved) return;
 
     if (isCorrect) {
+
+        if (task) task.solved = true;
 
         if (button) button.classList.add("correct");
 
         correctAddition++;
         saveCounters();
-        addStars(5);
+
+        if (additionLevelModeActive) {
+            /* العدّ أولًا ثم النجوم حسب أعلى عدد سبق الدفع عنه */
+            onAdditionLevelTaskCorrect();
+            state.starsEarned += awardAdditionTaskStars(state.levelId, state.correctCount);
+        } else {
+            onAdditionLevelTaskCorrect();
+        }
 
         if (messageEl) {
             messageEl.textContent = "🎉 أحسنت! إجابة صحيحة ⭐";
@@ -19634,9 +19760,9 @@ function finishAdditionChoiceTask(isCorrect, button) {
             .querySelectorAll("#additionTaskStage .addition-choice-btn")
             .forEach(btn => { btn.disabled = true; });
 
-        onAdditionLevelTaskCorrect();
-
         setTimeout(() => {
+            /* لا نتابع إن غادر الطفل المستوى أو بدأ مستوى آخر */
+            if (additionLevelState !== state || !additionLevelModeActive) return;
             advanceAdditionLevelTask();
         }, 1200);
 
@@ -19694,12 +19820,27 @@ checkAddition = function () {
 
     const wasAnswered = Number.isFinite(answer);
 
-    originalCheckAdditionForLevels();
+    const state = additionLevelState;
+    const task = state.currentTask;
+
+    /* بعد الإجابة الصحيحة: تجاهل الضغط المتكرر (كان يضاعف العدّ) */
+    if (additionTimer || (task && task.solved)) return;
+
+    /* نجوم الدالة الأصلية تُحجب مؤقتًا وتُمنح عبر نظام الحدّ الأعلى */
+    const realAddStars = addStars;
+    addStars = function () { /* محجوب أثناء النداء الأصلي فقط */ };
+    try {
+        originalCheckAdditionForLevels();
+    } finally {
+        addStars = realAddStars;
+    }
 
     if (wasAnswered) {
 
         if (answer === correct) {
+            if (task) task.solved = true;
             onAdditionLevelTaskCorrect();
+            state.starsEarned += awardAdditionTaskStars(state.levelId, state.correctCount);
         }
         /* في حال الخطأ: لا عقوبة، الرسالة والصوت تمت معالجتهما
            بالفعل داخل الدالة الأصلية — الطفل يعيد المحاولة بنفس
@@ -19708,6 +19849,8 @@ checkAddition = function () {
 };
 
 function advanceAdditionLevelTask() {
+
+    if (additionLevelState.finished) return;
 
     additionLevelState.taskIndex++;
 
@@ -19725,17 +19868,19 @@ function advanceAdditionLevelTask() {
 
 function finishAdditionLevel() {
 
+    if (additionLevelState.finished) return;
+    additionLevelState.finished = true;
+
     const level = ADDITION_LEVELS[additionLevelState.levelId - 1];
-    const score = additionLevelState.correctCount;
-    const passed = score >= 8;
+    const score = Math.min(additionLevelState.correctCount, ADDITION_TASKS_PER_LEVEL);
+    const passed = score >= ADDITION_PASS_SCORE;
 
     additionLevelModeActive = false;
 
     saveAdditionLevelBest(level.id, score);
 
     if (passed) {
-        addStars(10);
-        unlockAdditionLevel(level.id + 1);
+        additionLevelState.starsEarned += awardAdditionCompletionStars(level.id);
     }
 
     renderAdditionLevelResultScreen(level, score, passed);
@@ -19775,17 +19920,19 @@ function renderAdditionLevelResultScreen(level, score, passed) {
                     النتيجة: ${arabicNumber(score)} / ١٠
                 </div>
 
-                ${passed && nextLevel ? `
-                    <button class="success" type="button" onclick="openAdditionLevel(${nextLevel.id})">
-                        ➡️ المستوى التالي: ${nextLevel.title}
+                ${additionLevelState.starsEarned > 0
+                    ? `<div class="addition-level-result-score">⭐ نجوم جديدة: ${arabicNumber(additionLevelState.starsEarned)}</div>`
+                    : `<div class="addition-level-result-score">💛 نجومك السابقة محفوظة، والتدريب يقوّي مهارتك</div>`}
+
+                ${nextLevel ? `
+                    <button class="${passed ? "success" : "secondary"}" type="button" onclick="openAdditionLevel(${nextLevel.id})">
+                        ➡️ ${passed ? "المستوى التالي" : "جرّب المستوى التالي"}: ${nextLevel.title}
                     </button>
                 ` : ""}
 
-                ${!passed ? `
-                    <button class="success" type="button" onclick="openAdditionLevel(${level.id})">
-                        🔁 إعادة المحاولة
-                    </button>
-                ` : ""}
+                <button class="${passed ? "secondary" : "success"}" type="button" onclick="openAdditionLevel(${level.id})">
+                    🔁 ${passed ? "العب هذا المستوى مرة أخرى" : "إعادة المحاولة"}
+                </button>
 
                 <button class="secondary" type="button" onclick="backToAdditionLevels()">
                     🏠 كل المستويات
@@ -24742,7 +24889,7 @@ const StudentData = (function () {
             /* مستويات الأقسام الأخرى المفتوحة حاليًا (قراءة فقط) */
             unlockedLevels: {
                 words: Number(localStorage.getItem("taha_words_unlocked_level") || 1),
-                addition: Number(localStorage.getItem("taha_addition_unlocked_level") || 1),
+                addition: ADDITION_LEVELS.length, /* كل مستويات الجمع مفتوحة دائمًا */
                 subtraction: Number(localStorage.getItem("taha_subtraction_unlocked_level") || 1)
             },
 
