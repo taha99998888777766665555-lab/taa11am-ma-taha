@@ -15042,3 +15042,48 @@ body.calm-mode #subtractionLevelCard .subtraction-choice-btn.hinted { animation:
     #subtractionLevelCard .subtraction-ten-frame { width: min(100%, 300px); }
     #subtractionLevelCard .subtraction-number-line-wrapper { padding-top: 44px; }
 }
+
+/* =====================================================================
+   تجربة (د): تخطيط مختصر للوحة الأرقام — الجوال والتابلت (الطرح فقط)
+   ===================================================================== */
+@media (max-width: 520px) {
+    #subtractionLevelCard .subtraction-legacy-wrapper:not([style*="display: none"]):not([style*="display:none"]) {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+        column-gap: 8px;
+        align-items: center;
+    }
+    #subtractionLevelCard .subtraction-legacy-wrapper > br { display: none; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subPictures { grid-column: 1 / -1; grid-row: 1; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subQuestion { grid-column: 1; grid-row: 2; margin: 0 0 8px; min-width: 0; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subAnswer { grid-column: 2; grid-row: 2; width: 100%; max-width: none; margin: 0 0 8px; min-width: 0; box-sizing: border-box; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subCheckZone { grid-column: 1 / -1; grid-row: 3; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subtractionDigitPad { grid-column: 1 / -1; grid-row: 4; justify-self: center; width: 100%; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > button.success { grid-column: 1 / -1; grid-row: 5; justify-self: center; width: min(100%, 330px); }
+    #subtractionLevelCard .operation { font-size: clamp(30px, 8.8vw, 38px); padding: 6px 8px; white-space: nowrap; }
+    #subtractionLevelCard[data-key="6"] .subtraction-legacy-wrapper:not([style*="display: none"]) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    #subtractionLevelCard[data-key="6"] .sub2-vert-grid { font-size: clamp(34px, 10vw, 44px); }
+    #subtractionLevelCard[data-key="6"] .sub2-vert-head { font-size: 12px !important; white-space: nowrap; letter-spacing: -.2px; }
+}
+
+@media (min-width: 600px) and (max-width: 999px) {
+    #subtractionLevelCard .subtraction-legacy-wrapper:not([style*="display: none"]):not([style*="display:none"]) {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        column-gap: clamp(16px, 3vw, 32px);
+        align-items: center;
+    }
+    #subtractionLevelCard .subtraction-legacy-wrapper > br { display: none; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subPictures { grid-column: 1; grid-row: 1; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subQuestion { grid-column: 1; grid-row: 2; margin: 0 0 10px; min-width: 0; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subCheckZone { grid-column: 1; grid-row: 3; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subAnswer { grid-column: 1; grid-row: 4; justify-self: center; width: 100%; max-width: 320px; margin: 0 0 10px; box-sizing: border-box; }
+    #subtractionLevelCard .subtraction-legacy-wrapper > button.success { grid-column: 1; grid-row: 5; justify-self: center; width: min(100%, 320px); }
+    #subtractionLevelCard .subtraction-legacy-wrapper > #subtractionDigitPad { grid-column: 2; grid-row: 1 / span 5; max-width: none; margin: 0; }
+    #subtractionLevelCard .subtraction-digit-pad { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    #subtractionLevelCard .subtraction-digit-btn { min-height: clamp(72px, 8.5vh, 96px); font-size: 36px; }
+    #subtractionLevelCard .operation { font-size: clamp(40px, 6.4vw, 60px); white-space: nowrap; }
+}
+
+/* زر المساعدة: حالة الإغلاق واضحة */
+#subtractionLevelCard #subHintBtn.active { background: #ede7ff; border-color: var(--a2-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--a2-accent) 28%, transparent); }

@@ -30342,6 +30342,10 @@ function sub2SetHelpOpen(open) {
     if (btn) {
         btn.setAttribute("aria-expanded", open ? "true" : "false");
         btn.classList.toggle("active", !!open);
+        const ico = btn.querySelector(".add2-action-ico");
+        const lbl = btn.querySelector("span:last-child");
+        if (ico) ico.textContent = open ? "✖️" : "💡";
+        if (lbl) lbl.textContent = open ? "إغلاق التلميح" : "تلميح";
     }
 
     if (model) {
