@@ -1970,12 +1970,13 @@ function showScreen(screenId) {
         if (typeof renderWritingHub === "function") renderWritingHub();
     }
 
+    /* شاشتا الجمع والطرح تبدآن باختيار المستوى: توليد السؤال القديم بدون نطق */
     if (screenId === "addition") {
-        newAddition();
+        newAddition(true);
     }
 
     if (screenId === "subtraction") {
-        newSubtraction();
+        newSubtraction(true);
     }
 
     if (screenId === "quran") {
@@ -2224,7 +2225,7 @@ let currentAddB = 1;
 
 let additionTimer = null;
 
-function newAddition() {
+function newAddition(silent) {
 
     if (additionTimer) {
         clearTimeout(additionTimer);
@@ -2270,12 +2271,16 @@ function newAddition() {
         message.className = "message";
     }
 
-    speakEducational(
-        `${currentAddA} زائد ${currentAddB} يساوي كم؟`,
-        {
-            rate: 0.8
-        }
-    );
+    /* الدخول إلى شاشة اختيار المستويات يولّد السؤال القديم بصمت (silent)؛
+       النطق فقط عند طلب سؤال فعلي داخل النشاط */
+    if (silent !== true) {
+        speakEducational(
+            `${currentAddA} زائد ${currentAddB} يساوي كم؟`,
+            {
+                rate: 0.8
+            }
+        );
+    }
 }
 
 function checkAddition() {
@@ -2374,7 +2379,7 @@ let currentSubB = 1;
 
 let subtractionTimer = null;
 
-function newSubtraction() {
+function newSubtraction(silent) {
 
     if (subtractionTimer) {
         clearTimeout(subtractionTimer);
@@ -2422,12 +2427,16 @@ function newSubtraction() {
         message.className = "message";
     }
 
-    speakEducational(
-        `${currentSubA} ناقص ${currentSubB} يساوي كم؟`,
-        {
-            rate: 0.8
-        }
-    );
+    /* الدخول إلى شاشة اختيار المستويات يولّد السؤال القديم بصمت (silent)؛
+       النطق فقط عند طلب سؤال فعلي داخل النشاط */
+    if (silent !== true) {
+        speakEducational(
+            `${currentSubA} ناقص ${currentSubB} يساوي كم؟`,
+            {
+                rate: 0.8
+            }
+        );
+    }
 }
 
 function checkSubtraction() {
@@ -19593,6 +19602,8 @@ function openAdditionLevel(levelId) {
 
     if (!level) return;
 
+    stopEducationalAudio();   /* لا يبقى صوت قديم في الطابور قبل نطق أول سؤال */
+
     if (additionTimer) {
         clearTimeout(additionTimer);
         additionTimer = null;
@@ -19634,6 +19645,7 @@ function backToAdditionLevels() {
     }
 
     stopAllAudio();
+    stopEducationalAudio();   /* طابور أصوات الأسئلة المحلية لا يوقفه stopAllAudio */
 
     const hub = $("additionLevelsHub");
     const levelCard = $("additionLevelCard");
@@ -20036,12 +20048,12 @@ function onAdditionLevelTaskCorrect() {
 
 const originalNewAdditionForLevels = newAddition;
 
-newAddition = function () {
+newAddition = function (silent) {
 
     if (additionLevelModeActive) {
         advanceAdditionLevelTask();
     } else {
-        originalNewAdditionForLevels();
+        originalNewAdditionForLevels(silent);
     }
 };
 
@@ -21328,6 +21340,8 @@ function openSubtractionLevel(levelId) {
 
     if (!level) return;
 
+    stopEducationalAudio();   /* لا يبقى صوت قديم في الطابور قبل نطق أول سؤال */
+
     subtractionLevelModeActive = true;
     subtractionWrongStreak = 0;
 
@@ -21363,6 +21377,7 @@ function backToSubtractionLevels() {
     }
 
     stopAllAudio();
+    stopEducationalAudio();   /* طابور أصوات الأسئلة المحلية لا يوقفه stopAllAudio */
     hideSubtractionHint();
 
     const hub = $("subtractionLevelsHub");
@@ -22061,12 +22076,12 @@ function logSubtractionAnswer(level, task, isCorrect) {
 
 const originalNewSubtractionForLevels = newSubtraction;
 
-newSubtraction = function () {
+newSubtraction = function (silent) {
 
     if (subtractionLevelModeActive) {
         advanceSubtractionLevelTask();
     } else {
-        originalNewSubtractionForLevels();
+        originalNewSubtractionForLevels(silent);
     }
 };
 
