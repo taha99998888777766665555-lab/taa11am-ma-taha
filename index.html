@@ -883,21 +883,29 @@
 ============================================================ -->
 
 <div
-    class="card"
+    class="card add2-hub"
     id="subtractionLevelsHub"
 >
 
-    <h2>
-        ➖ الطرح
-    </h2>
+    <div class="add2-hero">
+        <div class="add2-hero-text">
+            <h2>➖ الطرح</h2>
+            <p class="subtraction-hub-subtitle addition-hub-subtitle">
+                اختر المستوى الذي يناسبك، كل المستويات مفتوحة 🌟
+            </p>
+        </div>
+        <div class="add2-hero-stats" id="subHubStats" aria-live="polite"></div>
+    </div>
 
-    <p class="subtraction-hub-subtitle">
-        اختر مستوى لتبدأ التدريب 🌟
-    </p>
+    <div class="add2-legend" aria-hidden="true">
+        <span class="add2-chip add2-phase-concrete">🧸 محسوس</span>
+        <span class="add2-chip add2-phase-visual">🖼️ بصري</span>
+        <span class="add2-chip add2-phase-abstract">🔢 مجرد</span>
+    </div>
 
     <div
         id="subtractionLevelsGrid"
-        class="subtraction-levels-grid"
+        class="subtraction-levels-grid add2-grid"
         role="list"
     ></div>
 
@@ -909,84 +917,57 @@
 ============================================================ -->
 
 <div
-    class="card"
+    class="card add2-level"
     id="subtractionLevelCard"
     style="display:none;"
 >
 
-    <div class="subtraction-toolbar">
+    <div class="add2-topbar">
 
         <button
-            class="subtraction-toolbar-btn"
+            class="add2-icon-btn"
             onclick="showScreen('home')"
             aria-label="الرئيسية"
             type="button"
-        >
-            🏠
-            <span>الرئيسية</span>
-        </button>
+        >🏠</button>
+
+        <div
+            class="subtraction-level-title"
+            id="subtractionLevelTitle"
+        ></div>
 
         <button
-            class="subtraction-toolbar-btn"
+            class="add2-icon-btn"
             onclick="backToSubtractionLevels()"
             aria-label="رجوع للمستويات"
             type="button"
-        >
-            ⬅️
-            <span>رجوع</span>
-        </button>
-
-        <button
-            class="subtraction-toolbar-btn"
-            id="subtractionSpeakBtn"
-            onclick="speakCurrentSubtractionTask()"
-            aria-label="استمع للسؤال"
-            type="button"
-        >
-            🔊
-            <span>الصوت</span>
-        </button>
-
-        <button
-            class="subtraction-toolbar-btn"
-            onclick="retryCurrentSubtractionTask()"
-            aria-label="إعادة المحاولة"
-            type="button"
-        >
-            🔁
-            <span>إعادة</span>
-        </button>
+        >⬅️</button>
 
     </div>
 
+    <div class="add2-progress">
 
-    <div
-        class="subtraction-level-title"
-        id="subtractionLevelTitle"
-    ></div>
+        <div class="add2-dots" id="subDots" aria-hidden="true"></div>
 
+        <div class="add2-progress-meta">
+            <span
+                class="subtraction-progress-label"
+                id="subtractionProgressLabel"
+            >المهمة ١ من ١٠</span>
+            <span
+                class="subtraction-score-label"
+                id="subtractionScoreLabel"
+            >✅ ٠ / ١٠</span>
+        </div>
 
-    <div
-        class="subtraction-progress-label"
-        id="subtractionProgressLabel"
-    >
-        المهمة ١ من ١٠
+        <div class="subtraction-progress-bar add2-hidden-bar" aria-hidden="true">
+            <div
+                class="subtraction-progress-fill"
+                id="subtractionProgressFill"
+            ></div>
+        </div>
+
     </div>
-
-    <div class="subtraction-progress-bar">
-        <div
-            class="subtraction-progress-fill"
-            id="subtractionProgressFill"
-        ></div>
-    </div>
-
-    <div
-        class="subtraction-score-label"
-        id="subtractionScoreLabel"
-    >
-        ✅ ٠ / ١٠
-    </div>
-
 
     <div
         id="subtractionTaskStage"
@@ -994,16 +975,8 @@
     ></div>
 
 
-    <div
-        id="subtractionHintBox"
-        class="subtraction-hint-box"
-        role="status"
-        aria-live="polite"
-    ></div>
-
-
     <!-- عناصر محرك الطرح الأصلي (تُستخدم فعليًا داخل بعض
-         المستويات: الأفقي، الرأسي، ضمن ٢٠/٥٠/١٠٠) -->
+         المستويات: ضمن ٢٠، الأفقي، الرأسي، ضمن ٥٠/١٠٠) -->
 
     <div
         id="subtractionFreePlayLegacy"
@@ -1024,6 +997,14 @@
         >
             ٣ - ١ = ؟
         </div>
+
+
+        <div
+            id="subCheckZone"
+            class="sub2-check-zone"
+            role="status"
+            aria-live="polite"
+        ></div>
 
 
         <input
@@ -1062,6 +1043,54 @@
         aria-live="polite"
     ></div>
 
+    <!-- خانة المساعدة: ثابتة أسفل النشاط وأعلى أزرار الإجراءات (على نمط الجمع والألعاب)،
+         تتمدّد للأسفل فقط فلا تُحرّك السؤال ولا أزرار الإجابة -->
+    <div class="add2-help-slot" id="subHelpSlot">
+        <div class="add2-help-idle" aria-hidden="true">💡 تظهر المساعدة هنا عند الحاجة</div>
+        <div
+            id="subtractionHintBox"
+            class="subtraction-hint-box sub2-help"
+            role="status"
+            aria-live="polite"
+        ></div>
+        <div id="subHelpModel" class="sub2-help-model" aria-hidden="true"></div>
+    </div>
+
+    <div class="add2-actions" id="subActions">
+
+        <button
+            class="add2-action-btn add2-hint-btn"
+            id="subHintBtn"
+            onclick="sub2ToggleHint()"
+            type="button"
+            aria-expanded="false"
+        >
+            <span class="add2-action-ico">💡</span>
+            <span>تلميح</span>
+        </button>
+
+        <button
+            class="add2-action-btn"
+            id="subtractionSpeakBtn"
+            onclick="speakCurrentSubtractionTask()"
+            aria-label="استمع للسؤال"
+            type="button"
+        >
+            <span class="add2-action-ico">🔊</span>
+            <span>اسمع</span>
+        </button>
+
+        <button
+            class="add2-action-btn"
+            onclick="retryCurrentSubtractionTask()"
+            aria-label="سؤال آخر"
+            type="button"
+        >
+            <span class="add2-action-ico">🔁</span>
+            <span>سؤال آخر</span>
+        </button>
+
+    </div>
 
 </div>
 

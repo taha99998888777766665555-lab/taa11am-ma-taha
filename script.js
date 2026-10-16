@@ -21501,9 +21501,21 @@ function renderLegacySubtractionDisplay(level, task) {
     const question = $("subQuestion");
     const pictures = $("subPictures");
     const answer = $("subAnswer");
+    const zone = $("subCheckZone");
 
     if (answer) answer.value = "";
-    if (pictures) pictures.textContent = task.pictures || "";
+
+    if (zone) {
+        zone.textContent = "";
+        zone.classList.remove("filled");
+    }
+
+    /* العشرات والآحاد والعبور عبر العشرة: ٣ (ضمن ٢٠) و٩ (ضمن ٥٠)؛ في ١٠ تظهر ضمن خانة المساعدة */
+    if (pictures) {
+        pictures.innerHTML = (level.key === 3 || level.key === 9)
+            ? sub2PlaceVisual(task.a, task.b)
+            : "";
+    }
 
     if (task.relation) {
 
@@ -21515,13 +21527,7 @@ function renderLegacySubtractionDisplay(level, task) {
     } else if (level.mode === "vertical") {
 
         if (question) {
-            question.innerHTML = `
-                <div class="subtraction-vertical-box">
-                    <div class="subtraction-vertical-row">${arabicNumber(task.a)}</div>
-                    <div class="subtraction-vertical-row subtraction-vertical-minus">${arabicNumber(task.b)}</div>
-                    <div class="subtraction-vertical-line"></div>
-                </div>
-            `;
+            question.innerHTML = sub2VerticalHTML(task.a, task.b);
         }
 
     } else {
@@ -21795,12 +21801,20 @@ function renderSubtractionMissingNumberTask(stage, task) {
     const em = task.itemEmoji || "🍎";
     const items = n => n > 0 ? em.repeat(n) : "∅";
     const visual = task.missingSide === "b"
-        ? `${items(task.a)} ← أخذنا ؟ ← بقي ${items(task.correct)}`
-        : `كان معنا ؟ ← أخذنا ${items(task.b)} ← بقي ${items(task.correct)}`;
+        ? `<div class="sub2-miss-group">${items(task.a)}</div>
+           <span class="sub2-miss-op">−</span>
+           <div class="sub2-miss-group unknown">؟</div>
+           <span class="sub2-miss-op">=</span>
+           <div class="sub2-miss-group">${items(task.correct)}</div>`
+        : `<div class="sub2-miss-group unknown">؟</div>
+           <span class="sub2-miss-op">−</span>
+           <div class="sub2-miss-group taken">${items(task.b)}</div>
+           <span class="sub2-miss-op">=</span>
+           <div class="sub2-miss-group">${items(task.correct)}</div>`;
 
     stage.innerHTML = `
         <div class="operation">${displayA} - ${displayB} = ${arabicNumber(task.correct)}</div>
-        <div class="subtraction-concrete-instruction" aria-hidden="true">${visual}</div>
+        <div class="sub2-miss" aria-hidden="true">${visual}</div>
         <div class="subtraction-level-title" style="font-size:18px;">
             ما هو العدد المفقود؟
         </div>
@@ -22093,10 +22107,11 @@ checkSubtraction = function () {
             hideSubtractionHint();
 
             /* الطرح الأفقي: التحقق بالجمع بعد الإجابة الصحيحة */
-            const checkMsg = $("subMessage");
-            if (level.key === 5 && checkMsg) {
-                checkMsg.textContent =
-                    `🎉 أحسنت! تحقّق: ${arabicNumber(correct)} + ${arabicNumber(task.b)} = ${arabicNumber(task.a)} ⭐`;
+            const checkZone = $("subCheckZone");
+            if (level.key === 5 && checkZone) {
+                checkZone.textContent =
+                    `✔️ تحقّق: ${arabicNumber(correct)} + ${arabicNumber(task.b)} = ${arabicNumber(task.a)}`;
+                checkZone.classList.add("filled");
             }
 
             logSubtractionAnswer(level, task, true);
@@ -30126,4 +30141,437 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* =========================================================
    🔚 نهاية الطبقة الاحترافية لقسم الجمع
+========================================================= */
+
+/* =========================================================================
+   ➖ طبقة واجهة قسم «الطرح» (المرحلة ج) — sub2
+   واجهة فقط: لا تغيير في مولّدات الأسئلة ولا النجوم ولا التخزين ولا سجل المعلم.
+   كل الأصوات من ملفات EduAudio المحلية؛ لا مؤقتات ضغط ولا أرواح ولا عقوبات.
+========================================================================= */
+
+const SUB2_META = {
+    1:  { phase: "concrete", chip: "🧸 أزل وعُدّ" },
+    2:  { phase: "concrete", chip: "🔟 إطار العشرة" },
+    3:  { phase: "visual",   chip: "🔟 عبور العشرة" },
+    4:  { phase: "visual",   chip: "❓ العدد المفقود" },
+    5:  { phase: "abstract", chip: "⚡ طلاقة وتحقق" },
+    6:  { phase: "abstract", chip: "📐 رأسي واستلاف" },
+    7:  { phase: "visual",   chip: "🐇 خط الأعداد" },
+    8:  { phase: "visual",   chip: "📖 مسألة وقصة" },
+    9:  { phase: "abstract", chip: "🟦 عشرات وآحاد" },
+    10: { phase: "abstract", chip: "💯 حتى ١٠٠" }
+};
+
+const SUB2_PHASE_LABEL = {
+    concrete: "🧸 محسوس",
+    visual: "🖼️ بصري",
+    abstract: "🔢 مجرد"
+};
+
+function sub2StarsFromScore(score) {
+    if (score >= SUBTRACTION_TASKS_PER_LEVEL) return 3;
+    if (score >= SUBTRACTION_PASS_SCORE) return 2;
+    if (score > 0) return 1;
+    return 0;
+}
+
+function sub2StarRow(n) {
+    let out = "";
+    for (let i = 1; i <= 3; i++) {
+        out += `<span class="add2-star${i <= n ? " on" : ""}">★</span>`;
+    }
+    return out;
+}
+
+/* ---------- شاشة اختيار المستويات ---------- */
+
+renderSubtractionLevelsHub = function () {
+
+    const grid = $("subtractionLevelsGrid");
+    if (!grid) return;
+
+    const best = loadSubtractionLevelBest();
+    const completed = SUBTRACTION_LEVELS.filter(l => (best[l.id] || 0) >= SUBTRACTION_PASS_SCORE).length;
+    const recommended = (SUBTRACTION_LEVELS.find(l => (best[l.id] || 0) < SUBTRACTION_PASS_SCORE) || {}).id;
+
+    const stats = $("subHubStats");
+    if (stats) {
+        stats.innerHTML =
+            `<span class="add2-stat">⭐ ${arabicNumber(getStars())}</span>` +
+            `<span class="add2-stat">✅ ${arabicNumber(completed)}/${arabicNumber(SUBTRACTION_LEVELS.length)}</span>`;
+    }
+
+    grid.innerHTML = SUBTRACTION_LEVELS.map(level => {
+
+        const meta = SUB2_META[level.key] || SUB2_META[1];
+        const score = best[level.id] || 0;
+        const done = score >= SUBTRACTION_PASS_SCORE;
+
+        return `
+            <button
+                class="subtraction-level-card-btn add2-card add2-phase-${meta.phase}${done ? " completed" : ""}${level.id === recommended ? " recommended" : ""}"
+                type="button"
+                role="listitem"
+                onclick="openSubtractionLevel(${level.id})"
+                aria-label="المستوى ${arabicNumber(level.id)}: ${level.title}${done ? "، مكتمل" : ""}"
+            >
+                ${level.id === recommended ? `<span class="add2-reco">مقترح لك</span>` : ""}
+                <span class="add2-card-num">${arabicNumber(level.id)}</span>
+                <span class="add2-card-icon" aria-hidden="true">${level.icon}</span>
+                <span class="add2-card-title">${level.title}</span>
+                <span class="add2-card-phase">${meta.chip || SUB2_PHASE_LABEL[meta.phase]}</span>
+                <span class="add2-stars" aria-hidden="true">${sub2StarRow(sub2StarsFromScore(score))}</span>
+                ${score ? `<span class="subtraction-level-best add2-card-best">${arabicNumber(score)}/١٠</span>` : ""}
+            </button>
+        `;
+    }).join("");
+};
+
+/* ---------- شريط التقدم بنقاط ---------- */
+
+const sub2PrevUpdateProgress = updateSubtractionProgressUI;
+
+updateSubtractionProgressUI = function () {
+
+    sub2PrevUpdateProgress();
+
+    const dots = $("subDots");
+    if (!dots) return;
+
+    const idx = subtractionLevelState.taskIndex;
+
+    if (idx >= SUBTRACTION_TASKS_PER_LEVEL) {
+        const lbl = $("subtractionProgressLabel");
+        if (lbl) lbl.textContent = "اكتمل المستوى ✨";
+    }
+
+    let html = "";
+    for (let i = 0; i < SUBTRACTION_TASKS_PER_LEVEL; i++) {
+        const cls = i < idx ? "done" : (i === idx ? "now" : "");
+        html += `<span class="add2-dot ${cls}"></span>`;
+    }
+    dots.innerHTML = html;
+};
+
+/* ---------- العشرات والآحاد (٣ و٩، وفي ١٠ داخل المساعدة) ---------- */
+
+function sub2PlaceVisual(a, b) {
+
+    const R = Math.floor(a / 10);
+    const U = a % 10;
+    const tb = Math.floor(b / 10);
+    const bu = b % 10;
+
+    const crossing = bu > U;                    /* نحتاج فكّ عشرة */
+    const strikeOnes = crossing ? U : bu;       /* آحاد تُشطَب */
+    const opened = crossing ? (bu - U) : 0;     /* مكعبات تُشطَب من العشرة المفكوكة */
+
+    let rods = "";
+    for (let i = 0; i < tb; i++) rods += `<span class="sub2-rod gone"></span>`;
+
+    let intact = R - tb;
+
+    if (crossing && intact > 0) {
+        let cubes = "";
+        for (let i = 0; i < 10; i++) cubes += `<span class="sub2-cube${i < opened ? " gone" : ""}"></span>`;
+        rods += `<span class="sub2-open">${cubes}</span>`;
+        intact -= 1;
+    }
+
+    for (let i = 0; i < intact; i++) rods += `<span class="sub2-rod"></span>`;
+
+    let ones = "";
+    for (let i = 0; i < U; i++) ones += `<span class="sub2-cube${i < strikeOnes ? " gone" : ""}"></span>`;
+
+    return `<div class="sub2-place" aria-hidden="true">` +
+        (rods ? `<span class="sub2-rods">${rods}</span>` : "") +
+        (ones ? `<span class="sub2-ones">${ones}</span>` : "") +
+        `</div>`;
+}
+
+/* ---------- الطرح الرأسي: عمودا العشرات والآحاد ---------- */
+
+function sub2VerticalHTML(a, b) {
+
+    const N = arabicNumber;
+    const at = Math.floor(a / 10), ao = a % 10;
+    const bt = Math.floor(b / 10), bo = b % 10;
+
+    return `
+        <div class="sub2-vert" aria-label="${N(a)} ناقص ${N(b)}">
+            <div class="sub2-vert-grid">
+                <span></span>
+                <span class="sub2-vert-head t">عشرات</span>
+                <span class="sub2-vert-head o">آحاد</span>
+                <span></span>
+                <span class="sub2-vert-col-t">${at ? N(at) : ""}</span>
+                <span class="sub2-vert-col-o">${N(ao)}</span>
+                <span class="sub2-vert-sign">−</span>
+                <span class="sub2-vert-col-t">${bt ? N(bt) : ""}</span>
+                <span class="sub2-vert-col-o">${N(bo)}</span>
+                <div class="sub2-vert-line"></div>
+            </div>
+        </div>
+    `;
+}
+
+/* ---------- خانة المساعدة السفلية ---------- */
+
+function sub2HelpModelHTML(level, task) {
+
+    if (!level || !task) return "";
+
+    if (level.key === 10) return sub2PlaceVisual(task.a, task.b);
+
+    if (level.key === 6 && /borrow/.test(task.kind)) {
+        const N = arabicNumber;
+        return `<div class="sub2-help-note">${N(task.a)} = <b>${N(Math.floor(task.a / 10) - 1)}</b> عشرات + <b>${N(task.a % 10 + 10)}</b> آحاد</div>`;
+    }
+
+    return "";
+}
+
+function sub2SetHelpOpen(open) {
+
+    const card = $("subtractionLevelCard");
+    const btn = $("subHintBtn");
+    const model = $("subHelpModel");
+
+    if (card) card.classList.toggle("add2-tray-open", !!open);
+
+    if (btn) {
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        btn.classList.toggle("active", !!open);
+    }
+
+    if (model) {
+        if (open) {
+            const lv = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+            model.innerHTML = sub2HelpModelHTML(lv, subtractionLevelState.currentTask);
+        } else {
+            model.innerHTML = "";
+        }
+    }
+}
+
+const sub2PrevShowHint = showSubtractionHint;
+
+showSubtractionHint = function (text) {
+    sub2PrevShowHint(text);
+    sub2SetHelpOpen(true);
+};
+
+const sub2PrevHideHint = hideSubtractionHint;
+
+hideSubtractionHint = function () {
+    sub2PrevHideHint();
+    sub2SetHelpOpen(false);
+};
+
+function sub2DefaultHint(level, task) {
+
+    const N = arabicNumber;
+
+    switch (level.mode) {
+        case "concrete-removal":
+            return `👆 المس ${N(task.b)} من الأغراض لتزيلها، ثم عدّ ما بقي`;
+        case "ten-frame":
+            return `👆 المس ${N(task.b)} من الأقراص لتزيلها، ثم عدّ الأقراص الباقية`;
+        case "missing-number":
+            return task.missingSide === "b"
+                ? `🌟 فكّر: كم أخذنا من ${N(task.a)} حتى بقي ${N(task.correct)}؟`
+                : `🌟 فكّر: كم كان معنا؟ أخذنا ${N(task.b)} وبقي ${N(task.correct)}`;
+        case "number-line":
+            return "🌟 المس الرقم الذي قبل الأرنب مباشرة، وارجع خطوة بخطوة";
+        case "word-problem":
+            return "🌟 اقرأ المسألة: كم كان عندنا؟ وكم أخذنا؟ ثم اطرح";
+        default:
+            return "🌟 خذ وقتك: ما الذي نطرحه؟ وكم يبقى؟";
+    }
+}
+
+function sub2ToggleHint() {
+
+    const box = $("subtractionHintBox");
+    const task = subtractionLevelState.currentTask;
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+
+    if (!box || !task || !level) return;
+
+    if (box.classList.contains("visible")) {
+        hideSubtractionHint();
+        return;
+    }
+
+    task.helpLevel = Math.max(task.helpLevel || 0, 1);
+    showSubtractionHint(task.hint1 || sub2DefaultHint(level, task));
+}
+
+/* بعد تكرار الخطأ تظهر المساعدة كاملة في الشاشة بأقل تمرير ممكن، مع وميض هادئ مرتين فقط */
+function sub2RevealHelp() {
+
+    const slot = $("subHelpSlot");
+    if (!slot) return;
+
+    slot.classList.remove("add2-help-flash");
+    void slot.offsetWidth;
+    slot.classList.add("add2-help-flash");
+    setTimeout(() => slot.classList.remove("add2-help-flash"), 2600);
+
+    const settle = () => {
+        try {
+            const r = slot.getBoundingClientRect();
+            const vh = window.innerHeight || document.documentElement.clientHeight;
+            if (r.bottom > vh - 8) window.scrollBy({ top: r.bottom - vh + 12, left: 0, behavior: "instant" });
+            else if (r.top < 0) window.scrollBy({ top: r.top - 12, left: 0, behavior: "instant" });
+        } catch (e) { /* لا شيء */ }
+    };
+
+    settle();
+    setTimeout(settle, 120);
+}
+
+const sub2PrevPrompting = applySubtractionPrompting;
+
+applySubtractionPrompting = function () {
+    sub2PrevPrompting();
+    sub2RevealHelp();
+};
+
+/* ---------- احتفال خفيف ---------- */
+
+function sub2Celebrate() {
+
+    if (document.body.classList.contains("calm-mode")) return;
+
+    try {
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    } catch (e) { /* لا شيء */ }
+
+    const card = $("subtractionLevelCard");
+    if (!card) return;
+
+    const box = document.createElement("div");
+    box.className = "add2-burst";
+    box.setAttribute("aria-hidden", "true");
+
+    for (let i = 0; i < 8; i++) {
+        const s = document.createElement("span");
+        const ang = (i / 8) * Math.PI * 2;
+        s.style.setProperty("--dx", Math.round(Math.cos(ang) * 90) + "px");
+        s.style.setProperty("--dy", Math.round(Math.sin(ang) * 70) + "px");
+        s.textContent = i % 2 ? "⭐" : "✨";
+        box.appendChild(s);
+    }
+
+    card.appendChild(box);
+    setTimeout(() => { if (box.parentNode) box.parentNode.removeChild(box); }, 1100);
+}
+
+/* ---------- ربط عرض المهمة ---------- */
+
+const sub2PrevRenderCurrent = renderCurrentSubtractionTask;
+
+renderCurrentSubtractionTask = function () {
+
+    sub2PrevRenderCurrent();
+
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+    if (!level) return;
+
+    const meta = SUB2_META[level.key] || SUB2_META[1];
+    const card = $("subtractionLevelCard");
+    const actions = $("subActions");
+
+    if (card) {
+        card.classList.remove("add2-done");
+        card.setAttribute("data-phase", meta.phase);
+        card.setAttribute("data-mode", level.mode);
+        card.setAttribute("data-key", String(level.key));
+    }
+
+    if (actions) actions.style.display = "";
+};
+
+/* ---------- الإجابات: احتفال وإبراز هادئ لمفاتيح الإجابة ---------- */
+
+const sub2PrevFinishChoice = finishSubtractionChoiceTask;
+
+finishSubtractionChoiceTask = function (isCorrect, button) {
+
+    sub2PrevFinishChoice(isCorrect, button);
+
+    if (isCorrect) sub2Celebrate();
+};
+
+const sub2PrevCheck = checkSubtraction;
+
+checkSubtraction = function () {
+
+    const before = (typeof subtractionLevelState !== "undefined") ? subtractionLevelState.correctCount : 0;
+
+    sub2PrevCheck();
+
+    if (!subtractionLevelModeActive) return;
+
+    const level = SUBTRACTION_LEVELS[subtractionLevelState.levelId - 1];
+    const task = subtractionLevelState.currentTask;
+
+    if (subtractionLevelState.correctCount > before) {
+        sub2Celebrate();
+        return;
+    }
+
+    /* بعد ٣ أخطاء: نُبرز أرقام الإجابة الصحيحة بلطف على لوحة الأرقام */
+    if (level && task && (level.mode === "digit-pad" || level.mode === "vertical") && (task.wrong || 0) >= 3) {
+        const digits = String(task.correct).split("");
+        document.querySelectorAll("#subtractionDigitPad .subtraction-digit-btn").forEach(btn => {
+            const d = "٠١٢٣٤٥٦٧٨٩".indexOf(btn.textContent.trim());
+            if (d >= 0 && digits.indexOf(String(d)) >= 0) btn.classList.add("glow");
+        });
+    }
+};
+
+/* ---------- شاشة النتيجة والرجوع ---------- */
+
+const sub2PrevResult = renderSubtractionLevelResultScreen;
+
+renderSubtractionLevelResultScreen = function (level, score, passed) {
+
+    sub2PrevResult(level, score, passed);
+
+    const card = $("subtractionLevelCard");
+    const actions = $("subActions");
+
+    if (card) card.classList.add("add2-done");
+    if (actions) actions.style.display = "none";
+
+    sub2SetHelpOpen(false);
+
+    const resultCard = document.querySelector("#subtractionTaskStage .subtraction-level-result-card");
+
+    if (resultCard) {
+        const row = document.createElement("div");
+        row.className = "add2-result-stars";
+        row.setAttribute("aria-label", sub2StarsFromScore(score) + " من ٣ نجوم");
+        row.innerHTML = sub2StarRow(sub2StarsFromScore(score));
+        resultCard.insertBefore(row, resultCard.firstChild);
+    }
+
+    sub2Celebrate();
+};
+
+const sub2PrevBack = backToSubtractionLevels;
+
+backToSubtractionLevels = function () {
+    sub2PrevBack();
+    sub2SetHelpOpen(false);
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    if ($("subtractionLevelsGrid")) renderSubtractionLevelsHub();
+});
+
+/* =========================================================
+   🔚 نهاية طبقة واجهة قسم الطرح
 ========================================================= */
