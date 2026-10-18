@@ -3571,7 +3571,33 @@ function clearQuranError() {
 const QURAN_REPEAT_CHOICES = [1, 3, 5, 10];
 const QURAN_REPEAT_GAP_MS = 600;
 
-let quranRepeat = null;   // { session, ayah, total, done, audio, timer }
+let quranRepeat = null;   // { session, ayah, total, done, audio, timer, cleanup }
+
+/* حارس اللمس المزدوج: بعد بدء التكرار مباشرة يتحرك المحتوى (يظهر زر الإيقاف)،
+   فقد تقع اللمسة الثانية على زر آخر. نتجاهل نقرات أزرار القرآن لمدة قصيرة فقط. */
+const QURAN_REPEAT_TAP_GUARD_MS = 700;
+let quranRepeatGuardUntil = 0;
+
+document.addEventListener("click", function (event) {
+
+    if (performance.now() >= quranRepeatGuardUntil) return;
+
+    const target = event.target;
+
+    if (
+        target && target.closest &&
+        target.closest(
+            "#quranSurahDetailView .quran-ayah-button, " +
+            "#quranSurahDetailView .quran-repeat-btn, " +
+            "#quranSurahDetailView .quran-repeat-chip, " +
+            "#quranSurahDetailView .quran-play-all-button, " +
+            "#quranSurahDetailView .quran-bismillah-button"
+        )
+    ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+}, true);
 
 function quranRepeatRefreshUI() {
 
@@ -3610,8 +3636,8 @@ function quranRepeatCloseOptions() {
 
 function quranRepeatReset() {
 
-    if (quranRepeat && quranRepeat.timer) {
-        clearTimeout(quranRepeat.timer);
+    if (quranRepeat && quranRepeat.cleanup) {
+        quranRepeat.cleanup();    // مؤقت + مستمعات + إيقاف عنصر الصوت
     }
 
     const wasActive = !!quranRepeat;
@@ -3649,6 +3675,12 @@ function quranRepeatStart(ayahNumber, total) {
 
     currentQuranAyah = ayahNumber;
 
+    /* نقطة ارتكاز: موضع تحكم التكرار قبل أي تغيير في الصفحة */
+    const anchor = document.querySelector(
+        `.quran-repeat[data-ayah="${ayahNumber}"]`
+    );
+    const anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+
     const url = getQuranAyahUrl(surah.id, ayahNumber);
 
     const audio = new Audio();
@@ -3663,7 +3695,28 @@ function quranRepeatStart(ayahNumber, total) {
 
     const stale = () => session !== quranSessionToken || quranRepeat !== st;
 
+    /* تنظيف كامل: مؤقت الفاصل + مستمعات الصوت + إيقاف العنصر (آمن للتكرار) */
+    function cleanup() {
+
+        if (st.timer) {
+            clearTimeout(st.timer);
+            st.timer = null;
+        }
+
+        audio.removeEventListener("ended", onEnded);
+        audio.removeEventListener("error", onError);
+
+        try {
+            audio.pause();
+            audio.removeAttribute("src");   // بلا حدث error وهمي (على عكس src = "")
+            audio.load();                   // يفرّغ المورد المحمَّل
+        } catch (e) {}
+    }
+
+    st.cleanup = cleanup;
+
     function finish() {
+        cleanup();
         quranRepeat = null;
         currentQuranAudio = null;
         quranClearPlayingHighlight();
@@ -3672,8 +3725,7 @@ function quranRepeatStart(ayahNumber, total) {
     }
 
     function fail(message, error) {
-        if (st.timer) clearTimeout(st.timer);
-        finish();
+        finish();                 // يشمل cleanup()
         console.error("Quran repeat error:", url, error);
         showQuranError(message);
     }
@@ -3690,7 +3742,7 @@ function quranRepeatStart(ayahNumber, total) {
         }
     }
 
-    audio.addEventListener("ended", () => {
+    function onEnded() {
 
         if (stale()) return;
 
@@ -3712,19 +3764,32 @@ function quranRepeatStart(ayahNumber, total) {
             playOnce();
 
         }, QURAN_REPEAT_GAP_MS);
-    });
+    }
 
-    audio.addEventListener("error", () => {
+    function onError() {
 
         if (stale()) return;
 
         fail("⚠️ تعذر تشغيل صوت الآية. تأكد من اتصال الإنترنت ثم حاول مرة أخرى.", audio.error);
-    });
+    }
+
+    audio.addEventListener("ended", onEnded);
+    audio.addEventListener("error", onError);
+
+    quranRepeatGuardUntil = performance.now() + QURAN_REPEAT_TAP_GUARD_MS;
 
     quranSetPlayingHighlight(ayahNumber);
     quranShowStopButton();
     quranRepeatCloseOptions();
     quranRepeatRefreshUI();
+
+    /* ثبات الصفحة: ظهور زر الإيقاف يدفع المحتوى للأسفل، فنعيد التحكم لموضعه */
+    if (anchor && anchorTop !== null) {
+        const shift = anchor.getBoundingClientRect().top - anchorTop;
+        if (Math.abs(shift) > 1) {
+            window.scrollBy({ top: shift, left: 0, behavior: "instant" });
+        }
+    }
 
     playOnce();
 }
