@@ -24096,9 +24096,9 @@ const LTR_STARS_PER_NEW_ACTIVITY = 5;
 const LTR_STARS_PER_NEW_LETTER = 10;
 
 const LTR_STAGE_IDS = [
-    "listen", "auditory-discrimination", "sound-to-letter", "visual-discrimination",
-    "link-to-picture", "letter-house", "discover-in-word", "position-train",
-    "shape-by-position", "trace-write", "review"
+    "listen", "auditory-discrimination", "sound-box", "sound-to-letter", "syllable-build",
+    "visual-discrimination", "link-to-picture", "letter-house", "word-build", "discover-in-word",
+    "position-train", "shape-by-position", "trace-write", "review"
 ];
 
 /* المراحل التسع الأصلية (قبل المرحلة ٢) — تُستعمل فقط لاستنتاج تقدّم الطلاب القدامى */
@@ -24114,6 +24114,9 @@ const LTR_STAGE_META = {
     "visual-discrimination":  { name: "أبحث وأميّز",    icon: "🔍" },
     "link-to-picture":        { name: "الحرف والصورة",  icon: "🖼️" },
     "letter-house":           { name: "بيت الحرف",      icon: "🏠" },
+    "sound-box":              { name: "صندوق الأصوات",  icon: "📦" },
+    "syllable-build":         { name: "بناء المقطع",    icon: "🎵" },
+    "word-build":             { name: "ركّب الكلمة",    icon: "🧱" },
     "position-train":         { name: "قطار المواقع",   icon: "🚂" },
     "discover-in-word":       { name: "داخل الكلمات",   icon: "📖" },
     "shape-by-position":      { name: "أشكال الحرف",    icon: "🧩" },
@@ -24121,7 +24124,7 @@ const LTR_STAGE_META = {
     "review":                 { name: "مراجعة",         icon: "⭐" }
 };
 
-const LTR_ART_FILES = new Set(["1f33d", "1f4fa", "1f682", "1f99d", "1f309", "1f30c", "1f311", "1f313", "1f319", "1f31f", "1f333", "1f334", "1f335", "1f338", "1f339", "1f347", "1f348", "1f349", "1f34a", "1f34b", "1f34c", "1f34d", "1f34e", "1f351", "1f352", "1f353", "1f35e", "1f36f", "1f374", "1f37d", "1f380", "1f381", "1f382", "1f392", "1f3a7", "1f3c6", "1f3ca", "1f3d6", "1f3e0", "1f3eb", "1f3ee", "1f3f0", "1f404", "1f40a", "1f40d", "1f40e", "1f411", "1f412", "1f413", "1f414", "1f418", "1f419", "1f41d", "1f41f", "1f426", "1f426-200d-2b1b", "1f42a", "1f42c", "1f42d", "1f42f", "1f430", "1f433", "1f436", "1f438", "1f43a", "1f43b", "1f441", "1f442", "1f445", "1f451", "1f455", "1f457", "1f45e", "1f466", "1f467", "1f468-200d-1f373", "1f468-200d-2695-fe0f", "1f469", "1f46e-200d-2642-fe0f", "1f476", "1f485", "1f487", "1f4a1", "1f4aa", "1f4d3", "1f4d6", "1f4d8", "1f4e6", "1f4ef", "1f4f1", "1f50d", "1f511", "1f514", "1f519", "1f524", "1f53a", "1f54c", "1f56f", "1f5bc", "1f5e3", "1f5fa", "1f60a", "1f680", "1f697", "1f6a2", "1f6a9", "1f6aa", "1f6b2", "1f6cb", "1f6cf", "1f6e5", "1f947", "1f952", "1f955", "1f95b", "1f969", "1f96c", "1f981", "1f985", "1f986", "1f98a", "1f98b", "1f98c", "1f98d", "1f992", "1f99a", "1f9a4", "1f9b7", "1f9c0", "1f9c3", "1f9c4", "1f9ca", "1f9cd", "1f9e4", "1f9e9", "1f9f8", "1f9fa", "1fa80", "1fa91", "1fa9f", "1fab0", "1fab6", "1fad0", "1fad2", "23f0", "2600", "2601", "26bd", "26f0", "26fa", "2702", "2708", "2709", "270b", "270f", "2744", "2764", "2b50"]);
+const LTR_ART_FILES = new Set(["1f3b5", "1f9f1", "1f33d", "1f4fa", "1f682", "1f99d", "1f309", "1f30c", "1f311", "1f313", "1f319", "1f31f", "1f333", "1f334", "1f335", "1f338", "1f339", "1f347", "1f348", "1f349", "1f34a", "1f34b", "1f34c", "1f34d", "1f34e", "1f351", "1f352", "1f353", "1f35e", "1f36f", "1f374", "1f37d", "1f380", "1f381", "1f382", "1f392", "1f3a7", "1f3c6", "1f3ca", "1f3d6", "1f3e0", "1f3eb", "1f3ee", "1f3f0", "1f404", "1f40a", "1f40d", "1f40e", "1f411", "1f412", "1f413", "1f414", "1f418", "1f419", "1f41d", "1f41f", "1f426", "1f426-200d-2b1b", "1f42a", "1f42c", "1f42d", "1f42f", "1f430", "1f433", "1f436", "1f438", "1f43a", "1f43b", "1f441", "1f442", "1f445", "1f451", "1f455", "1f457", "1f45e", "1f466", "1f467", "1f468-200d-1f373", "1f468-200d-2695-fe0f", "1f469", "1f46e-200d-2642-fe0f", "1f476", "1f485", "1f487", "1f4a1", "1f4aa", "1f4d3", "1f4d6", "1f4d8", "1f4e6", "1f4ef", "1f4f1", "1f50d", "1f511", "1f514", "1f519", "1f524", "1f53a", "1f54c", "1f56f", "1f5bc", "1f5e3", "1f5fa", "1f60a", "1f680", "1f697", "1f6a2", "1f6a9", "1f6aa", "1f6b2", "1f6cb", "1f6cf", "1f6e5", "1f947", "1f952", "1f955", "1f95b", "1f969", "1f96c", "1f981", "1f985", "1f986", "1f98a", "1f98b", "1f98c", "1f98d", "1f992", "1f99a", "1f9a4", "1f9b7", "1f9c0", "1f9c3", "1f9c4", "1f9ca", "1f9cd", "1f9e4", "1f9e9", "1f9f8", "1f9fa", "1fa80", "1fa91", "1fa9f", "1fab0", "1fab6", "1fad0", "1fad2", "23f0", "2600", "2601", "26bd", "26f0", "26fa", "2702", "2708", "2709", "270b", "270f", "2744", "2764", "2b50"]);
 
 function ltrArtFallback(img) {
     if (!img || !img.parentNode) return;
@@ -26674,6 +26677,583 @@ function activityLetterHouse(stage, letterChar, difficulty) {
     setTimeout(() => { if (alive()) speakEducational(letterWithFatha(letterChar), { rate: 0.75 }); }, 300);
 }
 
+/* =========================================================
+   🧱🎵📦 المرحلة ٣: «ركّب الكلمة» و«بناء المقطع» و«صندوق الأصوات»
+   • تسجيلات موجودة فقط: لا يُعرض مقطع أو كلمة إلا بعد التحقق من وجود
+     تسجيلها (EduAudio.has) — وما ليس له تسجيل لا يظهر للطالب أبدًا
+   • الأشكال والاتصال تُحسب برمجيًا من قواعد الوصل العربية
+   • السحب والبديل بالنقر يستخدمان نفس ltrMakeDraggable (المرحلة ٢)
+========================================================= */
+
+const LTR_TA_MARBUTA = { isolated: "ﺓ", final: "ﺔ" };
+const LTR_HARAKAT = [
+    { id: "f", mark: "َ", name: "فتحة" },
+    { id: "d", mark: "ُ", name: "ضمة" },
+    { id: "k", mark: "ِ", name: "كسرة" }
+];
+/* حروف شبه صائتة: لا نعدّها صوتًا مستهدفًا إلا في أول الكلمة، ولا نقبل في «الكلمات الأخرى» ما يشاركها صوتها */
+const LTR_SOUND_TWINS = { "أ": "أإآاءؤئ", "و": "وؤ", "ي": "يىئ" };
+
+function ltrCharForms(c) {
+    return LTR_ALEF_FORMS[c] || (c === "ة" ? LTR_TA_MARBUTA : null) ||
+        (typeof arabicLetterForms !== "undefined" ? arabicLetterForms[c] : null) || null;
+}
+
+/* شكل كل حرف داخل الكلمة (أول/وسط/آخر/منفصل) حسب اتصاله بما قبله وبعده */
+function ltrWordShapes(word) {
+    const chars = Array.from(ltrStripMarks(word));
+    const out = [];
+    for (let i = 0; i < chars.length; i++) {
+        const c = chars[i];
+        const forms = ltrCharForms(c);
+        if (!forms) return null;
+        const prevJoins = i > 0 && LTR_NON_JOINERS.indexOf(chars[i - 1]) === -1;
+        const nextJoins = i < chars.length - 1 && LTR_NON_JOINERS.indexOf(c) === -1;
+        const form = prevJoins && nextJoins ? "medial" : (prevJoins ? "final" : (nextJoins ? "initial" : "isolated"));
+        const glyph = forms[form];
+        if (!glyph || !forms.isolated) return null;
+        out.push({ ch: c, form, glyph, isolated: forms.isolated });
+    }
+    return out;
+}
+
+function ltrAllTrainWords() {
+    const set = new Set();
+    Object.keys(LTR_TRAIN_WORDS).forEach(l => LTR_TRAIN_WORDS[l].forEach(w => set.add(w)));
+    return Array.from(set).filter(w => EduAudio.has(w));
+}
+
+function ltrBuildableWord(word) {
+    const n = Array.from(ltrStripMarks(word)).length;
+    return n >= 3 && n <= 6 && EduAudio.has(word) && !!ltrWordShapes(word);
+}
+
+function ltrShuffleUntilDifferent(arr, same) {
+    let out = shuffle(arr.slice());
+    if (out.length > 1 && same(out)) out.reverse();
+    return out;
+}
+
+/* ---------- ركّب الكلمة ---------- */
+
+function ltrPickBuildWord(letter, difficulty) {
+    const own = (LTR_TRAIN_WORDS[letter] || []).filter(ltrBuildableWord);
+    const lenOf = w => Array.from(ltrStripMarks(w)).length;
+    const wanted = difficulty <= 1 ? 3 : (difficulty === 2 ? 4 : 5);
+    let pool = own.filter(w => lenOf(w) === wanted);
+    if (!pool.length) {
+        const sorted = own.slice().sort((a, b) => Math.abs(lenOf(a) - wanted) - Math.abs(lenOf(b) - wanted));
+        const best = sorted.length ? Math.abs(lenOf(sorted[0]) - wanted) : 0;
+        pool = sorted.filter(w => Math.abs(lenOf(w) - wanted) === best);
+    }
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+}
+
+function activityWordBuild(stage, letterChar, difficulty) {
+
+    difficulty = difficulty || 1;
+    const word = ltrPickBuildWord(letterChar, difficulty);
+    const shapes = word && ltrWordShapes(word);
+    if (!shapes) { activityLetterHouse(stage, letterChar, difficulty); return; }
+
+    const sid = ltrState.sid;
+    const img = difficulty <= 2 ? ltrVerifiedImage(word) : null;
+    const ghost = difficulty <= 1;
+
+    /* حروف مشتتة (٢ في المستوى الأصعب) من حروف مشابهة، ولا تكرر حروف الكلمة */
+    const present = new Set(shapes.map(s => s.ch));
+    let distractors = [];
+    if (difficulty >= 3) {
+        const pool = [];
+        shapes.forEach(s => (LTR_CONFUSABLE[s.ch] || "").split("").forEach(c => pool.push(c)));
+        shuffle(pool.concat(shuffle(LETTER_UNITS.map(u => u.letter)))).forEach(c => {
+            if (distractors.length < 2 && !present.has(c) && distractors.indexOf(c) === -1 && ltrCharForms(c)) distractors.push(c);
+        });
+    }
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-wordbuild";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrWbReplay">🔊 استمع للكلمة</button>
+        </div>
+        ${img ? `<div class="ltr-wb-pic">${ltrArt(img)}</div>` : ""}
+        <div class="ltr-instruction-line">رتّب الحروف لتكوّن الكلمة التي سمعتها</div>
+        <div class="ltr-slots" dir="rtl">
+            ${shapes.map((s, i) => `
+                <button type="button" class="ltr-slot" data-i="${i}" data-ch="${s.ch}" aria-label="مكان الحرف ${i + 1}">
+                    <span class="ltr-slot-ghost">${ghost ? ltrFormatGlyph(s.glyph, s.form) : ""}</span>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-tray" id="ltrWbTray"></div>
+        <div class="ltr-drag-tip">اسحب الحرف إلى مكانه — أو المس الحرف ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const tiles = ltrShuffleUntilDifferent(
+        shapes.map(s => s.ch).concat(distractors),
+        arr => difficulty < 3 && arr.join("") === shapes.map(s => s.ch).join("")
+    );
+    root.querySelector("#ltrWbTray").innerHTML = tiles.map((c, k) => `
+        <button type="button" class="ltr-ticket ltr-tile" data-ch="${c}" data-k="${k}" aria-pressed="false">${ltrCharForms(c).isolated}</button>
+    `).join("");
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const msg = $("letterMessage");
+    let filled = 0;
+    let finished = false;
+    const wrongs = {};
+
+    function onDrop(tile, slot) {
+        if (finished || !alive()) return;
+        const i = Number(slot.dataset.i);
+        if (tile.dataset.ch === slot.dataset.ch) {
+            const s = shapes[i];
+            tile.dataset.locked = "1";
+            slot.classList.remove("hinted", "armed", "over");
+            slot.classList.add("filled");
+            slot.disabled = true;
+            slot.innerHTML = `<span class="ltr-slot-letter">${ltrFormatGlyph(s.glyph, s.form)}</span>`;
+            tile.remove();
+            filled++;
+            if (msg) { msg.textContent = "✅ حرف في مكانه الصحيح"; msg.className = "message correct"; }
+            if (filled >= shapes.length) {
+                finished = true;
+                root.querySelectorAll(".ltr-tile").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+                const done = document.createElement("div");
+                done.className = "ltr-wb-done";
+                done.textContent = word;
+                root.insertBefore(done, root.querySelector(".ltr-slots").nextSibling);
+                speakEducational(word, { rate: 0.78 });
+                setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 900);
+            }
+        } else {
+            tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
+            wrongs[tile.dataset.k] = (wrongs[tile.dataset.k] || 0) + 1;
+            finishLtrChoiceTask(false, null);
+            if (wrongs[tile.dataset.k] >= 2) {
+                const right = Array.from(root.querySelectorAll(".ltr-slot:not(.filled)")).find(sl => sl.dataset.ch === tile.dataset.ch);
+                if (right) right.classList.add("hinted");
+            }
+        }
+    }
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-tile",
+        target: ".ltr-slot:not(.filled)",
+        onDrop
+    });
+
+    root.querySelector("#ltrWbReplay").onclick = () => speakEducational(word, { rate: 0.78 });
+    setTimeout(() => { if (alive()) speakEducational(word, { rate: 0.78 }); }, 300);
+}
+
+/* ---------- بناء المقطع ---------- */
+
+function ltrSyllables(letter) {
+    const clean = removeArabicHarakat(letter);
+    return LTR_HARAKAT
+        .map(h => ({ id: h.id, mark: h.mark, name: h.name, text: clean + h.mark }))
+        .filter(s => EduAudio.has(s.text));
+}
+
+function ltrMarkGlyph(mark) {
+    return `<span class="ltr-markglyph">ـ${mark}</span>`;
+}
+
+/* ١) أسمع المقطع فأضع الحركة فوق الحرف */
+function activitySyllableHear(stage, letterChar) {
+
+    const list = ltrSyllables(letterChar);
+    if (list.length < 2) { activitySoundToLetter(stage, letterChar, 1); return; }
+
+    const target = list[Math.floor(Math.random() * list.length)];
+    const sid = ltrState.sid;
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-syllable";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrSyReplay">🔊 استمع للمقطع</button>
+        </div>
+        <div class="ltr-instruction-line">أي حركة سمعتها على الحرف؟ ضعها فوق الحرف</div>
+        <button type="button" class="ltr-syl-base" aria-label="الحرف">
+            <span class="ltr-syl-letter">${removeArabicHarakat(letterChar)}</span>
+        </button>
+        <div class="ltr-tray">
+            ${shuffle(list.slice()).map(s => `
+                <button type="button" class="ltr-ticket ltr-marktile" data-id="${s.id}" aria-pressed="false">
+                    ${ltrMarkGlyph(s.mark)}<small>${s.name}</small>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب الحركة فوق الحرف — أو المسها ثم المس الحرف</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-marktile",
+        target: ".ltr-syl-base",
+        onDrop: (chip, base) => {
+            if (finished || !alive()) return;
+            if (chip.dataset.id === target.id) {
+                finished = true;
+                chip.dataset.locked = "1";
+                base.querySelector(".ltr-syl-letter").textContent = target.text;
+                base.classList.add("filled");
+                root.querySelectorAll(".ltr-marktile").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+                setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 500);
+            } else {
+                chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+                wrongs[chip.dataset.id] = (wrongs[chip.dataset.id] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                const total = Object.values(wrongs).reduce((a, b) => a + b, 0);
+                if (total >= 2) {
+                    const right = root.querySelector(`.ltr-marktile[data-id="${target.id}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    root.querySelector("#ltrSyReplay").onclick = () => speakEducational(target.text, { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(target.text, { rate: 0.75 }); }, 300);
+}
+
+/* ٢) أطابق كل صوت بمقطعه المكتوب */
+function activitySyllableMatch(stage, letterChar) {
+
+    const list = ltrSyllables(letterChar);
+    if (list.length < 2) { activitySoundToLetter(stage, letterChar, 1); return; }
+
+    const sid = ltrState.sid;
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-syllable";
+    const cards = ltrShuffleUntilDifferent(list, arr => arr.every((s, i) => s.id === list[i].id));
+    root.innerHTML = `
+        <div class="ltr-instruction-line">المس البطاقة لتسمع المقطع، ثم ضعها عند المقطع المكتوب الذي يشبهه</div>
+        <div class="ltr-syl-slots" dir="rtl">
+            ${list.map(s => `
+                <button type="button" class="ltr-syl-slot" data-id="${s.id}" aria-label="مقطع مكتوب">
+                    <span class="ltr-syl-text">${s.text}</span>
+                    <span class="ltr-syl-slot-fill"></span>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-tray">
+            ${cards.map((s, k) => `
+                <button type="button" class="ltr-ticket ltr-soundcard" data-id="${s.id}" aria-pressed="false" aria-label="صوت ${k + 1}">
+                    🔊 <b>${arabicNumber(k + 1)}</b>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب البطاقة إلى مكانها — أو المس البطاقة ثم المس المقطع</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const textOf = id => list.find(s => s.id === id).text;
+    let placed = 0;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-soundcard",
+        target: ".ltr-syl-slot:not(.filled)",
+        onPick: chip => speakEducational(textOf(chip.dataset.id), { rate: 0.75 }),
+        onDrop: (chip, slot) => {
+            if (finished || !alive()) return;
+            if (chip.dataset.id === slot.dataset.id) {
+                chip.dataset.locked = "1";
+                slot.classList.remove("hinted", "armed", "over");
+                slot.classList.add("filled");
+                slot.disabled = true;
+                slot.querySelector(".ltr-syl-slot-fill").textContent = "🔊 ✓";
+                chip.remove();
+                placed++;
+                if (placed >= list.length) {
+                    finished = true;
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 600);
+                } else {
+                    speakEducational(textOf(slot.dataset.id), { rate: 0.75 });
+                }
+            } else {
+                chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+                wrongs[chip.dataset.id] = (wrongs[chip.dataset.id] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                if (wrongs[chip.dataset.id] >= 2) {
+                    const right = root.querySelector(`.ltr-syl-slot[data-id="${chip.dataset.id}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+}
+
+/* ٣) أبني المقطع من جزأين: الحرف الصحيح + الحركة الصحيحة */
+function activitySyllableBuild(stage, letterChar) {
+
+    const list = ltrSyllables(letterChar);
+    if (list.length < 2) { activitySoundToLetter(stage, letterChar, 1); return; }
+
+    const target = list[Math.floor(Math.random() * list.length)];
+    const clean = removeArabicHarakat(letterChar);
+    const conf = (LTR_CONFUSABLE[letterChar] || "").split("").filter(c => ltrCharForms(c));
+    const other = conf.length ? conf[Math.floor(Math.random() * conf.length)] : ltrPickDistractorLetters(letterChar, 1)[0];
+    const sid = ltrState.sid;
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-syllable ltr-syl-build";
+    const tiles = shuffle([
+        `<button type="button" class="ltr-ticket ltr-tile" data-kind="letter" data-val="${clean}" aria-pressed="false">${clean}</button>`,
+        `<button type="button" class="ltr-ticket ltr-tile" data-kind="letter" data-val="${other}" aria-pressed="false">${other}</button>`,
+        ...list.map(s => `<button type="button" class="ltr-ticket ltr-marktile" data-kind="mark" data-val="${s.id}" aria-pressed="false">${ltrMarkGlyph(s.mark)}<small>${s.name}</small></button>`)
+    ]);
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrSbReplay">🔊 استمع للمقطع</button>
+        </div>
+        <div class="ltr-instruction-line">ابنِ المقطع الذي سمعته: اختر الحرف ثم الحركة</div>
+        <div class="ltr-slots ltr-syl-parts" dir="rtl">
+            <button type="button" class="ltr-slot" data-kind="letter" data-val="${clean}" aria-label="مكان الحرف"></button>
+            <button type="button" class="ltr-slot" data-kind="mark" data-val="${target.id}" aria-label="مكان الحركة"></button>
+        </div>
+        <div class="ltr-syl-result" aria-live="polite"></div>
+        <div class="ltr-tray">${tiles.join("")}</div>
+        <div class="ltr-drag-tip">اسحب القطعة إلى مكانها — أو المسها ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let letterDone = false, markDone = false, finished = false;
+    const wrongs = {};
+
+    function checkDone() {
+        if (letterDone && markDone && !finished) {
+            finished = true;
+            root.querySelectorAll(".ltr-ticket").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+            root.querySelector(".ltr-syl-result").textContent = target.text;
+            speakEducational(target.text, { rate: 0.75 });
+            setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 900);
+        }
+    }
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-ticket",
+        target: ".ltr-slot:not(.filled)",
+        onDrop: (tile, slot) => {
+            if (finished || !alive()) return;
+            const okKind = tile.dataset.kind === slot.dataset.kind;
+            const okVal = tile.dataset.val === slot.dataset.val;
+            if (okKind && okVal) {
+                tile.dataset.locked = "1";
+                slot.classList.remove("hinted", "armed", "over");
+                slot.classList.add("filled");
+                slot.disabled = true;
+                slot.innerHTML = `<span class="ltr-slot-letter">${slot.dataset.kind === "letter" ? clean : ltrMarkGlyph(target.mark)}</span>`;
+                tile.remove();
+                if (slot.dataset.kind === "letter") letterDone = true; else markDone = true;
+                checkDone();
+            } else {
+                tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
+                const key = tile.dataset.kind + tile.dataset.val;
+                wrongs[key] = (wrongs[key] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                if (wrongs[key] >= 2) {
+                    const right = root.querySelector(`.ltr-ticket[data-kind="${slot.dataset.kind}"][data-val="${slot.dataset.val}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    root.querySelector("#ltrSbReplay").onclick = () => speakEducational(target.text, { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(target.text, { rate: 0.75 }); }, 300);
+}
+
+/* ---------- صندوق الأصوات ---------- */
+
+/* كلمات يُسمع فيها صوت الحرف فعلًا (والتسجيل موجود). الحروف شبه الصائتة (أ/و/ي)
+   لا تُحتسب إلا في أول الكلمة حتى لا تلتبس بحروف المد */
+function ltrSoundPositives(letter, anywhere) {
+    const tw = LTR_SOUND_TWINS[letter];
+    return ltrAllTrainWords().filter(w => {
+        const chars = Array.from(ltrStripMarks(w));
+        if (tw) {
+            return chars[0] === letter && chars.filter(c => tw.indexOf(c) !== -1).length === 1;
+        }
+        if (ltrCountLetter(w, letter) !== 1) return false;
+        return anywhere ? true : chars[0] === letter;
+    });
+}
+
+function ltrSoundNegatives(letter) {
+    const tw = LTR_SOUND_TWINS[letter];
+    return ltrAllTrainWords().filter(w => {
+        const chars = Array.from(ltrStripMarks(w));
+        if (tw) return chars.filter(c => tw.indexOf(c) !== -1).length === 0;
+        return ltrCountLetter(w, letter) === 0;
+    });
+}
+
+function ltrSoundBoxSort(stage, letterChar, anywhere) {
+
+    const per = anywhere ? 3 : 2;
+    const pos = shuffle(ltrSoundPositives(letterChar, anywhere)).slice(0, per);
+    const neg = shuffle(ltrSoundNegatives(letterChar)).slice(0, per);
+    if (pos.length < 2 || neg.length < 2) { activityLetterHouse(stage, letterChar, 1); return; }
+
+    const sid = ltrState.sid;
+    const items = shuffle([
+        ...pos.map(w => ({ word: w, has: true })),
+        ...neg.map(w => ({ word: w, has: false }))
+    ]);
+    const clean = removeArabicHarakat(letterChar);
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-house-game ltr-soundbox";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrBoxReplay">🔊 استمع للحرف</button>
+        </div>
+        <div class="ltr-instruction-line">${anywhere
+            ? `المس البطاقة لتسمع الكلمة. هل تسمع صوت <strong>${clean}</strong> فيها؟`
+            : `المس البطاقة لتسمع الكلمة. هل تبدأ بصوت <strong>${clean}</strong>؟`}</div>
+        <div class="ltr-house-wrap">
+            <button type="button" class="ltr-house-zone ltr-house-in" data-in="1">
+                <span class="ltr-box-icon" aria-hidden="true">${ltrArt("📦")}</span>
+                <span class="ltr-zone-title">${anywhere ? "فيها" : "تبدأ بـ"} ${clean}</span>
+                <span class="ltr-zone-items"></span>
+            </button>
+            <button type="button" class="ltr-house-zone ltr-house-out" data-in="0">
+                <span class="ltr-box-icon" aria-hidden="true">${ltrArt("📦")}</span>
+                <span class="ltr-zone-title">${anywhere ? "ليس فيها" : "لا تبدأ بـ"} ${clean}</span>
+                <span class="ltr-zone-items"></span>
+            </button>
+        </div>
+        <div class="ltr-tray">
+            ${items.map((c, i) => `
+                <button type="button" class="ltr-ticket ltr-soundcard" data-i="${i}" aria-pressed="false" aria-label="كلمة مسموعة ${i + 1}">
+                    🔊 <b>${arabicNumber(i + 1)}</b>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب البطاقة إلى الصندوق — أو المس البطاقة ثم المس الصندوق</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const msg = $("letterMessage");
+    let placed = 0;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-soundcard",
+        target: ".ltr-house-zone",
+        onPick: chip => speakEducational(items[Number(chip.dataset.i)].word, { rate: 0.78 }),
+        onDrop: (chip, zone) => {
+            if (finished || !alive()) return;
+            const it = items[Number(chip.dataset.i)];
+            if (it.has === (zone.dataset.in === "1")) {
+                chip.dataset.locked = "1";
+                const mini = document.createElement("span");
+                mini.className = "ltr-placed" + (it.has ? " in" : " out");
+                mini.innerHTML = ltrWordHtml(it.word, letterChar, it.has);
+                zone.querySelector(".ltr-zone-items").appendChild(mini);
+                chip.remove();
+                placed++;
+                root.querySelectorAll(".hinted").forEach(el => el.classList.remove("hinted"));
+                if (msg) { msg.textContent = "✅ صحيح!"; msg.className = "message correct"; }
+                if (placed >= items.length) {
+                    finished = true;
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 600);
+                }
+            } else {
+                chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+                wrongs[chip.dataset.i] = (wrongs[chip.dataset.i] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                speakEducational(it.word, { rate: 0.78 });
+                if (wrongs[chip.dataset.i] >= 2) {
+                    const right = root.querySelector(`.ltr-house-zone[data-in="${it.has ? 1 : 0}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    root.querySelector("#ltrBoxReplay").onclick = () => speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+}
+
+function activitySoundBoxInitial(stage, letterChar) { ltrSoundBoxSort(stage, letterChar, false); }
+function activitySoundBoxAnywhere(stage, letterChar) { ltrSoundBoxSort(stage, letterChar, true); }
+
+/* أسمع الكلمة ثم ألمس الحرف المستهدف بين حروفها */
+function activitySoundBoxFind(stage, letterChar) {
+
+    const words = shuffle(ltrSoundPositives(letterChar, true).filter(w => ltrWordShapes(w) && Array.from(ltrStripMarks(w)).length <= 6));
+    const word = words[0];
+    const shapes = word && ltrWordShapes(word);
+    if (!shapes) { activitySoundBoxInitial(stage, letterChar); return; }
+
+    const tw = LTR_SOUND_TWINS[letterChar];
+    const set = tw ? letterChar : ltrLetterSet(letterChar);
+    const sid = ltrState.sid;
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-soundfind";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrSfReplay">🔊 استمع للكلمة</button>
+        </div>
+        <div class="ltr-instruction-line">اسمع الكلمة، ثم المس الحرف <strong>${removeArabicHarakat(letterChar)}</strong> بين حروفها</div>
+        <div class="ltr-letter-tiles" dir="rtl">
+            ${shapes.map((s, i) => `
+                <button type="button" class="ltr-letter-tile" data-hit="${set.indexOf(s.ch) !== -1 ? 1 : 0}" aria-label="الحرف ${i + 1}">${s.isolated}</button>`).join("")}
+        </div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let finished = false;
+    let wrongCount = 0;
+
+    root.querySelectorAll(".ltr-letter-tile").forEach(btn => {
+        btn.addEventListener("click", () => {
+            if (finished || !alive() || btn.disabled) return;
+            if (btn.dataset.hit === "1") {
+                finished = true;
+                btn.classList.add("correct");
+                root.querySelectorAll(".ltr-letter-tile").forEach(t => { t.disabled = true; });
+                const w = document.createElement("div");
+                w.className = "ltr-wb-done";
+                w.innerHTML = ltrWordHtml(word, letterChar, true);
+                root.appendChild(w);
+                speakEducational(word, { rate: 0.78 });
+                setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 900);
+            } else {
+                btn.disabled = true;
+                btn.classList.add("wrong");
+                wrongCount++;
+                finishLtrChoiceTask(false, null);
+                if (wrongCount >= 2) {
+                    const right = root.querySelector('.ltr-letter-tile[data-hit="1"]:not(:disabled)');
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        });
+    });
+
+    root.querySelector("#ltrSfReplay").onclick = () => speakEducational(word, { rate: 0.78 });
+    setTimeout(() => { if (alive()) speakEducational(word, { rate: 0.78 }); }, 300);
+}
+
 const LTR_STAGES = [
     {
         id: "listen",
@@ -26692,9 +27272,19 @@ const LTR_STAGES = [
         ]
     },
     {
+        id: "sound-box",
+        goal: "أصنّف الأصوات في صندوق الأصوات",
+        activities: [activitySoundBoxInitial, activitySoundBoxAnywhere, activitySoundBoxFind]
+    },
+    {
         id: "sound-to-letter",
         goal: "أربط الصوت بالحرف",
         activities: [activitySoundToLetter, activitySoundToLetterHard, activityLetterRecognition]
+    },
+    {
+        id: "syllable-build",
+        goal: "أبني المقطع بالحركات",
+        activities: [activitySyllableHear, activitySyllableMatch, activitySyllableBuild]
     },
     {
         id: "visual-discrimination",
@@ -26716,6 +27306,11 @@ const LTR_STAGES = [
         id: "letter-house",
         goal: "أضع الكلمات في بيت الحرف",
         activities: [activityLetterHouse, activityLetterHouse]
+    },
+    {
+        id: "word-build",
+        goal: "أركّب الكلمة",
+        activities: [activityWordBuild, activityWordBuild, activityWordBuild]
     },
     {
         id: "discover-in-word",
