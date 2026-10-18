@@ -23668,7 +23668,6 @@ const LETTER_UNITS = [
         { word: "أناناس", image: "🍍" },
         { word: "أرنب", image: "🐰" },
         { word: "أسد", image: "🦁" },
-        { word: "أم", image: "👩" },
         { word: "أذن", image: "👂" },
         { word: "أخطبوط", image: "🐙" }
     ]},
@@ -23684,16 +23683,14 @@ const LETTER_UNITS = [
     { letter: "ت", words: [
         { word: "تفاح", image: "🍎" },
         { word: "تاج", image: "👑" },
-        { word: "تمر", image: "🌴" },
-        { word: "تين", image: "🍈" },
         { word: "تمساح", image: "🐊" },
-        { word: "توت", image: "🫐" }
+        { word: "توت", image: "🫐" },
+        { word: "تلفاز", image: "📺" }
     ]},
     { letter: "ث", words: [
         { word: "ثعلب", image: "🦊" },
         { word: "ثوم", image: "🧄" },
         { word: "ثعبان", image: "🐍" },
-        { word: "ثلاجة", image: "🧊" },
         { word: "ثلج", image: "❄️" }
     ]},
     { letter: "ج", words: [
@@ -23728,23 +23725,18 @@ const LETTER_UNITS = [
         { word: "دراجة", image: "🚲" }
     ]},
     { letter: "ذ", words: [
-        { word: "ذيل", image: "🦁" },
-        { word: "ذهب", image: "🥇" },
         { word: "ذراع", image: "💪" },
         { word: "ذبابة", image: "🪰" },
-        { word: "ذئب", image: "🐺" }
+        { word: "ذئب", image: "🐺" },
+        { word: "ذرة", image: "🌽" }
     ]},
     { letter: "ر", words: [
-        { word: "رمل", image: "🏖️" },
         { word: "ريشة", image: "🪶" },
-        { word: "رأس", image: "🗣️" },
-        { word: "رجل", image: "🧍" }
+        { word: "راكون", image: "🦝" }
     ]},
     { letter: "ز", words: [
         { word: "زهرة", image: "🌸" },
-        { word: "زينة", image: "🎀" },
         { word: "زرافة", image: "🦒" },
-        { word: "زيت", image: "🫒" },
         { word: "زيتون", image: "🫒" }
     ]},
     { letter: "س", words: [
@@ -23752,12 +23744,10 @@ const LETTER_UNITS = [
         { word: "سيارة", image: "🚗" },
         { word: "سمكة", image: "🐟" },
         { word: "ساعة", image: "⏰" },
-        { word: "سرير", image: "🛏️" },
-        { word: "سماء", image: "🌌" }
+        { word: "سرير", image: "🛏️" }
     ]},
     { letter: "ش", words: [
         { word: "شمس", image: "☀️" },
-        { word: "شعر", image: "💇" },
         { word: "شجرة", image: "🌳" },
         { word: "شمعة", image: "🕯️" },
         { word: "شوكة", image: "🍴" },
@@ -23765,22 +23755,17 @@ const LETTER_UNITS = [
     ]},
     { letter: "ص", words: [
         { word: "صندوق", image: "📦" },
-        { word: "صالة", image: "🛋️" },
-        { word: "صقر", image: "🦅" },
         { word: "صاروخ", image: "🚀" },
-        { word: "صافرة", image: "📯" },
         { word: "صحن", image: "🍽️" },
         { word: "صبار", image: "🌵" }
     ]},
     { letter: "ض", words: [
         { word: "ضرس", image: "🦷" },
         { word: "ضفدع", image: "🐸" },
-        { word: "ضابط", image: "👮‍♂️" },
-        { word: "ضوء", image: "💡" }
+        { word: "ضابط", image: "👮‍♂️" }
     ]},
     { letter: "ط", words: [
         { word: "طباخ", image: "👨‍🍳" },
-        { word: "طاولة", image: "🪑" },
         { word: "طبيب", image: "👨‍⚕️" },
         { word: "طائرة", image: "✈️" },
         { word: "طاووس", image: "🦚" },
@@ -23788,8 +23773,7 @@ const LETTER_UNITS = [
     ]},
     { letter: "ظ", words: [
         { word: "ظرف", image: "✉️" },
-        { word: "ظفر", image: "💅" },
-        { word: "ظل", image: "🌓" }
+        { word: "ظفر", image: "💅" }
     ]},
     { letter: "ع", words: [
         { word: "علم", image: "🚩" },
@@ -23800,7 +23784,6 @@ const LETTER_UNITS = [
         { word: "عصير", image: "🧃" }
     ]},
     { letter: "غ", words: [
-        { word: "غسالة", image: "🧺" },
         { word: "غيوم", image: "☁️" },
         { word: "غراب", image: "🐦‍⬛" },
         { word: "غوريلا", image: "🦍" },
@@ -23824,7 +23807,6 @@ const LETTER_UNITS = [
     ]},
     { letter: "ك", words: [
         { word: "كرة", image: "⚽" },
-        { word: "كأس", image: "🏆" },
         { word: "كلب", image: "🐶" },
         { word: "كرسي", image: "🪑" },
         { word: "كيك", image: "🎂" },
@@ -23833,14 +23815,12 @@ const LETTER_UNITS = [
     ]},
     { letter: "ل", words: [
         { word: "ليمون", image: "🍋" },
-        { word: "لبن", image: "🥛" },
         { word: "لحم", image: "🥩" },
         { word: "لمبة", image: "💡" },
         { word: "لعبة", image: "🧸" },
         { word: "لسان", image: "👅" }
     ]},
     { letter: "م", words: [
-        { word: "مسبح", image: "🏊" },
         { word: "مدرسة", image: "🏫" },
         { word: "مسجد", image: "🕌" },
         { word: "مقص", image: "✂️" },
@@ -23852,25 +23832,19 @@ const LETTER_UNITS = [
         { word: "نحل", image: "🐝" },
         { word: "نجمة", image: "⭐" },
         { word: "نمر", image: "🐯" },
-        { word: "نعامة", image: "🦤" },
         { word: "نخلة", image: "🌴" }
     ]},
     { letter: "ه", words: [
         { word: "هلال", image: "🌙" },
-        { word: "هدهد", image: "🐦" },
         { word: "هدية", image: "🎁" },
-        { word: "هاتف", image: "📱" },
-        { word: "هرم", image: "🔺" }
+        { word: "هاتف", image: "📱" }
     ]},
     { letter: "و", words: [
         { word: "وجه", image: "😊" },
         { word: "وردة", image: "🌹" },
-        { word: "ولد", image: "👦" },
-        { word: "وسادة", image: "🛏️" }
+        { word: "ولد", image: "👦" }
     ]},
     { letter: "ي", words: [
-        { word: "يلعب", image: "⚽" },
-        { word: "يوسفي", image: "🍊" },
         { word: "يد", image: "✋" },
         { word: "يخت", image: "🛥️" },
         { word: "يويو", image: "🪀" }
@@ -24123,6 +24097,13 @@ const LTR_STARS_PER_NEW_LETTER = 10;
 
 const LTR_STAGE_IDS = [
     "listen", "auditory-discrimination", "sound-to-letter", "visual-discrimination",
+    "link-to-picture", "letter-house", "discover-in-word", "position-train",
+    "shape-by-position", "trace-write", "review"
+];
+
+/* المراحل التسع الأصلية (قبل المرحلة ٢) — تُستعمل فقط لاستنتاج تقدّم الطلاب القدامى */
+const LTR_LEGACY_STAGE_IDS = [
+    "listen", "auditory-discrimination", "sound-to-letter", "visual-discrimination",
     "link-to-picture", "discover-in-word", "shape-by-position", "trace-write", "review"
 ];
 
@@ -24132,13 +24113,15 @@ const LTR_STAGE_META = {
     "sound-to-letter":        { name: "صوت وحرف",       icon: "🔤" },
     "visual-discrimination":  { name: "أبحث وأميّز",    icon: "🔍" },
     "link-to-picture":        { name: "الحرف والصورة",  icon: "🖼️" },
+    "letter-house":           { name: "بيت الحرف",      icon: "🏠" },
+    "position-train":         { name: "قطار المواقع",   icon: "🚂" },
     "discover-in-word":       { name: "داخل الكلمات",   icon: "📖" },
     "shape-by-position":      { name: "أشكال الحرف",    icon: "🧩" },
     "trace-write":            { name: "أتتبّع وأكتب",   icon: "✏️" },
     "review":                 { name: "مراجعة",         icon: "⭐" }
 };
 
-const LTR_ART_FILES = new Set(["1f309", "1f30c", "1f311", "1f313", "1f319", "1f31f", "1f333", "1f334", "1f335", "1f338", "1f339", "1f347", "1f348", "1f349", "1f34a", "1f34b", "1f34c", "1f34d", "1f34e", "1f351", "1f352", "1f353", "1f35e", "1f36f", "1f374", "1f37d", "1f380", "1f381", "1f382", "1f392", "1f3a7", "1f3c6", "1f3ca", "1f3d6", "1f3e0", "1f3eb", "1f3ee", "1f3f0", "1f404", "1f40a", "1f40d", "1f40e", "1f411", "1f412", "1f413", "1f414", "1f418", "1f419", "1f41d", "1f41f", "1f426", "1f426-200d-2b1b", "1f42a", "1f42c", "1f42d", "1f42f", "1f430", "1f433", "1f436", "1f438", "1f43a", "1f43b", "1f441", "1f442", "1f445", "1f451", "1f455", "1f457", "1f45e", "1f466", "1f467", "1f468-200d-1f373", "1f468-200d-2695-fe0f", "1f469", "1f46e-200d-2642-fe0f", "1f476", "1f485", "1f487", "1f4a1", "1f4aa", "1f4d3", "1f4d6", "1f4d8", "1f4e6", "1f4ef", "1f4f1", "1f50d", "1f511", "1f514", "1f519", "1f524", "1f53a", "1f54c", "1f56f", "1f5bc", "1f5e3", "1f5fa", "1f60a", "1f680", "1f697", "1f6a2", "1f6a9", "1f6aa", "1f6b2", "1f6cb", "1f6cf", "1f6e5", "1f947", "1f952", "1f955", "1f95b", "1f969", "1f96c", "1f981", "1f985", "1f986", "1f98a", "1f98b", "1f98c", "1f98d", "1f992", "1f99a", "1f9a4", "1f9b7", "1f9c0", "1f9c3", "1f9c4", "1f9ca", "1f9cd", "1f9e4", "1f9e9", "1f9f8", "1f9fa", "1fa80", "1fa91", "1fa9f", "1fab0", "1fab6", "1fad0", "1fad2", "23f0", "2600", "2601", "26bd", "26f0", "26fa", "2702", "2708", "2709", "270b", "270f", "2744", "2764", "2b50"]);
+const LTR_ART_FILES = new Set(["1f33d", "1f4fa", "1f682", "1f99d", "1f309", "1f30c", "1f311", "1f313", "1f319", "1f31f", "1f333", "1f334", "1f335", "1f338", "1f339", "1f347", "1f348", "1f349", "1f34a", "1f34b", "1f34c", "1f34d", "1f34e", "1f351", "1f352", "1f353", "1f35e", "1f36f", "1f374", "1f37d", "1f380", "1f381", "1f382", "1f392", "1f3a7", "1f3c6", "1f3ca", "1f3d6", "1f3e0", "1f3eb", "1f3ee", "1f3f0", "1f404", "1f40a", "1f40d", "1f40e", "1f411", "1f412", "1f413", "1f414", "1f418", "1f419", "1f41d", "1f41f", "1f426", "1f426-200d-2b1b", "1f42a", "1f42c", "1f42d", "1f42f", "1f430", "1f433", "1f436", "1f438", "1f43a", "1f43b", "1f441", "1f442", "1f445", "1f451", "1f455", "1f457", "1f45e", "1f466", "1f467", "1f468-200d-1f373", "1f468-200d-2695-fe0f", "1f469", "1f46e-200d-2642-fe0f", "1f476", "1f485", "1f487", "1f4a1", "1f4aa", "1f4d3", "1f4d6", "1f4d8", "1f4e6", "1f4ef", "1f4f1", "1f50d", "1f511", "1f514", "1f519", "1f524", "1f53a", "1f54c", "1f56f", "1f5bc", "1f5e3", "1f5fa", "1f60a", "1f680", "1f697", "1f6a2", "1f6a9", "1f6aa", "1f6b2", "1f6cb", "1f6cf", "1f6e5", "1f947", "1f952", "1f955", "1f95b", "1f969", "1f96c", "1f981", "1f985", "1f986", "1f98a", "1f98b", "1f98c", "1f98d", "1f992", "1f99a", "1f9a4", "1f9b7", "1f9c0", "1f9c3", "1f9c4", "1f9ca", "1f9cd", "1f9e4", "1f9e9", "1f9f8", "1f9fa", "1fa80", "1fa91", "1fa9f", "1fab0", "1fab6", "1fad0", "1fad2", "23f0", "2600", "2601", "26bd", "26f0", "26fa", "2702", "2708", "2709", "270b", "270f", "2744", "2764", "2b50"]);
 
 function ltrArtFallback(img) {
     if (!img || !img.parentNode) return;
@@ -24170,10 +24153,21 @@ function ltrWriteJSON(key, value) {
 
 /* مفاتيح الأنشطة الـ٢٥ الثابتة لكل حرف (نفس ترتيب المسار الموجّه) */
 function ltrCanonicalActivityKeys() {
-    const keys = [];
-    LTR_STAGES.forEach(stage => stage.activities.forEach((fn, i) => keys.push(stage.id + "#" + i)));
-    keys.push("review#0", "review#1");
-    return keys;
+    /* قائمة ثابتة بمفاتيح الأنشطة الأصلية فقط — أنشطة المرحلة ٢ الجديدة
+       (letter-house / position-train) تُكافأ مرة واحدة كمحتوى جديد */
+    return [
+        "listen#0", "listen#1",
+        "auditory-discrimination#0", "auditory-discrimination#1", "auditory-discrimination#2",
+        "auditory-discrimination#3", "auditory-discrimination#4",
+        "sound-to-letter#0", "sound-to-letter#1", "sound-to-letter#2",
+        "visual-discrimination#0", "visual-discrimination#1", "visual-discrimination#2",
+        "visual-discrimination#3", "visual-discrimination#4",
+        "link-to-picture#0", "link-to-picture#1",
+        "discover-in-word#0", "discover-in-word#1",
+        "shape-by-position#0", "shape-by-position#1",
+        "trace-write#0", "trace-write#1",
+        "review#0", "review#1"
+    ];
 }
 
 /* سجل المكافآت. عند أول استخدام لطالب موجود: يُبذَر من تقدّمه السابق حتى لا
@@ -24252,7 +24246,7 @@ function ltrStageDoneCount(letter, stageId) {
     const s = m[letter] && m[letter][stageId];
     if (s && s.done) return s.done;
     /* طالب قديم أتمّ الحرف قبل هذا التحديث: كل مراحله منجزة مرة */
-    return ltrIsLetterCompleted(letter) ? 1 : 0;
+    return (LTR_LEGACY_STAGE_IDS.indexOf(stageId) !== -1 && ltrIsLetterCompleted(letter)) ? 1 : 0;
 }
 
 /* مستوى الإتقان لمرحلة: ٠ لم تُنجز، ١ أُنجزت، ٢ بلا أخطاء غالبًا، ٣ متقنة (جلستان+) */
@@ -24349,7 +24343,8 @@ let ltrState = {
     queue: [],
     mode: "menu",        // "menu" قائمة الأنشطة | "run" تشغيل نشاط
     session: null,       // { kind: full|short|stage, stageId, starsGained }
-    sid: 0               // رقم الجلسة: يُبطل أي مؤقت متأخر بعد الخروج
+    sid: 0,              // رقم الجلسة: يُبطل أي مؤقت متأخر بعد الخروج
+    settled: false       // تمت الإجابة الصحيحة على النشاط الحالي (يمنع الاحتساب المزدوج)
 };
 
 /* =========================================================
@@ -24418,7 +24413,7 @@ function renderLettersGridForLevel(group) {
 
     grid.innerHTML = group.letters.map(letterChar => {
         const isCompleted = completed.includes(letterChar);
-        const pct = Math.round((ltrLetterStagesDone(letterChar) / LTR_STAGE_IDS.length) * 100);
+        const pct = isCompleted ? 100 : Math.min(100, Math.round((ltrLetterStagesDone(letterChar) / LTR_STAGE_IDS.length) * 100));
         return `
             <button
                 class="ltr-letter-card-btn ${isCompleted ? "completed" : ""}"
@@ -24651,6 +24646,7 @@ function renderCurrentLetterActivity() {
 
     ltrWrongStreak = 0;
     ltrActivityHadWrong = false;
+    ltrState.settled = false;
     ltrHideHint();
     updateLtrProgressUI();
 
@@ -24680,6 +24676,10 @@ function finishLtrChoiceTask(isCorrect, button) {
     const messageEl = $("letterMessage");
     const activity = ltrState.queue[ltrState.activityIndex];
     if (!activity) return;
+
+    /* 🛡️ لا تُحتسب إجابة بعد إجابة صحيحة لنفس النشاط (لمس متكرر/نقرتان سريعتان) */
+    if (ltrState.settled) return;
+    if (isCorrect) ltrState.settled = true;
 
     const sid = ltrState.sid;
 
@@ -25404,32 +25404,32 @@ document.addEventListener("DOMContentLoaded", () => {
 const LETTER_SOUND_WORDS = {
     "أ": [{ word: "أناناس", image: "🍍" }, { word: "أرنب", image: "🐰" }, { word: "أسد", image: "🦁" }],
     "ب": [{ word: "بيت", image: "🏠" }, { word: "بطة", image: "🦆" }, { word: "باب", image: "🚪" }, { word: "بقرة", image: "🐄" }, { word: "بطيخ", image: "🍉" }],
-    "ت": [{ word: "تاج", image: "👑" }, { word: "تمر", image: "🌴" }],
-    "ث": [{ word: "ثعلب", image: "🦊" }, { word: "ثلاجة", image: "🧊" }, { word: "ثلج", image: "❄️" }],
+    "ت": [{ word: "تاج", image: "👑" }, { word: "تفاح", image: "🍎" }, { word: "تمساح", image: "🐊" }],
+    "ث": [{ word: "ثعلب", image: "🦊" }, { word: "ثلج", image: "❄️" }, { word: "ثوم", image: "🧄" }],
     "ج": [{ word: "جرس", image: "🔔" }, { word: "جزر", image: "🥕" }, { word: "جبل", image: "⛰️" }, { word: "جمل", image: "🐪" }],
-    "ح": [{ word: "حليب", image: "🥛" }, { word: "حقيبة", image: "🎒" }],
+    "ح": [{ word: "حليب", image: "🥛" }, { word: "حقيبة", image: "🎒" }, { word: "حصان", image: "🐎" }],
     "خ": [{ word: "خيمة", image: "⛺" }, { word: "خس", image: "🥬" }, { word: "خوخ", image: "🍑" }, { word: "خروف", image: "🐑" }],
     "د": [{ word: "دجاجة", image: "🐔" }, { word: "دفتر", image: "📓" }, { word: "دراجة", image: "🚲" }],
-    "ذ": [{ word: "ذيل", image: "🦁" }, { word: "ذهب", image: "🥇" }],
-    "ر": [{ word: "رمل", image: "🏖️" }, { word: "رأس", image: "🗣️" }, { word: "رجل", image: "🧍" }],
-    "ز": [{ word: "زهرة", image: "🌸" }, { word: "زرافة", image: "🦒" }, { word: "زيت", image: "🫒" }, { word: "زيتون", image: "🫒" }],
-    "س": [{ word: "سفينة", image: "🚢" }, { word: "سيارة", image: "🚗" }, { word: "سمكة", image: "🐟" }, { word: "ساعة", image: "⏰" }, { word: "سرير", image: "🛏️" }, { word: "سماء", image: "🌌" }],
-    "ش": [{ word: "شمس", image: "☀️" }, { word: "شعر", image: "💇" }, { word: "شجرة", image: "🌳" }, { word: "شمعة", image: "🕯️" }, { word: "شوكة", image: "🍴" }],
-    "ص": [{ word: "صالة", image: "🛋️" }, { word: "صقر", image: "🦅" }, { word: "صاروخ", image: "🚀" }, { word: "صافرة", image: "📯" }, { word: "صحن", image: "🍽️" }, { word: "صبار", image: "🌵" }],
-    "ض": [{ word: "ضابط", image: "👮‍♂️" }, { word: "ضوء", image: "💡" }],
-    "ط": [{ word: "طباخ", image: "👨‍🍳" }, { word: "طاولة", image: "🪑" }, { word: "طبيب", image: "👨‍⚕️" }, { word: "طائرة", image: "✈️" }, { word: "طاووس", image: "🦚" }],
-    "ظ": [{ word: "ظرف", image: "✉️" }, { word: "ظلام", image: "🌑" }, { word: "ظهر", image: "🔙" }],
+    "ذ": [{ word: "ذراع", image: "💪" }, { word: "ذبابة", image: "🪰" }, { word: "ذئب", image: "🐺" }],
+    "ر": [{ word: "ريشة", image: "🪶" }, { word: "راكون", image: "🦝" }],
+    "ز": [{ word: "زهرة", image: "🌸" }, { word: "زرافة", image: "🦒" }, { word: "زيتون", image: "🫒" }],
+    "س": [{ word: "سفينة", image: "🚢" }, { word: "سيارة", image: "🚗" }, { word: "سمكة", image: "🐟" }, { word: "ساعة", image: "⏰" }, { word: "سرير", image: "🛏️" }],
+    "ش": [{ word: "شمس", image: "☀️" }, { word: "شجرة", image: "🌳" }, { word: "شمعة", image: "🕯️" }, { word: "شوكة", image: "🍴" }],
+    "ص": [{ word: "صاروخ", image: "🚀" }, { word: "صحن", image: "🍽️" }, { word: "صبار", image: "🌵" }],
+    "ض": [{ word: "ضابط", image: "👮‍♂️" }, { word: "ضرس", image: "🦷" }, { word: "ضفدع", image: "🐸" }],
+    "ط": [{ word: "طباخ", image: "👨‍🍳" }, { word: "طبيب", image: "👨‍⚕️" }, { word: "طائرة", image: "✈️" }, { word: "طاووس", image: "🦚" }],
+    "ظ": [{ word: "ظرف", image: "✉️" }, { word: "ظفر", image: "💅" }],
     "ع": [{ word: "علم", image: "🚩" }, { word: "عين", image: "👁️" }, { word: "عسل", image: "🍯" }, { word: "عصير", image: "🧃" }],
-    "غ": [{ word: "غسالة", image: "🧺" }, { word: "غزالة", image: "🦌" }],
+    "غ": [{ word: "غزالة", image: "🦌" }, { word: "غيوم", image: "☁️" }, { word: "غراب", image: "🐦‍⬛" }],
     "ف": [{ word: "فراشة", image: "🦋" }, { word: "فانوس", image: "🏮" }, { word: "فراولة", image: "🍓" }, { word: "فأر", image: "🐭" }],
     "ق": [{ word: "قميص", image: "👕" }, { word: "قلم", image: "✏️" }, { word: "قلب", image: "❤️" }, { word: "قصر", image: "🏰" }],
-    "ك": [{ word: "كأس", image: "🏆" }, { word: "كلب", image: "🐶" }, { word: "كيك", image: "🎂" }, { word: "كرز", image: "🍒" }],
-    "ل": [{ word: "ليمون", image: "🍋" }, { word: "لبن", image: "🥛" }, { word: "لحم", image: "🥩" }, { word: "لمبة", image: "💡" }],
-    "م": [{ word: "مسبح", image: "🏊" }, { word: "مدرسة", image: "🏫" }, { word: "مسجد", image: "🕌" }, { word: "موز", image: "🍌" }],
-    "ن": [{ word: "نسر", image: "🦅" }, { word: "نحل", image: "🐝" }, { word: "نجمة", image: "⭐" }, { word: "نعامة", image: "🦤" }, { word: "نخلة", image: "🌴" }],
-    "ه": [{ word: "هدية", image: "🎁" }, { word: "هاتف", image: "📱" }, { word: "هرم", image: "🔺" }],
+    "ك": [{ word: "كلب", image: "🐶" }, { word: "كيك", image: "🎂" }, { word: "كرز", image: "🍒" }],
+    "ل": [{ word: "ليمون", image: "🍋" }, { word: "لحم", image: "🥩" }, { word: "لمبة", image: "💡" }],
+    "م": [{ word: "مدرسة", image: "🏫" }, { word: "مسجد", image: "🕌" }, { word: "موز", image: "🍌" }],
+    "ن": [{ word: "نسر", image: "🦅" }, { word: "نحل", image: "🐝" }, { word: "نجمة", image: "⭐" }, { word: "نخلة", image: "🌴" }],
+    "ه": [{ word: "هدية", image: "🎁" }, { word: "هاتف", image: "📱" }, { word: "هلال", image: "🌙" }],
     "و": [{ word: "وجه", image: "😊" }, { word: "وردة", image: "🌹" }, { word: "ولد", image: "👦" }],
-    "ي": [{ word: "يلعب", image: "⚽" }, { word: "يد", image: "✋" }, { word: "يخت", image: "🛥️" }]
+    "ي": [{ word: "يد", image: "✋" }, { word: "يخت", image: "🛥️" }, { word: "يويو", image: "🪀" }]
 };
 
 function getLetterSoundWords(letterChar) {
@@ -26170,6 +26170,510 @@ function activityTraceInWord(stage, letterChar) {
    يُبنى منها تسلسل فعلي لكل حرف عند فتحه (buildLetterActivityQueue)
 ========================================================================= */
 
+/* =========================================================
+   🚂🏠 المرحلة ٢: نشاطان تفاعليان جديدان — «قطار المواقع» و«بيت الحرف»
+   • يعتمدان على كلمات حقيقية مؤكَّد صوتها (تسجيلات موجودة فقط، بلا تحويل نص لكلام)
+   • موضع الحرف وشكله في السياق يُحسبان برمجيًا من قواعد الاتصال العربية
+     (وليس من صورة)، فلا يمكن أن تختلف الإجابة عن حقيقة الكلمة
+   • السحب بمؤشر موحّد (لمس/ماوس/قلم) + بديل بالنقر: المس البطاقة ثم المس
+     مكانها — أو لوحة المفاتيح — فلا يلزم السحب أبدًا
+========================================================= */
+
+const LTR_TRAIN_WORDS = {
+    "أ": ["أسد", "أذن", "أرنب", "أخطبوط", "اسم", "باب", "تاج", "فأر", "تفاح", "حصان", "غوريلا", "لجأ"],
+    "ب": ["بيت", "بنت", "بطة", "بقرة", "بطيخ", "جبل", "خبز", "جبنة", "شباك", "صبار", "دب", "ذئب", "عنب", "قلب", "كلب"],
+    "ت": ["تاج", "تفاح", "تمساح", "تلفاز", "تمثال", "دفتر", "كتاب", "هاتف", "زيتون", "فستان", "بيت", "بنت", "حوت", "يخت"],
+    "ث": ["ثوم", "ثلج", "ثعلب", "ثعبان", "مثل", "تمثال", "حديث"],
+    "ج": ["جسر", "جرس", "جزر", "جبل", "جمل", "وجه", "شجرة", "مسجد", "نجمة", "دراجة", "تاج", "ثلج", "نضج"],
+    "ح": ["حوت", "حصان", "حليب", "حذاء", "حقيبة", "صحن", "لحم", "نحل", "بحر", "تفاح", "تمساح", "مفتاح", "فتح"],
+    "خ": ["خس", "خبز", "خيمة", "خيار", "خروف", "يخت", "نخلة", "أخطبوط", "بطيخ", "طباخ", "صاروخ"],
+    "د": ["دب", "ديك", "دفتر", "دجاجة", "دلفين", "ضفدع", "هدية", "وردة", "صندوق", "مدرسة", "يد", "أسد", "قرد", "ولد", "مسجد"],
+    "ذ": ["ذئب", "ذرة", "ذراع", "ذبابة", "أذن", "حذاء", "غذاء", "نفذ", "جرذ", "قنفذ"],
+    "ر": ["ريشة", "راكون", "رمل", "ركض", "جرس", "ذرة", "ضرس", "ظرف", "قرد", "جسر", "جزر", "ظفر", "فأر", "قصر"],
+    "ز": ["زهرة", "زرافة", "زيتون", "جزر", "غزالة", "خبز", "كرز", "موز", "قفاز", "تلفاز"],
+    "س": ["سمكة", "ساعة", "سرير", "سفينة", "سيارة", "أسد", "جسر", "عسل", "نسر", "كرسي", "خس", "جرس", "شمس", "ضرس", "طاووس"],
+    "ش": ["شمس", "شجرة", "شمعة", "شوكة", "شباك", "ريشة", "فراشة", "خشب", "عشاء", "عطش", "قرش", "نقش"],
+    "ص": ["صحن", "صبار", "صندوق", "صاروخ", "صقر", "قصر", "حصان", "عصير", "عصفور", "مقص", "قميص"],
+    "ض": ["ضرس", "ضفدع", "ضابط", "نضج", "مضرب", "خضار", "بيضة", "بعض", "بيض", "ركض", "نهض", "مريض"],
+    "ط": ["طفل", "طباخ", "طبيب", "طائرة", "طاووس", "بطة", "بطيخ", "عطش", "ضابط", "خط"],
+    "ظ": ["ظرف", "ظفر", "مظلة", "نظيف", "نظارة", "منظار", "محفظة", "حفظ"],
+    "ع": ["علم", "عين", "عنب", "عسل", "عصير", "ثعلب", "ساعة", "شمعة", "لعبة", "ثعبان", "ذراع", "ضفدع", "سبع"],
+    "غ": ["غيوم", "غراب", "غزالة", "غوريلا", "غذاء", "بغل", "مغسلة", "ببغاء", "مغرفة", "مغارة", "بلغ", "صبغ", "دماغ"],
+    "ف": ["فيل", "فأر", "فراشة", "فستان", "فانوس", "طفل", "ظفر", "تفاح", "دفتر", "ضفدع", "ظرف", "خروف", "هاتف", "كيف", "كهف"],
+    "ق": ["قلم", "قرد", "قلب", "قصر", "قميص", "مقص", "بقرة", "حقيبة", "برتقال", "صقر", "صندوق"],
+    "ك": ["كرة", "كلب", "كرز", "كرسي", "كتاب", "سمكة", "شوكة", "راكون", "ركض", "مكتب", "ديك", "شباك", "ملك", "سمك"],
+    "ل": ["لحم", "لمبة", "لعبة", "لسان", "ليمون", "ثلج", "علم", "قلم", "قلب", "كلب", "جبل", "جمل", "طفل", "عسل", "فيل"],
+    "م": ["مقص", "موز", "مسجد", "مدرسة", "مفتاح", "جمل", "شمس", "نمر", "خيمة", "سمكة", "ثوم", "علم", "قلم", "لحم", "غيوم"],
+    "ن": ["نسر", "نحل", "نمر", "نجمة", "نخلة", "بنت", "عنب", "أرنب", "جبنة", "سفينة", "أذن", "صحن", "عين", "حصان", "لسان"],
+    "ه": ["هلال", "هدية", "هاتف", "زهرة", "نهض", "سهم", "فهد", "كهف", "وجه", "شبه"],
+    "و": ["وجه", "ولد", "وردة", "توت", "ثوم", "حوت", "خوخ", "موز", "جو"],
+    "ي": ["يد", "يخت", "بيت", "ديك", "عين", "فيل", "كيك", "كرسي", "نبي"]
+};
+
+const LTR_NON_JOINERS = "اأإآدذرزوؤءة";
+const LTR_ALEF_FORMS = {
+    "ا": { isolated: "ﺍ", final: "ﺎ" },
+    "أ": { isolated: "ﺃ", final: "ﺄ" },
+    "إ": { isolated: "ﺇ", final: "ﺈ" },
+    "آ": { isolated: "ﺁ", final: "ﺂ" }
+};
+const LTR_TRAIN_POS_LABEL = { start: "أول الكلمة", middle: "وسط الكلمة", end: "آخر الكلمة" };
+const LTR_CONFUSABLE = {
+    "أ": "لك", "ب": "تثني", "ت": "بثني", "ث": "بتني", "ج": "حخ", "ح": "جخ", "خ": "جح",
+    "د": "ذ", "ذ": "د", "ر": "ز", "ز": "ر", "س": "ش", "ش": "س", "ص": "ض", "ض": "ص",
+    "ط": "ظ", "ظ": "ط", "ع": "غ", "غ": "ع", "ف": "ق", "ق": "ف", "ك": "ل", "ل": "ك",
+    "م": "ه", "ن": "بتثي", "ه": "م", "و": "فق", "ي": "بتثن"
+};
+
+function ltrStripMarks(word) {
+    return String(word).replace(/[ً-ٰـ]/g, "");
+}
+
+function ltrLetterSet(letter) {
+    return letter === "أ" ? "أإآا" : letter;
+}
+
+/* هل الكلمة تحوي الحرف؟ (عدد مرات الظهور) */
+function ltrCountLetter(word, letter) {
+    const set = ltrLetterSet(letter);
+    return Array.from(ltrStripMarks(word)).filter(c => set.indexOf(c) !== -1).length;
+}
+
+/* تحليل موضع الحرف وشكله داخل الكلمة — يُرجع null إن لم يظهر مرة واحدة بالضبط */
+function ltrAnalyzeWord(word, letter) {
+    const chars = Array.from(ltrStripMarks(word));
+    const set = ltrLetterSet(letter);
+    const hits = [];
+    chars.forEach((c, i) => { if (set.indexOf(c) !== -1) hits.push(i); });
+    if (hits.length !== 1) return null;
+
+    const idx = hits[0];
+    const n = chars.length;
+    const prevJoins = idx > 0 && LTR_NON_JOINERS.indexOf(chars[idx - 1]) === -1;
+    const nextJoins = idx < n - 1 && LTR_NON_JOINERS.indexOf(chars[idx]) === -1;
+    const form = prevJoins && nextJoins ? "medial" : (prevJoins ? "final" : (nextJoins ? "initial" : "isolated"));
+    const pos = idx === 0 ? "start" : (idx === n - 1 ? "end" : "middle");
+    const ch = chars[idx];
+    const forms = LTR_ALEF_FORMS[ch] || (typeof arabicLetterForms !== "undefined" && arabicLetterForms[letter]) || {};
+
+    return { word, chars, idx, pos, form, ch, forms, glyph: forms[form] || forms.isolated || ch };
+}
+
+/* الكلمة مع إبراز الحرف المستهدف (لونًا فقط حتى لا ينقطع اتصال الحروف) */
+function ltrWordHtml(word, letter, highlight) {
+    const chars = Array.from(String(word));
+    const set = ltrLetterSet(letter);
+    return chars.map(c => (highlight && set.indexOf(c) !== -1) ? `<span class="ltr-hit">${c}</span>` : c).join("");
+}
+
+function ltrPickTrainRound(letter) {
+    const by = { start: [], middle: [], end: [] };
+    (LTR_TRAIN_WORDS[letter] || []).forEach(w => {
+        const a = ltrAnalyzeWord(w, letter);
+        if (a) by[a.pos].push(a);
+    });
+    return ["start", "middle", "end"]
+        .filter(p => by[p].length)
+        .map(p => by[p][Math.floor(Math.random() * by[p].length)]);
+}
+
+/* صورة الكلمة إن وُجدت ضمن الصور المدقَّقة فقط */
+function ltrVerifiedImage(word) {
+    for (const u of LETTER_UNITS) {
+        const hit = u.words.find(w => w.word === word);
+        if (hit) return hit.image;
+    }
+    return null;
+}
+
+/* ---------- محرّك السحب الموحّد + البديل بالنقر ---------- */
+function ltrMakeDraggable(zone, opts) {
+
+    let selected = null;
+    let drag = null;
+    let lastActionAt = 0;
+
+    const targetsList = () => Array.from(zone.querySelectorAll(opts.target));
+
+    function setArmed(on) {
+        targetsList().forEach(t => t.classList.toggle("armed", !!on));
+    }
+
+    function deselect() {
+        if (selected) {
+            selected.classList.remove("selected");
+            selected.setAttribute("aria-pressed", "false");
+        }
+        selected = null;
+        setArmed(false);
+    }
+
+    function select(chip) {
+        if (chip.dataset.locked === "1") return;
+        deselect();
+        selected = chip;
+        chip.classList.add("selected");
+        chip.setAttribute("aria-pressed", "true");
+        setArmed(true);
+        if (opts.onPick) opts.onPick(chip);
+    }
+
+    function targetAt(x, y) {
+        const stack = document.elementsFromPoint(x, y);
+        for (const el of stack) {
+            const t = el.closest && el.closest(opts.target);
+            if (t && zone.contains(t)) return t;
+        }
+        /* سبّورة تفاعلية: تسامح ٢٨px حول مناطق الإفلات */
+        let best = null, bestD = 1e9;
+        targetsList().forEach(t => {
+            const r = t.getBoundingClientRect();
+            const dx = Math.max(r.left - x, 0, x - r.right);
+            const dy = Math.max(r.top - y, 0, y - r.bottom);
+            const d = Math.hypot(dx, dy);
+            if (d <= 28 && d < bestD) { best = t; bestD = d; }
+        });
+        return best;
+    }
+
+    function hover(x, y) {
+        const t = targetAt(x, y);
+        targetsList().forEach(el => el.classList.toggle("over", el === t));
+    }
+
+    /* نقطة دخول واحدة لأي إفلات/نقر: تمنع الاحتساب المزدوج من اللمس المتكرر */
+    function dropOn(chip, target) {
+        const now = Date.now();
+        if (now - lastActionAt < 350) return;
+        if (!chip || chip.dataset.locked === "1" || !chip.isConnected) return;
+        lastActionAt = now;
+        deselect();
+        opts.onDrop(chip, target);
+    }
+
+    zone.querySelectorAll(opts.chip).forEach(chip => {
+        chip.style.touchAction = "none";
+
+        chip.addEventListener("pointerdown", e => {
+            if (e.button > 0) return;
+            if (chip.dataset.locked === "1" || drag) return;
+            drag = { chip, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false };
+            try { chip.setPointerCapture(e.pointerId); } catch (error) { /* غير مدعوم */ }
+        });
+
+        chip.addEventListener("pointermove", e => {
+            if (!drag || drag.chip !== chip || e.pointerId !== drag.id) return;
+            const dx = e.clientX - drag.sx;
+            const dy = e.clientY - drag.sy;
+            if (!drag.moved) {
+                if (Math.hypot(dx, dy) < 8) return;
+                drag.moved = true;
+                deselect();
+                chip.classList.add("dragging");
+                setArmed(true);
+                if (opts.onPick) opts.onPick(chip);
+            }
+            chip.style.transform = `translate(${dx}px, ${dy}px)`;
+            hover(e.clientX, e.clientY);
+            e.preventDefault();
+        });
+
+        const finish = (e, cancelled) => {
+            if (!drag || drag.chip !== chip || e.pointerId !== drag.id) return;
+            const d = drag;
+            drag = null;
+            try { chip.releasePointerCapture(e.pointerId); } catch (error) { /* لا شيء */ }
+            chip.classList.remove("dragging");
+            chip.style.transform = "";
+            targetsList().forEach(el => el.classList.remove("over"));
+            if (cancelled) { setArmed(selected !== null); return; }
+
+            if (d.moved) {
+                setArmed(false);
+                const t = targetAt(e.clientX, e.clientY);
+                if (t) dropOn(chip, t);
+            } else if (selected === chip) {
+                deselect();
+            } else {
+                select(chip);
+            }
+        };
+        chip.addEventListener("pointerup", e => finish(e, false));
+        chip.addEventListener("pointercancel", e => finish(e, true));
+
+        /* لوحة المفاتيح فقط (Enter/Space ⇒ detail = 0) — النقر بالمؤشر تعالجه pointerup */
+        chip.addEventListener("click", e => {
+            if (e.detail !== 0) return;
+            if (selected === chip) deselect(); else select(chip);
+        });
+    });
+
+    targetsList().forEach(t => {
+        t.addEventListener("click", () => { if (selected) dropOn(selected, t); });
+    });
+
+    return { deselect, select };
+}
+
+/* =========================================================
+   🚂 قطار المواقع
+   الخطوة ١: ضع كل كلمة في عربة (أول/وسط/آخر الكلمة) بحسب موضع الحرف.
+   الخطوة ٢: ما شكل الحرف في هذا الموضع؟ (الشكل داخل السياق).
+   لا صور هنا عمدًا: السؤال عن الحرف داخل الكتابة نفسها.
+========================================================= */
+
+function activityPositionTrain(stage, letterChar, difficulty) {
+
+    const round = ltrPickTrainRound(letterChar);
+    if (round.length < 2) { activityPositionInWord(stage, letterChar, difficulty); return; }
+
+    const highlight = (difficulty || 2) <= 1;
+    const order = ["start", "middle", "end"].filter(p => round.some(r => r.pos === p));
+    const sid = ltrState.sid;
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-train";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrTrainReplay">🔊 استمع للحرف</button>
+        </div>
+        <div class="ltr-instruction-line">ضع كل كلمة في عربتها: أين يقع الحرف <strong>${letterChar}</strong> في الكلمة؟</div>
+        <div class="ltr-train-track" dir="rtl">
+            <span class="ltr-train-loco" aria-hidden="true">${ltrArt("🚂")}</span>
+            ${order.map(p => `
+                <button type="button" class="ltr-wagon" data-pos="${p}" aria-label="${LTR_TRAIN_POS_LABEL[p]}">
+                    <span class="ltr-wagon-label">${LTR_TRAIN_POS_LABEL[p]}</span>
+                    <span class="ltr-wagon-slot"></span>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-tray" id="ltrTrainPanel"></div>
+        <div class="ltr-drag-tip">اسحب البطاقة إلى العربة — أو المس البطاقة ثم المس العربة</div>
+    `;
+    stage.appendChild(root);
+
+    const panel = root.querySelector("#ltrTrainPanel");
+    let tickets = shuffle(round.map((r, i) => i));
+    if (tickets.length > 1 && tickets.every((v, k) => round[v].pos === order[k])) tickets.reverse();
+
+    panel.innerHTML = tickets.map(i => `
+        <button type="button" class="ltr-ticket" data-i="${i}" aria-pressed="false">
+            ${ltrWordHtml(round[i].word, letterChar, highlight)}
+        </button>`).join("");
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const msg = $("letterMessage");
+    let placed = 0;
+    let finished = false;
+    let wrongOnChip = {};
+
+    function startShapeStep() {
+        if (!alive()) return;
+        const target = round[Math.floor(Math.random() * round.length)];
+        const forms = target.forms;
+        let keys = Object.keys(forms).filter(k => forms[k]);
+        if (keys.indexOf(target.form) === -1) keys.push(target.form);
+        const others = shuffle(keys.filter(k => k !== target.form));
+        const take = (difficulty || 2) <= 1 ? 1 : 2;
+        const choiceKeys = shuffle([target.form, ...others.slice(0, take)]);
+
+        panel.className = "ltr-shape-step";
+        panel.innerHTML = `
+            <div class="ltr-shape-word">${ltrWordHtml(target.word, letterChar, true)}</div>
+            <div class="ltr-instruction-line">في كلمة «${target.word}» يقع الحرف في <strong>${LTR_TRAIN_POS_LABEL[target.pos]}</strong>.<br>ما شكل الحرف هنا؟</div>
+        `;
+        root.querySelector(".ltr-drag-tip").remove();
+        const box = document.createElement("div");
+        panel.appendChild(box);
+        renderLtrChoices(
+            box,
+            choiceKeys,
+            key => ltrFormatGlyph(forms[key] || target.ch, key),
+            target.form,
+            (ok, btn) => {
+                if (!alive()) return;
+                if (ok) finished = true;
+                finishLtrChoiceTask(ok, btn);
+            }
+        );
+        speakEducational(target.word, { rate: 0.78 });
+    }
+
+    function onDrop(chip, wagon) {
+        if (finished || !alive()) return;
+        const item = round[Number(chip.dataset.i)];
+        if (wagon.dataset.pos === item.pos) {
+            chip.dataset.locked = "1";
+            wagon.classList.remove("hinted", "armed", "over");
+            wagon.classList.add("filled");
+            wagon.disabled = true;
+            wagon.querySelector(".ltr-wagon-slot").innerHTML = `
+                <span class="ltr-placed">${ltrWordHtml(item.word, letterChar, true)}</span>
+                <span class="ltr-shape-badge" title="شكل الحرف هنا">${ltrFormatGlyph(item.glyph, item.form)}</span>`;
+            chip.remove();
+            placed++;
+            if (msg) { msg.textContent = "✅ صحيح!"; msg.className = "message correct"; }
+            if (placed >= round.length) {
+                setTimeout(startShapeStep, 700);
+            } else {
+                speakEducational(item.word, { rate: 0.78 });
+            }
+        } else {
+            chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+            wrongOnChip[chip.dataset.i] = (wrongOnChip[chip.dataset.i] || 0) + 1;
+            finishLtrChoiceTask(false, null);
+            if (wrongOnChip[chip.dataset.i] >= 2) {
+                const right = root.querySelector(`.ltr-wagon[data-pos="${item.pos}"]`);
+                if (right) right.classList.add("hinted");
+            }
+        }
+    }
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-ticket",
+        target: ".ltr-wagon:not(.filled)",
+        onDrop,
+        onPick: chip => speakEducational(round[Number(chip.dataset.i)].word, { rate: 0.78 })
+    });
+
+    root.querySelector("#ltrTrainReplay").onclick = () => speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(letterWithFatha(letterChar), { rate: 0.75 }); }, 300);
+}
+
+/* =========================================================
+   🏠 بيت الحرف
+   الكلمات التي تحوي الحرف تدخل البيت، وغيرها يبقى في الحديقة.
+   في المستوى الأعلى تحوي كلمات الحديقة حروفًا مشابهة شكلًا أو صوتًا
+   فلا يكفي التخمين. تظهر صورة الكلمة فقط حين تكون مدقَّقة.
+========================================================= */
+
+function ltrPickHouseRound(letter, difficulty) {
+
+    const hard = (difficulty || 2) >= 2;
+    const per = hard ? 3 : 2;
+
+    const mine = (LTR_TRAIN_WORDS[letter] || []).filter(w => ltrCountLetter(w, letter) === 1);
+    const byPos = { start: [], middle: [], end: [] };
+    mine.forEach(w => { const a = ltrAnalyzeWord(w, letter); if (a) byPos[a.pos].push(w); });
+    let ins = [];
+    shuffle(["start", "middle", "end"]).forEach(p => {
+        if (ins.length < per && byPos[p].length) ins.push(shuffle(byPos[p])[0]);
+    });
+    shuffle(mine).forEach(w => { if (ins.length < per && ins.indexOf(w) === -1) ins.push(w); });
+
+    const conf = LTR_CONFUSABLE[letter] || "";
+    const pool = [];
+    const seenOut = new Set();
+    Object.keys(LTR_TRAIN_WORDS).forEach(l => {
+        if (l === letter) return;
+        LTR_TRAIN_WORDS[l].forEach(w => {
+            if (ltrCountLetter(w, letter) !== 0 || seenOut.has(w) || ins.indexOf(w) !== -1) return;
+            seenOut.add(w);
+            const near = Array.from(ltrStripMarks(w)).some(c => conf.indexOf(c) !== -1);
+            pool.push({ w, near });
+        });
+    });
+    let outs = [];
+    if (hard) outs = shuffle(pool.filter(x => x.near)).slice(0, per).map(x => x.w);
+    shuffle(pool).forEach(x => { if (outs.length < per && outs.indexOf(x.w) === -1) outs.push(x.w); });
+
+    return { ins, outs };
+}
+
+function activityLetterHouse(stage, letterChar, difficulty) {
+
+    const { ins, outs } = ltrPickHouseRound(letterChar, difficulty);
+    if (ins.length < 1 || outs.length < 1) { activityLetterToPicture(stage, letterChar, difficulty); return; }
+
+    const sid = ltrState.sid;
+    const cards = shuffle([
+        ...ins.map(w => ({ word: w, has: true })),
+        ...outs.map(w => ({ word: w, has: false }))
+    ]);
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-house-game";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrHouseReplay">🔊 استمع للحرف</button>
+        </div>
+        <div class="ltr-instruction-line">أدخل إلى بيت الحرف <strong>${letterChar}</strong> الكلمات التي فيها هذا الحرف</div>
+        <div class="ltr-house-wrap">
+            <button type="button" class="ltr-house-zone ltr-house-in" data-in="1" aria-label="داخل بيت الحرف">
+                <span class="ltr-roof"><span class="ltr-roof-letter">${letterChar}</span></span>
+                <span class="ltr-zone-title">داخل البيت</span>
+                <span class="ltr-zone-items"></span>
+            </button>
+            <button type="button" class="ltr-house-zone ltr-house-out" data-in="0" aria-label="خارج البيت">
+                <span class="ltr-garden-icon" aria-hidden="true">${ltrArt("🌳")}</span>
+                <span class="ltr-zone-title">خارج البيت</span>
+                <span class="ltr-zone-items"></span>
+            </button>
+        </div>
+        <div class="ltr-tray"></div>
+        <div class="ltr-drag-tip">اسحب البطاقة إلى مكانها — أو المس البطاقة ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const tray = root.querySelector(".ltr-tray");
+    tray.innerHTML = cards.map((c, i) => {
+        const img = ltrVerifiedImage(c.word);
+        return `<button type="button" class="ltr-ticket ltr-ticket-pic" data-i="${i}" aria-pressed="false">
+            ${img ? `<span class="ltr-ticket-art">${ltrArt(img)}</span>` : ""}
+            <span class="ltr-ticket-word">${c.word}</span>
+        </button>`;
+    }).join("");
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const msg = $("letterMessage");
+    let placed = 0;
+    let finished = false;
+    const wrongOnChip = {};
+
+    function onDrop(chip, zone) {
+        if (finished || !alive()) return;
+        const card = cards[Number(chip.dataset.i)];
+        const zoneIn = zone.dataset.in === "1";
+
+        if (card.has === zoneIn) {
+            chip.dataset.locked = "1";
+            const mini = document.createElement("span");
+            mini.className = "ltr-placed" + (card.has ? " in" : " out");
+            mini.innerHTML = ltrWordHtml(card.word, letterChar, card.has);
+            zone.querySelector(".ltr-zone-items").appendChild(mini);
+            chip.remove();
+            placed++;
+            root.querySelectorAll(".hinted").forEach(el => el.classList.remove("hinted"));
+            if (msg) { msg.textContent = card.has ? "✅ صحيح! الحرف موجود في الكلمة" : "✅ صحيح! لا يوجد هذا الحرف فيها"; msg.className = "message correct"; }
+            if (placed >= cards.length) {
+                finished = true;
+                setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 600);
+            } else {
+                speakEducational(card.word, { rate: 0.78 });
+            }
+        } else {
+            chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+            wrongOnChip[chip.dataset.i] = (wrongOnChip[chip.dataset.i] || 0) + 1;
+            finishLtrChoiceTask(false, null);
+            if (wrongOnChip[chip.dataset.i] >= 2) {
+                const right = root.querySelector(`.ltr-house-zone[data-in="${card.has ? 1 : 0}"]`);
+                if (right) right.classList.add("hinted");
+            }
+        }
+    }
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-ticket",
+        target: ".ltr-house-zone",
+        onDrop,
+        onPick: chip => speakEducational(cards[Number(chip.dataset.i)].word, { rate: 0.78 })
+    });
+
+    root.querySelector("#ltrHouseReplay").onclick = () => speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(letterWithFatha(letterChar), { rate: 0.75 }); }, 300);
+}
+
 const LTR_STAGES = [
     {
         id: "listen",
@@ -26209,12 +26713,22 @@ const LTR_STAGES = [
         activities: [activityConnectWheel, activityLetterToPictureSound]
     },
     {
+        id: "letter-house",
+        goal: "أضع الكلمات في بيت الحرف",
+        activities: [activityLetterHouse, activityLetterHouse]
+    },
+    {
         id: "discover-in-word",
         goal: "أتعرف عليه داخل الكلمات",
         activities: [
             activityHearInWordYesNo,
             activityHearInWordChoose
         ]
+    },
+    {
+        id: "position-train",
+        goal: "أضع الكلمات في قطار المواقع",
+        activities: [activityPositionTrain, activityPositionTrain]
     },
     {
         id: "shape-by-position",
