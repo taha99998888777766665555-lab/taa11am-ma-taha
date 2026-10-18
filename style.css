@@ -15135,3 +15135,250 @@ body.dark-mode .quran-repeat-chip {
 body.dark-mode .quran-repeat.repeating .quran-repeat-btn {
     background: #204525;
 }
+
+
+/* =====================================================================
+   🔤 تطوير قسم الحروف — المرحلة ١ (أصناف جديدة فقط، لا تمسّ أقسامًا أخرى)
+   - بلا أقفال: كل المجموعات والأنشطة مفتوحة
+   - قائمة أنشطة لكل حرف + رسومات SVG محلية بدل الإيموجي
+   ===================================================================== */
+
+/* رسومات SVG (Twemoji CC-BY 4.0، انظر assets/images/letters/NOTICE.txt)
+   تتبع حجم الخط الذي كان الإيموجي يتبعه */
+.ltr-art {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.12em;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.ltr-display-emoji .ltr-art,
+.ltr-result-emoji .ltr-art {
+    display: block;
+    margin: 0 auto;
+}
+
+/* بطاقة المجموعة */
+.ltr-level-progress {
+    font-size: 14px;
+    font-weight: bold;
+    color: #5c6f7a;
+}
+
+.ltr-level-card-btn.completed .ltr-level-progress {
+    color: #2e7d32;
+}
+
+/* بطاقة الحرف: حرف + شريط إتقان رفيع */
+.ltr-letter-card-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ltr-letter-glyph {
+    line-height: 1.1;
+}
+
+.ltr-letter-meter {
+    display: block;
+    width: 70%;
+    height: 6px;
+    background: rgba(21, 101, 192, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.ltr-letter-meter i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #43a047, #81c784);
+    border-radius: 6px;
+}
+
+/* ---------- وضع القائمة / وضع التشغيل داخل بطاقة الحرف ---------- */
+
+#letterDetailCard[data-ltr-mode="menu"] #ltrRunner,
+#letterDetailCard[data-ltr-mode="menu"] #ltrRetryBtn {
+    display: none;
+}
+
+#letterDetailCard[data-ltr-mode="run"] #ltrActivityMenu {
+    display: none;
+}
+
+.ltr-big-letter {
+    cursor: pointer;
+}
+
+/* ---------- قائمة الأنشطة ---------- */
+
+.ltr-activity-menu {
+    max-width: 560px;
+    margin: 6px auto 0;
+    animation: ltrFadeUp 0.35s ease both;
+}
+
+@keyframes ltrFadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.ltr-menu-primary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0 8px;
+}
+
+.ltr-menu-main,
+.ltr-menu-short {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 118px;
+    padding: 12px 8px;
+    border: 3px solid transparent;
+    border-radius: 22px;
+    cursor: pointer;
+    font-family: inherit;
+    touch-action: manipulation;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ltr-menu-main {
+    background: linear-gradient(160deg, #1976d2, #1565c0);
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(21, 101, 192, 0.28);
+}
+
+.ltr-menu-short {
+    background: linear-gradient(160deg, #fff8e1, #ffecb3);
+    color: #5d4037;
+    box-shadow: 0 6px 14px rgba(255, 160, 0, 0.2);
+}
+
+.ltr-menu-main b,
+.ltr-menu-short b {
+    font-size: 19px;
+}
+
+.ltr-menu-main small,
+.ltr-menu-short small {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.ltr-menu-main-icon {
+    font-size: 38px;
+    line-height: 1;
+}
+
+.ltr-menu-main:active,
+.ltr-menu-short:active,
+.ltr-stage-card:active {
+    transform: scale(0.97);
+}
+
+.ltr-menu-caption {
+    color: #78909c;
+    font-size: 15px;
+    margin: 14px 0 8px;
+}
+
+.ltr-stage-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 380px) {
+    .ltr-stage-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.ltr-stage-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 112px;
+    padding: 12px 6px;
+    background: #f1f7fe;
+    border: 3px solid transparent;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    touch-action: manipulation;
+    box-shadow: 0 3px 8px rgba(21, 101, 192, 0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ltr-stage-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(21, 101, 192, 0.18);
+}
+
+.ltr-stage-card.lvl1 { background: #eaf5ec; }
+.ltr-stage-card.lvl2 { background: #e3f3e6; border-color: #a5d6a7; }
+.ltr-stage-card.lvl3 { background: #dff3e3; border-color: #43a047; }
+
+.ltr-stage-icon {
+    font-size: 34px;
+    line-height: 1;
+}
+
+.ltr-stage-name {
+    font-size: 15px;
+    font-weight: bold;
+    color: #37474f;
+    text-align: center;
+}
+
+.ltr-stage-stars {
+    display: flex;
+    gap: 2px;
+    font-size: 15px;
+}
+
+.ltr-mini-star.off {
+    filter: grayscale(1);
+    opacity: 0.28;
+}
+
+.ltr-result-soft {
+    color: #5c6f7a;
+}
+
+body.dark-mode .ltr-menu-short {
+    background: #4e3d1c;
+    color: #ffe0b2;
+}
+
+body.dark-mode .ltr-stage-card {
+    background: #1f2d3d;
+}
+
+body.dark-mode .ltr-stage-card.lvl1,
+body.dark-mode .ltr-stage-card.lvl2,
+body.dark-mode .ltr-stage-card.lvl3 {
+    background: #1d3a26;
+}
+
+body.dark-mode .ltr-stage-name {
+    color: #cfd8dc;
+}
+
+body.calm-mode .ltr-activity-menu {
+    animation: none;
+}
