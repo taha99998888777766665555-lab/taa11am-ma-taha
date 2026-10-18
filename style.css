@@ -15067,3 +15067,71 @@ body.calm-mode #subtractionLevelCard .subtraction-choice-btn.hinted { animation:
 
 /* زر المساعدة: حالة الإغلاق واضحة */
 #subtractionLevelCard #subHintBtn.active { background: #ede7ff; border-color: var(--a2-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--a2-accent) 28%, transparent); }
+
+/* =====================================================================
+   🔁 تكرار الآية (قسم القرآن) — تحكم صغير هادئ
+   ===================================================================== */
+.quran-repeat {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.quran-repeat-btn,
+.quran-repeat-chip {
+    min-height: 44px;
+    border-radius: 12px;
+    border: 2px solid #a5d6a7;
+    background: #ffffff;
+    color: #2e7d32;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.quran-repeat-btn {
+    padding: 6px 16px;
+}
+
+.quran-repeat-chip {
+    min-width: 48px;
+    padding: 6px 12px;
+    font-size: 18px;
+}
+
+.quran-repeat-cancel {
+    color: #6d4c41;
+    border-color: #d7ccc8;
+}
+
+.quran-repeat-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.quran-repeat-options[hidden] {
+    display: none;
+}
+
+.quran-repeat.repeating .quran-repeat-btn {
+    background: #e8f5e9;
+    border-color: #2e7d32;
+}
+
+body.dark-mode .quran-repeat-btn,
+body.dark-mode .quran-repeat-chip {
+    background: #1b3a1e;
+    color: #a5d6a7;
+    border-color: #4caf50;
+}
+
+body.dark-mode .quran-repeat.repeating .quran-repeat-btn {
+    background: #204525;
+}

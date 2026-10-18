@@ -3479,6 +3479,7 @@ function renderSurah() {
 
         ayahBox.appendChild(text);
         ayahBox.appendChild(button);
+        ayahBox.appendChild(quranBuildRepeatControl(ayahNumber));
 
         container.appendChild(ayahBox);
     });
@@ -3559,6 +3560,243 @@ function clearQuranError() {
         errorBox.textContent = "";
     }
 }
+
+/* =========================================================
+   🔁 تكرار الآية — إضافة مستقلة (لا تغيّر speakQuranAyah ولا speakSurah)
+   - تستخدم ملف الآية نفسه عبر getQuranAyahUrl (لا مصدر جديد ولا TTS)
+   - عدد التشغيلات = العدد المختار بالضبط ثم تتوقف ولا تنتقل لآية أخرى
+   - أي تشغيل آخر أو إيقاف (stopAllAudio) يلغي التكرار فورًا
+========================================================= */
+
+const QURAN_REPEAT_CHOICES = [1, 3, 5, 10];
+const QURAN_REPEAT_GAP_MS = 600;
+
+let quranRepeat = null;   // { session, ayah, total, done, audio, timer }
+
+function quranRepeatRefreshUI() {
+
+    document.querySelectorAll(".quran-repeat").forEach(box => {
+
+        const n = Number(box.dataset.ayah);
+        const btn = box.querySelector(".quran-repeat-btn");
+        const active = !!quranRepeat && quranRepeat.ayah === n;
+
+        box.classList.toggle("repeating", active);
+
+        if (!btn) return;
+
+        if (active) {
+            const current = Math.min(quranRepeat.done + 1, quranRepeat.total);
+            btn.textContent =
+                `⏹ ${arabicNumber(current)} / ${arabicNumber(quranRepeat.total)}`;
+            btn.setAttribute("aria-label", "إيقاف التكرار");
+        } else {
+            btn.textContent = "🔁 تكرار";
+            btn.setAttribute("aria-label", "تكرار الآية");
+        }
+    });
+}
+
+function quranRepeatCloseOptions() {
+
+    document.querySelectorAll(".quran-repeat-options").forEach(o => {
+        o.hidden = true;
+    });
+
+    document.querySelectorAll(".quran-repeat-btn").forEach(b => {
+        b.setAttribute("aria-expanded", "false");
+    });
+}
+
+function quranRepeatReset() {
+
+    if (quranRepeat && quranRepeat.timer) {
+        clearTimeout(quranRepeat.timer);
+    }
+
+    const wasActive = !!quranRepeat;
+
+    quranRepeat = null;
+
+    if (wasActive) quranRepeatRefreshUI();
+}
+
+/* أي إيقاف عام للصوت (زر الإيقاف، تغيير الشاشة، آية/سورة أخرى) يُنهي التكرار */
+const quranRepeatOriginalStopAllAudio = stopAllAudio;
+
+stopAllAudio = function () {
+    quranRepeatOriginalStopAllAudio();
+    quranRepeatReset();
+};
+
+function quranRepeatStart(ayahNumber, total) {
+
+    const surah = quranSurahs[currentSurahIndex];
+    if (!surah) return;
+
+    const ayahs = quranAyahs[String(surah.id)] || [];
+
+    if (ayahNumber < 1 || ayahNumber > ayahs.length) return;
+    if (QURAN_REPEAT_CHOICES.indexOf(total) === -1) return;
+
+    stopAllAudio();                 // يوقف أي صوت أو تكرار سابق ويرفع رقم الجلسة
+
+    quranPlayingAll = false;
+
+    const session = quranSessionToken;
+
+    clearQuranError();
+
+    currentQuranAyah = ayahNumber;
+
+    const url = getQuranAyahUrl(surah.id, ayahNumber);
+
+    const audio = new Audio();
+    audio.preload = "auto";
+    audio.src = url;
+
+    currentQuranAudio = audio;
+
+    const st = { session, ayah: ayahNumber, total, done: 0, audio, timer: null };
+
+    quranRepeat = st;
+
+    const stale = () => session !== quranSessionToken || quranRepeat !== st;
+
+    function finish() {
+        quranRepeat = null;
+        currentQuranAudio = null;
+        quranClearPlayingHighlight();
+        quranHideStopButton();
+        quranRepeatRefreshUI();
+    }
+
+    function fail(message, error) {
+        if (st.timer) clearTimeout(st.timer);
+        finish();
+        console.error("Quran repeat error:", url, error);
+        showQuranError(message);
+    }
+
+    function playOnce() {
+
+        const promise = audio.play();
+
+        if (promise && typeof promise.catch === "function") {
+            promise.catch(error => {
+                if (stale()) return;
+                fail("⚠️ المتصفح منع تشغيل الصوت أو تعذر تحميله. اضغط التكرار مرة أخرى.", error);
+            });
+        }
+    }
+
+    audio.addEventListener("ended", () => {
+
+        if (stale()) return;
+
+        st.done++;
+
+        if (st.done >= st.total) {
+            finish();                 // انتهى العدد المطلوب: توقف تام
+            return;
+        }
+
+        quranRepeatRefreshUI();
+
+        st.timer = setTimeout(() => {
+
+            if (stale()) return;
+
+            try { audio.currentTime = 0; } catch (e) {}
+
+            playOnce();
+
+        }, QURAN_REPEAT_GAP_MS);
+    });
+
+    audio.addEventListener("error", () => {
+
+        if (stale()) return;
+
+        fail("⚠️ تعذر تشغيل صوت الآية. تأكد من اتصال الإنترنت ثم حاول مرة أخرى.", audio.error);
+    });
+
+    quranSetPlayingHighlight(ayahNumber);
+    quranShowStopButton();
+    quranRepeatCloseOptions();
+    quranRepeatRefreshUI();
+
+    playOnce();
+}
+
+function quranBuildRepeatControl(ayahNumber) {
+
+    const box = document.createElement("div");
+    box.className = "quran-repeat";
+    box.dataset.ayah = String(ayahNumber);
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "quran-repeat-btn";
+    btn.textContent = "🔁 تكرار";
+    btn.setAttribute("aria-label", "تكرار الآية");
+    btn.setAttribute("aria-expanded", "false");
+
+    const options = document.createElement("div");
+    options.className = "quran-repeat-options";
+    options.setAttribute("role", "group");
+    options.setAttribute("aria-label", "عدد مرات التكرار");
+    options.hidden = true;
+
+    QURAN_REPEAT_CHOICES.forEach(count => {
+
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "quran-repeat-chip";
+        chip.dataset.count = String(count);
+        chip.textContent = arabicNumber(count);
+        chip.setAttribute("aria-label", `تكرار الآية ${arabicNumber(count)} مرات`);
+
+        chip.addEventListener("click", () => quranRepeatStart(ayahNumber, count));
+
+        options.appendChild(chip);
+    });
+
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "quran-repeat-chip quran-repeat-cancel";
+    cancel.textContent = "✖";
+    cancel.setAttribute("aria-label", "إلغاء التكرار");
+
+    cancel.addEventListener("click", () => {
+        options.hidden = true;
+        btn.setAttribute("aria-expanded", "false");
+    });
+
+    options.appendChild(cancel);
+
+    btn.addEventListener("click", () => {
+
+        /* أثناء التكرار: الضغط يوقفه فورًا */
+        if (quranRepeat && quranRepeat.ayah === ayahNumber) {
+            stopQuranPlayback();
+            return;
+        }
+
+        const willOpen = options.hidden;
+
+        quranRepeatCloseOptions();
+
+        options.hidden = !willOpen;
+        btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+
+    box.appendChild(btn);
+    box.appendChild(options);
+
+    return box;
+}
+
 
 
 /* =========================================================
