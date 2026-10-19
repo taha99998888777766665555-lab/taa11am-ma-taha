@@ -7960,11 +7960,13 @@ const RR_CSS = `
 #roadRaceGame{width:100%;min-height:100vh;padding:10px;overflow-x:hidden;overflow-y:auto}
 .rr-wrap{position:relative;width:min(980px,100%);margin:0 auto;display:flex;flex-direction:column;gap:10px}
 .rr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.rr-info{display:flex;gap:8px;flex-wrap:wrap}
-.rr-chip{background:rgba(255,255,255,.96);border-radius:16px;padding:6px 14px;box-shadow:0 5px 14px rgba(0,0,0,.12);min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rr-info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rr-chip{background:#fff;border-radius:16px;padding:4px 10px;box-shadow:0 3px 8px rgba(0,0,0,.1);min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
 .rr-chip small{color:#667085;font-size:12px;font-weight:800}
 .rr-chip b{color:#172033;font-size:22px;font-weight:900}
-.rr-grow{flex:1;min-width:150px}
+.rr-grow{grid-column:1/-1;order:-1}
+#roadRaceGame .race-top-btn{width:52px;height:52px;min-width:52px;min-height:52px;flex:0 0 52px;padding:0}
+#roadRaceGame .race-top-btn#rrMotion[aria-pressed="true"]{background:#fde047;box-shadow:0 0 0 4px #f59e0b}
 .rr-dots{display:flex;gap:6px;justify-content:center;margin-top:4px}
 .rr-dot{width:14px;height:14px;border-radius:50%;background:#cbd5e1}
 .rr-dot.done{background:#22c55e}
@@ -7999,9 +8001,11 @@ const RR_CSS = `
 .rr-controls{display:flex;gap:10px;justify-content:center;align-items:stretch}
 .rr-ctl{width:92px;min-height:68px;border:0;border-radius:18px;background:#fff;color:#1f2937;font-size:32px;font-weight:900;box-shadow:0 5px 14px rgba(0,0,0,.18);cursor:pointer}
 .rr-go{flex:1;max-width:340px;min-height:68px;border:0;border-radius:18px;background:#16a34a;color:#fff;font-size:24px;font-weight:900;box-shadow:0 6px 0 #166534;cursor:pointer}
-.rr-result,.rr-demo{position:absolute;inset:0;border-radius:22px;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:18px;text-align:center}
-.rr-result{background:rgba(255,255,255,.98);z-index:70}
-.rr-demo{background:rgba(238,242,255,.98);z-index:60}
+.rr-result,.rr-demo{position:fixed;inset:0;border-radius:0;display:none;align-items:center;justify-content:flex-start;flex-direction:column;gap:12px;padding:18px;text-align:center;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.rr-result>:first-child,.rr-demo>:first-child{margin-top:auto}
+.rr-result>:last-child,.rr-demo>:last-child{margin-bottom:auto}
+.rr-result{background:#fff;z-index:1000}
+.rr-demo{background:#eef2ff;z-index:990}
 .rr-result.on,.rr-demo.on{display:flex}
 .rr-result h3{margin:0;font-size:27px;color:#15803d}
 .rr-result p{margin:0;font-size:17px;color:#475467;font-weight:700}
@@ -8017,7 +8021,9 @@ const RR_CSS = `
 .rr-prep{margin:10px 0;text-align:center}
 .rr-prep button{min-height:52px;padding:0 18px;border:0;border-radius:14px;background:#e0e7ff;color:#312e81;font-weight:900;font-size:16px;cursor:pointer}
 .rr-prep small{display:block;margin-top:6px;color:#475467;font-weight:700}
+@media (min-width:700px){.rr-info{grid-template-columns:auto minmax(0,1fr) auto auto}.rr-grow{grid-column:auto;order:0}.rr-chip{padding:6px 14px;min-height:56px}}
 @media (max-width:560px){.rr-sign{min-height:140px}.rr-face{min-height:96px}.rr-ctl{width:72px}.rr-car{font-size:48px}}
+@media (max-height:820px),(max-width:560px){.rr-wrap{gap:6px}.rr-board{padding:6px 12px;gap:2px;border-radius:20px}.rr-badge{font-size:16px}.rr-target{font-size:clamp(44px,9vh,72px);line-height:1.2}.rr-target.rr-icon{font-size:clamp(44px,9vh,68px)}.rr-sub{font-size:15px;min-height:1.2em}.rr-lvl{display:none}.rr-tool{min-height:50px;min-width:50px;font-size:16px}.rr-road{padding:8px 6px 4px}.rr-sign{min-height:104px}.rr-face{min-height:76px;font-size:clamp(40px,10vw,64px);border-width:5px}.rr-carrow{height:52px}.rr-car{font-size:42px}.rr-msg{min-height:24px;font-size:17px}.rr-ctl,.rr-go{min-height:56px}}
 @media (prefers-reduced-motion:reduce){.rr-wrap *{animation:none!important;transition:none!important}}
 .calm-mode .rr-wrap *{animation:none!important;transition:none!important}
 `;
@@ -8181,6 +8187,7 @@ function rrWire() {
         RR.motion = !RR.motion;
         $("rrWrap").classList.toggle("rr-motion", RR.motion);
         $("rrMotion").setAttribute("aria-pressed", RR.motion ? "true" : "false");
+        $("rrMsg").textContent = RR.motion ? "🏎️ حركة السيارة: تعمل" : "🏎️ حركة السيارة: متوقفة";
     }));
     $("rrListen").addEventListener("click", rrSafe(() => {
         const run = RR.run;
@@ -8309,8 +8316,27 @@ function rrBuildDemo(letter, stage, seed, rounds) {
     const usedWords = new Set(rounds.map(r => r.word));
     const position = stage.positions[0];
     const pick = rrPickWord(letter, position, seed + 7, usedWords, 3, false, seed + 7);
-    if (!pick || usedWords.has(pick.word)) return null;
-    return rrMakeRound("word", letter, position, pick.word, pick.occ, pick.distract, 1);
+    if (pick && !usedWords.has(pick.word)) return rrMakeRound("word", letter, position, pick.word, pick.occ, pick.distract, 1);
+    const extra = rrExtraDemoWord(letter, position, usedWords, seed);
+    if (extra) return rrMakeRound("word", letter, position, extra.word, extra.occ, extra.distract, 1);
+    return null;
+}
+
+/* كلمة إضافية للعرض النموذجي فقط حين تُستنفد كلمات البنك: معروفة وبتسجيل، الحرف فيها مرة واحدة في الموضع المطلوب،
+   ولها مشتتات بلا التباس. لا تدخل الجولات المحسوبة ولا القوائم المشتركة */
+function rrExtraDemoWord(letter, position, used, seed) {
+    try {
+        const list = Array.from(rrKnownWords()).filter(w => /^[ء-ي]{3,}$/.test(w) && !used.has(w))
+            .sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0));
+        for (let k = 0; k < list.length; k++) {
+            const w = list[(seed + k) % list.length];
+            const occ = raceFindOccurrence(w, letter, position);
+            if (occ < 0 || Array.from(w).filter(c => c === letter).length !== 1 || !EduAudio.has(w)) continue;
+            const d = rrDistractors(letter, position, 2, false, seed + 7, w, occ);
+            if (d.length === 2) return { word: w, occ: occ, distract: d };
+        }
+    } catch (e) { /* لا مثال إضافي */ }
+    return null;
 }
 
 /* مستوى الدعم لهذا التشغيل: ٢ = مثال + تلميحات، ١ = تلميحات بعد الخطأ، ٠ = بلا مساعدة.
@@ -8538,6 +8564,19 @@ function rrMoveSel(dir) {
     rrSelect(run, lane, true);
 }
 
+/* مكافئ raceScrollToPlay القديم: يُظهر شريط اللعب واللافتات و«انطلق» دون تمرير يدوي */
+function rrScrollToPlay(force) {
+    try {
+        const top = document.querySelector("#roadRaceGame .rr-top");
+        const go = $("rrGo");
+        if (!top || !go) return;
+        const r = top.getBoundingClientRect();
+        const g = go.getBoundingClientRect();
+        if (!force && r.top >= 0 && g.bottom <= window.innerHeight) return;
+        window.scrollTo({ top: Math.max(0, r.top + window.scrollY - 6), behavior: "auto" });
+    } catch (e) { /* لا شيء */ }
+}
+
 function rrNextRound(run) {
     if (run.dead || RR.run !== run) return;
     run.idx++;
@@ -8551,6 +8590,7 @@ function rrNextRound(run) {
     rrSelect(run, Math.min(1, round.options.length - 1), false);
     run.ready = true;
     run.locked = false;
+    rrScrollToPlay(run.idx === 0);
     rrSayPrompt(round);
 }
 
@@ -8633,6 +8673,7 @@ function rrPlayDemo(run, after) {
     run.demoAfter = after;
     const panel = $("rrDemo");
     panel.classList.add("on");
+    rrScrollToPlay(true);
     $("rrDemoMsg").textContent = "👀 شاهد هذا المثال";
     rrRenderTarget(d, $("rrDemoTarget"), false);
     const ds = $("rrDemoSigns");
@@ -8806,6 +8847,7 @@ function rrFinish(run) {
     }
     $("rrResStars").textContent = (isMastery && !passed) ? "" : raceStarsText(starsEarned);
     $("rrResult").classList.add("on");
+    try { next.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ }
     rrSay(phrase);
 }
 
@@ -8848,6 +8890,12 @@ function rrDecorateStageView() {
             btn.type = "button";
             btn.id = "rrPrepBtn";
             btn.textContent = "📥 جهّز صوت هذا الحرف دون اتصال";
+            try { rrInjectCss(); } catch (e) { /* نكتفي بالأنماط المضمّنة أدناه */ }
+            try {
+                btn.style.minHeight = "52px"; btn.style.minWidth = "52px"; btn.style.padding = "0 18px";
+                btn.style.border = "0"; btn.style.borderRadius = "14px"; btn.style.background = "#e0e7ff";
+                btn.style.color = "#312e81"; btn.style.fontWeight = "900"; btn.style.fontSize = "16px"; btn.style.cursor = "pointer";
+            } catch (e) { /* لا شيء */ }
             const st = document.createElement("small");
             st.id = "rrPrepStatus";
             btn.addEventListener("click", function () {
