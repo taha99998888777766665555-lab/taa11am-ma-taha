@@ -284,6 +284,7 @@
 <div
     class="card"
     id="letterDetailCard"
+    data-ltr-mode="menu"
     style="display:none;"
 >
 
@@ -293,7 +294,7 @@
             🏠<span>الرئيسية</span>
         </button>
 
-        <button class="ltr-toolbar-btn" onclick="backToLettersGrid()" type="button">
+        <button class="ltr-toolbar-btn" onclick="ltrBackFromDetail()" type="button">
             ⬅️<span>رجوع</span>
         </button>
 
@@ -301,7 +302,7 @@
             🔊<span>الصوت</span>
         </button>
 
-        <button class="ltr-toolbar-btn" onclick="retryCurrentLetterActivity()" type="button">
+        <button class="ltr-toolbar-btn" id="ltrRetryBtn" onclick="retryCurrentLetterActivity()" type="button">
             🔁<span>إعادة</span>
         </button>
 
@@ -309,19 +310,27 @@
 
     <div class="ltr-big-letter" id="currentLetterDisplay"></div>
 
-    <div class="ltr-progress-label" id="ltrProgressLabel"></div>
+    <!-- قائمة الأنشطة: كل الأنشطة مفتوحة دائمًا (بلا أقفال) -->
+    <div id="ltrActivityMenu" class="ltr-activity-menu"></div>
 
-    <div class="ltr-progress-bar">
-        <div class="ltr-progress-fill" id="ltrProgressFill"></div>
+    <!-- منفّذ الأنشطة -->
+    <div id="ltrRunner">
+
+        <div class="ltr-progress-label" id="ltrProgressLabel"></div>
+
+        <div class="ltr-progress-bar">
+            <div class="ltr-progress-fill" id="ltrProgressFill"></div>
+        </div>
+
+        <div class="ltr-activity-goal" id="ltrActivityGoal"></div>
+
+        <div id="ltrActivityStage" class="ltr-activity-stage"></div>
+
+        <div id="ltrHintBox" class="ltr-hint-box" role="status" aria-live="polite"></div>
+
+        <div id="letterMessage" class="message" role="status" aria-live="polite"></div>
+
     </div>
-
-    <div class="ltr-activity-goal" id="ltrActivityGoal"></div>
-
-    <div id="ltrActivityStage" class="ltr-activity-stage"></div>
-
-    <div id="ltrHintBox" class="ltr-hint-box" role="status" aria-live="polite"></div>
-
-    <div id="letterMessage" class="message" role="status" aria-live="polite"></div>
 
 </div>
 
@@ -3953,6 +3962,14 @@
         <h3>🔍 مهارات تحتاج مراجعة</h3>
 
         <div id="teacherSkillsReview" class="teacher-skills-review">
+            <p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>
+        </div>
+
+        <h3>🔤 تفاصيل الحروف</h3>
+
+        <p class="teacher-empty-note teacher-letters-legend">✅ تقدّم: مراحل أُنجزت · ⭐ إتقان: مراحل متقنة · 🌱 تدريب بمساعدة بصرية (يُكافأ ولا يُحسب إتقانًا)</p>
+
+        <div id="teacherLettersDetail" class="teacher-letters-detail">
             <p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>
         </div>
 

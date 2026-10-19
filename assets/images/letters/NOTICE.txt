@@ -1,0 +1,17 @@
+رسومات قسم الحروف — Letters section artwork
+============================================
+
+الملفات *.svg في هذا المجلد مأخوذة دون تعديل من مشروع Twemoji (الفرع المُصان jdecked/twemoji):
+  https://github.com/jdecked/twemoji/tree/main/assets/svg
+
+Graphics © Twitter, Inc. and other contributors.
+Licensed under Creative Commons Attribution 4.0 International (CC-BY 4.0):
+  https://creativecommons.org/licenses/by/4.0/
+نص الترخيص الكامل في الملف المجاور: LICENSE-GRAPHICS-CC-BY-4.0.txt
+
+لم تُجرَ أي تعديلات على محتوى ملفات SVG (نُسخت كما هي). اسم كل ملف هو رمز Unicode
+للإيموجي المقابل (مثال: 1f34d.svg = 🍍). التعيين بين الكلمات والملفات موجود في
+LETTER_ART_MAP داخل script.js.
+
+التحقق من الترخيص: LICENSE-GRAPHICS في المستودع الأصلي ينص على CC-BY 4.0، وملف README
+فيه يقبل الإشارة في README أو مصدر HTML/JS (وهذا ما نفعله هنا وفي تعليق script.js).

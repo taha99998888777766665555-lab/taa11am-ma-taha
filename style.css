@@ -15135,3 +15135,671 @@ body.dark-mode .quran-repeat-chip {
 body.dark-mode .quran-repeat.repeating .quran-repeat-btn {
     background: #204525;
 }
+
+
+/* =====================================================================
+   🔤 تطوير قسم الحروف — المرحلة ١ (أصناف جديدة فقط، لا تمسّ أقسامًا أخرى)
+   - بلا أقفال: كل المجموعات والأنشطة مفتوحة
+   - قائمة أنشطة لكل حرف + رسومات SVG محلية بدل الإيموجي
+   ===================================================================== */
+
+/* رسومات SVG (Twemoji CC-BY 4.0، انظر assets/images/letters/NOTICE.txt)
+   تتبع حجم الخط الذي كان الإيموجي يتبعه */
+.ltr-art {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.12em;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.ltr-display-emoji .ltr-art,
+.ltr-result-emoji .ltr-art {
+    display: block;
+    margin: 0 auto;
+}
+
+/* بطاقة المجموعة */
+.ltr-level-progress {
+    font-size: 14px;
+    font-weight: bold;
+    color: #5c6f7a;
+}
+
+.ltr-level-card-btn.completed .ltr-level-progress {
+    color: #2e7d32;
+}
+
+/* بطاقة الحرف: حرف + شريط إتقان رفيع */
+.ltr-letter-card-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ltr-letter-glyph {
+    line-height: 1.1;
+}
+
+.ltr-letter-meter {
+    display: block;
+    width: 70%;
+    height: 6px;
+    background: rgba(21, 101, 192, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.ltr-letter-meter i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #43a047, #81c784);
+    border-radius: 6px;
+}
+
+/* ---------- وضع القائمة / وضع التشغيل داخل بطاقة الحرف ---------- */
+
+#letterDetailCard[data-ltr-mode="menu"] #ltrRunner,
+#letterDetailCard[data-ltr-mode="menu"] #ltrRetryBtn {
+    display: none;
+}
+
+#letterDetailCard[data-ltr-mode="run"] #ltrActivityMenu {
+    display: none;
+}
+
+.ltr-big-letter {
+    cursor: pointer;
+}
+
+/* ---------- قائمة الأنشطة ---------- */
+
+.ltr-activity-menu {
+    max-width: 560px;
+    margin: 6px auto 0;
+    animation: ltrFadeUp 0.35s ease both;
+}
+
+@keyframes ltrFadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.ltr-menu-primary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0 8px;
+}
+
+.ltr-menu-main,
+.ltr-menu-short {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 118px;
+    padding: 12px 8px;
+    border: 3px solid transparent;
+    border-radius: 22px;
+    cursor: pointer;
+    font-family: inherit;
+    touch-action: manipulation;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ltr-menu-main {
+    background: linear-gradient(160deg, #1976d2, #1565c0);
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(21, 101, 192, 0.28);
+}
+
+.ltr-menu-short {
+    background: linear-gradient(160deg, #fff8e1, #ffecb3);
+    color: #5d4037;
+    box-shadow: 0 6px 14px rgba(255, 160, 0, 0.2);
+}
+
+.ltr-menu-main b,
+.ltr-menu-short b {
+    font-size: 19px;
+}
+
+.ltr-menu-main small,
+.ltr-menu-short small {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.ltr-menu-main-icon {
+    font-size: 38px;
+    line-height: 1;
+}
+
+.ltr-menu-main:active,
+.ltr-menu-short:active,
+.ltr-stage-card:active {
+    transform: scale(0.97);
+}
+
+.ltr-menu-caption {
+    color: #78909c;
+    font-size: 15px;
+    margin: 14px 0 8px;
+}
+
+.ltr-stage-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 380px) {
+    .ltr-stage-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.ltr-stage-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 112px;
+    padding: 12px 6px;
+    background: #f1f7fe;
+    border: 3px solid transparent;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    touch-action: manipulation;
+    box-shadow: 0 3px 8px rgba(21, 101, 192, 0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ltr-stage-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(21, 101, 192, 0.18);
+}
+
+.ltr-stage-card.lvl1 { background: #eaf5ec; }
+.ltr-stage-card.lvl2 { background: #e3f3e6; border-color: #a5d6a7; }
+.ltr-stage-card.lvl3 { background: #dff3e3; border-color: #43a047; }
+
+.ltr-stage-icon {
+    font-size: 34px;
+    line-height: 1;
+}
+
+.ltr-stage-name {
+    font-size: 15px;
+    font-weight: bold;
+    color: #37474f;
+    text-align: center;
+}
+
+.ltr-stage-stars {
+    display: flex;
+    gap: 2px;
+    font-size: 15px;
+}
+
+.ltr-mini-star.off {
+    filter: grayscale(1);
+    opacity: 0.28;
+}
+
+.ltr-result-soft {
+    color: #5c6f7a;
+}
+
+body.dark-mode .ltr-menu-short {
+    background: #4e3d1c;
+    color: #ffe0b2;
+}
+
+body.dark-mode .ltr-stage-card {
+    background: #1f2d3d;
+}
+
+body.dark-mode .ltr-stage-card.lvl1,
+body.dark-mode .ltr-stage-card.lvl2,
+body.dark-mode .ltr-stage-card.lvl3 {
+    background: #1d3a26;
+}
+
+body.dark-mode .ltr-stage-name {
+    color: #cfd8dc;
+}
+
+body.calm-mode .ltr-activity-menu {
+    animation: none;
+}
+
+/* ===== المرحلة ٢: قطار المواقع + بيت الحرف ===== */
+.ltr-activity-head { display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
+.ltr-head-glyph { font-size:clamp(34px,8vw,52px); margin:0; }
+.ltr-train, .ltr-house-game { display:flex; flex-direction:column; gap:12px; }
+.ltr-train-track { display:flex; align-items:stretch; gap:6px; padding:10px 4px 16px; overflow:visible; border-bottom:6px solid #8d6e63; border-radius:6px; background:linear-gradient(#e3f2fd,#f1f8e9); }
+.ltr-train-loco { display:flex; align-items:center; flex:0 0 auto; }
+.ltr-train-loco .ltr-art { width:clamp(46px,11vw,70px); height:clamp(46px,11vw,70px); }
+.ltr-wagon { flex:1 1 0; min-width:0; min-height:104px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:6px; padding:8px 6px; border:3px dashed #1976d2; border-radius:14px; background:#fff; color:#0d47a1; font:inherit; cursor:pointer; position:relative; touch-action:manipulation; }
+.ltr-wagon::after { content:""; position:absolute; bottom:-14px; inset-inline:20%; height:10px; border-radius:50%; background:radial-gradient(circle,#455a64 40%,transparent 42%) 0 0/28px 10px repeat-x; }
+.ltr-wagon-label { font-weight:700; font-size:clamp(14px,3.6vw,18px); }
+.ltr-wagon-slot { display:flex; flex-direction:column; align-items:center; gap:4px; min-height:40px; }
+.ltr-wagon.filled { border-style:solid; border-color:#2e7d32; background:#e8f5e9; cursor:default; }
+.ltr-placed { font-size:clamp(20px,5vw,28px); font-weight:700; color:#1b5e20; }
+.ltr-placed.out { color:#546e7a; }
+.ltr-shape-badge { font-size:clamp(22px,5.4vw,30px); color:#0d47a1; background:#fff8e1; border-radius:10px; padding:0 10px; line-height:1.5; }
+.ltr-tray { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; min-height:64px; padding:6px 0; }
+.ltr-ticket { min-width:92px; min-height:64px; padding:10px 18px; border:3px solid #ff9800; border-radius:16px; background:#fff3e0; color:#4e342e; font:inherit; font-size:clamp(22px,5.6vw,32px); font-weight:700; cursor:grab; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:none; position:relative; transition:box-shadow .15s, border-color .15s; }
+.ltr-ticket.selected { border-color:#1976d2; box-shadow:0 0 0 5px rgba(25,118,210,.35); background:#e3f2fd; }
+.ltr-ticket.dragging { z-index:50; cursor:grabbing; box-shadow:0 10px 24px rgba(0,0,0,.3); transition:none; opacity:.95; }
+.ltr-ticket.shake { animation:ltrShake .35s; }
+@keyframes ltrShake { 0%,100%{translate:0} 25%{translate:-7px} 75%{translate:7px} }
+.ltr-ticket-pic { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.ltr-ticket-art .ltr-art { width:clamp(34px,9vw,48px); height:clamp(34px,9vw,48px); pointer-events:none; }
+.ltr-ticket-word { pointer-events:none; }
+.ltr-hit { color:#d81b60; }
+.ltr-wagon.armed, .ltr-house-zone.armed { border-color:#1976d2; animation:ltrPulse 1.1s infinite; }
+.ltr-wagon.over, .ltr-house-zone.over { background:#fffde7; border-color:#f9a825; }
+.ltr-wagon.hinted, .ltr-house-zone.hinted { border-color:#2e7d32; box-shadow:0 0 0 6px rgba(46,125,50,.35); }
+@keyframes ltrPulse { 0%,100%{box-shadow:0 0 0 0 rgba(25,118,210,.0)} 50%{box-shadow:0 0 0 6px rgba(25,118,210,.25)} }
+.ltr-drag-tip { text-align:center; font-size:14px; color:#607d8b; }
+.ltr-shape-step { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.ltr-shape-word { font-size:clamp(34px,9vw,54px); font-weight:700; }
+.ltr-house-wrap { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.ltr-house-zone { min-height:150px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px; border:3px dashed #1976d2; border-radius:16px; background:#fff; font:inherit; color:#0d47a1; cursor:pointer; touch-action:manipulation; }
+.ltr-house-in { background:#fff8e1; border-color:#f9a825; }
+.ltr-house-out { background:#e8f5e9; border-color:#43a047; color:#1b5e20; }
+.ltr-roof { width:0; height:0; border-left:clamp(30px,9vw,64px) solid transparent; border-right:clamp(30px,9vw,64px) solid transparent; border-bottom:34px solid #c62828; position:relative; align-self:center; box-sizing:content-box; }
+.ltr-roof-letter { position:absolute; top:6px; left:50%; transform:translateX(-50%); color:#fff; font-weight:800; font-size:22px; line-height:1; }
+.ltr-garden-icon .ltr-art { width:40px; height:40px; }
+.ltr-zone-title { font-weight:700; font-size:clamp(14px,3.6vw,18px); }
+.ltr-zone-items { display:flex; flex-wrap:wrap; justify-content:center; gap:6px 12px; }
+@media (max-width:420px) { .ltr-train-loco .ltr-art { width:38px; height:38px; } .ltr-wagon-label { font-size:13px; } .ltr-wagon { padding:8px 3px; } .ltr-ticket { min-width:80px; padding:8px 12px; } }
+@media (prefers-reduced-motion:reduce) { .ltr-wagon.armed, .ltr-house-zone.armed, .ltr-ticket.shake { animation:none; } }
+
+/* ===== المرحلة ٣: ركّب الكلمة + بناء المقطع + صندوق الأصوات ===== */
+.ltr-wordbuild, .ltr-syllable, .ltr-soundfind { display:flex; flex-direction:column; gap:12px; align-items:stretch; }
+.ltr-wb-pic { display:flex; justify-content:center; }
+.ltr-wb-pic .ltr-art { width:clamp(64px,18vw,104px); height:clamp(64px,18vw,104px); }
+.ltr-slots { display:flex; justify-content:center; gap:10px; flex-wrap:nowrap; padding:8px 0; }
+.ltr-slot { flex:0 1 auto; min-width:clamp(52px,14vw,84px); min-height:clamp(64px,16vw,92px); padding:4px 6px; border:3px dashed #1976d2; border-radius:14px; background:#fff; color:#0d47a1; font:inherit; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:manipulation; position:relative; }
+.ltr-slot-ghost { font-size:clamp(26px,7vw,40px); color:rgba(25,118,210,.28); }
+.ltr-slot-letter { font-size:clamp(32px,9vw,52px); font-weight:700; color:#1b5e20; line-height:1.4; }
+.ltr-slot.filled { border-style:solid; border-color:#2e7d32; background:#e8f5e9; cursor:default; }
+.ltr-slot.armed { border-color:#1976d2; animation:ltrPulse 1.1s infinite; }
+.ltr-slot.over { background:#fffde7; border-color:#f9a825; }
+.ltr-slot.hinted, .ltr-ticket.hinted, .ltr-letter-tile.hinted, .ltr-syl-slot.hinted, .ltr-syl-base.hinted { border-color:#2e7d32; box-shadow:0 0 0 6px rgba(46,125,50,.35); }
+.ltr-tile { min-width:clamp(58px,15vw,84px); font-size:clamp(32px,9vw,48px); padding:6px 12px; }
+.ltr-wb-done { text-align:center; font-size:clamp(34px,9vw,54px); font-weight:800; color:#1b5e20; }
+.ltr-syl-base { align-self:center; min-width:clamp(96px,28vw,140px); min-height:clamp(96px,28vw,140px); border:3px dashed #1976d2; border-radius:20px; background:#fff; display:flex; align-items:center; justify-content:center; font:inherit; cursor:pointer; touch-action:manipulation; }
+.ltr-syl-letter { font-size:clamp(56px,16vw,84px); font-weight:800; color:#0d47a1; line-height:1.6; }
+.ltr-syl-base.filled { border-style:solid; border-color:#2e7d32; background:#e8f5e9; }
+.ltr-syl-base.armed { animation:ltrPulse 1.1s infinite; }
+.ltr-syl-base.over { background:#fffde7; }
+.ltr-marktile { display:flex; flex-direction:column; align-items:center; gap:0; min-width:clamp(80px,22vw,110px); }
+.ltr-markglyph { font-size:clamp(40px,11vw,60px); line-height:1.5; }
+.ltr-marktile small { font-size:14px; font-weight:600; }
+.ltr-syl-slots { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; }
+.ltr-syl-slot { min-width:clamp(88px,26vw,120px); min-height:clamp(88px,24vw,110px); border:3px dashed #1976d2; border-radius:16px; background:#fff; font:inherit; color:#0d47a1; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; touch-action:manipulation; }
+.ltr-syl-text { font-size:clamp(38px,11vw,56px); font-weight:700; line-height:1.5; }
+.ltr-syl-slot.filled { border-style:solid; border-color:#2e7d32; background:#e8f5e9; cursor:default; }
+.ltr-syl-slot.armed { animation:ltrPulse 1.1s infinite; }
+.ltr-syl-slot.over { background:#fffde7; }
+.ltr-syl-result { text-align:center; min-height:clamp(40px,10vw,62px); font-size:clamp(36px,10vw,56px); font-weight:800; color:#1b5e20; }
+.ltr-soundcard { min-width:clamp(80px,22vw,104px); font-size:clamp(22px,6vw,30px); }
+.ltr-box-icon .ltr-art { width:44px; height:44px; }
+.ltr-letter-tiles { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; padding:6px 0; }
+.ltr-letter-tile { min-width:clamp(60px,16vw,84px); min-height:clamp(70px,18vw,96px); border:3px solid #ff9800; border-radius:16px; background:#fff3e0; color:#4e342e; font:inherit; font-size:clamp(34px,10vw,52px); font-weight:700; cursor:pointer; touch-action:manipulation; }
+.ltr-letter-tile.correct { border-color:#2e7d32; background:#c8e6c9; }
+.ltr-letter-tile.wrong, .ltr-letter-tile:disabled:not(.correct) { opacity:.45; }
+@media (max-width:420px) { .ltr-slots { gap:6px; } .ltr-slot { min-width:48px; } .ltr-tile { min-width:54px; padding:6px 8px; } }
+
+/* ===== المرحلة ٤: محقق النقاط + أكمل النمط + الحرف المختبئ ===== */
+.ltr-dots { display:flex; flex-direction:column; gap:12px; }
+.ltr-dots-card { display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px; border-radius:18px; background:#f3e5f5; }
+.ltr-dots-letter { font-size:clamp(84px,26vw,130px); font-weight:800; color:#4a148c; line-height:1.3; }
+.ltr-dotzone { width:min(88%,320px); min-height:clamp(60px,15vw,76px); border:3px dashed #7b1fa2; border-radius:14px; background:#fff; color:#4a148c; font:inherit; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; touch-action:manipulation; }
+.ltr-dotzone-label { font-weight:700; font-size:15px; opacity:.7; }
+.ltr-dotzone-items { display:flex; gap:10px; }
+.ltr-dotzone.armed { animation:ltrPulse 1.1s infinite; }
+.ltr-dotzone.over { background:#fffde7; }
+.ltr-dotzone.hinted { border-color:#2e7d32; box-shadow:0 0 0 6px rgba(46,125,50,.35); }
+.ltr-dot { display:inline-block; width:clamp(24px,7vw,32px); height:clamp(24px,7vw,32px); border-radius:50%; background:#d81b60; box-shadow:inset 0 -3px 0 rgba(0,0,0,.18); }
+.ltr-dottoken { min-width:72px; min-height:72px; display:flex; align-items:center; justify-content:center; }
+.ltr-sort-bins { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.ltr-sort-bin { min-height:110px; }
+.ltr-clue-card { text-align:center; font-size:clamp(18px,5vw,24px); padding:12px; border-radius:16px; background:#fff8e1; border:2px solid #f9a825; color:#4e342e; }
+.ltr-seq { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; padding:8px 0; }
+.ltr-seq-item { min-width:clamp(44px,12vw,64px); min-height:clamp(52px,13vw,72px); padding:2px 6px; display:flex; align-items:center; justify-content:center; font-size:clamp(28px,8vw,42px); font-weight:700; border-radius:12px; background:#e3f2fd; color:#0d47a1; }
+.ltr-seq-blank { min-width:clamp(48px,13vw,68px); font-size:clamp(28px,8vw,42px); }
+.ltr-seq-blank.filled { font-weight:700; color:#1b5e20; }
+.ltr-cover .ltr-art { width:clamp(34px,10vw,52px); height:clamp(34px,10vw,52px); }
+.ltr-hide-slot { border-color:#ef6c00; background:#fff3e0; }
+.ltr-slot-static { cursor:default; border-style:solid; border-color:#90caf9; background:#e3f2fd; }
+@media (max-width:420px) { .ltr-sort-bins { gap:5px; } .ltr-seq { gap:5px; } }
+
+/* =========================================================
+   المرحلة ٥: التتبّع الموجّه + رحلة الحرف
+========================================================= */
+.ltr-tw { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.ltr-tw-box { position:relative; width:min(92vw, 380px); aspect-ratio:4 / 3; background:#fff; border-radius:20px; box-shadow:0 4px 14px rgba(0,0,0,.12); overflow:hidden; touch-action:none; border:3px solid #bbdefb; }
+.ltr-tw-box.done { border-color:#43a047; }
+.ltr-tw-canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:crosshair; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.ltr-tw-status { min-height:30px; font-size:clamp(16px,4.4vw,19px); font-weight:700; color:#37474f; text-align:center; padding:0 8px; }
+.ltr-tw-btns, .ltr-tw-alts { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:4px; }
+.ltr-tw-btns { width:100%; }
+.ltr-tw-alts { width:100%; }
+.ltr-tw-btns button, .ltr-tw-alts button { flex:1 1 30%; min-height:52px; min-width:0; padding:8px 6px; font-size:clamp(16px,4.4vw,19px); border-radius:16px; }
+.ltr-tw-alts { margin-top:14px; padding-top:12px; border-top:2px dashed #cfd8dc; }
+.ltr-tw-alt.on { background:#e3f2fd; border-color:#1976d2; color:#0d47a1; }
+.ltr-tw-alt.hinted { box-shadow:0 0 0 6px rgba(46,125,50,.35); border-color:#2e7d32; }
+.ltr-tw-word { display:flex; align-items:center; justify-content:center; gap:12px; margin:6px 0 10px; flex-wrap:wrap; }
+.ltr-tw-word-pic .ltr-art { width:64px; height:64px; }
+.ltr-tw-word-text { font-size:clamp(34px,9vw,48px); font-weight:800; color:#37474f; }
+.ltr-tw-word-text .ltr-hit { color:#d84315; }
+.ltr-tw-word-replay { min-width:52px; min-height:52px; font-size:24px; border-radius:50%; }
+.ltr-tw-sub { text-align:center; font-size:17px; font-weight:700; color:#546e7a; margin-bottom:8px; }
+
+.ltr-pc, .ltr-so { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.ltr-pc-target { font-size:clamp(76px,24vw,120px); line-height:1.25; font-weight:800; color:#1565c0; direction:rtl; }
+.ltr-pc-sub { font-size:16px; font-weight:700; color:#78909c; margin-top:-8px; }
+.ltr-so-target { font-size:clamp(58px,18vw,90px); }
+.ltr-pc-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; width:100%; }
+.ltr-pathcard { padding:8px; min-height:0; width:clamp(118px,28vw,170px); display:flex; align-items:center; justify-content:center; }
+.ltr-pathcard canvas { width:100%; aspect-ratio:4 / 3; display:block; pointer-events:none; }
+.ltr-stepcard { padding:6px; min-width:0; flex:1 1 0; width:auto; max-width:130px; min-height:0; }
+.ltr-stepcard canvas { width:100%; aspect-ratio:4 / 3; display:block; pointer-events:none; }
+.ltr-stepslot { flex:1 1 0; width:auto; max-width:130px; min-width:0; min-height:0; padding:6px; }
+.ltr-stepslot canvas { width:100%; aspect-ratio:4 / 3; display:block; pointer-events:none; }
+.ltr-so-slots { flex-wrap:nowrap; width:100%; }
+.ltr-so-tray { width:100%; flex-wrap:nowrap; }
+.ltr-so { width:100%; }
+
+.ltr-journey-map { display:flex; justify-content:center; gap:8px; flex-wrap:nowrap; margin:6px 0 12px; }
+.ltr-station { flex:1 1 0; max-width:96px; min-height:84px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:6px 4px; border:3px solid #b0bec5; border-radius:16px; background:#fff; color:#37474f; font:inherit; cursor:pointer; touch-action:manipulation; }
+.ltr-station small { font-size:12px; font-weight:700; color:#607d8b; line-height:1.2; }
+.ltr-station-glyph { font-size:clamp(28px,8vw,40px); font-weight:800; line-height:1.2; direction:rtl; }
+.ltr-station-flag { font-size:16px; }
+.ltr-station.current { border-color:#1976d2; background:#e3f2fd; box-shadow:0 0 0 4px rgba(25,118,210,.25); }
+.ltr-station.done { border-color:#43a047; background:#e8f5e9; }
+@media (max-width:420px) { .ltr-journey-map { gap:5px; } .ltr-station small { font-size:11px; } }
+
+body.dark-mode .ltr-tw-box { background:#232946; border-color:#3f51b5; }
+body.dark-mode .ltr-tw-status, body.dark-mode .ltr-tw-word-text, body.dark-mode .ltr-tw-sub { color:#e8eaf6; }
+body.dark-mode .ltr-pc-target { color:#90caf9; }
+body.dark-mode .ltr-station { background:#232946; border-color:#546e7a; color:#e8eaf6; }
+body.dark-mode .ltr-station.current { background:#1a237e; }
+body.dark-mode .ltr-station.done { background:#1b5e20; }
+body.dark-mode .ltr-pathcard canvas, body.dark-mode .ltr-stepcard canvas { background:#fff; border-radius:10px; }
+
+/* 🌱 المرحلة ٥ (مراجعة): المستوى الأول تدريب بمساعدة بصرية */
+.ltr-practice-badge {
+    margin: 6px auto 4px;
+    max-width: 520px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: #ecfdf3;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.ltr-practice-skip {
+    display: block;
+    margin: 10px auto 0;
+    min-height: 52px;
+    min-width: 160px;
+}
+
+body.dark-mode .ltr-practice-badge {
+    background: #12301f;
+    color: #bbf7d0;
+    border-color: #1f6b3d;
+}
+
+/* =========================================================
+   🧭 المرحلة ٦ — تنظيم قائمة الحرف + وضع التركيز + تمييز التدريب/التقدّم/الإتقان
+========================================================= */
+
+.ltr-letter-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 8px 0 6px;
+}
+
+.ltr-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px;
+    border-radius: 14px;
+    background: #f1f7fe;
+    font-size: 14px;
+    color: #37474f;
+}
+
+.ltr-chip b { font-size: 18px; color: #1e3a8a; }
+.ltr-chip.progress { background: #eaf5ec; }
+.ltr-chip.mastery  { background: #fff8e1; }
+.ltr-chip.practice { background: #ecfdf3; }
+
+.ltr-letter-meter.big {
+    display: block;
+    height: 10px;
+    margin: 0 0 10px;
+    border-radius: 6px;
+    background: #e3eaf3;
+    overflow: hidden;
+}
+
+.ltr-letter-meter.big i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #43a047, #81c784);
+}
+
+.ltr-menu-suggest {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 72px;
+    margin: 4px 0 10px;
+    padding: 10px 14px;
+    border: 3px solid #ffb300;
+    border-radius: 20px;
+    background: linear-gradient(160deg, #fffde7, #fff3c4);
+    color: #5d4037;
+    font-family: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.ltr-menu-suggest-icon { font-size: 34px; line-height: 1; }
+.ltr-menu-suggest-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.ltr-menu-suggest-text small { font-size: 14px; opacity: 0.85; }
+.ltr-menu-suggest-text b { font-size: 19px; }
+
+.ltr-stage-group {
+    margin: 10px 0;
+    border-radius: 18px;
+    background: #f8fbff;
+    border: 2px solid #e1ecf7;
+    overflow: hidden;
+}
+
+.ltr-stage-group > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 17px;
+    color: #1e3a8a;
+    list-style: none;
+    touch-action: manipulation;
+}
+
+.ltr-stage-group > summary::-webkit-details-marker { display: none; }
+.ltr-stage-group > summary::after { content: "▾"; margin-inline-start: auto; font-size: 18px; color: #78909c; }
+.ltr-stage-group[open] > summary::after { content: "▴"; }
+.ltr-group-icon { font-size: 26px; line-height: 1; }
+.ltr-group-count { font-size: 14px; color: #2e7d32; font-weight: bold; }
+.ltr-stage-group .ltr-stage-grid { padding: 4px 10px 12px; }
+
+.ltr-stage-card { position: relative; }
+
+.ltr-stage-flag {
+    position: absolute;
+    top: 6px;
+    inset-inline-start: 8px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.ltr-stage-flag.practice { inset-inline-start: auto; inset-inline-end: 8px; }
+
+.ltr-legend {
+    margin: 12px 0 4px;
+    font-size: 14px;
+    color: #546e7a;
+}
+
+.ltr-legend > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.ltr-legend p { margin: 4px 0 0; line-height: 1.7; }
+
+/* سطر الهدف: شارة المرحلة + نص أوضح */
+.ltr-activity-goal {
+    font-size: 17px;
+    font-weight: bold;
+    color: #455a64;
+    margin-bottom: 8px;
+}
+
+.ltr-goal-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    margin-inline-end: 6px;
+    border-radius: 999px;
+    background: #e3f2fd;
+    color: #1565c0;
+    font-size: 15px;
+}
+
+.ltr-goal-chip .ltr-art { width: 22px; height: 22px; }
+
+/* 🎯 وضع التركيز: أثناء تشغيل نشاط (لا القائمة ولا النتيجة) يختفي الشريط العلوي لتقليل المشتتات.
+   :has غير مدعوم قديمًا ← يبقى الشريط ظاهرًا ولا يضرّ شيئًا */
+body:has(#letters.active #letterDetailCard[data-ltr-mode="run"]:not([data-ltr-view="result"])) > header {
+    display: none;
+}
+
+#ltrRunner { position: relative; }
+
+.ltr-star-pop {
+    position: absolute;
+    top: 6px;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: #fff8e1;
+    color: #e65100;
+    font-size: 22px;
+    font-weight: 900;
+    box-shadow: 0 4px 12px rgba(255, 160, 0, 0.35);
+    pointer-events: none;
+    animation: ltrStarPop 1.1s ease-out both;
+}
+
+.ltr-star-pop .ltr-art { width: 28px; height: 28px; vertical-align: middle; }
+
+@keyframes ltrStarPop {
+    0%   { opacity: 0; transform: translate(-50%, 10px) scale(0.8); }
+    25%  { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+    80%  { opacity: 1; transform: translate(-50%, -6px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -14px) scale(1); }
+}
+
+.ltr-result-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 8px auto 12px;
+    max-width: 420px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: #f1f7fe;
+    text-align: start;
+    font-size: 16px;
+    color: #37474f;
+}
+
+/* أزرار لمس مريحة داخل الأنشطة */
+#ltrActivityStage button { min-height: 52px; touch-action: manipulation; }
+.ltr-toolbar-btn { min-height: 56px; min-width: 56px; }
+
+/* 👩‍🏫 لوحة المعلم: تفاصيل الحروف */
+.teacher-letters-head { margin: 4px 0 8px; font-weight: bold; color: #37474f; }
+.teacher-letters-legend { font-size: 13px; }
+.teacher-letters-table { display: flex; flex-direction: column; gap: 6px; }
+
+.teacher-letter-row {
+    display: grid;
+    grid-template-columns: 36px repeat(3, auto) 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: #f1f7fe;
+    font-size: 14px;
+}
+
+.teacher-letter-row.needs { background: #fff4e5; border: 1px solid #ffcc80; }
+.teacher-letter-row .tl-letter { font-size: 22px; color: #1e3a8a; }
+.teacher-letter-row .tl-note { font-size: 13px; color: #6d4c41; }
+
+@media (max-width: 420px) {
+    .teacher-letter-row { grid-template-columns: 32px repeat(3, auto); }
+    .teacher-letter-row .tl-note { grid-column: 1 / -1; }
+}
+
+body.dark-mode .ltr-chip,
+body.dark-mode .ltr-result-lines { background: #1f2a3a; color: #dbe7f5; }
+body.dark-mode .ltr-chip b { color: #bbdefb; }
+body.dark-mode .ltr-chip.progress { background: #16301f; }
+body.dark-mode .ltr-chip.mastery { background: #3a3216; }
+body.dark-mode .ltr-chip.practice { background: #12301f; }
+body.dark-mode .ltr-stage-group { background: #1a2433; border-color: #2c3b52; }
+body.dark-mode .ltr-stage-group > summary { color: #bbdefb; }
+body.dark-mode .ltr-menu-suggest { background: #3a3216; color: #ffe0b2; border-color: #ffb300; }
+body.dark-mode .ltr-legend { color: #b0bec5; }
+body.dark-mode .ltr-activity-goal { color: #cfd8dc; }
+body.dark-mode .ltr-goal-chip { background: #1a2d4a; color: #bbdefb; }
+body.dark-mode .teacher-letter-row { background: #1f2a3a; color: #dbe7f5; }
+body.dark-mode .teacher-letter-row.needs { background: #3a2a14; border-color: #8d5a1f; }
+body.dark-mode .teacher-letter-row .tl-letter { color: #bbdefb; }
+body.dark-mode .teacher-letter-row .tl-note { color: #ffcc80; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ltr-star-pop { animation: none; opacity: 1; }
+    .ltr-stage-card, .ltr-menu-main, .ltr-menu-short, .ltr-menu-suggest { transition: none; animation: none; }
+}

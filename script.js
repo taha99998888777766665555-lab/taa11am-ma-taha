@@ -7053,6 +7053,8 @@ function raceNormalizeProgress(p) {
                 if (!raceIsObj(r)) return;
                 const rec = { done: r.done === true, stars: Math.max(0, Math.min(3, Number(r.stars) || 0)), plays: Math.max(0, Number(r.plays) || 0) };
                 if (r.migrated === true) rec.migrated = true;
+                /* حقول إضافية من المحرك الجديد (لا تُنشأ للسجلات القديمة) */
+                ["ind", "lvl", "ft"].forEach(k => { if (typeof r[k] === "number" && isFinite(r[k]) && r[k] >= 0) rec[k] = r[k]; });
                 stages[id] = rec;
             });
         }
@@ -7066,6 +7068,8 @@ function raceNormalizeProgress(p) {
                 attempts: Math.max(0, Number(m.attempts) || 0)
             }
         };
+        if (typeof m.ind === "number" && isFinite(m.ind) && m.ind >= 0) out.letters[l].mastery.ind = m.ind;
+        if (m.indPassed === true) out.letters[l].mastery.indPassed = true;
     });
     return out;
 }
@@ -7267,16 +7271,14 @@ function renderRaceStages() {
     }
     const list = $("raceStageList");
     if (!list) return;
-    let prevDone = true;
+    /* كل المراحل مفتوحة دائمًا: لا أقفال ولا اشتراط إنهاء مرحلة سابقة */
     list.innerHTML = stages.map((s, i) => {
         const done = raceStageDone(entry, s.id);
-        const open = i === 0 || prevDone;
-        prevDone = done;
         const st = entry.stages[s.id];
         const starsN = s.id === "mastery" ? (entry.mastery.stars || 0) : (st && st.stars) || 0;
-        const state = done ? "done" : (open ? "open" : "locked");
-        const mark = done ? "✅" : (open ? "▶" : "🔒");
-        return `<button type="button" class="race-stage-btn ${state}" data-stage="${s.id}" ${open ? "" : "disabled"} onclick="startRaceStage('${letter}', ${i})">
+        const state = done ? "done" : "open";
+        const mark = done ? "✅" : "▶";
+        return `<button type="button" class="race-stage-btn ${state}" data-stage="${s.id}" onclick="startRaceStage('${letter}', ${i})">
             <span class="race-stage-no">${arabicNumber(i + 1)}</span>
             <span class="race-stage-icon">${s.icon}</span>
             <span class="race-stage-name">${s.title}</span>
@@ -7284,6 +7286,7 @@ function renderRaceStages() {
             <span class="race-stage-mark">${mark}</span>
         </button>`;
     }).join("");
+    rrDecorateStageView();
 }
 
 function raceBackFromStages() {
@@ -7298,7 +7301,7 @@ function startLetterRace() {
     openLetterRaceMap();
 }
 
-function startRaceStage(letter, stageIdx) {
+function legacyStartRaceStage(letter, stageIdx) {
     const stages = raceStagesFor(letter);
     const stage = stages[stageIdx];
     if (!stage) return;
@@ -7921,6 +7924,991 @@ function exitLetterRace(toGrid) {
         renderRaceStages();
         raceMapShow("stages");
     }
+}
+
+/* =========================================================
+   🛣️ سباق الطريق (RR) — محرك المراحل الجديد لسباق الحروف
+   ---------------------------------------------------------
+   - يُستدعى فقط من الموزّع startRaceStage؛ لا يعمل شيء منه عند تحميل الملف.
+   - المحرك القديم (legacyStartRaceStage وما يتبعه) باقٍ كما هو وهو خيار التراجع.
+   - قواعد المكافآت كما في القديم تمامًا: نجمة عامة واحدة لكل جولة صحيحة من
+     أول محاولة (round.wrong === 0)، نجوم المرحلة بـ raceStageStars نفسها،
+     والإتقان 5 من 6. لا سقف جديد ولا تغيير في الرصيد.
+   - الإتقان المستقل حقل إضافي منفصل (ind / indPassed) لا يدخل في النجوم ولا في passed.
+   - الواجهة والتنسيق يُنشآن بالجافاسكربت عند أول دخول فقط.
+========================================================= */
+
+const RR_ENABLED = true;
+const RR_BUILD = "rr1";
+const RR_SCREEN = "roadRaceGame";
+const RR_CSS_ID = "rr-css";
+const RR_READY_MS = 3000;
+const RR_PHRASES = ["صحيح", "أحسنت يا بطل", "أحسنت، عمل رائع", "حاول مرة أخرى", "محاولة رائعة، لنحاول مرة أخرى", "أحسنت! أكملت المستوى بنجاح", "أحسنت! أتممت هذا الحرف بنجاح"];
+
+/* مالك التشغيل: لا يعمل محركان معًا */
+let rrOwner = null;          /* null | "new" | "legacy" */
+/* يُضبط عند أول فشل ويدوم حتى إعادة تحميل الصفحة (في الذاكرة فقط، بلا مفتاح تخزين) */
+let rrDisabled = false;
+let rrRunSeq = 0;
+/* بوابة المكافأة: كل (تشغيل، جولة) تُحتسب مرة واحدة فقط */
+const rrSettled = new Set();
+
+const RR = { run: null, session: 0, timers: [], keyOn: false, motion: false, drag: null };
+
+const RR_CSS = `
+.rr-probe{--rr-build:rr1;display:none}
+#roadRaceGame{width:100%;min-height:100vh;padding:10px;overflow-x:hidden;overflow-y:auto}
+.rr-wrap{position:relative;width:min(980px,100%);margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.rr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rr-info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rr-chip{background:#fff;border-radius:16px;padding:4px 10px;box-shadow:0 3px 8px rgba(0,0,0,.1);min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
+.rr-chip small{color:#667085;font-size:12px;font-weight:800}
+.rr-chip b{color:#172033;font-size:22px;font-weight:900}
+.rr-grow{grid-column:1/-1;order:-1}
+#roadRaceGame .race-top-btn{width:52px;height:52px;min-width:52px;min-height:52px;flex:0 0 52px;padding:0}
+#roadRaceGame .race-top-btn#rrMotion[aria-pressed="true"]{background:#fde047;box-shadow:0 0 0 4px #f59e0b}
+.rr-dots{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.rr-dot{width:14px;height:14px;border-radius:50%;background:#cbd5e1}
+.rr-dot.done{background:#22c55e}
+.rr-dot.cur{background:#6366f1;transform:scale(1.3)}
+.rr-board{background:linear-gradient(135deg,#fff,#eef4ff);border-radius:24px;padding:14px 16px;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.14);display:flex;flex-direction:column;align-items:center;gap:6px}
+.rr-badge{font-weight:900;color:#4f46e5;font-size:19px}
+.rr-target{font-size:clamp(60px,17vw,124px);font-weight:900;line-height:1.35;color:#172033;min-height:1.35em;direction:rtl}
+.rr-target.rr-icon{font-size:clamp(56px,14vw,96px)}
+.rr-target.rr-filled{color:#15803d}
+.rr-blank{display:inline-block;min-width:1.1em;height:.9em;vertical-align:baseline;border-bottom:7px dashed #f59e0b;margin:0 4px}
+.rr-sub{color:#475467;font-size:17px;font-weight:800;min-height:1.4em}
+.rr-lvl{color:#6b7280;font-size:13px;font-weight:800}
+.rr-tools{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.rr-tool{min-height:58px;min-width:58px;padding:0 20px;border:0;border-radius:16px;background:#eef2ff;color:#312e81;font-size:18px;font-weight:900;cursor:pointer}
+.rr-tool:active,.rr-ctl:active,.rr-go:active{transform:scale(.95)}
+.rr-road{position:relative;border-radius:26px;background:#374151;padding:14px 8px 6px;box-shadow:inset 0 4px 14px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.18);direction:ltr}
+.rr-lanes{display:flex;align-items:stretch}
+.rr-sign{flex:1;min-width:0;min-height:170px;border:0;border-left:4px dashed rgba(255,255,255,.55);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:4px 6px;cursor:pointer;position:relative}
+.rr-sign:first-child{border-left:0}
+.rr-face{width:min(100%,190px);min-height:120px;display:flex;align-items:center;justify-content:center;background:#fff;border:7px solid #1d4ed8;border-radius:22px;font-size:clamp(56px,15vw,100px);font-weight:900;color:#111827;line-height:1.2;box-shadow:0 6px 0 #1e3a8a}
+.rr-post{width:12px;flex:1;min-height:22px;background:#9ca3af;border-radius:0 0 6px 6px}
+.rr-sign.sel .rr-face{box-shadow:0 0 0 7px #facc15,0 6px 0 #1e3a8a}
+.rr-sign.dim{opacity:.3;pointer-events:none}
+.rr-sign.hint .rr-face{border-color:#16a34a;box-shadow:0 0 0 7px #86efac,0 6px 0 #166534;animation:rrPulse 1.1s ease-in-out infinite}
+.rr-sign.right .rr-face{background:#dcfce7;border-color:#16a34a;box-shadow:0 0 0 7px #4ade80,0 6px 0 #166534}
+.rr-sign.wrong .rr-face{background:#fee2e2;border-color:#ef4444}
+@keyframes rrPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.rr-carrow{position:relative;height:78px}
+.rr-car{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:58px;line-height:1;border:0;background:transparent;padding:0;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;transition:left var(--rr-move,.18s) ease}
+.rr-wrap.rr-motion{--rr-move:.6s}
+.rr-msg{min-height:34px;text-align:center;font-size:20px;font-weight:900;color:#1f2937}
+.rr-controls{display:flex;gap:10px;justify-content:center;align-items:stretch}
+.rr-ctl{width:92px;min-height:68px;border:0;border-radius:18px;background:#fff;color:#1f2937;font-size:32px;font-weight:900;box-shadow:0 5px 14px rgba(0,0,0,.18);cursor:pointer}
+.rr-go{flex:1;max-width:340px;min-height:68px;border:0;border-radius:18px;background:#16a34a;color:#fff;font-size:24px;font-weight:900;box-shadow:0 6px 0 #166534;cursor:pointer}
+.rr-result,.rr-demo{position:fixed;inset:0;border-radius:0;display:none;align-items:center;justify-content:flex-start;flex-direction:column;gap:12px;padding:18px;text-align:center;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.rr-result>:first-child,.rr-demo>:first-child{margin-top:auto}
+.rr-result>:last-child,.rr-demo>:last-child{margin-bottom:auto}
+.rr-result{background:#fff;z-index:1000}
+.rr-demo{background:#eef2ff;z-index:990}
+.rr-result.on,.rr-demo.on{display:flex}
+.rr-result h3{margin:0;font-size:27px;color:#15803d}
+.rr-result p{margin:0;font-size:17px;color:#475467;font-weight:700}
+.rr-result .rr-stars{font-size:44px;color:#f59e0b;letter-spacing:4px}
+.rr-result button{display:block;width:min(340px,100%);min-height:62px;border:0;border-radius:18px;font-size:20px;font-weight:900;cursor:pointer}
+.rr-result .rr-p{background:#4f46e5;color:#fff}
+.rr-result .rr-s{background:#e5e7eb;color:#1f2937}
+.rr-demo-signs{display:flex;gap:12px;direction:ltr}
+.rr-mini{min-width:84px;min-height:84px;display:flex;align-items:center;justify-content:center;background:#fff;border:6px solid #1d4ed8;border-radius:18px;font-size:54px;font-weight:900}
+.rr-mini.hint{border-color:#16a34a;box-shadow:0 0 0 6px #86efac;animation:rrPulse 1.1s ease-in-out infinite}
+.rr-mini.right{background:#dcfce7;border-color:#16a34a}
+.rr-notice{background:#fff7ed;border:2px solid #fdba74;color:#7c2d12;border-radius:14px;padding:10px 14px;margin:8px 0;font-weight:800;text-align:center}
+.rr-prep{margin:10px 0;text-align:center}
+.rr-prep button{min-height:52px;padding:0 18px;border:0;border-radius:14px;background:#e0e7ff;color:#312e81;font-weight:900;font-size:16px;cursor:pointer}
+.rr-prep small{display:block;margin-top:6px;color:#475467;font-weight:700}
+@media (min-width:700px){.rr-info{grid-template-columns:auto minmax(0,1fr) auto auto}.rr-grow{grid-column:auto;order:0}.rr-chip{padding:6px 14px;min-height:56px}}
+@media (max-width:560px){.rr-sign{min-height:140px}.rr-face{min-height:96px}.rr-ctl{width:72px}.rr-car{font-size:48px}}
+@media (max-height:820px),(max-width:560px){.rr-wrap{gap:6px}.rr-board{padding:6px 12px;gap:2px;border-radius:20px}.rr-badge{font-size:16px}.rr-target{font-size:clamp(44px,9vh,72px);line-height:1.2}.rr-target.rr-icon{font-size:clamp(44px,9vh,68px)}.rr-sub{font-size:15px;min-height:1.2em}.rr-lvl{display:none}.rr-tool{min-height:50px;min-width:50px;font-size:16px}.rr-road{padding:8px 6px 4px}.rr-sign{min-height:104px}.rr-face{min-height:76px;font-size:clamp(40px,10vw,64px);border-width:5px}.rr-carrow{height:52px}.rr-car{font-size:42px}.rr-msg{min-height:24px;font-size:17px}.rr-ctl,.rr-go{min-height:56px}}
+@media (prefers-reduced-motion:reduce){.rr-wrap *{animation:none!important;transition:none!important}}
+.calm-mode .rr-wrap *{animation:none!important;transition:none!important}
+`;
+
+const RR_HTML = `
+<div class="rr-wrap" id="rrWrap">
+  <div class="rr-top">
+    <button type="button" class="race-top-btn" id="rrBack" aria-label="رجوع إلى مراحل الحرف">⬅️</button>
+    <div class="race-title"><span>🛣️</span><strong>سباق الطريق</strong></div>
+    <button type="button" class="race-top-btn" id="rrMotion" aria-pressed="false" aria-label="حركة السيارة">🏎️</button>
+  </div>
+  <div class="rr-info">
+    <div class="rr-chip"><small>الحرف</small><b id="rrLetter"></b></div>
+    <div class="rr-chip rr-grow"><small id="rrStageName"></small><div class="rr-dots" id="rrDots" aria-hidden="true"></div></div>
+    <div class="rr-chip"><small>الجولة</small><b><span id="rrRound">١</span> / <span id="rrTotal">٣</span></b></div>
+    <div class="rr-chip"><small>⭐ نجومي</small><b id="rrStars">٠</b></div>
+  </div>
+  <div class="rr-board" id="rrBoard">
+    <div class="rr-badge" id="rrBadge"></div>
+    <div class="rr-target" id="rrTarget" aria-live="polite"></div>
+    <div class="rr-sub" id="rrSub"></div>
+    <div class="rr-lvl" id="rrLvl"></div>
+    <div class="rr-tools">
+      <button type="button" class="rr-tool" id="rrListen">🔊 اسمع</button>
+      <button type="button" class="rr-tool" id="rrDemoBtn">👀 شاهد مثالًا</button>
+    </div>
+  </div>
+  <div class="rr-road" id="rrRoad">
+    <div class="rr-lanes" id="rrSigns"></div>
+    <div class="rr-carrow"><button type="button" class="rr-car" id="rrCar" aria-label="السيارة: اسحبها إلى اللافتة ثم اضغط انطلق">🚗</button></div>
+  </div>
+  <div class="rr-msg" id="rrMsg" role="status" aria-live="polite"></div>
+  <div class="rr-controls">
+    <button type="button" class="rr-ctl" id="rrLeft" aria-label="اللافتة السابقة">◀</button>
+    <button type="button" class="rr-go" id="rrGo">✔ انطلق</button>
+    <button type="button" class="rr-ctl" id="rrRight" aria-label="اللافتة التالية">▶</button>
+  </div>
+  <div class="rr-demo" id="rrDemo">
+    <div class="rr-badge" id="rrDemoMsg"></div>
+    <div class="rr-target" id="rrDemoTarget"></div>
+    <div class="rr-demo-signs" id="rrDemoSigns"></div>
+    <button type="button" class="rr-tool" id="rrDemoSkip">تخطَّ المثال ⏭</button>
+  </div>
+  <div class="rr-result" id="rrResult">
+    <h3 id="rrResTitle"></h3>
+    <div class="rr-stars" id="rrResStars" aria-hidden="true"></div>
+    <p id="rrResBody"></p>
+    <button type="button" class="rr-p" id="rrResNext"></button>
+    <button type="button" class="rr-s" id="rrResMap">🗺️ مراحل الحرف</button>
+  </div>
+</div>
+`;
+
+/* ---------- أدوات عامة ---------- */
+
+function rrScreenActive() {
+    const el = $(RR_SCREEN);
+    return !!(el && el.classList.contains("active"));
+}
+
+function rrSafe(fn) {
+    return function () {
+        try { return fn.apply(this, arguments); }
+        catch (e) { rrRecover(e); }
+    };
+}
+
+function rrLater(fn, ms) {
+    const s = RR.session;
+    const id = setTimeout(rrSafe(function () {
+        RR.timers = RR.timers.filter(t => t !== id);
+        if (s !== RR.session) return;
+        if (!rrScreenActive()) { rrTeardown(); return; }
+        fn();
+    }), ms);
+    RR.timers.push(id);
+    return id;
+}
+
+/* صوت واحد في اللحظة، ثم done مرة واحدة فقط (مع مهلة أمان) */
+function rrSay(what, done, maxMs) {
+    const s = RR.session;
+    let fired = false;
+    const fin = function () {
+        if (fired || s !== RR.session) return;
+        fired = true;
+        if (done) done();
+    };
+    if (typeof EduAudio === "undefined") { fin(); return; }
+    EduAudio.play(what, { mode: "interrupt", done: rrSafe(fin) });
+    if (done) rrLater(fin, maxMs || 4500);
+}
+
+function rrTeardown() {
+    RR.session++;
+    RR.timers.forEach(t => clearTimeout(t));
+    RR.timers = [];
+    if (RR.keyOn) { document.removeEventListener("keydown", rrKey); RR.keyOn = false; }
+    rrDragEnd();
+    if (RR.run) RR.run.dead = true;
+    RR.run = null;
+    try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
+    const r = $("rrResult"); if (r) r.classList.remove("on");
+    const d = $("rrDemo"); if (d) d.classList.remove("on");
+    if (rrOwner === "new") rrOwner = null;
+}
+
+/* ---------- الأنماط والواجهة (تُنشأ عند أول دخول فقط) ---------- */
+
+function rrCssApplied() {
+    const probe = document.createElement("i");
+    probe.className = "rr-probe";
+    document.body.appendChild(probe);
+    let ok = false;
+    try { ok = getComputedStyle(probe).getPropertyValue("--rr-build").trim() === RR_BUILD; }
+    finally { if (probe.parentNode) probe.parentNode.removeChild(probe); }
+    return ok;
+}
+
+function rrInjectCss() {
+    if (rrCssApplied()) return;
+    try {
+        if (!$(RR_CSS_ID)) {
+            const s = document.createElement("style");
+            s.id = RR_CSS_ID;
+            s.textContent = RR_CSS;
+            document.head.appendChild(s);
+        }
+    } catch (e) { /* نجرّب الطريقة الاحتياطية */ }
+    if (rrCssApplied()) return;
+    try {
+        const sh = new CSSStyleSheet();
+        sh.replaceSync(RR_CSS);
+        document.adoptedStyleSheets = Array.prototype.concat.call(document.adoptedStyleSheets || [], [sh]);
+    } catch (e) { /* يُحسم بالفحص التالي */ }
+    if (!rrCssApplied()) throw new Error("rr-css-not-applied");
+}
+
+function rrEnsureScreen() {
+    let el = $(RR_SCREEN);
+    if (!el) {
+        const legacy = $("letterRaceGame");
+        const host = (legacy && legacy.parentNode) || document.body;
+        el = document.createElement("section");
+        el.id = RR_SCREEN;
+        el.className = "screen";
+        el.innerHTML = RR_HTML;
+        host.appendChild(el);
+    }
+    if (!$("rrSigns") || !$("rrGo")) throw new Error("rr-screen-incomplete");
+    if (el.getAttribute("data-rr-wired") !== "1") {
+        rrWire();
+        el.setAttribute("data-rr-wired", "1");
+    }
+    return el;
+}
+
+function rrWire() {
+    $("rrBack").addEventListener("click", rrSafe(() => rrExit()));
+    $("rrMotion").addEventListener("click", rrSafe(() => {
+        RR.motion = !RR.motion;
+        $("rrWrap").classList.toggle("rr-motion", RR.motion);
+        $("rrMotion").setAttribute("aria-pressed", RR.motion ? "true" : "false");
+        $("rrMsg").textContent = RR.motion ? "🏎️ حركة السيارة: تعمل" : "🏎️ حركة السيارة: متوقفة";
+    }));
+    $("rrListen").addEventListener("click", rrSafe(() => {
+        const run = RR.run;
+        if (run && run.cur && !run.demoing) rrSayPrompt(run.cur);
+    }));
+    $("rrDemoBtn").addEventListener("click", rrSafe(() => rrDemoRequested()));
+    $("rrDemoSkip").addEventListener("click", rrSafe(() => rrDemoFinish()));
+    $("rrLeft").addEventListener("click", rrSafe(() => rrMoveSel(-1)));
+    $("rrRight").addEventListener("click", rrSafe(() => rrMoveSel(1)));
+    $("rrGo").addEventListener("click", rrSafe(() => { const r = RR.run; if (r) rrSubmit(r.selected); }));
+    const car = $("rrCar");
+    car.addEventListener("pointerdown", rrSafe(rrDragStart));
+}
+
+/* ---------- المحتوى: المتشابهات والكلمات المعروفة وبناء الجولات ---------- */
+
+/* متشابهات الحرف بتماثل كامل (القاموس المشترك LTR_SIMILAR_LETTERS لا يُعدَّل) */
+function rrSimilarOf(letter) {
+    const m = (typeof LTR_SIMILAR_LETTERS !== "undefined" && LTR_SIMILAR_LETTERS) || {};
+    const out = new Set((m[letter] || []).filter(l => l !== letter));
+    Object.keys(m).forEach(k => { if (k !== letter && (m[k] || []).indexOf(letter) >= 0) out.add(k); });
+    return out;
+}
+
+let rrKnownCache = null;
+function rrStripMarks(w) { return String(w).replace(/[ً-ْٰـ]/g, ""); }
+
+/* كل كلمة عربية يعرفها التطبيق (قوائم الحروف والسباق والتدريب وملفات الصوت) */
+function rrKnownWords() {
+    if (rrKnownCache) return rrKnownCache;
+    const s = new Set();
+    try { LETTER_UNITS.forEach(u => (u.words || []).forEach(w => s.add(rrStripMarks(w.word)))); } catch (e) { /* لا شيء */ }
+    try { Object.keys(RACE_WORD_BANK).forEach(l => Object.keys(RACE_WORD_BANK[l]).forEach(p => RACE_WORD_BANK[l][p].forEach(w => s.add(rrStripMarks(w))))); } catch (e) { /* لا شيء */ }
+    try { Object.keys(LTR_TRAIN_WORDS).forEach(l => LTR_TRAIN_WORDS[l].forEach(w => s.add(rrStripMarks(w)))); } catch (e) { /* لا شيء */ }
+    try {
+        const m = EDUCATIONAL_AUDIO_MANIFEST;
+        Object.keys(m).forEach(k => { if (/\/words\//.test(m[k])) s.add(rrStripMarks(k)); });
+    } catch (e) { /* لا شيء */ }
+    rrKnownCache = s;
+    return s;
+}
+
+/* هل استبدال الحرف المطلوب بحرف مشتت يُنتج كلمة أخرى معروفة؟ (التباس) */
+function rrCollides(word, occ, dLetter) {
+    const nw = word.slice(0, occ) + dLetter + word.slice(occ + 1);
+    return nw !== word && rrKnownWords().has(nw);
+}
+
+function rrDistractors(letter, position, count, hard, seed, word, occ) {
+    const sim = rrSimilarOf(letter);
+    const needsConnector = position === "initial" || position === "medial";
+    const eligible = RACE_ALPHABET.filter(l => l !== letter && (!needsConnector || !RACE_NON_CONNECTORS.has(l)));
+    const near = eligible.filter(l => sim.has(l));
+    const far = eligible.filter(l => !sim.has(l));
+    const order = hard
+        ? raceRotate(near, seed).concat(raceRotate(far, seed * 3))
+        : raceRotate(far, seed * 3).concat(raceRotate(near, seed));
+    const correct = raceShapeForLetterAtPosition(letter, position);
+    const shapes = [];
+    order.forEach(l => {
+        if (shapes.length >= count) return;
+        if (word && rrCollides(word, occ, l)) return;
+        const s = raceShapeForLetterAtPosition(l, position);
+        if (s && s !== correct && shapes.indexOf(s) < 0) shapes.push(s);
+    });
+    return shapes;
+}
+
+function rrMakeRound(kind, letter, position, word, occ, distract, r) {
+    const correctShape = raceShapeForLetterAtPosition(letter, position);
+    const correctIndex = r % (distract.length + 1);
+    const options = distract.slice();
+    options.splice(correctIndex, 0, correctShape);
+    return { kind: kind, letter: letter, position: position, word: word, occ: occ, options: options, correctShape: correctShape, correctIndex: options.indexOf(correctShape), wrong: 0, hinted: false, firstTry: false, helped: false, ind: false };
+}
+
+/* كلمة صالحة بلا التباس لهذه الجولة، أو null */
+function rrPickWord(letter, position, offset, used, gateCount, hard, seed) {
+    const list = raceValidWords(letter, position);
+    for (let pass = 0; pass < 2; pass++) {
+        for (let k = 0; k < list.length; k++) {
+            const w = list[(offset + k) % list.length];
+            if (pass === 0 && used.has(w)) continue;
+            const occ = raceFindOccurrence(w, letter, position);
+            const d = rrDistractors(letter, position, gateCount - 1, hard, seed, w, occ);
+            if (d.length === gateCount - 1) return { word: w, occ: occ, distract: d };
+        }
+    }
+    return null;
+}
+
+/* عدد اللافتات وصعوبة كل جولة كما في السباق القديم تمامًا */
+function rrBuildRounds(letter, stage, seed) {
+    const rounds = [];
+    const used = new Set();
+    const P = stage.positions;
+    for (let r = 0; r < stage.rounds; r++) {
+        let kind = stage.kind === "mastery" ? "word" : stage.kind;
+        let position = (kind === "hear" || kind === "see") ? "isolated" : P[r % P.length];
+        const gateCount = kind === "hear" ? 2 : 3;
+        let pick = null;
+        if (kind === "word") {
+            const hardW = stage.kind === "mastery" ? true : (stage.id === "words" ? r >= 2 : r >= 1);
+            pick = rrPickWord(letter, position, seed + r, used, gateCount, hardW, seed + r);
+            if (pick) used.add(pick.word);
+            else { kind = "see"; position = "isolated"; }
+        }
+        if (kind === "word") {
+            rounds.push(rrMakeRound("word", letter, position, pick.word, pick.occ, pick.distract, seed + r));
+        } else {
+            const gc = kind === "hear" ? 2 : 3;
+            const hard = kind === "see" ? r >= 1 : false;
+            rounds.push(rrMakeRound(kind, letter, position, null, -1, rrDistractors(letter, position, gc - 1, hard, seed + r, null, -1), seed + r));
+        }
+    }
+    return rounds;
+}
+
+/* جولة العرض النموذجي: لا تُحتسب ولا تمنح نجمة. كلمة مختلفة عن كلمات المرحلة قدر الإمكان */
+function rrBuildDemo(letter, stage, seed, rounds) {
+    if (stage.id === "mastery") return null;
+    const gateCount = stage.kind === "hear" ? 2 : 3;
+    if (stage.kind === "hear" || stage.kind === "see") {
+        return rrMakeRound(stage.kind, letter, "isolated", null, -1, rrDistractors(letter, "isolated", gateCount - 1, false, seed, null, -1), 0);
+    }
+    const usedWords = new Set(rounds.map(r => r.word));
+    const position = stage.positions[0];
+    const pick = rrPickWord(letter, position, seed + 7, usedWords, 3, false, seed + 7);
+    if (pick && !usedWords.has(pick.word)) return rrMakeRound("word", letter, position, pick.word, pick.occ, pick.distract, 1);
+    const extra = rrExtraDemoWord(letter, position, usedWords, seed);
+    if (extra) return rrMakeRound("word", letter, position, extra.word, extra.occ, extra.distract, 1);
+    return null;
+}
+
+/* كلمة إضافية للعرض النموذجي فقط حين تُستنفد كلمات البنك: معروفة وبتسجيل، الحرف فيها مرة واحدة في الموضع المطلوب،
+   ولها مشتتات بلا التباس. لا تدخل الجولات المحسوبة ولا القوائم المشتركة */
+function rrExtraDemoWord(letter, position, used, seed) {
+    try {
+        const list = Array.from(rrKnownWords()).filter(w => /^[ء-ي]{3,}$/.test(w) && !used.has(w))
+            .sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0));
+        for (let k = 0; k < list.length; k++) {
+            const w = list[(seed + k) % list.length];
+            const occ = raceFindOccurrence(w, letter, position);
+            if (occ < 0 || Array.from(w).filter(c => c === letter).length !== 1 || !EduAudio.has(w)) continue;
+            const d = rrDistractors(letter, position, 2, false, seed + 7, w, occ);
+            if (d.length === 2) return { word: w, occ: occ, distract: d };
+        }
+    } catch (e) { /* لا مثال إضافي */ }
+    return null;
+}
+
+/* مستوى الدعم لهذا التشغيل: ٢ = مثال + تلميحات، ١ = تلميحات بعد الخطأ، ٠ = بلا مساعدة.
+   يُشتق من سجل المرحلة؛ السجل القديم بلا lvl/ft يبدأ من ١ ولا يُعدّ مستقلًا. */
+function rrLevelFor(stage, rec) {
+    if (stage.id === "mastery") return 0;
+    if (!rec || !(rec.plays > 0)) return 2;
+    if (typeof rec.lvl !== "number" || typeof rec.ft !== "number") return 1;
+    const total = stage.rounds;
+    if (rec.ft >= Math.ceil(total * 2 / 3)) return Math.max(0, rec.lvl - 1);
+    if (rec.ft < Math.ceil(total / 2)) return Math.min(2, rec.lvl + 1);
+    return rec.lvl;
+}
+
+/* ---------- البدء: الموزّع والتراجع ---------- */
+
+function rrTryStart(letter, stageIdx, stages, stage) {
+    try {
+        rrTeardown();
+        raceAbortInBackground();
+        const p = raceLoadProgress();
+        const entry = raceLetterEntry(p, letter);
+        const rec = entry.stages[stage.id];
+        const plays = (rec && rec.plays) || 0;
+        const order = raceLetterOrder();
+        const seed = plays * 3 + (order.indexOf(letter) % 3);
+        const rounds = rrBuildRounds(letter, stage, seed);
+        if (!rounds.length) throw new Error("rr-no-rounds");
+        const lvl = rrLevelFor(stage, rec);
+        const demo = rrBuildDemo(letter, stage, seed, rounds);
+        const run = {
+            id: ++rrRunSeq, letter: letter, stageIdx: stageIdx, stage: stage, stages: stages,
+            rounds: rounds, demo: demo, idx: -1, cur: null, lvl: lvl, assisted: false,
+            firstTry: 0, indCount: 0, awarded: 0, locked: true, ready: false, dead: false,
+            finished: false, demoing: false, selected: 0
+        };
+        rrInjectCss();
+        rrEnsureScreen();
+        letterRaceGame.letter = letter;
+        RR.run = run;
+        rrOwner = "new";
+        showScreen(RR_SCREEN);
+        if (!rrScreenActive()) throw new Error("rr-screen-not-active");
+        $("rrResult").classList.remove("on");
+        $("rrDemo").classList.remove("on");
+        document.addEventListener("keydown", rrKey);
+        RR.keyOn = true;
+        rrRenderHeader(run);
+        $("rrMsg").textContent = "";
+        $("rrSigns").textContent = "";
+        const autoDemo = !!(run.demo && run.lvl >= 2);
+        if (!autoDemo) rrArmWatchdog(run);
+        rrLater(function () {
+            if (autoDemo) rrPlayDemo(run, function () { rrNextRound(run); rrArmWatchdog(run); });
+            else rrNextRound(run);
+        }, 200);
+        return true;
+    } catch (e) {
+        try { console.warn("rr-start-fallback", e && e.message); } catch (e2) { /* لا شيء */ }
+        rrDisabled = true;
+        rrTeardown();
+        return false;
+    }
+}
+
+/* مراقب الجاهزية: إن لم تُعرض الجولة الأولى خلال مهلة قصيرة فالشاشة عالقة → الفشل «قبل أي جولة» */
+function rrArmWatchdog(run) {
+    const s = RR.session;
+    const wd = setTimeout(rrSafe(function () {
+        if (s === RR.session && RR.run === run && !run.dead && !run.cur) throw new Error("rr-not-ready");
+    }), RR_READY_MS);
+    RR.timers.push(wd);
+}
+
+/* الموزّع: المحرك الجديد أولًا، وإن لم يبدأ فالقديم فورًا. لا يعمل المحركان معًا أبدًا */
+function startRaceStage(letter, stageIdx) {
+    const stages = raceStagesFor(letter);
+    const stage = stages[stageIdx];
+    if (!stage) return;
+    if (RR_ENABLED && !rrDisabled && rrTryStart(letter, stageIdx, stages, stage)) return;
+    rrTeardown();
+    rrOwner = "legacy";
+    legacyStartRaceStage(letter, stageIdx);
+}
+
+/* خطأ أثناء التشغيل: قبل أي نجمة → القديم فورًا؛ بعدها → قائمة المراحل دون إعادة التشغيل */
+function rrRecover(err) {
+    try { console.warn("rr-recover", err && err.message); } catch (e) { /* لا شيء */ }
+    rrDisabled = true;
+    const run = RR.run;
+    rrTeardown();
+    if (!run) return;
+    if (run.awarded === 0 && !run.finished) {
+        rrOwner = "legacy";
+        try { legacyStartRaceStage(run.letter, run.stageIdx); return; }
+        catch (e2) { /* ننتقل لقائمة المراحل */ }
+    }
+    rrBackToStages(run.letter, run.awarded > 0 && !run.finished ? "تعذّر إكمال هذه المرحلة، لكن نجومك محفوظة. اختر المرحلة لتبدأ من جديد." : "");
+}
+
+function rrBackToStages(letter, note) {
+    try {
+        if (letter) letterRaceGame.letter = letter;
+        showScreen("letterRaceMap");
+        renderRaceStages();
+        raceMapShow("stages");
+        if (note) rrNotice(note);
+    } catch (e) {
+        try { showScreen("games"); } catch (e2) { /* لا شيء */ }
+    }
+}
+
+function rrNotice(text) {
+    const host = $("raceStageView");
+    if (!host) return;
+    let n = $("rrNotice");
+    if (!n) {
+        n = document.createElement("div");
+        n.id = "rrNotice";
+        n.className = "rr-notice";
+        host.insertBefore(n, host.firstChild);
+    }
+    n.textContent = text;
+}
+
+function rrExit() {
+    const run = RR.run;
+    const letter = run ? run.letter : letterRaceGame.letter;
+    rrTeardown();
+    rrBackToStages(letter, "");
+}
+
+/* ---------- الجولات ---------- */
+
+function rrRenderHeader(run) {
+    $("rrLetter").textContent = run.letter;
+    $("rrStageName").textContent = run.stage.icon + " " + run.stage.title;
+    $("rrTotal").textContent = arabicNumber(run.rounds.length);
+    $("rrRound").textContent = arabicNumber(Math.max(1, Math.min(run.idx + 1, run.rounds.length)));
+    $("rrStars").textContent = arabicNumber(typeof stars !== "undefined" ? stars : 0);
+    $("rrDots").innerHTML = run.rounds.map((r, i) => `<span class="rr-dot ${i === run.idx ? "cur" : (i < run.idx ? "done" : "")}"></span>`).join("");
+    $("rrLvl").textContent = run.stage.id === "mastery" ? "اختبار بلا مساعدة" : (run.lvl >= 2 ? "🧩 مع مثال وتلميحات" : (run.lvl === 1 ? "🧩 تلميحات عند الحاجة" : "⭐ بلا مساعدة"));
+    $("rrDemoBtn").style.display = run.demo ? "" : "none";
+}
+
+function rrRenderWord(container, word, letter, position, occ) {
+    container.textContent = "";
+    const index = (typeof occ === "number" && occ >= 0) ? occ : word.indexOf(letter);
+    if (index < 0) { container.textContent = word; return; }
+    let before = word.slice(0, index);
+    let after = word.slice(index + 1);
+    if ((position === "medial" || position === "final") && before) before += RACE_TATWEEL;
+    if ((position === "medial" || position === "initial") && after) after = RACE_TATWEEL + after;
+    const a = document.createElement("span"); a.textContent = before; container.appendChild(a);
+    const b = document.createElement("span"); b.className = "rr-blank"; b.id = container.id === "rrDemoTarget" ? "rrDemoBlank" : "rrBlank"; container.appendChild(b);
+    const c = document.createElement("span"); c.textContent = after; container.appendChild(c);
+}
+
+function rrRenderTarget(round, t, withLabels) {
+    t.textContent = "";
+    t.className = "rr-target";
+    let badge = "", sub = "";
+    if (round.kind === "hear") { badge = "🎧 اسمع الحرف"; sub = "اسمع الصوت ثم اختر شكل الحرف"; t.textContent = "🔊"; t.classList.add("rr-icon"); }
+    else if (round.kind === "see") { badge = "👀 انظر"; sub = "اختر الشكل المطابق"; t.textContent = round.correctShape; }
+    else { badge = "🔎 أكمل الكلمة"; sub = RACE_POSITION_TITLES[round.position] || ""; rrRenderWord(t, round.word, round.letter, round.position, round.occ); }
+    if (withLabels) { $("rrBadge").textContent = badge; $("rrSub").textContent = sub; }
+}
+
+function rrFillTarget(round, t) {
+    if (round.kind === "word" && round.word) t.textContent = round.word;
+    else t.textContent = round.correctShape;
+    t.classList.remove("rr-icon");
+    t.classList.add("rr-filled");
+}
+
+function rrSayPrompt(round) {
+    if (round.kind === "word" && round.word && EduAudio.has(round.word)) EduAudio.play(round.word, { mode: "interrupt" });
+    else EduAudio.play(letterWithFatha(round.letter), { mode: "interrupt" });
+}
+
+function rrSignEls() { return Array.prototype.slice.call(document.querySelectorAll("#rrSigns .rr-sign")); }
+
+function rrRenderSigns(round) {
+    const box = $("rrSigns");
+    box.textContent = "";
+    round.options.forEach((shape, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "rr-sign";
+        b.setAttribute("data-i", String(i));
+        b.setAttribute("aria-label", "لافتة الشكل " + shape);
+        const face = document.createElement("span"); face.className = "rr-face"; face.textContent = shape;
+        const post = document.createElement("span"); post.className = "rr-post";
+        b.appendChild(face); b.appendChild(post);
+        b.addEventListener("click", rrSafe(() => {
+            const run = RR.run;
+            if (!run || run.locked) return;
+            rrSelect(run, i, false);
+            rrSubmit(i);
+        }));
+        box.appendChild(b);
+    });
+}
+
+function rrCarTo(run, lane) {
+    const car = $("rrCar");
+    const n = Math.max(1, run.cur ? run.cur.options.length : 1);
+    car.style.left = (((lane + 0.5) / n) * 100) + "%";
+}
+
+function rrSelect(run, lane, focus) {
+    run.selected = lane;
+    rrSignEls().forEach((el, i) => el.classList.toggle("sel", i === lane));
+    rrCarTo(run, lane);
+    if (focus) { const el = rrSignEls()[lane]; if (el) { try { el.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ } } }
+}
+
+function rrMoveSel(dir) {
+    const run = RR.run;
+    if (!run || run.locked || !run.cur) return;
+    const els = rrSignEls();
+    let lane = run.selected + dir;
+    while (lane >= 0 && lane < els.length && els[lane].classList.contains("dim")) lane += dir;
+    if (lane < 0 || lane >= els.length) return;
+    rrSelect(run, lane, true);
+}
+
+/* مكافئ raceScrollToPlay القديم: يُظهر شريط اللعب واللافتات و«انطلق» دون تمرير يدوي */
+function rrScrollToPlay(force) {
+    try {
+        const top = document.querySelector("#roadRaceGame .rr-top");
+        const go = $("rrGo");
+        if (!top || !go) return;
+        const r = top.getBoundingClientRect();
+        const g = go.getBoundingClientRect();
+        if (!force && r.top >= 0 && g.bottom <= window.innerHeight) return;
+        window.scrollTo({ top: Math.max(0, r.top + window.scrollY - 6), behavior: "auto" });
+    } catch (e) { /* لا شيء */ }
+}
+
+function rrNextRound(run) {
+    if (run.dead || RR.run !== run) return;
+    run.idx++;
+    if (run.idx >= run.rounds.length) { rrFinish(run); return; }
+    const round = run.rounds[run.idx];
+    run.cur = round;
+    rrRenderHeader(run);
+    rrRenderTarget(round, $("rrTarget"), true);
+    rrRenderSigns(round);
+    $("rrMsg").textContent = "";
+    rrSelect(run, Math.min(1, round.options.length - 1), false);
+    run.ready = true;
+    run.locked = false;
+    rrScrollToPlay(run.idx === 0);
+    rrSayPrompt(round);
+}
+
+/* ---------- الإجابة: بوابة واحدة لا تُحتسب فيها الجولة مرتين ---------- */
+
+/* الدالة الوحيدة التي تُضيف نجمة عامة في المحرك الجديد */
+function rrAwardRound(run, idx) {
+    if (rrOwner !== "new" || !run || run.dead || RR.run !== run) return false;
+    const key = run.id + ":" + idx;
+    if (rrSettled.has(key)) return false;
+    rrSettled.add(key);
+    run.awarded++;
+    if (typeof addStars === "function") addStars(1);
+    return true;
+}
+
+function rrSubmit(index) {
+    const run = RR.run;
+    if (!run || run.dead || run.locked || run.demoing || !run.cur) return;
+    const els = rrSignEls();
+    const el = els[index];
+    if (!el || el.classList.contains("dim")) return;
+    run.locked = true;                       /* قفل متزامن: نقرة + Enter معًا تُحسب مرة واحدة */
+    rrSelect(run, index, false);
+    const round = run.cur;
+    if (round.options[index] === round.correctShape) rrCorrect(run, round, el);
+    else rrWrong(run, round, el);
+}
+
+function rrCorrect(run, round, el) {
+    el.classList.remove("sel");
+    el.classList.add("right");
+    const first = round.wrong === 0 && !round.helped;     /* القاعدة القديمة: بلا خطأ؛ والمثال المطلوب أثناء الجولة لا يمنح نجمة */
+    round.firstTry = first;
+    if (first) {
+        run.firstTry++;
+        if (run.lvl === 0 && !run.assisted) { run.indCount++; round.ind = true; }
+        rrAwardRound(run, run.idx);
+    }
+    rrFillTarget(round, $("rrTarget"));
+    const phrase = RACE_SUCCESS_PHRASES[(run.idx + run.stageIdx) % RACE_SUCCESS_PHRASES.length];
+    $("rrMsg").textContent = "🎉 " + phrase;
+    rrRenderHeader(run);
+    rrSay(phrase, function () { rrLater(function () { rrNextRound(run); }, RR.motion ? 700 : 450); }, 4000);
+}
+
+function rrWrong(run, round, el) {
+    round.wrong++;
+    el.classList.remove("sel");
+    el.classList.add("wrong", "dim");
+    $("rrMsg").textContent = "😊 حاول مرة أخرى";
+    const remaining = rrSignEls().filter(x => !x.classList.contains("dim"));
+    /* التلميح المتدرّج: بعد أول خطأ تخفّت الخاطئة وتُعاد الكلمة/الصوت (للمستويين ١ و٢)،
+       وبعد الثاني (أو حين تبقى لافتة واحدة) تُضاء الصحيحة */
+    const showHint = round.wrong >= 2 || remaining.length === 1;
+    if (showHint && !round.hinted) {
+        round.hinted = true;
+        const right = rrSignEls().filter(x => x.classList.contains("dim") === false && x.querySelector(".rr-face").textContent === round.correctShape)[0];
+        if (right) right.classList.add("hint");
+    }
+    const replay = showHint || run.lvl >= 1;
+    rrSay("حاول مرة أخرى", function () { if (replay && RR.run === run && !run.demoing) rrSayPrompt(round); }, 3000);
+    rrLater(function () {
+        el.classList.remove("wrong");
+        const els = rrSignEls();
+        let lane = -1;
+        els.forEach((x, i) => { if (lane < 0 && !x.classList.contains("dim")) lane = i; });
+        if (lane >= 0) rrSelect(run, lane, false);
+        run.locked = false;
+    }, 700);
+}
+
+/* ---------- المثال النموذجي ---------- */
+
+function rrPlayDemo(run, after) {
+    const d = run.demo;
+    if (!d) { after(); return; }
+    run.demoing = true;
+    run.locked = true;
+    run.demoAfter = after;
+    const panel = $("rrDemo");
+    panel.classList.add("on");
+    rrScrollToPlay(true);
+    $("rrDemoMsg").textContent = "👀 شاهد هذا المثال";
+    rrRenderTarget(d, $("rrDemoTarget"), false);
+    const ds = $("rrDemoSigns");
+    ds.textContent = "";
+    d.options.forEach(shape => { const m = document.createElement("div"); m.className = "rr-mini"; m.textContent = shape; m.setAttribute("data-s", shape); ds.appendChild(m); });
+    rrSayPrompt(d);
+    rrLater(function () {
+        if (!run.demoing) return;
+        const m = Array.prototype.slice.call(ds.children).filter(x => x.getAttribute("data-s") === d.correctShape)[0];
+        if (m) m.classList.add("hint");
+        $("rrDemoMsg").textContent = "هذه هي الإجابة الصحيحة";
+    }, 1700);
+    rrLater(function () {
+        if (!run.demoing) return;
+        const m = ds.querySelector(".hint");
+        if (m) { m.classList.remove("hint"); m.classList.add("right"); }
+        rrFillTarget(d, $("rrDemoTarget"));
+        EduAudio.play("صحيح", { mode: "interrupt" });
+    }, 3200);
+    rrLater(function () { rrDemoFinish(); }, 5000);
+}
+
+function rrDemoFinish() {
+    const run = RR.run;
+    if (!run || !run.demoing) return;
+    run.demoing = false;
+    $("rrDemo").classList.remove("on");
+    const after = run.demoAfter;
+    run.demoAfter = null;
+    if (after) after();
+}
+
+/* زر «شاهد مثالًا» أثناء الجولة: الجولة التي استُعين فيها بالمثال لا تمنح نجمة ولا تُعدّ من أول مرة */
+function rrDemoRequested() {
+    const run = RR.run;
+    if (!run || run.dead || run.locked || run.demoing || !run.cur || !run.demo) return;
+    run.cur.helped = true;
+    run.assisted = true;
+    rrPlayDemo(run, function () {
+        if (RR.run !== run) return;
+        run.locked = false;
+        $("rrMsg").textContent = "هيا جرّب أنت";
+        rrSayPrompt(run.cur);
+    });
+}
+
+/* ---------- التحكم: لوحة المفاتيح والسحب ---------- */
+
+function rrKey(ev) {
+    const run = RR.run;
+    if (!run || !rrScreenActive()) return;
+    const k = ev.key;
+    if (k === "ArrowRight") { rrMoveSel(1); ev.preventDefault(); }
+    else if (k === "ArrowLeft") { rrMoveSel(-1); ev.preventDefault(); }
+    else if (k === "Enter" || k === " ") {
+        /* إن كان التركيز على زر فنقرته الأصلية تتولى الأمر (لا إدخال مزدوج) */
+        const a = document.activeElement;
+        if (a && a.tagName === "BUTTON" && $(RR_SCREEN).contains(a)) return;
+        rrSubmit(run.selected);
+        ev.preventDefault();
+    }
+}
+
+function rrLaneFromX(run, clientX) {
+    const road = $("rrSigns").getBoundingClientRect();
+    const n = Math.max(1, run.cur ? run.cur.options.length : 1);
+    const x = Math.min(Math.max(clientX - road.left, 0), Math.max(1, road.width) - 1);
+    return Math.min(n - 1, Math.floor((x / road.width) * n));
+}
+
+function rrDragStart(ev) {
+    const run = RR.run;
+    if (!run || run.locked || !run.cur) return;
+    RR.drag = { id: ev.pointerId };
+    try { $("rrCar").setPointerCapture(ev.pointerId); } catch (e) { /* لا شيء */ }
+    document.addEventListener("pointermove", rrDragMove);
+    document.addEventListener("pointerup", rrDragEnd);
+    document.addEventListener("pointercancel", rrDragEnd);
+    ev.preventDefault();
+}
+
+function rrDragMove(ev) {
+    const run = RR.run;
+    if (!RR.drag || !run || run.locked) return;
+    const lane = rrLaneFromX(run, ev.clientX);
+    const els = rrSignEls();
+    if (els[lane] && !els[lane].classList.contains("dim")) rrSelect(run, lane, false);
+}
+
+/* السحب يختار اللافتة فقط؛ الإجابة تُسجَّل بزر «انطلق» أو بنقر اللافتة */
+function rrDragEnd() {
+    if (!RR.drag) return;
+    RR.drag = null;
+    document.removeEventListener("pointermove", rrDragMove);
+    document.removeEventListener("pointerup", rrDragEnd);
+    document.removeEventListener("pointercancel", rrDragEnd);
+}
+
+/* ---------- نهاية المرحلة (نفس قواعد القديم + حقول إضافية منفصلة) ---------- */
+
+function rrFinish(run) {
+    if (run.finished) return;
+    const stage = run.stage;
+    const total = run.rounds.length;
+    const ft = run.firstTry;
+    const isMastery = stage.id === "mastery";
+    const p = raceLoadProgress();
+    const entry = raceLetterEntry(p, run.letter);
+    const rec = entry.stages[stage.id] || { done: false, stars: 0, plays: 0 };
+    rec.plays = (rec.plays || 0) + 1;
+
+    let passed = true, starsEarned;
+    if (isMastery) {
+        entry.mastery.attempts = (entry.mastery.attempts || 0) + 1;
+        entry.mastery.best = Math.max(entry.mastery.best || 0, ft);
+        passed = ft >= RACE_MASTERY_PASS;
+        starsEarned = passed ? (ft >= total ? 3 : 2) : 0;
+        if (passed) {
+            entry.mastery.passed = true;
+            entry.mastery.stars = Math.max(entry.mastery.stars || 0, starsEarned);
+            rec.done = true;
+            rec.stars = entry.mastery.stars;
+        }
+        /* الإتقان المستقل منفصل عن النجاح: سجلات هذا المحرك فقط */
+        entry.mastery.ind = Math.max(entry.mastery.ind || 0, run.indCount);
+        if (run.indCount >= RACE_MASTERY_PASS) entry.mastery.indPassed = true;
+    } else {
+        starsEarned = raceStageStars(total, ft);
+        rec.done = true;
+        rec.stars = Math.max(rec.stars || 0, starsEarned);
+    }
+    rec.lvl = run.lvl;
+    rec.ft = ft;
+    rec.ind = Math.max(rec.ind || 0, run.indCount);
+    entry.stages[stage.id] = rec;
+    p.lastLetter = run.letter;
+    raceSaveProgress(p);
+    run.finished = true;
+    run.locked = true;
+
+    rrRenderHeader(run);
+    const lastStage = run.stageIdx >= run.stages.length - 1;
+    const title = $("rrResTitle"), body = $("rrResBody"), next = $("rrResNext"), map = $("rrResMap");
+    let phrase = "أحسنت! أكملت المستوى بنجاح";
+    map.style.display = "";
+    map.textContent = "🗺️ مراحل الحرف";
+    map.onclick = rrSafe(() => rrExit());
+    if (isMastery && passed) {
+        title.textContent = "🏅 أتقنتَ حرف " + run.letter + "!";
+        body.textContent = "أجبتَ " + arabicNumber(ft) + " من " + arabicNumber(total) + " من أول مرة" + (run.indCount >= RACE_MASTERY_PASS ? " — وبلا أي مساعدة" : "");
+        next.textContent = "🗺️ اختر حرفًا آخر";
+        next.onclick = rrSafe(() => { rrTeardown(); showScreen("letterRaceMap"); renderRaceMap(); });
+        map.style.display = "none";
+        phrase = "أحسنت! أتممت هذا الحرف بنجاح";
+    } else if (isMastery) {
+        title.textContent = "💪 قريب جدًا!";
+        body.textContent = "أجبتَ " + arabicNumber(ft) + " من " + arabicNumber(total) + " من أول مرة. نتدرّب قليلًا ثم نحاول مرة أخرى";
+        next.textContent = "🔁 أعد الاختبار";
+        next.onclick = rrSafe(() => startRaceStage(run.letter, run.stageIdx));
+        phrase = "محاولة رائعة، لنحاول مرة أخرى";
+    } else {
+        title.textContent = "🌟 أحسنت! أكملت المرحلة";
+        body.textContent = stage.title + " — " + arabicNumber(ft) + " من " + arabicNumber(total) + " من أول مرة";
+        if (lastStage) {
+            next.textContent = "🔁 العب المرحلة مرة أخرى";
+            next.onclick = rrSafe(() => startRaceStage(run.letter, run.stageIdx));
+        } else {
+            next.textContent = "▶ المرحلة التالية";
+            next.onclick = rrSafe(() => startRaceStage(run.letter, run.stageIdx + 1));
+        }
+    }
+    $("rrResStars").textContent = (isMastery && !passed) ? "" : raceStarsText(starsEarned);
+    $("rrResult").classList.add("on");
+    try { next.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ }
+    rrSay(phrase);
+}
+
+/* ---------- تجهيز الصوت دون اتصال (اختياري، بطلب من المستخدم) ---------- */
+
+function rrAudioPathsFor(letter) {
+    const texts = [letterWithFatha(letter)];
+    ["isolated", "initial", "medial", "final"].forEach(pos => raceValidWords(letter, pos).forEach(w => { if (texts.indexOf(w) < 0) texts.push(w); }));
+    RR_PHRASES.forEach(t => texts.push(t));
+    const paths = [];
+    texts.forEach(t => { const r = EduAudio.resolve(t); if (r) r.forEach(x => { if (paths.indexOf(x) < 0) paths.push(x); }); });
+    return paths;
+}
+
+/* fetch بقراءة الجسم كاملًا (استجابة ٢٠٠) فيخزّنها Service Worker الحالي؛ لا تعديل عليه.
+   لم يُختبر هذا على iOS/Safari ولا يُعدّ مدعومًا هناك قبل التجربة */
+function rrPrepareOffline(letter, statusEl) {
+    const paths = rrAudioPathsFor(letter);
+    let ok = 0, fail = 0, i = 0;
+    const show = () => { if (statusEl) statusEl.textContent = "جُهِّز " + arabicNumber(ok) + " من " + arabicNumber(paths.length) + (fail ? " — تعذّر " + arabicNumber(fail) : ""); };
+    show();
+    const worker = () => {
+        if (i >= paths.length) return Promise.resolve();
+        const p = paths[i++];
+        return fetch(p).then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error("http"))).then(() => { ok++; }, () => { fail++; }).then(() => { show(); return worker(); });
+    };
+    return Promise.all([worker(), worker(), worker()]).then(() => ({ ok: ok, fail: fail, total: paths.length }));
+}
+
+function rrDecorateStageView() {
+    try {
+        const list = $("raceStageList");
+        if (!list || !list.parentNode) return;
+        let wrap = $("rrPrep");
+        if (!wrap) {
+            wrap = document.createElement("div");
+            wrap.id = "rrPrep";
+            wrap.className = "rr-prep";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.id = "rrPrepBtn";
+            btn.textContent = "📥 جهّز صوت هذا الحرف دون اتصال";
+            try { rrInjectCss(); } catch (e) { /* نكتفي بالأنماط المضمّنة أدناه */ }
+            try {
+                btn.style.minHeight = "52px"; btn.style.minWidth = "52px"; btn.style.padding = "0 18px";
+                btn.style.border = "0"; btn.style.borderRadius = "14px"; btn.style.background = "#e0e7ff";
+                btn.style.color = "#312e81"; btn.style.fontWeight = "900"; btn.style.fontSize = "16px"; btn.style.cursor = "pointer";
+            } catch (e) { /* لا شيء */ }
+            const st = document.createElement("small");
+            st.id = "rrPrepStatus";
+            btn.addEventListener("click", function () {
+                btn.disabled = true;
+                rrPrepareOffline(letterRaceGame.letter, st).then(function () { btn.disabled = false; }, function () { btn.disabled = false; });
+            });
+            wrap.appendChild(btn);
+            wrap.appendChild(st);
+            list.parentNode.insertBefore(wrap, list.nextSibling);
+        }
+        const st2 = $("rrPrepStatus");
+        if (st2) st2.textContent = "";
+    } catch (e) { /* ميزة اختيارية: لا تُعطّل قائمة المراحل */ }
 }
 
 /* =========================================================
@@ -18304,6 +19292,42 @@ function renderTeacherStats() {
     renderTeacherWeeklySummary();
     renderTeacherRecentActivity();
     renderSkillsReview();
+    renderTeacherLettersDetail();
+}
+
+/* 🔤 تفاصيل الحروف للمعلم — قراءة فقط من سجلات الإتقان الحالية للطالب الحالي */
+function renderTeacherLettersDetail() {
+    const box = $("teacherLettersDetail");
+    if (!box || typeof LETTER_UNITS === "undefined") return;
+
+    const rows = [];
+    LETTER_UNITS.forEach(unit => {
+        const l = unit.letter;
+        const sum = ltrLetterSummary(l);
+        const has = sum.done > 0 || sum.practice > 0 || sum.weak.length > 0
+            || Object.keys(ltrReadJSON(LTR_MASTERY_KEY, {})[l] || {}).length > 0;
+        if (has) rows.push({ l, sum });
+    });
+
+    if (!rows.length) {
+        box.innerHTML = '<p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>';
+        return;
+    }
+
+    const needs = rows.filter(r => r.sum.weak.length);
+    const head = `<p class="teacher-letters-head">بدأ ${arabicNumber(rows.length)} حرفًا — ${needs.length ? arabicNumber(needs.length) + " منها يحتاج تدريبًا إضافيًا" : "لا حرف يحتاج تدريبًا إضافيًا الآن"}</p>`;
+
+    box.innerHTML = head + `<div class="teacher-letters-table" role="table">` + rows.map(r => {
+        const weakNames = r.sum.weak.slice(0, 3).map(w => (LTR_STAGE_META[w.id] || {}).name || w.id).join("، ");
+        return `
+            <div class="teacher-letter-row${r.sum.weak.length ? " needs" : ""}" role="row">
+                <b class="tl-letter">${r.l}</b>
+                <span class="tl-cell">✅ ${arabicNumber(r.sum.done)}/${arabicNumber(r.sum.total)}</span>
+                <span class="tl-cell">⭐ ${arabicNumber(r.sum.mastered)}</span>
+                <span class="tl-cell">🌱 ${arabicNumber(r.sum.practice)}</span>
+                <span class="tl-note">${weakNames ? "يحتاج تدريبًا: " + weakNames : "—"}</span>
+            </div>`;
+    }).join("") + `</div>`;
 }
 
 function renderSkillsReview() {
@@ -23668,7 +24692,6 @@ const LETTER_UNITS = [
         { word: "أناناس", image: "🍍" },
         { word: "أرنب", image: "🐰" },
         { word: "أسد", image: "🦁" },
-        { word: "أم", image: "👩" },
         { word: "أذن", image: "👂" },
         { word: "أخطبوط", image: "🐙" }
     ]},
@@ -23684,16 +24707,14 @@ const LETTER_UNITS = [
     { letter: "ت", words: [
         { word: "تفاح", image: "🍎" },
         { word: "تاج", image: "👑" },
-        { word: "تمر", image: "🌴" },
-        { word: "تين", image: "🍈" },
         { word: "تمساح", image: "🐊" },
-        { word: "توت", image: "🫐" }
+        { word: "توت", image: "🫐" },
+        { word: "تلفاز", image: "📺" }
     ]},
     { letter: "ث", words: [
         { word: "ثعلب", image: "🦊" },
         { word: "ثوم", image: "🧄" },
         { word: "ثعبان", image: "🐍" },
-        { word: "ثلاجة", image: "🧊" },
         { word: "ثلج", image: "❄️" }
     ]},
     { letter: "ج", words: [
@@ -23728,23 +24749,18 @@ const LETTER_UNITS = [
         { word: "دراجة", image: "🚲" }
     ]},
     { letter: "ذ", words: [
-        { word: "ذيل", image: "🦁" },
-        { word: "ذهب", image: "🥇" },
         { word: "ذراع", image: "💪" },
         { word: "ذبابة", image: "🪰" },
-        { word: "ذئب", image: "🐺" }
+        { word: "ذئب", image: "🐺" },
+        { word: "ذرة", image: "🌽" }
     ]},
     { letter: "ر", words: [
-        { word: "رمل", image: "🏖️" },
         { word: "ريشة", image: "🪶" },
-        { word: "رأس", image: "🗣️" },
-        { word: "رجل", image: "🧍" }
+        { word: "راكون", image: "🦝" }
     ]},
     { letter: "ز", words: [
         { word: "زهرة", image: "🌸" },
-        { word: "زينة", image: "🎀" },
         { word: "زرافة", image: "🦒" },
-        { word: "زيت", image: "🫒" },
         { word: "زيتون", image: "🫒" }
     ]},
     { letter: "س", words: [
@@ -23752,12 +24768,10 @@ const LETTER_UNITS = [
         { word: "سيارة", image: "🚗" },
         { word: "سمكة", image: "🐟" },
         { word: "ساعة", image: "⏰" },
-        { word: "سرير", image: "🛏️" },
-        { word: "سماء", image: "🌌" }
+        { word: "سرير", image: "🛏️" }
     ]},
     { letter: "ش", words: [
         { word: "شمس", image: "☀️" },
-        { word: "شعر", image: "💇" },
         { word: "شجرة", image: "🌳" },
         { word: "شمعة", image: "🕯️" },
         { word: "شوكة", image: "🍴" },
@@ -23765,22 +24779,17 @@ const LETTER_UNITS = [
     ]},
     { letter: "ص", words: [
         { word: "صندوق", image: "📦" },
-        { word: "صالة", image: "🛋️" },
-        { word: "صقر", image: "🦅" },
         { word: "صاروخ", image: "🚀" },
-        { word: "صافرة", image: "📯" },
         { word: "صحن", image: "🍽️" },
         { word: "صبار", image: "🌵" }
     ]},
     { letter: "ض", words: [
         { word: "ضرس", image: "🦷" },
         { word: "ضفدع", image: "🐸" },
-        { word: "ضابط", image: "👮‍♂️" },
-        { word: "ضوء", image: "💡" }
+        { word: "ضابط", image: "👮‍♂️" }
     ]},
     { letter: "ط", words: [
         { word: "طباخ", image: "👨‍🍳" },
-        { word: "طاولة", image: "🪑" },
         { word: "طبيب", image: "👨‍⚕️" },
         { word: "طائرة", image: "✈️" },
         { word: "طاووس", image: "🦚" },
@@ -23788,8 +24797,7 @@ const LETTER_UNITS = [
     ]},
     { letter: "ظ", words: [
         { word: "ظرف", image: "✉️" },
-        { word: "ظفر", image: "💅" },
-        { word: "ظل", image: "🌓" }
+        { word: "ظفر", image: "💅" }
     ]},
     { letter: "ع", words: [
         { word: "علم", image: "🚩" },
@@ -23800,7 +24808,6 @@ const LETTER_UNITS = [
         { word: "عصير", image: "🧃" }
     ]},
     { letter: "غ", words: [
-        { word: "غسالة", image: "🧺" },
         { word: "غيوم", image: "☁️" },
         { word: "غراب", image: "🐦‍⬛" },
         { word: "غوريلا", image: "🦍" },
@@ -23824,7 +24831,6 @@ const LETTER_UNITS = [
     ]},
     { letter: "ك", words: [
         { word: "كرة", image: "⚽" },
-        { word: "كأس", image: "🏆" },
         { word: "كلب", image: "🐶" },
         { word: "كرسي", image: "🪑" },
         { word: "كيك", image: "🎂" },
@@ -23833,14 +24839,12 @@ const LETTER_UNITS = [
     ]},
     { letter: "ل", words: [
         { word: "ليمون", image: "🍋" },
-        { word: "لبن", image: "🥛" },
         { word: "لحم", image: "🥩" },
         { word: "لمبة", image: "💡" },
         { word: "لعبة", image: "🧸" },
         { word: "لسان", image: "👅" }
     ]},
     { letter: "م", words: [
-        { word: "مسبح", image: "🏊" },
         { word: "مدرسة", image: "🏫" },
         { word: "مسجد", image: "🕌" },
         { word: "مقص", image: "✂️" },
@@ -23852,25 +24856,19 @@ const LETTER_UNITS = [
         { word: "نحل", image: "🐝" },
         { word: "نجمة", image: "⭐" },
         { word: "نمر", image: "🐯" },
-        { word: "نعامة", image: "🦤" },
         { word: "نخلة", image: "🌴" }
     ]},
     { letter: "ه", words: [
         { word: "هلال", image: "🌙" },
-        { word: "هدهد", image: "🐦" },
         { word: "هدية", image: "🎁" },
-        { word: "هاتف", image: "📱" },
-        { word: "هرم", image: "🔺" }
+        { word: "هاتف", image: "📱" }
     ]},
     { letter: "و", words: [
         { word: "وجه", image: "😊" },
         { word: "وردة", image: "🌹" },
-        { word: "ولد", image: "👦" },
-        { word: "وسادة", image: "🛏️" }
+        { word: "ولد", image: "👦" }
     ]},
     { letter: "ي", words: [
-        { word: "يلعب", image: "⚽" },
-        { word: "يوسفي", image: "🍊" },
         { word: "يد", image: "✋" },
         { word: "يخت", image: "🛥️" },
         { word: "يويو", image: "🪀" }
@@ -24104,6 +25102,272 @@ function ltrRecordOutcome(letterChar, activityId, correct, promptLevel) {
 }
 
 /* =========================================================
+   🆕 المرحلة ١ — إتقان v2 + سجل المكافآت (منع تكديس النجوم) + الرسومات
+   مفاتيح جديدة (تُحفظ لكل طالب تلقائيًا عبر StudentStore لأنها تبدأ بـ taha_):
+     taha_ltr3_rewards : { "<حرف>": { a: ["listen#0", ...], done: 0|1 } }
+     taha_ltr3_mastery : { "<حرف>": { "<stageId>": { correct, wrong, first, done } } }
+   مفاتيح taha_ltr2_* لا تُعدَّل ولا تُحذف ولا تُصفَّر — تستمر في الكتابة
+   كما كانت (adaptive / completed_letters / unlocked_level) لتوافق لوحة المعلم.
+
+   🖼️ رسومات SVG محلية: Twemoji (© Twitter, Inc. وآخرون) بترخيص CC-BY 4.0
+   https://creativecommons.org/licenses/by/4.0/ — نُسخت دون تعديل إلى
+   assets/images/letters/ (انظر NOTICE.txt هناك). الإشارة هنا وفي ذلك الملف.
+========================================================= */
+
+const LTR_REWARDS_KEY = "taha_ltr3_rewards";
+const LTR_MASTERY_KEY = "taha_ltr3_mastery";
+const LTR_STARS_PER_NEW_ACTIVITY = 5;
+const LTR_STARS_PER_NEW_LETTER = 10;
+
+const LTR_STAGE_IDS = [
+    "listen", "auditory-discrimination", "sound-box", "sound-to-letter", "syllable-build",
+    "visual-discrimination", "dots-detective", "link-to-picture", "letter-house", "word-build",
+    "hidden-letter", "discover-in-word", "position-train", "pattern-complete",
+    "shape-by-position", "letter-steps", "letter-journey", "trace-write", "review"
+];
+
+/* المراحل التسع الأصلية (قبل المرحلة ٢) — تُستعمل فقط لاستنتاج تقدّم الطلاب القدامى */
+const LTR_LEGACY_STAGE_IDS = [
+    "listen", "auditory-discrimination", "sound-to-letter", "visual-discrimination",
+    "link-to-picture", "discover-in-word", "shape-by-position", "trace-write", "review"
+];
+
+const LTR_STAGE_META = {
+    "listen":                 { name: "أسمع",           icon: "👂" },
+    "auditory-discrimination":{ name: "أميّز الأصوات",  icon: "🎧" },
+    "sound-to-letter":        { name: "صوت وحرف",       icon: "🔤" },
+    "visual-discrimination":  { name: "أبحث وأميّز",    icon: "🔍" },
+    "link-to-picture":        { name: "الحرف والصورة",  icon: "🖼️" },
+    "letter-house":           { name: "بيت الحرف",      icon: "🏠" },
+    "sound-box":              { name: "صندوق الأصوات",  icon: "📦" },
+    "syllable-build":         { name: "بناء المقطع",    icon: "🎵" },
+    "word-build":             { name: "ركّب الكلمة",    icon: "🧱" },
+    "dots-detective":         { name: "محقق النقاط",    icon: "🕵️" },
+    "pattern-complete":       { name: "أكمل النمط",     icon: "🔁" },
+    "hidden-letter":          { name: "الحرف المختبئ",  icon: "🙈" },
+    "position-train":         { name: "قطار المواقع",   icon: "🚂" },
+    "discover-in-word":       { name: "داخل الكلمات",   icon: "📖" },
+    "shape-by-position":      { name: "أشكال الحرف",    icon: "🧩" },
+    "letter-steps":           { name: "خطوات الحرف",    icon: "👣" },
+    "letter-journey":         { name: "رحلة الحرف",     icon: "🧭" },
+    "trace-write":            { name: "أتتبّع وأكتب",   icon: "✏️" },
+    "review":                 { name: "مراجعة",         icon: "⭐" }
+};
+
+const LTR_ART_FILES = new Set(["1f463", "1f9ed", "1f501", "1f575", "1f648", "1f3b5", "1f9f1", "1f33d", "1f4fa", "1f682", "1f99d", "1f309", "1f30c", "1f311", "1f313", "1f319", "1f31f", "1f333", "1f334", "1f335", "1f338", "1f339", "1f347", "1f348", "1f349", "1f34a", "1f34b", "1f34c", "1f34d", "1f34e", "1f351", "1f352", "1f353", "1f35e", "1f36f", "1f374", "1f37d", "1f380", "1f381", "1f382", "1f392", "1f3a7", "1f3c6", "1f3ca", "1f3d6", "1f3e0", "1f3eb", "1f3ee", "1f3f0", "1f404", "1f40a", "1f40d", "1f40e", "1f411", "1f412", "1f413", "1f414", "1f418", "1f419", "1f41d", "1f41f", "1f426", "1f426-200d-2b1b", "1f42a", "1f42c", "1f42d", "1f42f", "1f430", "1f433", "1f436", "1f438", "1f43a", "1f43b", "1f441", "1f442", "1f445", "1f451", "1f455", "1f457", "1f45e", "1f466", "1f467", "1f468-200d-1f373", "1f468-200d-2695-fe0f", "1f469", "1f46e-200d-2642-fe0f", "1f476", "1f485", "1f487", "1f4a1", "1f4aa", "1f4d3", "1f4d6", "1f4d8", "1f4e6", "1f4ef", "1f4f1", "1f50d", "1f511", "1f514", "1f519", "1f524", "1f53a", "1f54c", "1f56f", "1f5bc", "1f5e3", "1f5fa", "1f60a", "1f680", "1f697", "1f6a2", "1f6a9", "1f6aa", "1f6b2", "1f6cb", "1f6cf", "1f6e5", "1f947", "1f952", "1f955", "1f95b", "1f969", "1f96c", "1f981", "1f985", "1f986", "1f98a", "1f98b", "1f98c", "1f98d", "1f992", "1f99a", "1f9a4", "1f9b7", "1f9c0", "1f9c3", "1f9c4", "1f9ca", "1f9cd", "1f9e4", "1f9e9", "1f9f8", "1f9fa", "1fa80", "1fa91", "1fa9f", "1fab0", "1fab6", "1fad0", "1fad2", "23f0", "2600", "2601", "26bd", "26f0", "26fa", "2702", "2708", "2709", "270b", "270f", "2744", "2764", "2b50"]);
+
+function ltrArtFallback(img) {
+    if (!img || !img.parentNode) return;
+    img.replaceWith(document.createTextNode(img.dataset.e || ""));
+}
+
+/* يعيد وسم <img> لرسم SVG المحلي المقابل للإيموجي؛ وإن لم يتوفر الملف
+   يعيد الإيموجي نفسه (احتياط آمن) — وعند فشل التحميل يعود للإيموجي */
+function ltrArt(emoji) {
+    const e = String(emoji == null ? "" : emoji);
+    const hex = [...e].map(c => c.codePointAt(0).toString(16)).filter(h => h !== "fe0f").join("-");
+    const name = LTR_ART_FILES.has(hex) ? hex : (LTR_ART_FILES.has(hex + "-fe0f") ? hex + "-fe0f" : null);
+    if (!name) return e;
+    return `<img class="ltr-art" src="assets/images/letters/${name}.svg" alt="" draggable="false" data-e="${e}" onerror="ltrArtFallback(this)">`;
+}
+
+function ltrReadJSON(key, fallback) {
+    try {
+        const v = JSON.parse(localStorage.getItem(key));
+        return (v && typeof v === "object") ? v : fallback;
+    } catch (error) {
+        return fallback;
+    }
+}
+
+function ltrWriteJSON(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (error) { /* ممتلئ */ }
+}
+
+/* مفاتيح الأنشطة الـ٢٥ الثابتة لكل حرف (نفس ترتيب المسار الموجّه) */
+function ltrCanonicalActivityKeys() {
+    /* قائمة ثابتة بمفاتيح الأنشطة الأصلية فقط — أنشطة المرحلة ٢ الجديدة
+       (letter-house / position-train) تُكافأ مرة واحدة كمحتوى جديد */
+    return [
+        "listen#0", "listen#1",
+        "auditory-discrimination#0", "auditory-discrimination#1", "auditory-discrimination#2",
+        "auditory-discrimination#3", "auditory-discrimination#4",
+        "sound-to-letter#0", "sound-to-letter#1", "sound-to-letter#2",
+        "visual-discrimination#0", "visual-discrimination#1", "visual-discrimination#2",
+        "visual-discrimination#3", "visual-discrimination#4",
+        "link-to-picture#0", "link-to-picture#1",
+        "discover-in-word#0", "discover-in-word#1",
+        "shape-by-position#0", "shape-by-position#1",
+        "trace-write#0", "trace-write#1",
+        "review#0", "review#1"
+    ];
+}
+
+/* سجل المكافآت. عند أول استخدام لطالب موجود: يُبذَر من تقدّمه السابق حتى لا
+   يُكافأ مرة ثانية على ما أتقنه سابقًا (الحروف المكتملة ← كل أنشطتها، وغير
+   المكتملة ← بقدر إجاباتها الصحيحة المسجّلة) — دون تعديل أي مفتاح قديم */
+function ltrLoadRewards() {
+
+    if (localStorage.getItem(LTR_REWARDS_KEY) !== null) {
+        return ltrReadJSON(LTR_REWARDS_KEY, {});
+    }
+
+    const rewards = {};
+
+    try {
+        const keys = ltrCanonicalActivityKeys();
+        const completed = ltrLoadCompletedLetters();
+        const adaptive = ltrLoadAdaptive();
+
+        LETTER_UNITS.forEach(unit => {
+            const l = unit.letter;
+            if (completed.includes(l)) {
+                rewards[l] = { a: keys.slice(), done: 1 };
+            } else {
+                const n = adaptive[l] && adaptive[l].correct
+                    ? Math.min(Number(adaptive[l].correct) || 0, keys.length) : 0;
+                if (n > 0) rewards[l] = { a: keys.slice(0, n), done: 0 };
+            }
+        });
+    } catch (error) { /* يبقى سجل فارغ */ }
+
+    ltrWriteJSON(LTR_REWARDS_KEY, rewards);
+    return rewards;
+}
+
+function ltrClaimActivityReward(letter, key) {
+    const rewards = ltrLoadRewards();
+    const entry = rewards[letter] || (rewards[letter] = { a: [], done: 0 });
+    if (entry.a.indexOf(key) !== -1) return false;
+    entry.a.push(key);
+    ltrWriteJSON(LTR_REWARDS_KEY, rewards);
+    return true;
+}
+
+function ltrClaimLetterReward(letter) {
+    const rewards = ltrLoadRewards();
+    const entry = rewards[letter] || (rewards[letter] = { a: [], done: 0 });
+    if (entry.done) return false;
+    entry.done = 1;
+    ltrWriteJSON(LTR_REWARDS_KEY, rewards);
+    return true;
+}
+
+function ltrRecordMastery(letter, stageId, correct, firstTry) {
+    const m = ltrReadJSON(LTR_MASTERY_KEY, {});
+    const byStage = m[letter] || (m[letter] = {});
+    const s = byStage[stageId] || (byStage[stageId] = { correct: 0, wrong: 0, first: 0, done: 0 });
+    if (correct) {
+        s.correct++;
+        if (firstTry) s.first++;
+    } else {
+        s.wrong++;
+    }
+    ltrWriteJSON(LTR_MASTERY_KEY, m);
+}
+
+/* تدريب بمساعدة بصرية: يُسجَّل عدّاد منفصل (practice) ولا يمسّ correct/wrong/first.
+   السجلات القديمة بلا هذا الحقل تُقرأ كأنه صفر — لا ترحيل ولا إعادة حساب */
+function ltrRecordPractice(letter, stageId) {
+    const m = ltrReadJSON(LTR_MASTERY_KEY, {});
+    const byStage = m[letter] || (m[letter] = {});
+    const s = byStage[stageId] || (byStage[stageId] = { correct: 0, wrong: 0, first: 0, done: 0 });
+    s.practice = (s.practice || 0) + 1;
+    ltrWriteJSON(LTR_MASTERY_KEY, m);
+}
+
+function ltrMarkStageDone(letter, stageId) {
+    const m = ltrReadJSON(LTR_MASTERY_KEY, {});
+    const byStage = m[letter] || (m[letter] = {});
+    const s = byStage[stageId] || (byStage[stageId] = { correct: 0, wrong: 0, first: 0, done: 0 });
+    s.done++;
+    ltrWriteJSON(LTR_MASTERY_KEY, m);
+}
+
+function ltrStageDoneCount(letter, stageId) {
+    const m = ltrReadJSON(LTR_MASTERY_KEY, {});
+    const s = m[letter] && m[letter][stageId];
+    if (s && s.done) return s.done;
+    /* طالب قديم أتمّ الحرف قبل هذا التحديث: كل مراحله منجزة مرة */
+    return (LTR_LEGACY_STAGE_IDS.indexOf(stageId) !== -1 && ltrIsLetterCompleted(letter)) ? 1 : 0;
+}
+
+/* مستوى الإتقان لمرحلة: ٠ لم تُنجز، ١ أُنجزت، ٢ بلا أخطاء غالبًا، ٣ متقنة (جلستان+) */
+function ltrStageLevel(letter, stageId) {
+    const done = ltrStageDoneCount(letter, stageId);
+    if (!done) return 0;
+
+    const m = ltrReadJSON(LTR_MASTERY_KEY, {});
+    const s = m[letter] && m[letter][stageId];
+    if (!s || !s.correct) return 1;
+
+    const accuracy = s.first / s.correct;
+    if (done >= 2 && accuracy >= 0.85) return 3;
+    if (accuracy >= 0.7) return 2;
+    return 1;
+}
+
+function ltrLetterStagesDone(letter) {
+    return LTR_STAGE_IDS.filter(id => ltrStageDoneCount(letter, id) > 0).length;
+}
+
+/* =========================================================
+   🧭 المرحلة ٦ — تنظيم القائمة وتمييز: تدريب ≠ تقدّم ≠ إتقان
+   (قراءة فقط من السجلات الحالية؛ لا مفاتيح جديدة ولا تعديل لأي قيمة)
+     • تقدّم  ✅ = مراحل أُنجزت (done)
+     • إتقان  ⭐ = مراحل بمستوى ٣ (ltrStageLevel)
+     • تدريب  🌱 = إكمالات التدريب بمساعدة بصرية (practice) — لا تدخل الإتقان
+========================================================= */
+
+const LTR_STAGE_GROUPS = [
+    { id: "hear",  icon: "👂", name: "أسمع وأميّز",       stages: ["listen", "auditory-discrimination", "sound-box", "sound-to-letter", "syllable-build"] },
+    { id: "see",   icon: "🔍", name: "أرى وأبحث",         stages: ["visual-discrimination", "dots-detective", "link-to-picture", "letter-house"] },
+    { id: "build", icon: "🧱", name: "أركّب وأكتشف",      stages: ["word-build", "hidden-letter", "discover-in-word", "position-train", "pattern-complete"] },
+    { id: "write", icon: "✏️", name: "شكل الحرف وكتابته", stages: ["shape-by-position", "letter-steps", "letter-journey", "trace-write"] },
+    { id: "check", icon: "⭐", name: "أراجع",             stages: ["review"] }
+];
+
+/* مرحلة «ضعيفة»: ٣ إجابات صحيحة على الأقل ونسبة الصحيح من أول مرة أقل من ٧٠٪ */
+const LTR_WEAK_MIN_CORRECT = 3;
+const LTR_WEAK_ACCURACY = 0.7;
+
+function ltrLetterSummary(letter) {
+    const m = ltrReadJSON(LTR_MASTERY_KEY, {})[letter] || {};
+    const out = { done: 0, total: LTR_STAGE_IDS.length, mastered: 0, practice: 0, weak: [], fresh: [], levels: {} };
+    LTR_STAGE_IDS.forEach(id => {
+        const d = ltrStageDoneCount(letter, id);
+        if (d > 0) out.done++; else out.fresh.push(id);
+        const lv = ltrStageLevel(letter, id);
+        out.levels[id] = lv;
+        if (lv >= 3) out.mastered++;
+        const st = m[id];
+        if (st) {
+            out.practice += Number(st.practice) || 0;
+            if (st.correct >= LTR_WEAK_MIN_CORRECT && st.first / st.correct < LTR_WEAK_ACCURACY) {
+                out.weak.push({ id, accuracy: st.first / st.correct });
+            }
+        }
+    });
+    out.weak.sort((a, b) => a.accuracy - b.accuracy);
+    return out;
+}
+
+/* اقتراح واحد لما بعده — إرشاد فقط، لا يمنع أي اختيار آخر */
+function ltrSuggestStage(letter) {
+    const sum = ltrLetterSummary(letter);
+    if (sum.fresh.length) return { id: sum.fresh[0], reason: "مرحلة جديدة" };
+    if (sum.weak.length) return { id: sum.weak[0].id, reason: "لنتدرّب أكثر" };
+    const ranked = LTR_STAGE_IDS
+        .map((id, i) => ({ id, i, level: sum.levels[id], done: ltrStageDoneCount(letter, id) }))
+        .sort((a, b) => (a.level - b.level) || (a.done - b.done) || (a.i - b.i));
+    return { id: ranked[0].id, reason: "لنقوّي الإتقان" };
+}
+
+function ltrStageGroupOf(stageId) {
+    return LTR_STAGE_GROUPS.find(g => g.stages.indexOf(stageId) !== -1) || LTR_STAGE_GROUPS[0];
+}
+
+/* =========================================================
    🎯 مستويات المساعدة (ABA Prompting) — بدون عقوبة أبدًا
 ========================================================= */
 
@@ -24168,12 +25432,18 @@ let currentLetterIndex = 0;
 
 let ltrModeActive = false;
 
+let ltrActivityHadWrong = false;
+
 let ltrState = {
     levelId: 1,
     letter: null,
     activityIndex: 0,
     currentActivityData: null,
-    queue: []
+    queue: [],
+    mode: "menu",        // "menu" قائمة الأنشطة | "run" تشغيل نشاط
+    session: null,       // { kind: full|short|stage, stageId, starsGained }
+    sid: 0,              // رقم الجلسة: يُبطل أي مؤقت متأخر بعد الخروج
+    settled: false       // تمت الإجابة الصحيحة على النشاط الحالي (يمنع الاحتساب المزدوج)
 };
 
 /* =========================================================
@@ -24184,34 +25454,33 @@ function renderLettersLevelsHub() {
     const grid = $("lettersLevelsGrid");
     if (!grid) return;
 
-    const unlocked = StudentStore.eff(ltrLoadUnlockedLevel());
-
+    /* 🔓 كل المجموعات مفتوحة دائمًا لكل الطلاب — بلا أقفال ولا اشتراط
+       إكمال مجموعة سابقة. التقدم إرشاد فقط (✅ + عدد الحروف المكتملة). */
     grid.innerHTML = LETTER_LEVEL_GROUPS.map(group => {
-        const isUnlocked = group.id <= unlocked;
         const isCompleted = ltrIsLevelCompleted(group.id);
+        const doneCount = group.letters.filter(l => ltrIsLetterCompleted(l)).length;
 
         const classes = ["ltr-level-card-btn"];
-        if (!isUnlocked) classes.push("locked");
         if (isCompleted) classes.push("completed");
 
-        const lockIcon = isCompleted ? "✅" : (isUnlocked ? "🔓" : "🔒");
+        const progress = isCompleted
+            ? "✅ مكتملة"
+            : (doneCount > 0
+                ? `${arabicNumber(doneCount)} من ${arabicNumber(group.letters.length)}`
+                : "ابدأ من أي حرف");
 
         return `
             <button
                 class="${classes.join(" ")}"
                 type="button"
-                ${isUnlocked ? `onclick="openLettersLevel(${group.id})"` : `onclick="ltrShowLockedMessage()"`}
+                onclick="openLettersLevel(${group.id})"
             >
-                <span class="ltr-level-lock-icon">${lockIcon}</span>
                 <span class="ltr-level-letters-preview">${group.letters.join(" ")}</span>
                 <span class="ltr-level-name">المجموعة ${arabicNumber(group.id)}</span>
+                <span class="ltr-level-progress">${progress}</span>
             </button>
         `;
     }).join("");
-}
-
-function ltrShowLockedMessage() {
-    speakEducational("أكمل المجموعة السابقة أولًا لتفتح هذه المجموعة", { rate: 0.85 });
 }
 
 /* =========================================================
@@ -24219,9 +25488,6 @@ function ltrShowLockedMessage() {
 ========================================================= */
 
 function openLettersLevel(levelId) {
-    const unlocked = StudentStore.eff(ltrLoadUnlockedLevel());
-    if (levelId > unlocked) { ltrShowLockedMessage(); return; }
-
     const group = LETTER_LEVEL_GROUPS[levelId - 1];
     if (!group) return;
 
@@ -24246,6 +25512,7 @@ function renderLettersGridForLevel(group) {
 
     grid.innerHTML = group.letters.map(letterChar => {
         const isCompleted = completed.includes(letterChar);
+        const pct = isCompleted ? 100 : Math.min(100, Math.round((ltrLetterStagesDone(letterChar) / LTR_STAGE_IDS.length) * 100));
         return `
             <button
                 class="ltr-letter-card-btn ${isCompleted ? "completed" : ""}"
@@ -24253,7 +25520,8 @@ function renderLettersGridForLevel(group) {
                 onclick="openLetterDetail('${letterChar}')"
             >
                 ${isCompleted ? `<span class="ltr-letter-badge">✅</span>` : ""}
-                ${letterWithFatha(letterChar)}
+                <span class="ltr-letter-glyph">${letterWithFatha(letterChar)}</span>
+                <span class="ltr-letter-meter" aria-hidden="true"><i style="width:${pct}%"></i></span>
             </button>
         `;
     }).join("");
@@ -24269,7 +25537,10 @@ function backToLettersLevels() {
 
 function backToLettersGrid() {
     ltrModeActive = false;
+    ltrState.sid++;
+    ltrSetDetailMode("menu");
     stopAllAudio();
+    stopEducationalAudio();
     ltrHideHint();
 
     const detailCard = $("letterDetailCard");
@@ -24283,30 +25554,27 @@ function backToLettersGrid() {
 
 function openLetterDetail(letterChar) {
 
-    /* 🛡️ تحقق دفاعي: تأكد أن الحرف الممرَّر صحيح وله بيانات فعلية
-       في LETTER_UNITS قبل أي شيء آخر — يمنع أي حالة صامتة لو وصل
-       معرّف حرف غير متوقع، ويسجّل تحذيرًا واضحًا بدل الفشل الصامت */
+    /* 🛡️ تحقق دفاعي: تأكد أن الحرف الممرَّر صحيح وله بيانات فعلية */
     const unit = getLetterUnit(letterChar);
     if (!unit) {
         console.warn("openLetterDetail: لم يتم العثور على بيانات للحرف:", letterChar);
         return;
     }
 
-    ltrModeActive = true;
+    stopEducationalAudio();
+
+    ltrModeActive = false;
     ltrWrongStreak = 0;
+    ltrState.sid++;
 
     ltrState.letter = letterChar;
     ltrState.activityIndex = 0;
     ltrState.currentActivityData = null;
-    ltrState.queue = buildLetterActivityQueue(letterChar);
+    ltrState.queue = [];
+    ltrState.session = null;
 
     /* مزامنة currentLetterIndex مع مصفوفة letters القديمة (بيانات
-       مشتركة يعتمد عليها نظام الشهادات/المكافآت) — بلا استخدام أي
-       من منطق أو دوال المحرك القديم، فقط تحديث الفهرس ليتوافق مع
-       الحرف الذي يتدرب عليه الطفل فعليًا حاليًا.
-       🛡️ تحقق دفاعي إضافي: لو تعذّر إيجاد تطابق أو كانت letters
-       غير متاحة لأي سبب، نُبقي currentLetterIndex برقم صحيح آمن (٠)
-       بدل تركه بقيمة قديمة غير متوافقة مع الحرف الحالي */
+       مشتركة يعتمد عليها نظام الشهادات/المكافآت) */
     let oldIndex = -1;
     if (typeof letters !== "undefined" && Array.isArray(letters)) {
         oldIndex = letters.findIndex(item => item.letter === letterChar);
@@ -24319,9 +25587,164 @@ function openLetterDetail(letterChar) {
 
     if (gridCard) gridCard.style.display = "none";
     if (detailCard) detailCard.style.display = "block";
-    if (bigLetter) bigLetter.textContent = letterWithFatha(letterChar);
+    if (bigLetter) {
+        bigLetter.textContent = letterWithFatha(letterChar);
+        bigLetter.onclick = () => speakCurrentLetter();
+    }
 
+    ltrHideHint();
+    ltrSetDetailMode("menu");
+    renderLtrActivityMenu();
+}
+
+/* =========================================================
+   🧭 قائمة الأنشطة + بدء الجلسات (المرحلة ١)
+   كل الأنشطة مفتوحة دائمًا؛ «المسار الموجّه» اقتراح فقط.
+========================================================= */
+
+function ltrSetDetailMode(mode) {
+    ltrState.mode = mode;
+    const card = $("letterDetailCard");
+    if (card) {
+        card.dataset.ltrMode = mode;
+        if (mode !== "run") delete card.dataset.ltrView;
+    }
+}
+
+function ltrStageStarsHtml(level) {
+    let html = "";
+    for (let i = 1; i <= 3; i++) {
+        html += `<span class="ltr-mini-star ${i <= level ? "on" : "off"}">${ltrArt("⭐")}</span>`;
+    }
+    return html;
+}
+
+function renderLtrActivityMenu() {
+    const box = $("ltrActivityMenu");
+    if (!box || !ltrState.letter) return;
+
+    const letter = ltrState.letter;
+    const sum = ltrLetterSummary(letter);
+    const suggest = ltrSuggestStage(letter);
+    const suggestMeta = LTR_STAGE_META[suggest.id];
+    const suggestGroup = ltrStageGroupOf(suggest.id);
+    const fullQueue = buildLetterActivityQueue(letter);
+
+    const shortIcons = [...new Set(ltrPickShortSession(letter, fullQueue).map(q => q.stageId))]
+        .map(id => ltrArt(LTR_STAGE_META[id].icon)).join(" ");
+
+    const cardHtml = id => {
+        const meta = LTR_STAGE_META[id];
+        const level = sum.levels[id];
+        const isDone = ltrStageDoneCount(letter, id) > 0;
+        const st = (ltrReadJSON(LTR_MASTERY_KEY, {})[letter] || {})[id];
+        const practiced = st && st.practice > 0;
+        const status = (isDone ? "أُنجزت" : "جديدة") + "، إتقان " + arabicNumber(level) + " من ٣" + (practiced ? "، فيها تدريب" : "");
+        return `
+            <button class="ltr-stage-card lvl${level}${isDone ? " done" : ""}" type="button"
+                    data-stage="${id}"
+                    onclick="startLetterSession('stage', '${id}')"
+                    aria-label="${meta.name} — ${status}">
+                ${isDone ? `<span class="ltr-stage-flag" aria-hidden="true">✅</span>` : ""}
+                ${practiced ? `<span class="ltr-stage-flag practice" aria-hidden="true">🌱</span>` : ""}
+                <span class="ltr-stage-icon">${ltrArt(meta.icon)}</span>
+                <span class="ltr-stage-name">${meta.name}</span>
+                <span class="ltr-stage-stars" aria-hidden="true">${ltrStageStarsHtml(level)}</span>
+            </button>`;
+    };
+
+    const groups = LTR_STAGE_GROUPS.map(g => {
+        const doneIn = g.stages.filter(id => ltrStageDoneCount(letter, id) > 0).length;
+        return `
+            <details class="ltr-stage-group" data-group="${g.id}" ${g.id === suggestGroup.id ? "open" : ""}>
+                <summary>
+                    <span class="ltr-group-icon">${ltrArt(g.icon)}</span>
+                    <b>${g.name}</b>
+                    <span class="ltr-group-count">✅ ${arabicNumber(doneIn)}/${arabicNumber(g.stages.length)}</span>
+                </summary>
+                <div class="ltr-stage-grid">${g.stages.map(cardHtml).join("")}</div>
+            </details>`;
+    }).join("");
+
+    const pct = Math.round((sum.done / sum.total) * 100);
+
+    box.innerHTML = `
+        <div class="ltr-letter-summary" role="group" aria-label="حالة هذا الحرف">
+            <div class="ltr-chip progress"><span>✅ تقدّم</span><b>${arabicNumber(sum.done)} من ${arabicNumber(sum.total)}</b></div>
+            <div class="ltr-chip mastery"><span>⭐ إتقان</span><b>${arabicNumber(sum.mastered)}</b></div>
+            <div class="ltr-chip practice"><span>🌱 تدريب</span><b>${arabicNumber(sum.practice)}</b></div>
+        </div>
+        <div class="ltr-letter-meter big" aria-hidden="true"><i style="width:${pct}%"></i></div>
+
+        <button class="ltr-menu-suggest" type="button" onclick="startLetterSession('stage', '${suggest.id}')">
+            <span class="ltr-menu-suggest-icon">${ltrArt(suggestMeta.icon)}</span>
+            <span class="ltr-menu-suggest-text">
+                <small>▶ اقتراحي لك — ${suggest.reason}</small>
+                <b>${suggestMeta.name}</b>
+            </span>
+        </button>
+
+        <div class="ltr-menu-primary">
+            <button class="ltr-menu-main" type="button" onclick="startLetterSession('full')">
+                <span class="ltr-menu-main-icon">${ltrArt("🗺️")}</span>
+                <b>المسار الموجّه</b>
+                <small>${arabicNumber(fullQueue.length)} نشاطًا — توقّف متى شئت</small>
+            </button>
+            <button class="ltr-menu-short" type="button" onclick="startLetterSession('short')">
+                <span class="ltr-menu-main-icon">${ltrArt("🚀")}</span>
+                <b>جلسة قصيرة</b>
+                <small>${arabicNumber(5)} أنشطة · ${shortIcons}</small>
+            </button>
+        </div>
+        <div class="ltr-menu-caption">أو اختر ما تحب — كل الأنشطة مفتوحة</div>
+        ${groups}
+        <details class="ltr-legend">
+            <summary>ما معنى الرموز؟</summary>
+            <p>✅ <b>تقدّم</b>: مرحلة أنجزتها · ⭐ <b>إتقان</b>: النجوم الصغيرة تزيد كلما أجبت صحيحًا من أول مرة · 🌱 <b>تدريب</b>: تتبّع بمساعدة بصرية، نتعلّم به ولا يُحسب إتقانًا.</p>
+        </details>
+    `;
+}
+
+function startLetterSession(kind, stageId) {
+    const letter = ltrState.letter;
+    if (!letter) return;
+
+    stopAllAudio();
+    stopEducationalAudio();
+
+    ltrModeActive = true;
+    ltrWrongStreak = 0;
+    ltrState.sid++;
+    ltrState.session = { kind: kind, stageId: stageId || null, starsGained: 0 };
+    ltrState.activityIndex = 0;
+    ltrState.currentActivityData = null;
+
+    const opts = kind === "stage" ? { stageId: stageId }
+        : (kind === "short" ? { short: true } : {});
+
+    ltrState.queue = buildLetterActivityQueue(letter, opts);
+
+    if (!ltrState.queue.length) {
+        ltrModeActive = false;
+        return;
+    }
+
+    ltrSetDetailMode("run");
     renderCurrentLetterActivity();
+}
+
+function ltrBackFromDetail() {
+    if (ltrState.mode === "run") {
+        ltrModeActive = false;
+        ltrState.sid++;
+        stopAllAudio();
+        stopEducationalAudio();
+        ltrHideHint();
+        ltrSetDetailMode("menu");
+        renderLtrActivityMenu();
+        return;
+    }
+    backToLettersGrid();
 }
 
 /* =========================================================
@@ -24372,17 +25795,34 @@ function renderCurrentLetterActivity() {
     const messageEl = $("letterMessage");
 
     ltrWrongStreak = 0;
+    ltrActivityHadWrong = false;
+    ltrState.settled = false;
     ltrHideHint();
     updateLtrProgressUI();
 
     if (messageEl) { messageEl.textContent = ""; messageEl.className = "message"; }
-    if (goalEl) goalEl.textContent = activity ? activity.goal : "";
+    if (goalEl) {
+        goalEl.textContent = "";
+        if (activity) {
+            const meta = LTR_STAGE_META[activity.stageId];
+            if (meta) {
+                const chip = document.createElement("span");
+                chip.className = "ltr-goal-chip";
+                chip.innerHTML = ltrArt(meta.icon) + " " + meta.name;
+                goalEl.appendChild(chip);
+            }
+            goalEl.appendChild(document.createTextNode(" " + activity.goal));
+        }
+    }
+    const detailCard = $("letterDetailCard");
+    if (detailCard) delete detailCard.dataset.ltrView;
     if (!stage || !activity) return;
 
     activity.render(stage, ltrState.letter, activity.difficulty || 2);
 }
 
 function retryCurrentLetterActivity() {
+    if (ltrState.mode !== "run") return;
     renderCurrentLetterActivity();
 }
 
@@ -24392,23 +25832,77 @@ function retryCurrentLetterActivity() {
    لا نظام مكافآت منفصل)
 ========================================================= */
 
+/* 🔊 ثناء متنوّع من التسجيلات المحلية الموجودة فقط (بلا TTS ولا تسجيلات جديدة).
+   إن غاب أي تسجيل يُستبعد من التدوير، وإن غابت كلها يبقى النص الأصلي */
+const LTR_PRAISE = [
+    { say: "أحسنت! إجابة صحيحة", text: "🎉 أحسنت! إجابة صحيحة" },
+    { say: "صحيح", text: "✔️ صحيح" },
+    { say: "أحسنت يا بطل", text: "🏅 أحسنت يا بطل" }
+];
+let ltrPraiseIdx = -1;
+
+function ltrNextPraise(practice) {
+    if (practice) {
+        const say = EduAudio.has("أحسنت، عمل رائع") ? "أحسنت، عمل رائع" : "أحسنت! إجابة صحيحة";
+        return { say, text: "🌱 أحسنت التدريب!" };
+    }
+    const avail = LTR_PRAISE.filter(p => EduAudio.has(p.say));
+    if (!avail.length) return LTR_PRAISE[0];
+    ltrPraiseIdx = (ltrPraiseIdx + 1) % avail.length;
+    return avail[ltrPraiseIdx];
+}
+
+/* نجمة بصرية قصيرة عند نيل نجوم جديدة (لا تظهر عند الإعادة) */
+function ltrStarPop(n) {
+    const host = $("ltrRunner");
+    if (!host) return;
+    host.querySelectorAll(".ltr-star-pop").forEach(e => e.remove());
+    const el = document.createElement("div");
+    el.className = "ltr-star-pop";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = ltrArt("⭐") + " +" + arabicNumber(n);
+    host.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+}
+
 function finishLtrChoiceTask(isCorrect, button) {
+
+    /* 🛡️ نتيجة متأخرة (مؤقت قديم) بعد الخروج من النشاط: تُتجاهل كليًا */
+    if (ltrState.mode !== "run") return;
+
     const messageEl = $("letterMessage");
     const activity = ltrState.queue[ltrState.activityIndex];
+    if (!activity) return;
+
+    /* 🛡️ لا تُحتسب إجابة بعد إجابة صحيحة لنفس النشاط (لمس متكرر/نقرتان سريعتان) */
+    if (ltrState.settled) return;
+    if (isCorrect) ltrState.settled = true;
+
+    const sid = ltrState.sid;
 
     if (isCorrect) {
         if (button) button.classList.add("correct");
 
-        correctLetters++;
-        saveCounters();
-        addStars(5);
+        /* ⭐ المكافأة مرة واحدة فقط لكل (حرف، نشاط): التكرار يُسجَّل في
+           الإتقان لكن لا يمنح نجومًا ولا يرفع عدّاد الشارات */
+        const firstClaim = ltrClaimActivityReward(ltrState.letter, activity.key);
+
+        if (firstClaim) {
+            correctLetters++;
+            saveCounters();
+            addStars(LTR_STARS_PER_NEW_ACTIVITY);
+            if (ltrState.session) ltrState.session.starsGained += LTR_STARS_PER_NEW_ACTIVITY;
+            ltrStarPop(LTR_STARS_PER_NEW_ACTIVITY);
+        }
+        if (activity.practice && ltrState.session) ltrState.session.practiceDone = (ltrState.session.practiceDone || 0) + 1;
+        const praise = ltrNextPraise(!!activity.practice);
 
         if (messageEl) {
-            messageEl.textContent = "🎉 أحسنت! إجابة صحيحة ⭐";
+            messageEl.textContent = praise.text + (firstClaim ? " ⭐" : "");
             messageEl.className = "message correct";
         }
 
-        speakEducational("أحسنت! إجابة صحيحة", { rate: 0.8 });
+        speakEducational(praise.say, { rate: 0.8 });
 
         document
             .querySelectorAll("#ltrActivityStage .ltr-choice-btn, #ltrActivityStage .ltr-multi-item, #ltrActivityStage .ltr-audio-choice-btn")
@@ -24416,32 +25910,36 @@ function finishLtrChoiceTask(isCorrect, button) {
 
         ltrHideHint();
         ltrRecordOutcome(ltrState.letter, activity.id, true, ltrPromptLevel(ltrWrongStreak));
+        if (activity.practice) ltrRecordPractice(ltrState.letter, activity.stageId);
+        else ltrRecordMastery(ltrState.letter, activity.stageId, true, !ltrActivityHadWrong);
         ltrWrongStreak = 0;
 
-        setTimeout(() => advanceLtrActivity(), 1200);
+        setTimeout(() => {
+            if (sid === ltrState.sid && ltrState.mode === "run") advanceLtrActivity();
+        }, 1200);
 
     } else {
         /* عند الخطأ: بدون عقاب، وبدون تعطيل كل الأزرار، وبدون مؤقّت
-           خفي يتجاوز الطفل تلقائيًا. نعطّل فقط الزر الخاطئ الذي
-           ضغطه (ليتذكر أنه جرّبه)، ونقدّم مساعدة متدرّجة (تلميح ثم
-           إبراز الإجابة الصحيحة)، وتبقى كل الأزرار الأخرى — وعلى
-           رأسها الصحيحة — قابلة للضغط دائمًا ليُكمل الطفل بنفسه
-           بمجرد أن يراها، فيحصل على شعور إنجاز حقيقي بدل أن يُنقَل
-           تلقائيًا دون فعل منه */
+           خفي يتجاوز الطفل تلقائيًا (مساعدة متدرّجة ثم إبراز الصحيحة) */
         if (button) {
             button.classList.add("wrong");
             button.disabled = true;
         }
 
+        /* بعد خطأين متتاليين: عبارة أحنّ من التسجيلات الموجودة (إن وُجدت) */
+        const gentle = ltrWrongStreak >= 1 && EduAudio.has("محاولة رائعة، لنحاول مرة أخرى");
+
         if (messageEl) {
-            messageEl.textContent = "😊 حاول مرة أخرى";
+            messageEl.textContent = gentle ? "💪 محاولة رائعة، لنحاول مرة أخرى" : "😊 حاول مرة أخرى";
             messageEl.className = "message wrong";
         }
 
-        speakEducational("حاول مرة أخرى", { rate: 0.8 });
+        speakEducational(gentle ? "محاولة رائعة، لنحاول مرة أخرى" : "حاول مرة أخرى", { rate: 0.8 });
 
+        ltrActivityHadWrong = true;
         ltrWrongStreak++;
         ltrRecordOutcome(ltrState.letter, activity.id, false, ltrPromptLevel(ltrWrongStreak));
+        if (!activity.practice) ltrRecordMastery(ltrState.letter, activity.stageId, false, false);
 
         ltrApplyPrompting();
     }
@@ -24459,20 +25957,33 @@ function advanceLtrActivity() {
 }
 
 /* =========================================================
-   🎉 إنهاء الحرف: فتح المجموعة التالية عند إتمام كل حروفها
+   🎉 إنهاء الجلسة: تسجيل المراحل المنجزة وإتمام الحرف (مرة واحدة)
 ========================================================= */
 
 function finishLetterUnit() {
     ltrModeActive = false;
 
-    addStars(10);
-    ltrMarkLetterCompleted(ltrState.letter);
+    const letter = ltrState.letter;
+    const session = ltrState.session || { kind: "full", stageId: null, starsGained: 0 };
 
-    const group = LETTER_LEVEL_GROUPS[ltrState.levelId - 1];
+    const visited = [...new Set(ltrState.queue.map(q => q.stageId))];
+    visited.forEach(id => ltrMarkStageDone(letter, id));
+
+    /* الحرف «مكتمل» عند إنجاز كل المراحل التسع مرة واحدة على الأقل
+       (المسار الموجّه الكامل يحقق ذلك مباشرة كما كان سابقًا) */
+    if (ltrLetterStagesDone(letter) >= LTR_STAGE_IDS.length) {
+        ltrMarkLetterCompleted(letter);
+
+        if (ltrClaimLetterReward(letter)) {
+            addStars(LTR_STARS_PER_NEW_LETTER);
+            session.starsGained += LTR_STARS_PER_NEW_LETTER;
+        }
+    }
+
     const allDone = ltrIsLevelCompleted(ltrState.levelId);
 
     if (allDone) {
-        ltrUnlockLevel(ltrState.levelId + 1);
+        ltrUnlockLevel(ltrState.levelId + 1);   // توافق مع لوحة المعلم فقط — لا قفل
     }
 
     renderLtrResultScreen(allDone);
@@ -24488,20 +25999,55 @@ function renderLtrResultScreen(levelJustCompleted) {
 
     ltrHideHint();
 
+    const session = ltrState.session || { kind: "full", stageId: null, starsGained: 0 };
     const group = LETTER_LEVEL_GROUPS[ltrState.levelId - 1];
-    const nextLetterChar = group ? group.letters.find(l => !ltrIsLetterCompleted(l)) : null;
+    const nextLetterChar = group
+        ? group.letters.find(l => l !== ltrState.letter && !ltrIsLetterCompleted(l))
+        : null;
 
     if (!stage) return;
 
+    const letterGlyph = letterWithFatha(ltrState.letter);
+
+    let title = `أحسنت! أتممت حرف ${letterGlyph}`;
+    if (session.kind === "stage" && LTR_STAGE_META[session.stageId]) {
+        title = `أحسنت! أنهيت «${LTR_STAGE_META[session.stageId].name}» لحرف ${letterGlyph}`;
+    } else if (session.kind === "short") {
+        title = `أحسنت! أنهيت جلسة قصيرة لحرف ${letterGlyph}`;
+    }
+
+    const sum = ltrLetterSummary(ltrState.letter);
+    const suggest = ltrSuggestStage(ltrState.letter);
+    const suggestMeta = LTR_STAGE_META[suggest.id];
+    const detailsLines = `
+        <div class="ltr-result-lines">
+            ${session.practiceDone ? `<div>🌱 <b>تدريب</b>: أنجزتَ ${arabicNumber(session.practiceDone)} تدريبًا بمساعدة — يُحسب نجومًا لا إتقانًا</div>` : ""}
+            <div>✅ <b>تقدّم</b>: ${arabicNumber(sum.done)} من ${arabicNumber(sum.total)} مرحلة</div>
+            <div>⭐ <b>إتقان</b>: ${arabicNumber(sum.mastered)} مراحل متقنة</div>
+        </div>`;
+
+    const starsLine = session.starsGained > 0
+        ? `<div class="ltr-result-score">⭐ نجوم جديدة: ${arabicNumber(session.starsGained)}</div>`
+        : `<div class="ltr-result-score ltr-result-soft">💪 تكرار التدريب يقوّي التذكّر</div>`;
+
     stage.innerHTML = `
         <div class="ltr-result-card">
-            <div class="ltr-result-emoji">🏆</div>
-            <div class="ltr-result-title">أحسنت! أتممت حرف ${letterWithFatha(ltrState.letter)}</div>
+            <div class="ltr-result-emoji">${ltrArt("🏆")}</div>
+            <div class="ltr-result-title">${title}</div>
+            ${starsLine}
             ${levelJustCompleted ? `
                 <div class="ltr-result-score">🎊 أكملت كل حروف هذه المجموعة!</div>
             ` : ""}
+            ${detailsLines}
+            <button class="success" type="button" onclick="ltrBackFromDetail()">
+                🧭 قائمة الأنشطة
+            </button>
+            ${session.kind !== "stage" || session.stageId !== suggest.id ? `
+                <button class="secondary" type="button" onclick="startLetterSession('stage', '${suggest.id}')">
+                    ▶ اقتراحي: ${suggestMeta.name}
+                </button>` : ""}
             ${nextLetterChar ? `
-                <button class="success" type="button" onclick="openLetterDetail('${nextLetterChar}')">
+                <button class="secondary" type="button" onclick="openLetterDetail('${nextLetterChar}')">
                     ➡️ الحرف التالي: ${letterWithFatha(nextLetterChar)}
                 </button>
             ` : ""}
@@ -24511,7 +26057,15 @@ function renderLtrResultScreen(levelJustCompleted) {
         </div>
     `;
 
-    speakEducational("أحسنت! أتممت هذا الحرف بنجاح", { rate: 0.8 });
+    const card = $("letterDetailCard");
+    if (card) card.dataset.ltrView = "result";
+
+    speakEducational(
+        levelJustCompleted && EduAudio.has("أحسنت! أكملت المستوى بنجاح")
+            ? "أحسنت! أكملت المستوى بنجاح"
+            : (session.kind === "full" ? "أحسنت! أتممت هذا الحرف بنجاح" : "أحسنت! إجابة صحيحة"),
+        { rate: 0.8 }
+    );
 }
 
 /* =========================================================
@@ -24761,7 +26315,7 @@ function activityLetterToPicture(stage, letterChar, difficulty) {
     renderLtrChoices(
         choicesContainer,
         choices,
-        c => c.image,
+        c => ltrArt(c.image),
         correctWord,
         finishLtrChoiceTask
     );
@@ -24790,7 +26344,7 @@ function activityPictureToWord(stage, letterChar) {
     choices = shuffle(choices);
 
     stage.innerHTML = `
-        <div class="ltr-display-emoji">${correctWord.image}</div>
+        <div class="ltr-display-emoji">${ltrArt(correctWord.image)}</div>
         <div class="ltr-instruction-line">اختر الكلمة الصحيحة لهذه الصورة</div>
     `;
 
@@ -24845,7 +26399,7 @@ function activityWordsStartingWith(stage, letterChar, difficulty) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ltr-multi-item";
-        btn.textContent = item.image;
+        btn.innerHTML = ltrArt(item.image);
         btn.dataset.correct = item.isCorrect ? "1" : "0";
 
         btn.onclick = () => {
@@ -24929,33 +26483,6 @@ function ltrSetupTraceCanvas(canvas) {
    9️⃣ التتبع والكتابة
 ========================================================= */
 
-function activityTracing(stage, letterChar) {
-    stage.innerHTML = `
-        <div class="ltr-instruction-line">تتبّع شكل الحرف بإصبعك ✍️</div>
-        <div class="ltr-trace-wrapper">
-            <div class="ltr-trace-canvas-box">
-                <div class="ltr-trace-guide">${letterWithFatha(letterChar)}</div>
-                <canvas class="ltr-trace-canvas" id="ltrTraceCanvas"></canvas>
-            </div>
-            <div>
-                <button class="secondary" type="button" id="ltrTraceClearBtn">🧹 مسح</button>
-                <button class="primary" type="button" id="ltrTraceDoneBtn">✅ تم</button>
-            </div>
-        </div>
-    `;
-
-    const canvas = stage.querySelector("#ltrTraceCanvas");
-    const controls = ltrSetupTraceCanvas(canvas);
-
-    stage.querySelector("#ltrTraceClearBtn").onclick = () => controls.clear();
-
-    const traceDoneBtn = stage.querySelector("#ltrTraceDoneBtn");
-    traceDoneBtn.onclick = () => {
-        if (traceDoneBtn.disabled) return;
-        traceDoneBtn.disabled = true;
-        finishLtrChoiceTask(true, null);
-    };
-}
 
 /* =========================================================
    🔟 المراجعة: مزيج عشوائي من الأنشطة السابقة
@@ -25013,6 +26540,12 @@ function resetLetterGames() {
 const showScreenBeforeLettersRebuild = showScreen;
 
 showScreen = function (screenId) {
+    /* أي تغيير شاشة يُبطل مؤقتات الأنشطة المتأخرة ويعيد القسم لوضع القائمة */
+    ltrState.sid++;
+    ltrState.mode = "menu";
+    const detailCardEl = $("letterDetailCard");
+    if (detailCardEl) detailCardEl.dataset.ltrMode = "menu";
+
     if (screenId === "letters") {
         ltrModeActive = false;
     }
@@ -25066,32 +26599,32 @@ document.addEventListener("DOMContentLoaded", () => {
 const LETTER_SOUND_WORDS = {
     "أ": [{ word: "أناناس", image: "🍍" }, { word: "أرنب", image: "🐰" }, { word: "أسد", image: "🦁" }],
     "ب": [{ word: "بيت", image: "🏠" }, { word: "بطة", image: "🦆" }, { word: "باب", image: "🚪" }, { word: "بقرة", image: "🐄" }, { word: "بطيخ", image: "🍉" }],
-    "ت": [{ word: "تاج", image: "👑" }, { word: "تمر", image: "🌴" }],
-    "ث": [{ word: "ثعلب", image: "🦊" }, { word: "ثلاجة", image: "🧊" }, { word: "ثلج", image: "❄️" }],
+    "ت": [{ word: "تاج", image: "👑" }, { word: "تفاح", image: "🍎" }, { word: "تمساح", image: "🐊" }],
+    "ث": [{ word: "ثعلب", image: "🦊" }, { word: "ثلج", image: "❄️" }, { word: "ثوم", image: "🧄" }],
     "ج": [{ word: "جرس", image: "🔔" }, { word: "جزر", image: "🥕" }, { word: "جبل", image: "⛰️" }, { word: "جمل", image: "🐪" }],
-    "ح": [{ word: "حليب", image: "🥛" }, { word: "حقيبة", image: "🎒" }],
+    "ح": [{ word: "حليب", image: "🥛" }, { word: "حقيبة", image: "🎒" }, { word: "حصان", image: "🐎" }],
     "خ": [{ word: "خيمة", image: "⛺" }, { word: "خس", image: "🥬" }, { word: "خوخ", image: "🍑" }, { word: "خروف", image: "🐑" }],
     "د": [{ word: "دجاجة", image: "🐔" }, { word: "دفتر", image: "📓" }, { word: "دراجة", image: "🚲" }],
-    "ذ": [{ word: "ذيل", image: "🦁" }, { word: "ذهب", image: "🥇" }],
-    "ر": [{ word: "رمل", image: "🏖️" }, { word: "رأس", image: "🗣️" }, { word: "رجل", image: "🧍" }],
-    "ز": [{ word: "زهرة", image: "🌸" }, { word: "زرافة", image: "🦒" }, { word: "زيت", image: "🫒" }, { word: "زيتون", image: "🫒" }],
-    "س": [{ word: "سفينة", image: "🚢" }, { word: "سيارة", image: "🚗" }, { word: "سمكة", image: "🐟" }, { word: "ساعة", image: "⏰" }, { word: "سرير", image: "🛏️" }, { word: "سماء", image: "🌌" }],
-    "ش": [{ word: "شمس", image: "☀️" }, { word: "شعر", image: "💇" }, { word: "شجرة", image: "🌳" }, { word: "شمعة", image: "🕯️" }, { word: "شوكة", image: "🍴" }],
-    "ص": [{ word: "صالة", image: "🛋️" }, { word: "صقر", image: "🦅" }, { word: "صاروخ", image: "🚀" }, { word: "صافرة", image: "📯" }, { word: "صحن", image: "🍽️" }, { word: "صبار", image: "🌵" }],
-    "ض": [{ word: "ضابط", image: "👮‍♂️" }, { word: "ضوء", image: "💡" }],
-    "ط": [{ word: "طباخ", image: "👨‍🍳" }, { word: "طاولة", image: "🪑" }, { word: "طبيب", image: "👨‍⚕️" }, { word: "طائرة", image: "✈️" }, { word: "طاووس", image: "🦚" }],
-    "ظ": [{ word: "ظرف", image: "✉️" }, { word: "ظلام", image: "🌑" }, { word: "ظهر", image: "🔙" }],
+    "ذ": [{ word: "ذراع", image: "💪" }, { word: "ذبابة", image: "🪰" }, { word: "ذئب", image: "🐺" }],
+    "ر": [{ word: "ريشة", image: "🪶" }, { word: "راكون", image: "🦝" }],
+    "ز": [{ word: "زهرة", image: "🌸" }, { word: "زرافة", image: "🦒" }, { word: "زيتون", image: "🫒" }],
+    "س": [{ word: "سفينة", image: "🚢" }, { word: "سيارة", image: "🚗" }, { word: "سمكة", image: "🐟" }, { word: "ساعة", image: "⏰" }, { word: "سرير", image: "🛏️" }],
+    "ش": [{ word: "شمس", image: "☀️" }, { word: "شجرة", image: "🌳" }, { word: "شمعة", image: "🕯️" }, { word: "شوكة", image: "🍴" }],
+    "ص": [{ word: "صاروخ", image: "🚀" }, { word: "صحن", image: "🍽️" }, { word: "صبار", image: "🌵" }],
+    "ض": [{ word: "ضابط", image: "👮‍♂️" }, { word: "ضرس", image: "🦷" }, { word: "ضفدع", image: "🐸" }],
+    "ط": [{ word: "طباخ", image: "👨‍🍳" }, { word: "طبيب", image: "👨‍⚕️" }, { word: "طائرة", image: "✈️" }, { word: "طاووس", image: "🦚" }],
+    "ظ": [{ word: "ظرف", image: "✉️" }, { word: "ظفر", image: "💅" }],
     "ع": [{ word: "علم", image: "🚩" }, { word: "عين", image: "👁️" }, { word: "عسل", image: "🍯" }, { word: "عصير", image: "🧃" }],
-    "غ": [{ word: "غسالة", image: "🧺" }, { word: "غزالة", image: "🦌" }],
+    "غ": [{ word: "غزالة", image: "🦌" }, { word: "غيوم", image: "☁️" }, { word: "غراب", image: "🐦‍⬛" }],
     "ف": [{ word: "فراشة", image: "🦋" }, { word: "فانوس", image: "🏮" }, { word: "فراولة", image: "🍓" }, { word: "فأر", image: "🐭" }],
     "ق": [{ word: "قميص", image: "👕" }, { word: "قلم", image: "✏️" }, { word: "قلب", image: "❤️" }, { word: "قصر", image: "🏰" }],
-    "ك": [{ word: "كأس", image: "🏆" }, { word: "كلب", image: "🐶" }, { word: "كيك", image: "🎂" }, { word: "كرز", image: "🍒" }],
-    "ل": [{ word: "ليمون", image: "🍋" }, { word: "لبن", image: "🥛" }, { word: "لحم", image: "🥩" }, { word: "لمبة", image: "💡" }],
-    "م": [{ word: "مسبح", image: "🏊" }, { word: "مدرسة", image: "🏫" }, { word: "مسجد", image: "🕌" }, { word: "موز", image: "🍌" }],
-    "ن": [{ word: "نسر", image: "🦅" }, { word: "نحل", image: "🐝" }, { word: "نجمة", image: "⭐" }, { word: "نعامة", image: "🦤" }, { word: "نخلة", image: "🌴" }],
-    "ه": [{ word: "هدية", image: "🎁" }, { word: "هاتف", image: "📱" }, { word: "هرم", image: "🔺" }],
+    "ك": [{ word: "كلب", image: "🐶" }, { word: "كيك", image: "🎂" }, { word: "كرز", image: "🍒" }],
+    "ل": [{ word: "ليمون", image: "🍋" }, { word: "لحم", image: "🥩" }, { word: "لمبة", image: "💡" }],
+    "م": [{ word: "مدرسة", image: "🏫" }, { word: "مسجد", image: "🕌" }, { word: "موز", image: "🍌" }],
+    "ن": [{ word: "نسر", image: "🦅" }, { word: "نحل", image: "🐝" }, { word: "نجمة", image: "⭐" }, { word: "نخلة", image: "🌴" }],
+    "ه": [{ word: "هدية", image: "🎁" }, { word: "هاتف", image: "📱" }, { word: "هلال", image: "🌙" }],
     "و": [{ word: "وجه", image: "😊" }, { word: "وردة", image: "🌹" }, { word: "ولد", image: "👦" }],
-    "ي": [{ word: "يلعب", image: "⚽" }, { word: "يد", image: "✋" }, { word: "يخت", image: "🛥️" }]
+    "ي": [{ word: "يد", image: "✋" }, { word: "يخت", image: "🛥️" }, { word: "يويو", image: "🪀" }]
 };
 
 function getLetterSoundWords(letterChar) {
@@ -25183,7 +26716,7 @@ function activityListenInWord(stage, letterChar) {
 
     stage.innerHTML = `
         <div class="ltr-instruction-line">🔊 استمع للحرف داخل هذه الكلمة</div>
-        <div class="ltr-display-emoji">${item.image}</div>
+        <div class="ltr-display-emoji">${ltrArt(item.image)}</div>
         <div class="ltr-display-glyph" style="font-size:clamp(30px,7vw,44px);">${item.word}</div>
         <button type="button" class="secondary" id="ltrListenWordReplay">🔊 استمع مرة أخرى</button>
         <button type="button" class="primary" id="ltrListenWordDone" style="margin-top:14px;">✅ تم</button>
@@ -25589,7 +27122,7 @@ function activityConnectWheel(stage, letterChar, difficulty) {
         btn.type = "button";
         btn.className = "ltr-wheel-item";
         btn.style.transform = `rotate(${angle}deg) translate(120px) rotate(-${angle}deg)`;
-        btn.textContent = item.image;
+        btn.innerHTML = ltrArt(item.image);
         btn.dataset.correct = item.isCorrect ? "1" : "0";
 
         btn.onclick = () => {
@@ -25643,7 +27176,7 @@ function activityLetterToPictureSound(stage, letterChar, difficulty) {
     renderLtrChoices(
         choicesContainer,
         choices,
-        c => c.image,
+        c => ltrArt(c.image),
         correctWord,
         finishLtrChoiceTask
     );
@@ -25679,7 +27212,7 @@ function activityHearInWordYesNo(stage, letterChar) {
 
     stage.innerHTML = `
         <div class="ltr-instruction-line">🔊 استمع للكلمة</div>
-        <div class="ltr-display-emoji">${word.image}</div>
+        <div class="ltr-display-emoji">${ltrArt(word.image)}</div>
         <button type="button" class="secondary" id="ltrHearWordReplay">🔊 استمع للكلمة</button>
         <div class="ltr-instruction-line" style="margin-top:14px;">
             هل سمعت صوت ${letterWithFatha(letterChar)} في هذه الكلمة؟
@@ -25736,7 +27269,7 @@ function activityHearInWordChoose(stage, letterChar, difficulty) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ltr-choice-btn";
-        btn.innerHTML = w.image;
+        btn.innerHTML = ltrArt(w.image);
         btn.dataset.correct = w.word === correctWord.word ? "1" : "0";
         btn.onclick = () => {
             if (btn.disabled) return;
@@ -25767,7 +27300,7 @@ function activityPictureToWordSound(stage, letterChar) {
     const choices = shuffle([correctWord, ...distractorWords]);
 
     stage.innerHTML = `
-        <div class="ltr-display-emoji">${correctWord.image}</div>
+        <div class="ltr-display-emoji">${ltrArt(correctWord.image)}</div>
         <div class="ltr-instruction-line">استمع، ثم اختر الكلمة الصحيحة</div>
         <button type="button" class="secondary" id="ltrPtwReplay">🔊 استمع</button>
     `;
@@ -25794,43 +27327,2740 @@ function activityPictureToWordSound(stage, letterChar) {
    من كل حرف في الكتاب — ديك/دب لحرف الدال مثلًا)
 ========================================================= */
 
-function activityTraceInWord(stage, letterChar) {
-    const item = pickRandomSoundWord(letterChar);
-
-    stage.innerHTML = `
-        <div class="ltr-instruction-line">تتبّع الحرف ${letterWithFatha(letterChar)} داخل هذه الكلمة ✍️</div>
-        <div class="ltr-trace-wrapper">
-            <div class="ltr-display-emoji">${item.image}</div>
-            <div class="ltr-trace-canvas-box">
-                <div class="ltr-trace-guide" style="font-size:clamp(60px,14vw,120px);">${item.word}</div>
-                <canvas class="ltr-trace-canvas" id="ltrTraceWordCanvas"></canvas>
-            </div>
-            <div>
-                <button class="secondary" type="button" id="ltrTraceWordClearBtn">🧹 مسح</button>
-                <button class="primary" type="button" id="ltrTraceWordDoneBtn">✅ تم</button>
-            </div>
-        </div>
-    `;
-
-    const canvas = stage.querySelector("#ltrTraceWordCanvas");
-    const controls = ltrSetupTraceCanvas(canvas);
-
-    stage.querySelector("#ltrTraceWordClearBtn").onclick = () => controls.clear();
-
-    const traceWordDoneBtn = stage.querySelector("#ltrTraceWordDoneBtn");
-    traceWordDoneBtn.onclick = () => {
-        if (traceWordDoneBtn.disabled) return;
-        traceWordDoneBtn.disabled = true;
-        finishLtrChoiceTask(true, null);
-    };
-
-    speakEducational(item.word, { rate: 0.75 });
-}
 
 /* =========================================================================
    📋 سجل المراحل التسع — كل مرحلة تحوي عدة أنشطة بديلة (بنك غني)
    يُبنى منها تسلسل فعلي لكل حرف عند فتحه (buildLetterActivityQueue)
 ========================================================================= */
+
+/* =========================================================
+   🚂🏠 المرحلة ٢: نشاطان تفاعليان جديدان — «قطار المواقع» و«بيت الحرف»
+   • يعتمدان على كلمات حقيقية مؤكَّد صوتها (تسجيلات موجودة فقط، بلا تحويل نص لكلام)
+   • موضع الحرف وشكله في السياق يُحسبان برمجيًا من قواعد الاتصال العربية
+     (وليس من صورة)، فلا يمكن أن تختلف الإجابة عن حقيقة الكلمة
+   • السحب بمؤشر موحّد (لمس/ماوس/قلم) + بديل بالنقر: المس البطاقة ثم المس
+     مكانها — أو لوحة المفاتيح — فلا يلزم السحب أبدًا
+========================================================= */
+
+const LTR_TRAIN_WORDS = {
+    "أ": ["أسد", "أذن", "أرنب", "أخطبوط", "اسم", "باب", "تاج", "فأر", "تفاح", "حصان", "غوريلا", "لجأ"],
+    "ب": ["بيت", "بنت", "بطة", "بقرة", "بطيخ", "جبل", "خبز", "جبنة", "شباك", "صبار", "دب", "ذئب", "عنب", "قلب", "كلب"],
+    "ت": ["تاج", "تفاح", "تمساح", "تلفاز", "تمثال", "دفتر", "كتاب", "هاتف", "زيتون", "فستان", "بيت", "بنت", "حوت", "يخت"],
+    "ث": ["ثوم", "ثلج", "ثعلب", "ثعبان", "مثل", "تمثال", "حديث"],
+    "ج": ["جسر", "جرس", "جزر", "جبل", "جمل", "وجه", "شجرة", "مسجد", "نجمة", "دراجة", "تاج", "ثلج", "نضج"],
+    "ح": ["حوت", "حصان", "حليب", "حذاء", "حقيبة", "صحن", "لحم", "نحل", "بحر", "تفاح", "تمساح", "مفتاح", "فتح"],
+    "خ": ["خس", "خبز", "خيمة", "خيار", "خروف", "يخت", "نخلة", "أخطبوط", "بطيخ", "طباخ", "صاروخ"],
+    "د": ["دب", "ديك", "دفتر", "دجاجة", "دلفين", "ضفدع", "هدية", "وردة", "صندوق", "مدرسة", "يد", "أسد", "قرد", "ولد", "مسجد"],
+    "ذ": ["ذئب", "ذرة", "ذراع", "ذبابة", "أذن", "حذاء", "غذاء", "نفذ", "جرذ", "قنفذ"],
+    "ر": ["ريشة", "راكون", "رمل", "ركض", "جرس", "ذرة", "ضرس", "ظرف", "قرد", "جسر", "جزر", "ظفر", "فأر", "قصر"],
+    "ز": ["زهرة", "زرافة", "زيتون", "جزر", "غزالة", "خبز", "كرز", "موز", "قفاز", "تلفاز"],
+    "س": ["سمكة", "ساعة", "سرير", "سفينة", "سيارة", "أسد", "جسر", "عسل", "نسر", "كرسي", "خس", "جرس", "شمس", "ضرس", "طاووس"],
+    "ش": ["شمس", "شجرة", "شمعة", "شوكة", "شباك", "ريشة", "فراشة", "خشب", "عشاء", "عطش", "قرش", "نقش"],
+    "ص": ["صحن", "صبار", "صندوق", "صاروخ", "صقر", "قصر", "حصان", "عصير", "عصفور", "مقص", "قميص"],
+    "ض": ["ضرس", "ضفدع", "ضابط", "نضج", "مضرب", "خضار", "بيضة", "بعض", "بيض", "ركض", "نهض", "مريض"],
+    "ط": ["طفل", "طباخ", "طبيب", "طائرة", "طاووس", "بطة", "بطيخ", "عطش", "ضابط", "خط"],
+    "ظ": ["ظرف", "ظفر", "مظلة", "نظيف", "نظارة", "منظار", "محفظة", "حفظ"],
+    "ع": ["علم", "عين", "عنب", "عسل", "عصير", "ثعلب", "ساعة", "شمعة", "لعبة", "ثعبان", "ذراع", "ضفدع", "سبع"],
+    "غ": ["غيوم", "غراب", "غزالة", "غوريلا", "غذاء", "بغل", "مغسلة", "ببغاء", "مغرفة", "مغارة", "بلغ", "صبغ", "دماغ"],
+    "ف": ["فيل", "فأر", "فراشة", "فستان", "فانوس", "طفل", "ظفر", "تفاح", "دفتر", "ضفدع", "ظرف", "خروف", "هاتف", "كيف", "كهف"],
+    "ق": ["قلم", "قرد", "قلب", "قصر", "قميص", "مقص", "بقرة", "حقيبة", "برتقال", "صقر", "صندوق"],
+    "ك": ["كرة", "كلب", "كرز", "كرسي", "كتاب", "سمكة", "شوكة", "راكون", "ركض", "مكتب", "ديك", "شباك", "ملك", "سمك"],
+    "ل": ["لحم", "لمبة", "لعبة", "لسان", "ليمون", "ثلج", "علم", "قلم", "قلب", "كلب", "جبل", "جمل", "طفل", "عسل", "فيل"],
+    "م": ["مقص", "موز", "مسجد", "مدرسة", "مفتاح", "جمل", "شمس", "نمر", "خيمة", "سمكة", "ثوم", "علم", "قلم", "لحم", "غيوم"],
+    "ن": ["نسر", "نحل", "نمر", "نجمة", "نخلة", "بنت", "عنب", "أرنب", "جبنة", "سفينة", "أذن", "صحن", "عين", "حصان", "لسان"],
+    "ه": ["هلال", "هدية", "هاتف", "زهرة", "نهض", "سهم", "فهد", "كهف", "وجه", "شبه"],
+    "و": ["وجه", "ولد", "وردة", "توت", "ثوم", "حوت", "خوخ", "موز", "جو"],
+    "ي": ["يد", "يخت", "بيت", "ديك", "عين", "فيل", "كيك", "كرسي", "نبي"]
+};
+
+const LTR_NON_JOINERS = "اأإآدذرزوؤءة";
+const LTR_ALEF_FORMS = {
+    "ا": { isolated: "ﺍ", final: "ﺎ" },
+    "أ": { isolated: "ﺃ", final: "ﺄ" },
+    "إ": { isolated: "ﺇ", final: "ﺈ" },
+    "آ": { isolated: "ﺁ", final: "ﺂ" }
+};
+const LTR_TRAIN_POS_LABEL = { start: "أول الكلمة", middle: "وسط الكلمة", end: "آخر الكلمة" };
+const LTR_CONFUSABLE = {
+    "أ": "لك", "ب": "تثني", "ت": "بثني", "ث": "بتني", "ج": "حخ", "ح": "جخ", "خ": "جح",
+    "د": "ذ", "ذ": "د", "ر": "ز", "ز": "ر", "س": "ش", "ش": "س", "ص": "ض", "ض": "ص",
+    "ط": "ظ", "ظ": "ط", "ع": "غ", "غ": "ع", "ف": "ق", "ق": "ف", "ك": "ل", "ل": "ك",
+    "م": "ه", "ن": "بتثي", "ه": "م", "و": "فق", "ي": "بتثن"
+};
+
+function ltrStripMarks(word) {
+    return String(word).replace(/[ً-ٰـ]/g, "");
+}
+
+function ltrLetterSet(letter) {
+    return letter === "أ" ? "أإآا" : letter;
+}
+
+/* هل الكلمة تحوي الحرف؟ (عدد مرات الظهور) */
+function ltrCountLetter(word, letter) {
+    const set = ltrLetterSet(letter);
+    return Array.from(ltrStripMarks(word)).filter(c => set.indexOf(c) !== -1).length;
+}
+
+/* تحليل موضع الحرف وشكله داخل الكلمة — يُرجع null إن لم يظهر مرة واحدة بالضبط */
+function ltrAnalyzeWord(word, letter) {
+    const chars = Array.from(ltrStripMarks(word));
+    const set = ltrLetterSet(letter);
+    const hits = [];
+    chars.forEach((c, i) => { if (set.indexOf(c) !== -1) hits.push(i); });
+    if (hits.length !== 1) return null;
+
+    const idx = hits[0];
+    const n = chars.length;
+    const prevJoins = idx > 0 && LTR_NON_JOINERS.indexOf(chars[idx - 1]) === -1;
+    const nextJoins = idx < n - 1 && LTR_NON_JOINERS.indexOf(chars[idx]) === -1;
+    const form = prevJoins && nextJoins ? "medial" : (prevJoins ? "final" : (nextJoins ? "initial" : "isolated"));
+    const pos = idx === 0 ? "start" : (idx === n - 1 ? "end" : "middle");
+    const ch = chars[idx];
+    const forms = LTR_ALEF_FORMS[ch] || (typeof arabicLetterForms !== "undefined" && arabicLetterForms[letter]) || {};
+
+    return { word, chars, idx, pos, form, ch, forms, glyph: forms[form] || forms.isolated || ch };
+}
+
+/* الكلمة مع إبراز الحرف المستهدف (لونًا فقط حتى لا ينقطع اتصال الحروف) */
+function ltrWordHtml(word, letter, highlight) {
+    const chars = Array.from(String(word));
+    const set = ltrLetterSet(letter);
+    return chars.map(c => (highlight && set.indexOf(c) !== -1) ? `<span class="ltr-hit">${c}</span>` : c).join("");
+}
+
+function ltrPickTrainRound(letter) {
+    const by = { start: [], middle: [], end: [] };
+    (LTR_TRAIN_WORDS[letter] || []).forEach(w => {
+        const a = ltrAnalyzeWord(w, letter);
+        if (a) by[a.pos].push(a);
+    });
+    return ["start", "middle", "end"]
+        .filter(p => by[p].length)
+        .map(p => by[p][Math.floor(Math.random() * by[p].length)]);
+}
+
+/* صورة الكلمة إن وُجدت ضمن الصور المدقَّقة فقط */
+function ltrVerifiedImage(word) {
+    for (const u of LETTER_UNITS) {
+        const hit = u.words.find(w => w.word === word);
+        if (hit) return hit.image;
+    }
+    return null;
+}
+
+/* ---------- محرّك السحب الموحّد + البديل بالنقر ---------- */
+function ltrMakeDraggable(zone, opts) {
+
+    let selected = null;
+    let drag = null;
+    let lastActionAt = 0;
+
+    const targetsList = () => Array.from(zone.querySelectorAll(opts.target));
+
+    function setArmed(on) {
+        targetsList().forEach(t => t.classList.toggle("armed", !!on));
+    }
+
+    function deselect() {
+        if (selected) {
+            selected.classList.remove("selected");
+            selected.setAttribute("aria-pressed", "false");
+        }
+        selected = null;
+        setArmed(false);
+    }
+
+    function select(chip) {
+        if (chip.dataset.locked === "1") return;
+        deselect();
+        selected = chip;
+        chip.classList.add("selected");
+        chip.setAttribute("aria-pressed", "true");
+        setArmed(true);
+        if (opts.onPick) opts.onPick(chip);
+    }
+
+    function targetAt(x, y) {
+        const stack = document.elementsFromPoint(x, y);
+        for (const el of stack) {
+            const t = el.closest && el.closest(opts.target);
+            if (t && zone.contains(t)) return t;
+        }
+        /* سبّورة تفاعلية: تسامح ٢٨px حول مناطق الإفلات */
+        let best = null, bestD = 1e9;
+        targetsList().forEach(t => {
+            const r = t.getBoundingClientRect();
+            const dx = Math.max(r.left - x, 0, x - r.right);
+            const dy = Math.max(r.top - y, 0, y - r.bottom);
+            const d = Math.hypot(dx, dy);
+            if (d <= 28 && d < bestD) { best = t; bestD = d; }
+        });
+        return best;
+    }
+
+    function hover(x, y) {
+        const t = targetAt(x, y);
+        targetsList().forEach(el => el.classList.toggle("over", el === t));
+    }
+
+    /* نقطة دخول واحدة لأي إفلات/نقر: تمنع الاحتساب المزدوج من اللمس المتكرر */
+    function dropOn(chip, target) {
+        const now = Date.now();
+        if (now - lastActionAt < 350) return;
+        if (!chip || chip.dataset.locked === "1" || !chip.isConnected) return;
+        lastActionAt = now;
+        deselect();
+        opts.onDrop(chip, target);
+    }
+
+    zone.querySelectorAll(opts.chip).forEach(chip => {
+        chip.style.touchAction = "none";
+
+        chip.addEventListener("pointerdown", e => {
+            if (e.button > 0) return;
+            if (chip.dataset.locked === "1" || drag) return;
+            drag = { chip, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false };
+            try { chip.setPointerCapture(e.pointerId); } catch (error) { /* غير مدعوم */ }
+        });
+
+        chip.addEventListener("pointermove", e => {
+            if (!drag || drag.chip !== chip || e.pointerId !== drag.id) return;
+            const dx = e.clientX - drag.sx;
+            const dy = e.clientY - drag.sy;
+            if (!drag.moved) {
+                if (Math.hypot(dx, dy) < 8) return;
+                drag.moved = true;
+                deselect();
+                chip.classList.add("dragging");
+                setArmed(true);
+                if (opts.onPick) opts.onPick(chip);
+            }
+            chip.style.transform = `translate(${dx}px, ${dy}px)`;
+            hover(e.clientX, e.clientY);
+            e.preventDefault();
+        });
+
+        const finish = (e, cancelled) => {
+            if (!drag || drag.chip !== chip || e.pointerId !== drag.id) return;
+            const d = drag;
+            drag = null;
+            try { chip.releasePointerCapture(e.pointerId); } catch (error) { /* لا شيء */ }
+            chip.classList.remove("dragging");
+            chip.style.transform = "";
+            targetsList().forEach(el => el.classList.remove("over"));
+            if (cancelled) { setArmed(selected !== null); return; }
+
+            if (d.moved) {
+                setArmed(false);
+                const t = targetAt(e.clientX, e.clientY);
+                if (t) dropOn(chip, t);
+            } else if (selected === chip) {
+                deselect();
+            } else {
+                select(chip);
+            }
+        };
+        chip.addEventListener("pointerup", e => finish(e, false));
+        chip.addEventListener("pointercancel", e => finish(e, true));
+
+        /* لوحة المفاتيح فقط (Enter/Space ⇒ detail = 0) — النقر بالمؤشر تعالجه pointerup */
+        chip.addEventListener("click", e => {
+            if (e.detail !== 0) return;
+            if (selected === chip) deselect(); else select(chip);
+        });
+    });
+
+    targetsList().forEach(t => {
+        t.addEventListener("click", () => { if (selected) dropOn(selected, t); });
+    });
+
+    return { deselect, select };
+}
+
+/* =========================================================
+   🚂 قطار المواقع
+   الخطوة ١: ضع كل كلمة في عربة (أول/وسط/آخر الكلمة) بحسب موضع الحرف.
+   الخطوة ٢: ما شكل الحرف في هذا الموضع؟ (الشكل داخل السياق).
+   لا صور هنا عمدًا: السؤال عن الحرف داخل الكتابة نفسها.
+========================================================= */
+
+function activityPositionTrain(stage, letterChar, difficulty) {
+
+    const round = ltrPickTrainRound(letterChar);
+    if (round.length < 2) { activityPositionInWord(stage, letterChar, difficulty); return; }
+
+    const highlight = (difficulty || 2) <= 1;
+    const order = ["start", "middle", "end"].filter(p => round.some(r => r.pos === p));
+    const sid = ltrState.sid;
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-train";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrTrainReplay">🔊 استمع للحرف</button>
+        </div>
+        <div class="ltr-instruction-line">ضع كل كلمة في عربتها: أين يقع الحرف <strong>${letterChar}</strong> في الكلمة؟</div>
+        <div class="ltr-train-track" dir="rtl">
+            <span class="ltr-train-loco" aria-hidden="true">${ltrArt("🚂")}</span>
+            ${order.map(p => `
+                <button type="button" class="ltr-wagon" data-pos="${p}" aria-label="${LTR_TRAIN_POS_LABEL[p]}">
+                    <span class="ltr-wagon-label">${LTR_TRAIN_POS_LABEL[p]}</span>
+                    <span class="ltr-wagon-slot"></span>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-tray" id="ltrTrainPanel"></div>
+        <div class="ltr-drag-tip">اسحب البطاقة إلى العربة — أو المس البطاقة ثم المس العربة</div>
+    `;
+    stage.appendChild(root);
+
+    const panel = root.querySelector("#ltrTrainPanel");
+    let tickets = shuffle(round.map((r, i) => i));
+    if (tickets.length > 1 && tickets.every((v, k) => round[v].pos === order[k])) tickets.reverse();
+
+    panel.innerHTML = tickets.map(i => `
+        <button type="button" class="ltr-ticket" data-i="${i}" aria-pressed="false">
+            ${ltrWordHtml(round[i].word, letterChar, highlight)}
+        </button>`).join("");
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const msg = $("letterMessage");
+    let placed = 0;
+    let finished = false;
+    let wrongOnChip = {};
+
+    function startShapeStep() {
+        if (!alive()) return;
+        const target = round[Math.floor(Math.random() * round.length)];
+        const forms = target.forms;
+        let keys = Object.keys(forms).filter(k => forms[k]);
+        if (keys.indexOf(target.form) === -1) keys.push(target.form);
+        const others = shuffle(keys.filter(k => k !== target.form));
+        const take = (difficulty || 2) <= 1 ? 1 : 2;
+        const choiceKeys = shuffle([target.form, ...others.slice(0, take)]);
+
+        panel.className = "ltr-shape-step";
+        panel.innerHTML = `
+            <div class="ltr-shape-word">${ltrWordHtml(target.word, letterChar, true)}</div>
+            <div class="ltr-instruction-line">في كلمة «${target.word}» يقع الحرف في <strong>${LTR_TRAIN_POS_LABEL[target.pos]}</strong>.<br>ما شكل الحرف هنا؟</div>
+        `;
+        root.querySelector(".ltr-drag-tip").remove();
+        const box = document.createElement("div");
+        panel.appendChild(box);
+        renderLtrChoices(
+            box,
+            choiceKeys,
+            key => ltrFormatGlyph(forms[key] || target.ch, key),
+            target.form,
+            (ok, btn) => {
+                if (!alive()) return;
+                if (ok) finished = true;
+                finishLtrChoiceTask(ok, btn);
+            }
+        );
+        speakEducational(target.word, { rate: 0.78 });
+    }
+
+    function onDrop(chip, wagon) {
+        if (finished || !alive()) return;
+        const item = round[Number(chip.dataset.i)];
+        if (wagon.dataset.pos === item.pos) {
+            chip.dataset.locked = "1";
+            wagon.classList.remove("hinted", "armed", "over");
+            wagon.classList.add("filled");
+            wagon.disabled = true;
+            wagon.querySelector(".ltr-wagon-slot").innerHTML = `
+                <span class="ltr-placed">${ltrWordHtml(item.word, letterChar, true)}</span>
+                <span class="ltr-shape-badge" title="شكل الحرف هنا">${ltrFormatGlyph(item.glyph, item.form)}</span>`;
+            chip.remove();
+            placed++;
+            if (msg) { msg.textContent = "✅ صحيح!"; msg.className = "message correct"; }
+            if (placed >= round.length) {
+                setTimeout(startShapeStep, 700);
+            } else {
+                speakEducational(item.word, { rate: 0.78 });
+            }
+        } else {
+            chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+            wrongOnChip[chip.dataset.i] = (wrongOnChip[chip.dataset.i] || 0) + 1;
+            finishLtrChoiceTask(false, null);
+            if (wrongOnChip[chip.dataset.i] >= 2) {
+                const right = root.querySelector(`.ltr-wagon[data-pos="${item.pos}"]`);
+                if (right) right.classList.add("hinted");
+            }
+        }
+    }
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-ticket",
+        target: ".ltr-wagon:not(.filled)",
+        onDrop,
+        onPick: chip => speakEducational(round[Number(chip.dataset.i)].word, { rate: 0.78 })
+    });
+
+    root.querySelector("#ltrTrainReplay").onclick = () => speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(letterWithFatha(letterChar), { rate: 0.75 }); }, 300);
+}
+
+/* =========================================================
+   🏠 بيت الحرف
+   الكلمات التي تحوي الحرف تدخل البيت، وغيرها يبقى في الحديقة.
+   في المستوى الأعلى تحوي كلمات الحديقة حروفًا مشابهة شكلًا أو صوتًا
+   فلا يكفي التخمين. تظهر صورة الكلمة فقط حين تكون مدقَّقة.
+========================================================= */
+
+function ltrPickHouseRound(letter, difficulty) {
+
+    const hard = (difficulty || 2) >= 2;
+    const per = hard ? 3 : 2;
+
+    const mine = (LTR_TRAIN_WORDS[letter] || []).filter(w => ltrCountLetter(w, letter) === 1);
+    const byPos = { start: [], middle: [], end: [] };
+    mine.forEach(w => { const a = ltrAnalyzeWord(w, letter); if (a) byPos[a.pos].push(w); });
+    let ins = [];
+    shuffle(["start", "middle", "end"]).forEach(p => {
+        if (ins.length < per && byPos[p].length) ins.push(shuffle(byPos[p])[0]);
+    });
+    shuffle(mine).forEach(w => { if (ins.length < per && ins.indexOf(w) === -1) ins.push(w); });
+
+    const conf = LTR_CONFUSABLE[letter] || "";
+    const pool = [];
+    const seenOut = new Set();
+    Object.keys(LTR_TRAIN_WORDS).forEach(l => {
+        if (l === letter) return;
+        LTR_TRAIN_WORDS[l].forEach(w => {
+            if (ltrCountLetter(w, letter) !== 0 || seenOut.has(w) || ins.indexOf(w) !== -1) return;
+            seenOut.add(w);
+            const near = Array.from(ltrStripMarks(w)).some(c => conf.indexOf(c) !== -1);
+            pool.push({ w, near });
+        });
+    });
+    let outs = [];
+    if (hard) outs = shuffle(pool.filter(x => x.near)).slice(0, per).map(x => x.w);
+    shuffle(pool).forEach(x => { if (outs.length < per && outs.indexOf(x.w) === -1) outs.push(x.w); });
+
+    return { ins, outs };
+}
+
+function activityLetterHouse(stage, letterChar, difficulty) {
+
+    const { ins, outs } = ltrPickHouseRound(letterChar, difficulty);
+    if (ins.length < 1 || outs.length < 1) { activityLetterToPicture(stage, letterChar, difficulty); return; }
+
+    const sid = ltrState.sid;
+    const cards = shuffle([
+        ...ins.map(w => ({ word: w, has: true })),
+        ...outs.map(w => ({ word: w, has: false }))
+    ]);
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-house-game";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrHouseReplay">🔊 استمع للحرف</button>
+        </div>
+        <div class="ltr-instruction-line">أدخل إلى بيت الحرف <strong>${letterChar}</strong> الكلمات التي فيها هذا الحرف</div>
+        <div class="ltr-house-wrap">
+            <button type="button" class="ltr-house-zone ltr-house-in" data-in="1" aria-label="داخل بيت الحرف">
+                <span class="ltr-roof"><span class="ltr-roof-letter">${letterChar}</span></span>
+                <span class="ltr-zone-title">داخل البيت</span>
+                <span class="ltr-zone-items"></span>
+            </button>
+            <button type="button" class="ltr-house-zone ltr-house-out" data-in="0" aria-label="خارج البيت">
+                <span class="ltr-garden-icon" aria-hidden="true">${ltrArt("🌳")}</span>
+                <span class="ltr-zone-title">خارج البيت</span>
+                <span class="ltr-zone-items"></span>
+            </button>
+        </div>
+        <div class="ltr-tray"></div>
+        <div class="ltr-drag-tip">اسحب البطاقة إلى مكانها — أو المس البطاقة ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const tray = root.querySelector(".ltr-tray");
+    tray.innerHTML = cards.map((c, i) => {
+        const img = ltrVerifiedImage(c.word);
+        return `<button type="button" class="ltr-ticket ltr-ticket-pic" data-i="${i}" aria-pressed="false">
+            ${img ? `<span class="ltr-ticket-art">${ltrArt(img)}</span>` : ""}
+            <span class="ltr-ticket-word">${c.word}</span>
+        </button>`;
+    }).join("");
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const msg = $("letterMessage");
+    let placed = 0;
+    let finished = false;
+    const wrongOnChip = {};
+
+    function onDrop(chip, zone) {
+        if (finished || !alive()) return;
+        const card = cards[Number(chip.dataset.i)];
+        const zoneIn = zone.dataset.in === "1";
+
+        if (card.has === zoneIn) {
+            chip.dataset.locked = "1";
+            const mini = document.createElement("span");
+            mini.className = "ltr-placed" + (card.has ? " in" : " out");
+            mini.innerHTML = ltrWordHtml(card.word, letterChar, card.has);
+            zone.querySelector(".ltr-zone-items").appendChild(mini);
+            chip.remove();
+            placed++;
+            root.querySelectorAll(".hinted").forEach(el => el.classList.remove("hinted"));
+            if (msg) { msg.textContent = card.has ? "✅ صحيح! الحرف موجود في الكلمة" : "✅ صحيح! لا يوجد هذا الحرف فيها"; msg.className = "message correct"; }
+            if (placed >= cards.length) {
+                finished = true;
+                setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 600);
+            } else {
+                speakEducational(card.word, { rate: 0.78 });
+            }
+        } else {
+            chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+            wrongOnChip[chip.dataset.i] = (wrongOnChip[chip.dataset.i] || 0) + 1;
+            finishLtrChoiceTask(false, null);
+            if (wrongOnChip[chip.dataset.i] >= 2) {
+                const right = root.querySelector(`.ltr-house-zone[data-in="${card.has ? 1 : 0}"]`);
+                if (right) right.classList.add("hinted");
+            }
+        }
+    }
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-ticket",
+        target: ".ltr-house-zone",
+        onDrop,
+        onPick: chip => speakEducational(cards[Number(chip.dataset.i)].word, { rate: 0.78 })
+    });
+
+    root.querySelector("#ltrHouseReplay").onclick = () => speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(letterWithFatha(letterChar), { rate: 0.75 }); }, 300);
+}
+
+/* =========================================================
+   🧱🎵📦 المرحلة ٣: «ركّب الكلمة» و«بناء المقطع» و«صندوق الأصوات»
+   • تسجيلات موجودة فقط: لا يُعرض مقطع أو كلمة إلا بعد التحقق من وجود
+     تسجيلها (EduAudio.has) — وما ليس له تسجيل لا يظهر للطالب أبدًا
+   • الأشكال والاتصال تُحسب برمجيًا من قواعد الوصل العربية
+   • السحب والبديل بالنقر يستخدمان نفس ltrMakeDraggable (المرحلة ٢)
+========================================================= */
+
+const LTR_TA_MARBUTA = { isolated: "ﺓ", final: "ﺔ" };
+const LTR_HARAKAT = [
+    { id: "f", mark: "َ", name: "فتحة" },
+    { id: "d", mark: "ُ", name: "ضمة" },
+    { id: "k", mark: "ِ", name: "كسرة" }
+];
+/* حروف شبه صائتة: لا نعدّها صوتًا مستهدفًا إلا في أول الكلمة، ولا نقبل في «الكلمات الأخرى» ما يشاركها صوتها */
+const LTR_SOUND_TWINS = { "أ": "أإآاءؤئ", "و": "وؤ", "ي": "يىئ" };
+
+function ltrCharForms(c) {
+    return LTR_ALEF_FORMS[c] || (c === "ة" ? LTR_TA_MARBUTA : null) ||
+        (typeof arabicLetterForms !== "undefined" ? arabicLetterForms[c] : null) || null;
+}
+
+/* شكل كل حرف داخل الكلمة (أول/وسط/آخر/منفصل) حسب اتصاله بما قبله وبعده */
+function ltrWordShapes(word) {
+    const chars = Array.from(ltrStripMarks(word));
+    const out = [];
+    for (let i = 0; i < chars.length; i++) {
+        const c = chars[i];
+        const forms = ltrCharForms(c);
+        if (!forms) return null;
+        const prevJoins = i > 0 && LTR_NON_JOINERS.indexOf(chars[i - 1]) === -1;
+        const nextJoins = i < chars.length - 1 && LTR_NON_JOINERS.indexOf(c) === -1;
+        const form = prevJoins && nextJoins ? "medial" : (prevJoins ? "final" : (nextJoins ? "initial" : "isolated"));
+        const glyph = forms[form];
+        if (!glyph || !forms.isolated) return null;
+        out.push({ ch: c, form, glyph, isolated: forms.isolated });
+    }
+    return out;
+}
+
+function ltrAllTrainWords() {
+    const set = new Set();
+    Object.keys(LTR_TRAIN_WORDS).forEach(l => LTR_TRAIN_WORDS[l].forEach(w => set.add(w)));
+    return Array.from(set).filter(w => EduAudio.has(w));
+}
+
+function ltrBuildableWord(word) {
+    const n = Array.from(ltrStripMarks(word)).length;
+    return n >= 3 && n <= 6 && EduAudio.has(word) && !!ltrWordShapes(word);
+}
+
+function ltrShuffleUntilDifferent(arr, same) {
+    let out = shuffle(arr.slice());
+    if (out.length > 1 && same(out)) out.reverse();
+    return out;
+}
+
+/* ---------- ركّب الكلمة ---------- */
+
+function ltrPickBuildWord(letter, difficulty) {
+    const own = (LTR_TRAIN_WORDS[letter] || []).filter(ltrBuildableWord);
+    const lenOf = w => Array.from(ltrStripMarks(w)).length;
+    const wanted = difficulty <= 1 ? 3 : (difficulty === 2 ? 4 : 5);
+    let pool = own.filter(w => lenOf(w) === wanted);
+    if (!pool.length) {
+        const sorted = own.slice().sort((a, b) => Math.abs(lenOf(a) - wanted) - Math.abs(lenOf(b) - wanted));
+        const best = sorted.length ? Math.abs(lenOf(sorted[0]) - wanted) : 0;
+        pool = sorted.filter(w => Math.abs(lenOf(w) - wanted) === best);
+    }
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+}
+
+function activityWordBuild(stage, letterChar, difficulty) {
+
+    difficulty = difficulty || 1;
+    const word = ltrPickBuildWord(letterChar, difficulty);
+    const shapes = word && ltrWordShapes(word);
+    if (!shapes) { activityLetterHouse(stage, letterChar, difficulty); return; }
+
+    const sid = ltrState.sid;
+    const img = difficulty <= 2 ? ltrVerifiedImage(word) : null;
+    const ghost = difficulty <= 1;
+
+    /* حروف مشتتة (٢ في المستوى الأصعب) من حروف مشابهة، ولا تكرر حروف الكلمة */
+    const present = new Set(shapes.map(s => s.ch));
+    let distractors = [];
+    if (difficulty >= 3) {
+        const pool = [];
+        shapes.forEach(s => (LTR_CONFUSABLE[s.ch] || "").split("").forEach(c => pool.push(c)));
+        shuffle(pool.concat(shuffle(LETTER_UNITS.map(u => u.letter)))).forEach(c => {
+            if (distractors.length < 2 && !present.has(c) && distractors.indexOf(c) === -1 && ltrCharForms(c)) distractors.push(c);
+        });
+    }
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-wordbuild";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrWbReplay">🔊 استمع للكلمة</button>
+        </div>
+        ${img ? `<div class="ltr-wb-pic">${ltrArt(img)}</div>` : ""}
+        <div class="ltr-instruction-line">رتّب الحروف لتكوّن الكلمة التي سمعتها</div>
+        <div class="ltr-slots" dir="rtl">
+            ${shapes.map((s, i) => `
+                <button type="button" class="ltr-slot" data-i="${i}" data-ch="${s.ch}" aria-label="مكان الحرف ${i + 1}">
+                    <span class="ltr-slot-ghost">${ghost ? ltrFormatGlyph(s.glyph, s.form) : ""}</span>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-tray" id="ltrWbTray"></div>
+        <div class="ltr-drag-tip">اسحب الحرف إلى مكانه — أو المس الحرف ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const tiles = ltrShuffleUntilDifferent(
+        shapes.map(s => s.ch).concat(distractors),
+        arr => difficulty < 3 && arr.join("") === shapes.map(s => s.ch).join("")
+    );
+    root.querySelector("#ltrWbTray").innerHTML = tiles.map((c, k) => `
+        <button type="button" class="ltr-ticket ltr-tile" data-ch="${c}" data-k="${k}" aria-pressed="false">${ltrCharForms(c).isolated}</button>
+    `).join("");
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const msg = $("letterMessage");
+    let filled = 0;
+    let finished = false;
+    const wrongs = {};
+
+    function onDrop(tile, slot) {
+        if (finished || !alive()) return;
+        const i = Number(slot.dataset.i);
+        if (tile.dataset.ch === slot.dataset.ch) {
+            const s = shapes[i];
+            tile.dataset.locked = "1";
+            slot.classList.remove("hinted", "armed", "over");
+            slot.classList.add("filled");
+            slot.disabled = true;
+            slot.innerHTML = `<span class="ltr-slot-letter">${ltrFormatGlyph(s.glyph, s.form)}</span>`;
+            tile.remove();
+            filled++;
+            if (msg) { msg.textContent = "✅ حرف في مكانه الصحيح"; msg.className = "message correct"; }
+            if (filled >= shapes.length) {
+                finished = true;
+                root.querySelectorAll(".ltr-tile").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+                const done = document.createElement("div");
+                done.className = "ltr-wb-done";
+                done.textContent = word;
+                root.insertBefore(done, root.querySelector(".ltr-slots").nextSibling);
+                speakEducational(word, { rate: 0.78 });
+                setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 900);
+            }
+        } else {
+            tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
+            wrongs[tile.dataset.k] = (wrongs[tile.dataset.k] || 0) + 1;
+            finishLtrChoiceTask(false, null);
+            if (wrongs[tile.dataset.k] >= 2) {
+                const right = Array.from(root.querySelectorAll(".ltr-slot:not(.filled)")).find(sl => sl.dataset.ch === tile.dataset.ch);
+                if (right) {
+                    right.classList.add("hinted");
+                } else {
+                    /* حرف مشتّت: نُبرز الحرف الصحيح لهذا المكان */
+                    const good = Array.from(root.querySelectorAll(".ltr-tile")).find(t => t.dataset.ch === slot.dataset.ch && t.dataset.locked !== "1");
+                    if (good) good.classList.add("hinted");
+                }
+            }
+        }
+    }
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-tile",
+        target: ".ltr-slot:not(.filled)",
+        onDrop
+    });
+
+    root.querySelector("#ltrWbReplay").onclick = () => speakEducational(word, { rate: 0.78 });
+    setTimeout(() => { if (alive()) speakEducational(word, { rate: 0.78 }); }, 300);
+}
+
+/* ---------- بناء المقطع ---------- */
+
+function ltrSyllables(letter) {
+    const clean = removeArabicHarakat(letter);
+    return LTR_HARAKAT
+        .map(h => ({ id: h.id, mark: h.mark, name: h.name, text: clean + h.mark }))
+        .filter(s => EduAudio.has(s.text));
+}
+
+function ltrMarkGlyph(mark) {
+    return `<span class="ltr-markglyph">ـ${mark}</span>`;
+}
+
+/* ١) أسمع المقطع فأضع الحركة فوق الحرف */
+function activitySyllableHear(stage, letterChar) {
+
+    const list = ltrSyllables(letterChar);
+    if (list.length < 2) { activitySoundToLetter(stage, letterChar, 1); return; }
+
+    const target = list[Math.floor(Math.random() * list.length)];
+    const sid = ltrState.sid;
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-syllable";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrSyReplay">🔊 استمع للمقطع</button>
+        </div>
+        <div class="ltr-instruction-line">أي حركة سمعتها على الحرف؟ ضعها فوق الحرف</div>
+        <button type="button" class="ltr-syl-base" aria-label="الحرف">
+            <span class="ltr-syl-letter">${removeArabicHarakat(letterChar)}</span>
+        </button>
+        <div class="ltr-tray">
+            ${shuffle(list.slice()).map(s => `
+                <button type="button" class="ltr-ticket ltr-marktile" data-id="${s.id}" aria-pressed="false">
+                    ${ltrMarkGlyph(s.mark)}<small>${s.name}</small>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب الحركة فوق الحرف — أو المسها ثم المس الحرف</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-marktile",
+        target: ".ltr-syl-base",
+        onDrop: (chip, base) => {
+            if (finished || !alive()) return;
+            if (chip.dataset.id === target.id) {
+                finished = true;
+                chip.dataset.locked = "1";
+                base.querySelector(".ltr-syl-letter").textContent = target.text;
+                base.classList.add("filled");
+                root.querySelectorAll(".ltr-marktile").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+                setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 500);
+            } else {
+                chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+                wrongs[chip.dataset.id] = (wrongs[chip.dataset.id] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                const total = Object.values(wrongs).reduce((a, b) => a + b, 0);
+                if (total >= 2) {
+                    const right = root.querySelector(`.ltr-marktile[data-id="${target.id}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    root.querySelector("#ltrSyReplay").onclick = () => speakEducational(target.text, { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(target.text, { rate: 0.75 }); }, 300);
+}
+
+/* ٢) أطابق كل صوت بمقطعه المكتوب */
+function activitySyllableMatch(stage, letterChar) {
+
+    const list = ltrSyllables(letterChar);
+    if (list.length < 2) { activitySoundToLetter(stage, letterChar, 1); return; }
+
+    const sid = ltrState.sid;
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-syllable";
+    const cards = ltrShuffleUntilDifferent(list, arr => arr.every((s, i) => s.id === list[i].id));
+    root.innerHTML = `
+        <div class="ltr-instruction-line">المس البطاقة لتسمع المقطع، ثم ضعها عند المقطع المكتوب الذي يشبهه</div>
+        <div class="ltr-syl-slots" dir="rtl">
+            ${list.map(s => `
+                <button type="button" class="ltr-syl-slot" data-id="${s.id}" aria-label="مقطع مكتوب">
+                    <span class="ltr-syl-text">${s.text}</span>
+                    <span class="ltr-syl-slot-fill"></span>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-tray">
+            ${cards.map((s, k) => `
+                <button type="button" class="ltr-ticket ltr-soundcard" data-id="${s.id}" aria-pressed="false" aria-label="صوت ${k + 1}">
+                    🔊 <b>${arabicNumber(k + 1)}</b>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب البطاقة إلى مكانها — أو المس البطاقة ثم المس المقطع</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const textOf = id => list.find(s => s.id === id).text;
+    let placed = 0;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-soundcard",
+        target: ".ltr-syl-slot:not(.filled)",
+        onPick: chip => speakEducational(textOf(chip.dataset.id), { rate: 0.75 }),
+        onDrop: (chip, slot) => {
+            if (finished || !alive()) return;
+            if (chip.dataset.id === slot.dataset.id) {
+                chip.dataset.locked = "1";
+                slot.classList.remove("hinted", "armed", "over");
+                slot.classList.add("filled");
+                slot.disabled = true;
+                slot.querySelector(".ltr-syl-slot-fill").textContent = "🔊 ✓";
+                chip.remove();
+                placed++;
+                if (placed >= list.length) {
+                    finished = true;
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 600);
+                } else {
+                    speakEducational(textOf(slot.dataset.id), { rate: 0.75 });
+                }
+            } else {
+                chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+                wrongs[chip.dataset.id] = (wrongs[chip.dataset.id] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                if (wrongs[chip.dataset.id] >= 2) {
+                    const right = root.querySelector(`.ltr-syl-slot[data-id="${chip.dataset.id}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+}
+
+/* ٣) أبني المقطع من جزأين: الحرف الصحيح + الحركة الصحيحة */
+function activitySyllableBuild(stage, letterChar) {
+
+    const list = ltrSyllables(letterChar);
+    if (list.length < 2) { activitySoundToLetter(stage, letterChar, 1); return; }
+
+    const target = list[Math.floor(Math.random() * list.length)];
+    const clean = removeArabicHarakat(letterChar);
+    const conf = (LTR_CONFUSABLE[letterChar] || "").split("").filter(c => ltrCharForms(c));
+    const other = conf.length ? conf[Math.floor(Math.random() * conf.length)] : ltrPickDistractorLetters(letterChar, 1)[0];
+    const sid = ltrState.sid;
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-syllable ltr-syl-build";
+    const tiles = shuffle([
+        `<button type="button" class="ltr-ticket ltr-tile" data-kind="letter" data-val="${clean}" aria-pressed="false">${clean}</button>`,
+        `<button type="button" class="ltr-ticket ltr-tile" data-kind="letter" data-val="${other}" aria-pressed="false">${other}</button>`,
+        ...list.map(s => `<button type="button" class="ltr-ticket ltr-marktile" data-kind="mark" data-val="${s.id}" aria-pressed="false">${ltrMarkGlyph(s.mark)}<small>${s.name}</small></button>`)
+    ]);
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrSbReplay">🔊 استمع للمقطع</button>
+        </div>
+        <div class="ltr-instruction-line">ابنِ المقطع الذي سمعته: اختر الحرف ثم الحركة</div>
+        <div class="ltr-slots ltr-syl-parts" dir="rtl">
+            <button type="button" class="ltr-slot" data-kind="letter" data-val="${clean}" aria-label="مكان الحرف"></button>
+            <button type="button" class="ltr-slot" data-kind="mark" data-val="${target.id}" aria-label="مكان الحركة"></button>
+        </div>
+        <div class="ltr-syl-result" aria-live="polite"></div>
+        <div class="ltr-tray">${tiles.join("")}</div>
+        <div class="ltr-drag-tip">اسحب القطعة إلى مكانها — أو المسها ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let letterDone = false, markDone = false, finished = false;
+    const wrongs = {};
+
+    function checkDone() {
+        if (letterDone && markDone && !finished) {
+            finished = true;
+            root.querySelectorAll(".ltr-ticket").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+            root.querySelector(".ltr-syl-result").textContent = target.text;
+            speakEducational(target.text, { rate: 0.75 });
+            setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 900);
+        }
+    }
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-ticket",
+        target: ".ltr-slot:not(.filled)",
+        onDrop: (tile, slot) => {
+            if (finished || !alive()) return;
+            const okKind = tile.dataset.kind === slot.dataset.kind;
+            const okVal = tile.dataset.val === slot.dataset.val;
+            if (okKind && okVal) {
+                tile.dataset.locked = "1";
+                slot.classList.remove("hinted", "armed", "over");
+                slot.classList.add("filled");
+                slot.disabled = true;
+                slot.innerHTML = `<span class="ltr-slot-letter">${slot.dataset.kind === "letter" ? clean : ltrMarkGlyph(target.mark)}</span>`;
+                tile.remove();
+                if (slot.dataset.kind === "letter") letterDone = true; else markDone = true;
+                checkDone();
+            } else {
+                tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
+                const key = tile.dataset.kind + tile.dataset.val;
+                wrongs[key] = (wrongs[key] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                if (wrongs[key] >= 2) {
+                    const right = root.querySelector(`.ltr-ticket[data-kind="${slot.dataset.kind}"][data-val="${slot.dataset.val}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    root.querySelector("#ltrSbReplay").onclick = () => speakEducational(target.text, { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(target.text, { rate: 0.75 }); }, 300);
+}
+
+/* ---------- صندوق الأصوات ---------- */
+
+/* كلمات يُسمع فيها صوت الحرف فعلًا (والتسجيل موجود). الحروف شبه الصائتة (أ/و/ي)
+   لا تُحتسب إلا في أول الكلمة حتى لا تلتبس بحروف المد */
+function ltrSoundPositives(letter, anywhere) {
+    const tw = LTR_SOUND_TWINS[letter];
+    return ltrAllTrainWords().filter(w => {
+        const chars = Array.from(ltrStripMarks(w));
+        if (tw) {
+            return chars[0] === letter && chars.filter(c => tw.indexOf(c) !== -1).length === 1;
+        }
+        if (ltrCountLetter(w, letter) !== 1) return false;
+        return anywhere ? true : chars[0] === letter;
+    });
+}
+
+function ltrSoundNegatives(letter) {
+    const tw = LTR_SOUND_TWINS[letter];
+    return ltrAllTrainWords().filter(w => {
+        const chars = Array.from(ltrStripMarks(w));
+        if (tw) return chars.filter(c => tw.indexOf(c) !== -1).length === 0;
+        return ltrCountLetter(w, letter) === 0;
+    });
+}
+
+function ltrSoundBoxSort(stage, letterChar, anywhere) {
+
+    const per = anywhere ? 3 : 2;
+    const pos = shuffle(ltrSoundPositives(letterChar, anywhere)).slice(0, per);
+    const neg = shuffle(ltrSoundNegatives(letterChar)).slice(0, per);
+    if (pos.length < 2 || neg.length < 2) { activityLetterHouse(stage, letterChar, 1); return; }
+
+    const sid = ltrState.sid;
+    const items = shuffle([
+        ...pos.map(w => ({ word: w, has: true })),
+        ...neg.map(w => ({ word: w, has: false }))
+    ]);
+    const clean = removeArabicHarakat(letterChar);
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-house-game ltr-soundbox";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrBoxReplay">🔊 استمع للحرف</button>
+        </div>
+        <div class="ltr-instruction-line">${anywhere
+            ? `المس البطاقة لتسمع الكلمة. هل تسمع صوت <strong>${clean}</strong> فيها؟`
+            : `المس البطاقة لتسمع الكلمة. هل تبدأ بصوت <strong>${clean}</strong>؟`}</div>
+        <div class="ltr-house-wrap">
+            <button type="button" class="ltr-house-zone ltr-house-in" data-in="1">
+                <span class="ltr-box-icon" aria-hidden="true">${ltrArt("📦")}</span>
+                <span class="ltr-zone-title">${anywhere ? "فيها" : "تبدأ بـ"} ${clean}</span>
+                <span class="ltr-zone-items"></span>
+            </button>
+            <button type="button" class="ltr-house-zone ltr-house-out" data-in="0">
+                <span class="ltr-box-icon" aria-hidden="true">${ltrArt("📦")}</span>
+                <span class="ltr-zone-title">${anywhere ? "ليس فيها" : "لا تبدأ بـ"} ${clean}</span>
+                <span class="ltr-zone-items"></span>
+            </button>
+        </div>
+        <div class="ltr-tray">
+            ${items.map((c, i) => `
+                <button type="button" class="ltr-ticket ltr-soundcard" data-i="${i}" aria-pressed="false" aria-label="كلمة مسموعة ${i + 1}">
+                    🔊 <b>${arabicNumber(i + 1)}</b>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب البطاقة إلى الصندوق — أو المس البطاقة ثم المس الصندوق</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const msg = $("letterMessage");
+    let placed = 0;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-soundcard",
+        target: ".ltr-house-zone",
+        onPick: chip => speakEducational(items[Number(chip.dataset.i)].word, { rate: 0.78 }),
+        onDrop: (chip, zone) => {
+            if (finished || !alive()) return;
+            const it = items[Number(chip.dataset.i)];
+            if (it.has === (zone.dataset.in === "1")) {
+                chip.dataset.locked = "1";
+                const mini = document.createElement("span");
+                mini.className = "ltr-placed" + (it.has ? " in" : " out");
+                mini.innerHTML = ltrWordHtml(it.word, letterChar, it.has);
+                zone.querySelector(".ltr-zone-items").appendChild(mini);
+                chip.remove();
+                placed++;
+                root.querySelectorAll(".hinted").forEach(el => el.classList.remove("hinted"));
+                if (msg) { msg.textContent = "✅ صحيح!"; msg.className = "message correct"; }
+                if (placed >= items.length) {
+                    finished = true;
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 600);
+                }
+            } else {
+                chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+                wrongs[chip.dataset.i] = (wrongs[chip.dataset.i] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                speakEducational(it.word, { rate: 0.78 });
+                if (wrongs[chip.dataset.i] >= 2) {
+                    const right = root.querySelector(`.ltr-house-zone[data-in="${it.has ? 1 : 0}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    root.querySelector("#ltrBoxReplay").onclick = () => speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+}
+
+function activitySoundBoxInitial(stage, letterChar) { ltrSoundBoxSort(stage, letterChar, false); }
+function activitySoundBoxAnywhere(stage, letterChar) { ltrSoundBoxSort(stage, letterChar, true); }
+
+/* أسمع الكلمة ثم ألمس الحرف المستهدف بين حروفها */
+function activitySoundBoxFind(stage, letterChar) {
+
+    const words = shuffle(ltrSoundPositives(letterChar, true).filter(w => ltrWordShapes(w) && Array.from(ltrStripMarks(w)).length <= 6));
+    const word = words[0];
+    const shapes = word && ltrWordShapes(word);
+    if (!shapes) { activitySoundBoxInitial(stage, letterChar); return; }
+
+    const tw = LTR_SOUND_TWINS[letterChar];
+    const set = tw ? letterChar : ltrLetterSet(letterChar);
+    const sid = ltrState.sid;
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-soundfind";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrSfReplay">🔊 استمع للكلمة</button>
+        </div>
+        <div class="ltr-instruction-line">اسمع الكلمة، ثم المس الحرف <strong>${removeArabicHarakat(letterChar)}</strong> بين حروفها</div>
+        <div class="ltr-letter-tiles" dir="rtl">
+            ${shapes.map((s, i) => `
+                <button type="button" class="ltr-letter-tile" data-hit="${set.indexOf(s.ch) !== -1 ? 1 : 0}" aria-label="الحرف ${i + 1}">${s.isolated}</button>`).join("")}
+        </div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let finished = false;
+    let wrongCount = 0;
+
+    root.querySelectorAll(".ltr-letter-tile").forEach(btn => {
+        btn.addEventListener("click", () => {
+            if (finished || !alive() || btn.disabled) return;
+            if (btn.dataset.hit === "1") {
+                finished = true;
+                btn.classList.add("correct");
+                root.querySelectorAll(".ltr-letter-tile").forEach(t => { t.disabled = true; });
+                const w = document.createElement("div");
+                w.className = "ltr-wb-done";
+                w.innerHTML = ltrWordHtml(word, letterChar, true);
+                root.appendChild(w);
+                speakEducational(word, { rate: 0.78 });
+                setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 900);
+            } else {
+                btn.disabled = true;
+                btn.classList.add("wrong");
+                wrongCount++;
+                finishLtrChoiceTask(false, null);
+                if (wrongCount >= 2) {
+                    const right = root.querySelector('.ltr-letter-tile[data-hit="1"]:not(:disabled)');
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        });
+    });
+
+    root.querySelector("#ltrSfReplay").onclick = () => speakEducational(word, { rate: 0.78 });
+    setTimeout(() => { if (alive()) speakEducational(word, { rate: 0.78 }); }, 300);
+}
+
+/* =========================================================
+   🕵️🔁🙈 المرحلة ٤: «محقق النقاط» و«أكمل النمط» و«الحرف المختبئ»
+   • أنشطة سحب/نقر (نفس ltrMakeDraggable) بلا مؤقتات ولا عقاب
+   • جدول النقاط حقائق ثابتة عن الحروف العربية؛ والأنماط تُولَّد من دورة
+     معروفة فلا تتعارض الإجابة مع النمط المعروض
+   • التسجيلات الموجودة فقط: لا صوت إلا ما تحقّقنا من وجوده
+========================================================= */
+
+/* عدد نقاط كل حرف ومكانها (فوق/تحت). الهمزة والشرطة ليستا نقاطًا */
+const LTR_DOTS = {
+    "أ": { n: 0 }, "ب": { n: 1, pos: "below" }, "ت": { n: 2, pos: "above" }, "ث": { n: 3, pos: "above" },
+    "ج": { n: 1, pos: "below" }, "ح": { n: 0 }, "خ": { n: 1, pos: "above" },
+    "د": { n: 0 }, "ذ": { n: 1, pos: "above" }, "ر": { n: 0 }, "ز": { n: 1, pos: "above" },
+    "س": { n: 0 }, "ش": { n: 3, pos: "above" }, "ص": { n: 0 }, "ض": { n: 1, pos: "above" },
+    "ط": { n: 0 }, "ظ": { n: 1, pos: "above" }, "ع": { n: 0 }, "غ": { n: 1, pos: "above" },
+    "ف": { n: 1, pos: "above" }, "ق": { n: 2, pos: "above" }, "ك": { n: 0 }, "ل": { n: 0 },
+    "م": { n: 0 }, "ن": { n: 1, pos: "above" }, "ه": { n: 0 }, "و": { n: 0 }, "ي": { n: 2, pos: "below" }
+};
+
+function ltrDotZone(letter) {
+    const d = LTR_DOTS[letter];
+    return d && d.n > 0 ? d.pos : "none";
+}
+
+function ltrDotClue(letter) {
+    const d = LTR_DOTS[letter];
+    if (!d || !d.n) return "حرف ليس له نقاط";
+    const side = d.pos === "above" ? "فوقه" : "تحته";
+    const cnt = d.n === 1 ? "نقطة واحدة" : (d.n === 2 ? "نقطتان" : "ثلاث نقاط");
+    return `حرف له ${cnt} ${side}`;
+}
+
+function ltrDotSig(letter) {
+    const d = LTR_DOTS[letter];
+    return d && d.n ? d.n + d.pos : "0";
+}
+
+const LTR_DOT_ZONE_LABEL = { above: "نقاط فوق الحرف", below: "نقاط تحت الحرف", none: "بلا نقاط" };
+
+/* ---------- ١) محقق النقاط: أضع نقاط الحرف بعددها ومكانها ---------- */
+function activityDotsPlace(stage, letterChar) {
+
+    const spec = LTR_DOTS[letterChar];
+    if (!spec || !spec.n) { ltrDotsSort(stage, letterChar, 4); return; }
+
+    const sid = ltrState.sid;
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-dots";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrDotsReplay">🔊 استمع للحرف</button>
+        </div>
+        <div class="ltr-instruction-line">أنت المحقق 🕵️ انظر إلى الحرف جيدًا، ثم ضع نقاطه بنفس العدد وفي نفس المكان</div>
+        <div class="ltr-dots-card">
+            <button type="button" class="ltr-dotzone" data-z="above" aria-label="فوق الحرف"><span class="ltr-dotzone-label">فوق</span><span class="ltr-dotzone-items"></span></button>
+            <div class="ltr-dots-letter">${removeArabicHarakat(letterChar)}</div>
+            <button type="button" class="ltr-dotzone" data-z="below" aria-label="تحت الحرف"><span class="ltr-dotzone-label">تحت</span><span class="ltr-dotzone-items"></span></button>
+        </div>
+        <div class="ltr-tray">
+            ${[0, 1, 2].map(k => `<button type="button" class="ltr-ticket ltr-dottoken" data-k="${k}" aria-pressed="false" aria-label="نقطة"><span class="ltr-dot"></span></button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب النقطة إلى مكانها — أو المس النقطة ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let placed = 0;
+    let finished = false;
+    let wrongTotal = 0;
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-dottoken",
+        target: ".ltr-dotzone",
+        onDrop: (chip, zone) => {
+            if (finished || !alive()) return;
+            if (zone.dataset.z === spec.pos && placed < spec.n) {
+                chip.dataset.locked = "1";
+                const d = document.createElement("span");
+                d.className = "ltr-dot";
+                zone.querySelector(".ltr-dotzone-items").appendChild(d);
+                chip.remove();
+                placed++;
+                root.querySelectorAll(".hinted").forEach(el => el.classList.remove("hinted"));
+                if (placed >= spec.n) {
+                    finished = true;
+                    root.querySelectorAll(".ltr-dottoken").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 700);
+                }
+            } else {
+                chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+                wrongTotal++;
+                finishLtrChoiceTask(false, null);
+                if (wrongTotal >= 2) {
+                    const right = root.querySelector(`.ltr-dotzone[data-z="${spec.pos}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    root.querySelector("#ltrDotsReplay").onclick = () => speakEducational(letterWithFatha(letterChar), { rate: 0.75 });
+    setTimeout(() => { if (alive()) speakEducational(letterWithFatha(letterChar), { rate: 0.75 }); }, 300);
+}
+
+/* ---------- ٢) أصنّف الحروف حسب نقاطها ---------- */
+function ltrDotsSort(stage, letterChar, count) {
+
+    const letters = LETTER_UNITS.map(u => u.letter);
+    const others = shuffle(letters.filter(l => l !== letterChar));
+    const chosen = [letterChar];
+    ["above", "below", "none"].forEach(z => {
+        if (chosen.length < count && !chosen.some(l => ltrDotZone(l) === z)) {
+            const c = others.find(l => ltrDotZone(l) === z && chosen.indexOf(l) === -1);
+            if (c) chosen.push(c);
+        }
+    });
+    others.forEach(l => { if (chosen.length < count && chosen.indexOf(l) === -1) chosen.push(l); });
+    const tiles = shuffle(chosen);
+
+    const sid = ltrState.sid;
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-dots ltr-dots-sort";
+    root.innerHTML = `
+        <div class="ltr-instruction-line">صنّف الحروف: أين توجد نقاط كل حرف؟</div>
+        <div class="ltr-sort-bins">
+            ${["above", "below", "none"].map(z => `
+                <button type="button" class="ltr-house-zone ltr-sort-bin" data-z="${z}">
+                    <span class="ltr-zone-title">${LTR_DOT_ZONE_LABEL[z]}</span>
+                    <span class="ltr-zone-items"></span>
+                </button>`).join("")}
+        </div>
+        <div class="ltr-tray">
+            ${tiles.map(l => `<button type="button" class="ltr-ticket ltr-tile" data-ch="${l}" aria-pressed="false">${l}</button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب الحرف إلى مكانه — أو المس الحرف ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let placed = 0;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-tile",
+        target: ".ltr-sort-bin",
+        onPick: chip => speakEducational(letterWithFatha(chip.dataset.ch), { rate: 0.75 }),
+        onDrop: (chip, bin) => {
+            if (finished || !alive()) return;
+            const ch = chip.dataset.ch;
+            if (ltrDotZone(ch) === bin.dataset.z) {
+                chip.dataset.locked = "1";
+                const m = document.createElement("span");
+                m.className = "ltr-placed";
+                m.textContent = ch;
+                bin.querySelector(".ltr-zone-items").appendChild(m);
+                chip.remove();
+                placed++;
+                root.querySelectorAll(".hinted").forEach(el => el.classList.remove("hinted"));
+                if (placed >= tiles.length) {
+                    finished = true;
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 600);
+                }
+            } else {
+                chip.classList.remove("shake"); void chip.offsetWidth; chip.classList.add("shake");
+                wrongs[ch] = (wrongs[ch] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                if (wrongs[ch] >= 2) {
+                    const right = root.querySelector(`.ltr-sort-bin[data-z="${ltrDotZone(ch)}"]`);
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+}
+function activityDotsSort(stage, letterChar) { ltrDotsSort(stage, letterChar, 5); }
+
+/* ---------- ٣) أتتبّع الدليل: ألمس كل الحروف التي تطابق الوصف ---------- */
+function activityDotsClue(stage, letterChar) {
+
+    const sig = ltrDotSig(letterChar);
+    const letters = LETTER_UNITS.map(u => u.letter);
+    const twins = shuffle(letters.filter(l => l !== letterChar && ltrDotSig(l) === sig)).slice(0, 1);
+    const rest = shuffle(letters.filter(l => ltrDotSig(l) !== sig)).slice(0, 5 - twins.length);
+    const matches = [letterChar, ...twins];
+    const tiles = shuffle([...matches, ...rest]);
+
+    const sid = ltrState.sid;
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-soundfind ltr-dots";
+    root.innerHTML = `
+        <div class="ltr-clue-card">🕵️ <strong>الدليل:</strong> ${ltrDotClue(letterChar)}</div>
+        <div class="ltr-instruction-line">المس كل الحروف التي تطابق الدليل (${arabicNumber(matches.length)} ${matches.length === 1 ? "حرف" : "حرفان"})</div>
+        <div class="ltr-letter-tiles" dir="rtl">
+            ${tiles.map(l => `<button type="button" class="ltr-letter-tile" data-ch="${l}" data-hit="${ltrDotSig(l) === sig ? 1 : 0}">${l}</button>`).join("")}
+        </div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let found = 0;
+    let finished = false;
+    let wrongCount = 0;
+
+    root.querySelectorAll(".ltr-letter-tile").forEach(btn => {
+        btn.addEventListener("click", () => {
+            if (finished || !alive() || btn.disabled) return;
+            if (btn.dataset.hit === "1") {
+                btn.classList.add("correct");
+                btn.disabled = true;
+                btn.classList.remove("hinted");
+                found++;
+                speakEducational(letterWithFatha(btn.dataset.ch), { rate: 0.75 });
+                if (found >= matches.length) {
+                    finished = true;
+                    root.querySelectorAll(".ltr-letter-tile").forEach(t => { t.disabled = true; });
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 800);
+                }
+            } else {
+                btn.disabled = true;
+                btn.classList.add("wrong");
+                wrongCount++;
+                finishLtrChoiceTask(false, null);
+                if (wrongCount >= 2) {
+                    const right = root.querySelector('.ltr-letter-tile[data-hit="1"]:not(:disabled)');
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        });
+    });
+}
+
+/* ---------- أكمل النمط ---------- */
+
+function ltrPatternLetters(letter) {
+    const conf = (LTR_CONFUSABLE[letter] || "").split("").filter(c => ltrCharForms(c));
+    const pool = shuffle(LETTER_UNITS.map(u => u.letter).filter(l => l !== letter && ltrCharForms(l)));
+    const m = conf.length ? conf[Math.floor(Math.random() * conf.length)] : pool[0];
+    const k = pool.find(l => l !== m);
+    return { m, k };
+}
+
+/* وحدات الدورة: مقاطع الحركات إن توفرت تسجيلاتها، وإلا أشكال الحرف */
+function ltrPatternCycle(letter) {
+    const clean = removeArabicHarakat(letter);
+    const syl = ltrSyllables(letter);
+    const forms = ltrCharForms(clean) || {};
+    const formKeys = ["isolated", "initial", "medial", "final"].filter(k => forms[k]);
+    const useSyl = syl.length >= 2 && (formKeys.length < 2 || Math.random() < 0.5);
+    const { m } = ltrPatternLetters(letter);
+    const mForms = ltrCharForms(m) || {};
+    if (useSyl) {
+        const units = syl.map(s => ({ val: s.id, html: s.text, say: s.text }));
+        const mk = syl[syl.length - 1];
+        const dis = { val: "x" + mk.id, html: m + mk.mark, say: EduAudio.has(m + mk.mark) ? m + mk.mark : null };
+        return { kind: "syllable", units, distractor: dis };
+    }
+    const units = formKeys.map(k => ({ val: k, html: ltrFormatGlyph(forms[k], k), say: null }));
+    const dk = formKeys[formKeys.length - 1];
+    const dis = { val: "x" + dk, html: ltrFormatGlyph(mForms[dk] || mForms.isolated || m, dk), say: null };
+    return { kind: "form", units, distractor: dis };
+}
+
+function ltrBuildPattern(letter, difficulty) {
+    const clean = removeArabicHarakat(letter);
+    if (difficulty <= 2) {
+        const { m, k } = ltrPatternLetters(letter);
+        const A = { val: clean, html: clean, say: null };
+        const B = { val: m, html: m, say: null };
+        const K = { val: k, html: k, say: null };
+        const idx = difficulty <= 1 ? [0, 1, 0, 1, 0, 1] : [0, 1, 1, 0, 1, 1, 0, 1, 1];
+        const nBlank = difficulty <= 1 ? 1 : 2;
+        const seq = idx.map(i => (i ? B : A));
+        return { seq, blanks: Array.from({ length: nBlank }, (_, j) => seq.length - nBlank + j), options: shuffle([...seq.slice(seq.length - nBlank), A, K]), period: idx.length === 6 ? 2 : 3 };
+    }
+    const cyc = ltrPatternCycle(letter);
+    const u = cyc.units;
+    const seq = Array.from({ length: u.length === 2 ? 6 : (u.length === 3 ? 7 : 9) }, (_, i) => u[i % u.length]);
+    const answer = seq[seq.length - 1];
+    const opts = u.slice();
+    opts.push(cyc.distractor);
+    return { seq, blanks: [seq.length - 1], options: shuffle(opts.slice(0, 4)), period: u.length };
+}
+
+function ltrPatternActivity(stage, letterChar, difficulty) {
+
+    const pat = ltrBuildPattern(letterChar, difficulty);
+    const sid = ltrState.sid;
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-pattern";
+    root.innerHTML = `
+        <div class="ltr-instruction-line">انظر إلى النمط وأكمله: ما الذي يأتي بعد ذلك؟</div>
+        <div class="ltr-seq" dir="rtl">
+            ${pat.seq.map((u, i) => pat.blanks.indexOf(i) !== -1
+                ? `<button type="button" class="ltr-slot ltr-seq-blank" data-val="${u.val}" data-i="${i}" aria-label="مكان فارغ">؟</button>`
+                : `<span class="ltr-seq-item" data-val="${u.val}">${u.html}</span>`).join("")}
+        </div>
+        <div class="ltr-tray">
+            ${pat.options.map((u, k) => `<button type="button" class="ltr-ticket ltr-tile ltr-seq-tile" data-val="${u.val}" data-k="${k}" aria-pressed="false">${u.html}</button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب القطعة إلى المكان الفارغ — أو المسها ثم المس المكان</div>
+    `;
+    stage.appendChild(root);
+
+    const say = {};
+    pat.seq.concat(pat.options).forEach(u => { if (u.say) say[u.val] = u.say; });
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let filled = 0;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-seq-tile",
+        target: ".ltr-seq-blank:not(.filled)",
+        onPick: chip => { if (say[chip.dataset.val]) speakEducational(say[chip.dataset.val], { rate: 0.75 }); },
+        onDrop: (tile, slot) => {
+            if (finished || !alive()) return;
+            if (tile.dataset.val === slot.dataset.val) {
+                tile.dataset.locked = "1";
+                slot.classList.remove("hinted", "armed", "over");
+                slot.classList.add("filled");
+                slot.disabled = true;
+                slot.innerHTML = tile.innerHTML;
+                tile.remove();
+                filled++;
+                root.querySelectorAll(".hinted").forEach(el => el.classList.remove("hinted"));
+                if (filled >= pat.blanks.length) {
+                    finished = true;
+                    root.querySelectorAll(".ltr-seq-tile").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 800);
+                }
+            } else {
+                tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
+                wrongs[tile.dataset.k] = (wrongs[tile.dataset.k] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                if (wrongs[tile.dataset.k] >= 2) {
+                    const right = root.querySelector(`.ltr-seq-blank:not(.filled)[data-val="${tile.dataset.val}"]`) || root.querySelector(".ltr-seq-blank:not(.filled)");
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+}
+function activityPatternAB(stage, letterChar) { ltrPatternActivity(stage, letterChar, 1); }
+function activityPatternABB(stage, letterChar) { ltrPatternActivity(stage, letterChar, 2); }
+function activityPatternCycle(stage, letterChar) { ltrPatternActivity(stage, letterChar, 3); }
+
+/* ---------- الحرف المختبئ ---------- */
+
+function activityHiddenLetter(stage, letterChar, difficulty) {
+
+    difficulty = difficulty || 1;
+    const word = ltrPickBuildWord(letterChar, difficulty);
+    const shapes = word && ltrWordShapes(word);
+    if (!shapes) { activityLetterHouse(stage, letterChar, difficulty); return; }
+
+    const sid = ltrState.sid;
+    const img = difficulty === 1 ? ltrVerifiedImage(word) : null;
+    const lessonIdx = shapes.findIndex(s => ltrLetterSet(letterChar).indexOf(s.ch) !== -1);
+    const hidden = [lessonIdx];
+    if (difficulty >= 3) {
+        const cand = shapes.map((s, i) => i).filter(i => i !== lessonIdx);
+        if (cand.length) hidden.push(cand[Math.floor(Math.random() * cand.length)]);
+    }
+    hidden.sort((a, b) => a - b);
+
+    /* حروف مشتتة: مشابهة للمخفية */
+    const present = new Set(shapes.map(s => s.ch));
+    const options = hidden.map(i => shapes[i].ch);
+    const wantDis = difficulty === 1 ? 2 : 2;
+    const disPool = [];
+    hidden.forEach(i => (LTR_CONFUSABLE[shapes[i].ch] || "").split("").forEach(c => disPool.push(c)));
+    shuffle(disPool.concat(shuffle(LETTER_UNITS.map(u => u.letter)))).forEach(c => {
+        if (options.length < hidden.length + wantDis && !present.has(c) && options.indexOf(c) === -1 && ltrCharForms(c)) options.push(c);
+    });
+
+    stage.innerHTML = "";
+    const root = document.createElement("div");
+    root.className = "ltr-wordbuild ltr-hidden";
+    root.innerHTML = `
+        <div class="ltr-activity-head">
+            <button class="secondary" type="button" id="ltrHdReplay">🔊 استمع للكلمة</button>
+        </div>
+        ${img ? `<div class="ltr-wb-pic">${ltrArt(img)}</div>` : ""}
+        <div class="ltr-instruction-line">${hidden.length === 1 ? "اختبأ حرف في الكلمة 🙈 أي حرف هو؟" : "اختبأ حرفان في الكلمة 🙈 ما هما؟"}</div>
+        <div class="ltr-slots" dir="rtl">
+            ${shapes.map((s, i) => hidden.indexOf(i) !== -1
+                ? `<button type="button" class="ltr-slot ltr-hide-slot" data-i="${i}" data-ch="${s.ch}" aria-label="حرف مختبئ"><span class="ltr-cover">${ltrArt("🙈")}</span></button>`
+                : `<span class="ltr-slot ltr-slot-static filled"><span class="ltr-slot-letter">${ltrFormatGlyph(s.glyph, s.form)}</span></span>`).join("")}
+        </div>
+        <div class="ltr-tray">
+            ${shuffle(options).map((c, k) => `<button type="button" class="ltr-ticket ltr-tile" data-ch="${c}" data-k="${k}" aria-pressed="false">${ltrCharForms(c).isolated}</button>`).join("")}
+        </div>
+        <div class="ltr-drag-tip">اسحب الحرف إلى الصندوق — أو المس الحرف ثم المس الصندوق</div>
+    `;
+    stage.appendChild(root);
+
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    let found = 0;
+    let finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-tile",
+        target: ".ltr-hide-slot:not(.filled)",
+        onDrop: (tile, slot) => {
+            if (finished || !alive()) return;
+            const i = Number(slot.dataset.i);
+            if (tile.dataset.ch === slot.dataset.ch) {
+                tile.dataset.locked = "1";
+                slot.classList.remove("hinted", "armed", "over");
+                slot.classList.add("filled");
+                slot.disabled = true;
+                slot.innerHTML = `<span class="ltr-slot-letter">${ltrFormatGlyph(shapes[i].glyph, shapes[i].form)}</span>`;
+                tile.remove();
+                found++;
+                if (found >= hidden.length) {
+                    finished = true;
+                    root.querySelectorAll(".ltr-tile").forEach(t => { t.dataset.locked = "1"; t.disabled = true; });
+                    const done = document.createElement("div");
+                    done.className = "ltr-wb-done";
+                    done.textContent = word;
+                    root.insertBefore(done, root.querySelector(".ltr-slots").nextSibling);
+                    speakEducational(word, { rate: 0.78 });
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 900);
+                }
+            } else {
+                tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
+                wrongs[tile.dataset.k] = (wrongs[tile.dataset.k] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                if (wrongs[tile.dataset.k] >= 2) {
+                    const right = Array.from(root.querySelectorAll(".ltr-hide-slot:not(.filled)")).find(sl => sl.dataset.ch === tile.dataset.ch);
+                    if (right) {
+                        right.classList.add("hinted");
+                    } else {
+                        const good = Array.from(root.querySelectorAll(".ltr-tile")).find(t => t.dataset.ch === slot.dataset.ch && t.dataset.locked !== "1");
+                        if (good) good.classList.add("hinted");
+                    }
+                }
+            }
+        }
+    });
+
+    root.querySelector("#ltrHdReplay").onclick = () => speakEducational(word, { rate: 0.78 });
+    setTimeout(() => { if (alive()) speakEducational(word, { rate: 0.78 }); }, 300);
+}
+
+/* =========================================================
+   ✍️🗺️ المرحلة ٥: التتبّع الموجّه + رحلة الحرف
+   • مسار التتبّع لا يُكتب يدويًا: يُستخرج من رسم الحرف نفسه (بالخط الظاهر على الجهاز)
+     بحسب شكله في الموضع (منفصل/أول/وسط/آخر)، فلا يمكن أن يختلف الشكل المُتتبَّع
+     عن الشكل المعروض. الهيكل العظمي للحرف ⇒ نقاط تفتيش، والنقاط/الهمزة ⇒ أهداف لمس.
+   • القبول يعتمد على التغطية (هل مررتَ على الحرف) والدقة (هل بقيتَ قريبًا منه)،
+     بلا أي مؤقّت أو عقوبة، ويمكن الإعادة بلا حدود.
+   • بديلان لمن لا يستطيع التتبّع الدقيق: «اختر المسار» و«رتّب الخطوات».
+   • كل شيء مفتوح دون أقفال، والمكافأة مرة واحدة لكل نشاط (finishLtrChoiceTask).
+========================================================= */
+
+const LTR_GM_W = 240;
+const LTR_GM_H = 180;
+const LTR_GM_FONT = '"Tahoma","Arial","Traditional Arabic","Noto Naskh Arabic","DejaVu Sans",sans-serif';
+const LTR_FORM_NAMES = { isolated: "منفصل", initial: "أول الكلمة", medial: "وسط الكلمة", final: "آخر الكلمة" };
+const ltrGlyphCache = new Map();
+
+function ltrFormsAvailable(letter) {
+    const f = ltrCharForms(letter);
+    if (!f) return [];
+    return ["isolated", "initial", "medial", "final"].filter(k => f[k]);
+}
+
+/* نص يُشكَّل بحسب الموضع بواسطة محرك الخط نفسه (ZWJ) — هو المرجع الذي يُرسم ويُتتبَّع */
+function ltrShapedText(letter, form) {
+    if (form === "initial") return letter + "‍";
+    if (form === "medial") return "‍" + letter + "‍";
+    if (form === "final") return "‍" + letter;
+    return letter;
+}
+
+function ltrChamfer(src, W, H) {
+    const N = W * H, d = new Float32Array(N), INF = 1e9;
+    for (let i = 0; i < N; i++) d[i] = src[i] ? 0 : INF;
+    for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+            const i = y * W + x;
+            let v = d[i];
+            if (x > 0 && d[i - 1] + 3 < v) v = d[i - 1] + 3;
+            if (y > 0) {
+                if (d[i - W] + 3 < v) v = d[i - W] + 3;
+                if (x > 0 && d[i - W - 1] + 4 < v) v = d[i - W - 1] + 4;
+                if (x < W - 1 && d[i - W + 1] + 4 < v) v = d[i - W + 1] + 4;
+            }
+            d[i] = v;
+        }
+    }
+    for (let y = H - 1; y >= 0; y--) {
+        for (let x = W - 1; x >= 0; x--) {
+            const i = y * W + x;
+            let v = d[i];
+            if (x < W - 1 && d[i + 1] + 3 < v) v = d[i + 1] + 3;
+            if (y < H - 1) {
+                if (d[i + W] + 3 < v) v = d[i + W] + 3;
+                if (x < W - 1 && d[i + W + 1] + 4 < v) v = d[i + W + 1] + 4;
+                if (x > 0 && d[i + W - 1] + 4 < v) v = d[i + W - 1] + 4;
+            }
+            d[i] = v;
+        }
+    }
+    for (let i = 0; i < N; i++) d[i] = d[i] / 3;
+    return d;
+}
+
+function ltrComponents(mask, W, H) {
+    const label = new Int32Array(W * H);
+    const list = [];
+    const stack = [];
+    let id = 0;
+    for (let s = 0; s < W * H; s++) {
+        if (!mask[s] || label[s]) continue;
+        id++;
+        let area = 0, sx = 0, sy = 0;
+        stack.length = 0;
+        stack.push(s);
+        label[s] = id;
+        while (stack.length) {
+            const p = stack.pop();
+            const px = p % W, py = (p - px) / W;
+            area++; sx += px; sy += py;
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (!dx && !dy) continue;
+                    const nx = px + dx, ny = py + dy;
+                    if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+                    const q = ny * W + nx;
+                    if (mask[q] && !label[q]) { label[q] = id; stack.push(q); }
+                }
+            }
+        }
+        list.push({ id, area, cx: sx / area, cy: sy / area });
+    }
+    return { label, list };
+}
+
+/* تنحيف Zhang–Suen: يُرجع الهيكل العظمي (سُمك بكسل واحد) للحرف */
+function ltrThin(src, W, H) {
+    const img = Uint8Array.from(src);
+    const del = [];
+    let changed = true;
+    let guard = 0;
+    while (changed && guard++ < 60) {
+        changed = false;
+        for (let pass = 0; pass < 2; pass++) {
+            del.length = 0;
+            for (let y = 1; y < H - 1; y++) {
+                for (let x = 1; x < W - 1; x++) {
+                    const i = y * W + x;
+                    if (!img[i]) continue;
+                    const p2 = img[i - W], p3 = img[i - W + 1], p4 = img[i + 1], p5 = img[i + W + 1];
+                    const p6 = img[i + W], p7 = img[i + W - 1], p8 = img[i - 1], p9 = img[i - W - 1];
+                    const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+                    if (B < 2 || B > 6) continue;
+                    const A = ((p2 === 0 && p3 === 1) ? 1 : 0) + ((p3 === 0 && p4 === 1) ? 1 : 0) +
+                              ((p4 === 0 && p5 === 1) ? 1 : 0) + ((p5 === 0 && p6 === 1) ? 1 : 0) +
+                              ((p6 === 0 && p7 === 1) ? 1 : 0) + ((p7 === 0 && p8 === 1) ? 1 : 0) +
+                              ((p8 === 0 && p9 === 1) ? 1 : 0) + ((p9 === 0 && p2 === 1) ? 1 : 0);
+                    if (A !== 1) continue;
+                    if (pass === 0) { if (p2 * p4 * p6 !== 0 || p4 * p6 * p8 !== 0) continue; }
+                    else { if (p2 * p4 * p8 !== 0 || p2 * p6 * p8 !== 0) continue; }
+                    del.push(i);
+                }
+            }
+            if (del.length) { changed = true; for (let k = 0; k < del.length; k++) img[del[k]] = 0; }
+        }
+    }
+    return img;
+}
+
+/* نموذج الحرف في موضع معيّن: قناع الرسم، الجسم، النقاط/الهمزة، نقاط التفتيش مرتّبة */
+function ltrBuildGlyphModel(letter, form) {
+    const key = letter + "|" + form;
+    if (ltrGlyphCache.has(key)) {
+        const hit = ltrGlyphCache.get(key);
+        ltrGlyphCache.delete(key);
+        ltrGlyphCache.set(key, hit);
+        return hit;
+    }
+
+    const W = LTR_GM_W, H = LTR_GM_H, N = W * H;
+    const text = ltrShapedText(letter, form);
+    const model = { letter, form, text, W, H, empty: true };
+
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const cx = cv.getContext("2d", { willReadFrequently: true });
+
+    const paint = (fs, ox, oy) => {
+        cx.clearRect(0, 0, W, H);
+        cx.font = "700 " + fs + "px " + LTR_GM_FONT;
+        cx.direction = "rtl";
+        cx.textAlign = "center";
+        cx.textBaseline = "alphabetic";
+        cx.fillStyle = "#000";
+        cx.fillText(text, ox, oy);
+        const d = cx.getImageData(0, 0, W, H).data;
+        const m = new Uint8Array(N);
+        let minx = W, maxx = -1, miny = H, maxy = -1;
+        for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+                if (d[(y * W + x) * 4 + 3] >= 110) {
+                    m[y * W + x] = 1;
+                    if (x < minx) minx = x;
+                    if (x > maxx) maxx = x;
+                    if (y < miny) miny = y;
+                    if (y > maxy) maxy = y;
+                }
+            }
+        }
+        return { m, minx, maxx, miny, maxy };
+    };
+
+    try {
+        const r1 = paint(100, W / 2, H * 0.62);
+        if (r1.maxx < 0) { ltrGlyphCache.set(key, model); return model; }
+
+        const bw = r1.maxx - r1.minx + 1, bh = r1.maxy - r1.miny + 1;
+        let s = Math.min(3.5, (W * 0.8) / bw, (H * 0.78) / bh);
+        const bcx = (r1.minx + r1.maxx) / 2, bcy = (r1.miny + r1.maxy) / 2;
+        let fs = 100 * s;
+        let ox = W / 2 - (bcx - W / 2) * s;
+        let oy = H / 2 - (bcy - H * 0.62) * s;
+        let r2 = paint(fs, ox, oy);
+
+        for (let tries = 0; tries < 3 && (r2.minx < 2 || r2.miny < 2 || r2.maxx > W - 3 || r2.maxy > H - 3); tries++) {
+            s *= 0.9;
+            fs = 100 * s;
+            ox = W / 2 - (bcx - W / 2) * s;
+            oy = H / 2 - (bcy - H * 0.62) * s;
+            r2 = paint(fs, ox, oy);
+        }
+        if (r2.maxx < 0) { ltrGlyphCache.set(key, model); return model; }
+
+        const mask = r2.m;
+        const comps = ltrComponents(mask, W, H);
+        let body = comps.list[0];
+        comps.list.forEach(c => { if (c.area > body.area) body = c; });
+
+        const bodyMask = new Uint8Array(N);
+        for (let i = 0; i < N; i++) if (comps.label[i] === body.id) bodyMask[i] = 1;
+
+        const extras = comps.list
+            .filter(c => c.id !== body.id && c.area >= 12)
+            .map(c => ({ x: c.cx, y: c.cy, area: c.area, r: Math.max(8, Math.sqrt(c.area / Math.PI) + 6), id: c.id }))
+            .sort((a, b) => (b.x - a.x) || (a.y - b.y));
+
+        const skel = ltrThin(bodyMask, W, H);
+        const skelIdx = [];
+        for (let i = 0; i < N; i++) if (skel[i]) skelIdx.push(i);
+
+        const inner = ltrChamfer(bodyMask.map(v => v ? 0 : 1), W, H);
+        const widths = skelIdx.map(i => inner[i]).sort((a, b) => a - b);
+        let hw = widths.length ? widths[Math.floor(widths.length / 2)] : 5;
+        hw = Math.max(3, Math.min(20, hw));
+
+        /* نقاط تفتيش: عيّنة من الهيكل بتباعد ثابت */
+        const sp = 7;
+        const pts = [];
+        const sourceList = skelIdx.length ? skelIdx : (() => {
+            const a = [];
+            for (let i = 0; i < N; i += 7) if (bodyMask[i]) a.push(i);
+            return a;
+        })();
+        sourceList.forEach(i => {
+            const x = i % W, y = (i - x) / W;
+            for (let k = 0; k < pts.length; k++) {
+                if (Math.abs(pts[k].x - x) < sp && Math.abs(pts[k].y - y) < sp && Math.hypot(pts[k].x - x, pts[k].y - y) < sp) return;
+            }
+            pts.push({ x, y });
+        });
+
+        /* ترتيب تقريبي للكتابة: من أعلى اليمين (اتجاه الكتابة العربية) ثم الأقرب فالأقرب */
+        let start = 0;
+        const maxX = pts.reduce((m, q) => Math.max(m, q.x), -1);
+        pts.forEach((q, k) => {
+            if (q.x >= maxX - 8 && (pts[start].x < maxX - 8 || q.y < pts[start].y)) start = k;
+        });
+        const left = pts.slice();
+        const cps = [left.splice(start, 1)[0]];
+        while (left.length) {
+            const last = cps[cps.length - 1];
+            let bi = 0, bd = 1e9;
+            for (let k = 0; k < left.length; k++) {
+                const dd = Math.hypot(left[k].x - last.x, left[k].y - last.y);
+                if (dd < bd) { bd = dd; bi = k; }
+            }
+            cps.push(left.splice(bi, 1)[0]);
+        }
+
+        /* خريطة القرب من الهيكل ومن النقاط: أساس قياس الدقة */
+        const nearSrc = new Uint8Array(N);
+        skelIdx.forEach(i => { nearSrc[i] = 1; });
+        extras.forEach(e => {
+            for (let i = 0; i < N; i++) if (comps.label[i] === e.id) nearSrc[i] = 1;
+        });
+        if (!skelIdx.length) for (let i = 0; i < N; i++) if (bodyMask[i]) nearSrc[i] = 1;
+        const near = ltrChamfer(nearSrc, W, H);
+
+        Object.assign(model, {
+            empty: false, mask, bodyMask, skelCount: skelIdx.length, skelIdx, cps, extras, hw, near,
+            layout: { fs, ox, oy }, bbox: { minx: r2.minx, maxx: r2.maxx, miny: r2.miny, maxy: r2.maxy }
+        });
+    } catch (error) {
+        model.empty = true;
+    }
+
+    ltrGlyphCache.set(key, model);
+    if (ltrGlyphCache.size > 24) ltrGlyphCache.delete(ltrGlyphCache.keys().next().value);
+    return model;
+}
+
+/* تقدّم كل بكسل من الجسم على مسار الكتابة (٠ ← ١): أقرب نقطة تفتيش */
+function ltrModelProgress(model) {
+    if (model.prog) return model.prog;
+    const { W, H, cps, bodyMask } = model;
+    const prog = new Float32Array(W * H);
+    const n = Math.max(1, cps.length - 1);
+    for (let i = 0; i < W * H; i++) {
+        if (!bodyMask[i]) continue;
+        const x = i % W, y = (i - x) / W;
+        let bi = 0, bd = 1e9;
+        for (let k = 0; k < cps.length; k++) {
+            const dd = (cps[k].x - x) * (cps[k].x - x) + (cps[k].y - y) * (cps[k].y - y);
+            if (dd < bd) { bd = dd; bi = k; }
+        }
+        prog[i] = bi / n;
+    }
+    model.prog = prog;
+    return prog;
+}
+
+function ltrMaskSim(a, b) {
+    let inter = 0, uni = 0;
+    for (let i = 0; i < a.mask.length; i++) {
+        const x = a.mask[i], y = b.mask[i];
+        if (x && y) inter++;
+        if (x || y) uni++;
+    }
+    return uni ? inter / uni : 0;
+}
+
+/* مستوى ١ أوسع تسامحًا ← مستوى ٣ أدق */
+function ltrTraceParams(model, level) {
+    const L = Math.max(1, Math.min(3, level | 0 || 2));
+    const hw = model.hw;
+    return {
+        level: L,
+        cover: hw + [0, 5, 4, 2][L],
+        covThr: [0, 0.80, 0.85, 0.90][L],
+        precThr: [0, 0.65, 0.70, 0.75][L],
+        chunkThr: [0, 0.4, 0.5, 0.6][L],
+        /* اتساق ترتيب مرور الرسم على نقاط الحرف (يُقبل الاتجاهان لأن اتجاه الكتابة المرجعي تقريبي).
+           المستوى ٣ لا يحتاجه: معاييره الأخرى تكفي (قيس ذلك). */
+        orderThr: [0, 0.4, 0.3, 0][L]
+    };
+}
+
+/* ---------- أداة التتبّع ---------- */
+
+function ltrTraceWidget(root, o) {
+
+    const model = ltrBuildGlyphModel(o.letter, o.form);
+    if (!model || model.empty) return null;
+
+    const level = Math.max(1, Math.min(3, o.level || 2));
+    const P = ltrTraceParams(model, level);
+    const W = model.W, H = model.H;
+    const alive = o.alive || (() => root.isConnected);
+    const cps = model.cps;
+    const extras = model.extras;
+
+    root.innerHTML = `
+        <div class="ltr-tw">
+            <div class="ltr-tw-box" role="img" aria-label="مساحة تتبّع الحرف"><canvas class="ltr-tw-canvas"></canvas></div>
+            <div class="ltr-tw-status" aria-live="polite"></div>
+            <div class="ltr-tw-btns">
+                <button type="button" class="secondary ltr-tw-hint">💡 ساعدني</button>
+                <button type="button" class="secondary ltr-tw-clear">🧹 أعد من جديد</button>
+            </div>
+        </div>`;
+
+    const box = root.querySelector(".ltr-tw-box");
+    box.dataset.letter = o.letter;
+    box.dataset.form = o.form;
+    box.dataset.level = String(level);
+    const canvas = root.querySelector(".ltr-tw-canvas");
+    const statusEl = root.querySelector(".ltr-tw-status");
+    const ctx = canvas.getContext("2d");
+
+    const covered = new Uint8Array(cps.length);
+    const touched = new Uint8Array(extras.length);
+    let coveredCount = 0, touchedCount = 0, inkTotal = 0, inkGood = 0;
+    const firstT = new Int32Array(cps.length).fill(-1);
+    let hintLevel = 0, stall = 0, coveredBefore = 0;
+    let bodyDone = false, done = false, destroyed = false;
+    let activeId = null, cur = null;
+    const strokes = [];
+    let showStart = level <= 2;
+    let guideBoost = level < 3;
+    let demoPos = null, demoTrail = [], demoTimer = null;
+    let finishTimer = null;
+    let kx = 1, dpr = 1, guideCv = null, laidOut = false;
+    const dark = document.body.classList.contains("dark-mode");
+
+    const setStatus = t => { statusEl.textContent = t; };
+    setStatus(level === 1 ? "ابدأ من النقطة الخضراء ▶ وامشِ ببطء على الخط الرمادي"
+        : (level === 2 ? "تتبّع الحرف بإصبعك على الخط الرمادي" : "اكتب الحرف بنفسك فوق الخط الباهت"));
+
+    function drawGuide(g) {
+        g.setTransform(dpr * kx, 0, 0, dpr * kx, 0, 0);
+        g.font = "700 " + model.layout.fs + "px " + LTR_GM_FONT;
+        g.direction = "rtl";
+        g.textAlign = "center";
+        g.textBaseline = "alphabetic";
+        const a = done ? 0.9 : (guideBoost ? 0.30 : 0.13);
+        g.fillStyle = done ? "rgba(46,125,50," + a + ")" : (dark ? "rgba(144,202,249," + a + ")" : "rgba(21,101,192," + a + ")");
+        g.fillText(model.text, model.layout.ox, model.layout.oy);
+    }
+
+    function layout() {
+        if (destroyed) return;
+        const r = box.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        canvas.width = Math.round(r.width * dpr);
+        canvas.height = Math.round(r.height * dpr);
+        kx = r.width / W;
+        guideCv = document.createElement("canvas");
+        guideCv.width = canvas.width;
+        guideCv.height = canvas.height;
+        drawGuide(guideCv.getContext("2d"));
+        laidOut = true;
+        redraw();
+    }
+
+    function redraw() {
+        if (!laidOut) return;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(guideCv, 0, 0);
+        ctx.setTransform(dpr * kx, 0, 0, dpr * kx, 0, 0);
+
+        const hw = model.hw;
+        ctx.fillStyle = "rgba(67,160,71,0.38)";
+        for (let i = 0; i < cps.length; i++) {
+            if (covered[i]) { ctx.beginPath(); ctx.arc(cps[i].x, cps[i].y, hw * 0.95, 0, 6.2832); ctx.fill(); }
+        }
+        if (hintLevel >= 2 && !done && !bodyDone) {
+            ctx.fillStyle = "rgba(255,152,0,0.5)";
+            for (let i = 0; i < cps.length; i++) {
+                if (!covered[i]) { ctx.beginPath(); ctx.arc(cps[i].x, cps[i].y, hw * 0.95, 0, 6.2832); ctx.fill(); }
+            }
+        }
+        extras.forEach((e, k) => {
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, e.r, 0, 6.2832);
+            if (touched[k]) { ctx.fillStyle = "rgba(67,160,71,0.45)"; ctx.fill(); }
+            else if (bodyDone || hintLevel >= 2) { ctx.lineWidth = 3; ctx.strokeStyle = "#ff9800"; ctx.stroke(); }
+        });
+        if (showStart && !coveredCount && !done && cps.length) {
+            ctx.beginPath(); ctx.arc(cps[0].x, cps[0].y, 9, 0, 6.2832);
+            ctx.fillStyle = "#43a047"; ctx.fill();
+            ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+        }
+        if (demoTrail.length > 1) {
+            ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.lineJoin = "round";
+            ctx.strokeStyle = "rgba(255,111,0,0.75)";
+            ctx.beginPath();
+            demoTrail.forEach((p, k) => {
+                const prev = demoTrail[k - 1];
+                if (k === 0 || Math.hypot(p.x - prev.x, p.y - prev.y) > model.hw * 4) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.stroke();
+        }
+        ctx.lineWidth = 5.5; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.strokeStyle = done ? "#2e7d32" : (dark ? "#ffd54f" : "#1565c0");
+        strokes.forEach(s => {
+            if (!s.length) return;
+            ctx.beginPath();
+            ctx.moveTo(s[0].x, s[0].y);
+            if (s.length === 1) ctx.lineTo(s[0].x + 0.1, s[0].y);
+            for (let k = 1; k < s.length; k++) ctx.lineTo(s[k].x, s[k].y);
+            ctx.stroke();
+        });
+        if (demoPos) {
+            ctx.beginPath(); ctx.arc(demoPos.x, demoPos.y, 11, 0, 6.2832);
+            ctx.fillStyle = "#ff6f00"; ctx.fill();
+            ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+        }
+    }
+
+    function publish() {
+        box.dataset.cover = (coveredCount / Math.max(1, cps.length)).toFixed(2);
+        box.dataset.prec = (inkTotal ? inkGood / inkTotal : 1).toFixed(2);
+        box.dataset.touched = touchedCount + "/" + extras.length;
+        box.dataset.order = orderScore().toFixed(2);
+        box.dataset.hint = String(hintLevel);
+        box.dataset.done = done ? "1" : "0";
+    }
+
+    function toModel(e) {
+        const r = canvas.getBoundingClientRect();
+        return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
+    }
+
+    function handle(q) {
+        inkTotal++;
+        const xi = Math.round(q.x), yi = Math.round(q.y);
+        let nd = 1e9;
+        if (xi >= 0 && yi >= 0 && xi < W && yi < H) nd = model.near[yi * W + xi];
+        if (nd <= P.cover) inkGood++;
+        for (let i = 0; i < cps.length; i++) {
+            if (!covered[i] && Math.hypot(cps[i].x - q.x, cps[i].y - q.y) <= P.cover) { covered[i] = 1; coveredCount++; firstT[i] = inkTotal; }
+        }
+        for (let k = 0; k < extras.length; k++) {
+            if (!touched[k] && Math.hypot(extras[k].x - q.x, extras[k].y - q.y) <= extras[k].r + 4) { touched[k] = 1; touchedCount++; }
+        }
+    }
+
+    function addPoint(p) {
+        if (cur.length > 6000) return;
+        if (cur.length) {
+            const last = cur[cur.length - 1];
+            const dist = Math.hypot(p.x - last.x, p.y - last.y);
+            const steps = Math.max(1, Math.ceil(dist / 3));
+            for (let k = 1; k <= steps; k++) {
+                const q = { x: last.x + (p.x - last.x) * k / steps, y: last.y + (p.y - last.y) * k / steps };
+                handle(q);
+                cur.push(q);
+            }
+        } else {
+            handle(p);
+            cur.push(p);
+        }
+    }
+
+    function stopDemo() {
+        if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; }
+        demoPos = null;
+        demoTrail = [];
+    }
+
+    function runDemo() {
+        stopDemo();
+        let i = 0;
+        const step = () => {
+            if (destroyed || done || !alive()) { stopDemo(); return; }
+            if (i >= cps.length) {
+                demoPos = null;
+                redraw();
+                demoTimer = setTimeout(() => { demoTrail = []; demoTimer = null; redraw(); }, 1400);
+                return;
+            }
+            demoPos = cps[i];
+            demoTrail.push(cps[i]);
+            i++;
+            redraw();
+            demoTimer = setTimeout(step, Math.max(18, Math.min(45, Math.round(2200 / Math.max(1, cps.length)))));
+        };
+        step();
+    }
+
+    function applyHint(lv, auto) {
+        hintLevel = Math.max(hintLevel, lv);
+        guideBoost = true;
+        if (guideCv) drawGuide(guideCv.getContext("2d"));
+        if (lv === 1) {
+            showStart = true;
+            setStatus("ابدأ من النقطة الخضراء ▶ ثم تحرّك ببطء");
+        } else if (lv === 2) {
+            showStart = true;
+            setStatus(extras.length && bodyDone ? "المس الدوائر البرتقالية ✨" : "الأجزاء البرتقالية ما زالت تنتظرك 🟠");
+        } else if (lv === 3) {
+            showStart = true;
+            setStatus("شاهد أولًا 👀 ثم جرّب أنت");
+            runDemo();
+            if (o.onHintLevel) o.onHintLevel(3);
+        } else {
+            setStatus("إن أحببت جرّب طريقة أخرى: «اختر المسار» أو «رتّب الخطوات» 🧩");
+            if (o.onSuggestAlt) o.onSuggestAlt();
+        }
+        publish();
+        redraw();
+    }
+
+    function success() {
+        done = true;
+        guideBoost = true;
+        if (guideCv) drawGuide(guideCv.getContext("2d"));
+        stopDemo();
+        setStatus("🎉 ممتاز! تتبّعت الحرف");
+        box.classList.add("done");
+        canvas.style.pointerEvents = "none";
+        publish();
+        redraw();
+        finishTimer = setTimeout(() => { finishTimer = null; if (!destroyed && alive()) o.onSuccess(); }, 700);
+    }
+
+    /* لا يكفي مجموع التغطية: كل خُمس من المسار (بترتيب الكتابة) يجب أن يُغطّى بنسبة معقولة،
+       فلا يُقبل تتبّع نصف الحرف فقط */
+    function chunksOk() {
+        const n = cps.length, parts = 5;
+        for (let c = 0; c < parts; c++) {
+            const a = Math.floor(c * n / parts), b = Math.floor((c + 1) * n / parts);
+            if (b <= a) continue;
+            let got = 0;
+            for (let i = a; i < b; i++) got += covered[i];
+            if (got / (b - a) < P.chunkThr) return false;
+        }
+        return true;
+    }
+
+    /* اتساق الترتيب: ارتباط رُتب سبيرمان بين ترتيب نقاط الحرف وأول زمن مرّ فيه الرسم عليها (قيمة مطلقة: يقبل الاتجاهين) */
+    function orderScore() {
+        const idx = [];
+        for (let i = 0; i < cps.length; i++) if (firstT[i] >= 0) idx.push(i);
+        const n = idx.length;
+        if (n < 4) return 0;
+        const order = idx.map((i, k) => [firstT[i], k]).sort((a, b) => a[0] - b[0]);
+        const rk = new Array(n);
+        let i = 0;
+        while (i < n) {
+            let j = i;
+            while (j + 1 < n && order[j + 1][0] === order[i][0]) j++;
+            const av = (i + j) / 2;
+            for (let k = i; k <= j; k++) rk[order[k][1]] = av;
+            i = j + 1;
+        }
+        const mn = (n - 1) / 2;
+        let sxy = 0, sxx = 0, syy = 0;
+        for (let k = 0; k < n; k++) { sxy += (k - mn) * (rk[k] - mn); sxx += (k - mn) * (k - mn); syy += (rk[k] - mn) * (rk[k] - mn); }
+        return sxx && syy ? Math.abs(sxy / Math.sqrt(sxx * syy)) : 0;
+    }
+
+    function pathOk() { return orderScore() >= P.orderThr; }
+
+    function evaluate() {
+        const cov = coveredCount / Math.max(1, cps.length);
+        const prec = inkTotal ? inkGood / inkTotal : 1;
+        publish();
+        if (done) return;
+
+        if (!bodyDone && cov >= P.covThr && prec >= P.precThr && chunksOk() && pathOk()) bodyDone = true;
+
+        if (bodyDone) {
+            if (touchedCount >= extras.length) { success(); return; }
+            setStatus("👏 أحسنت! الآن المس العلامات الصغيرة ✨ (" + arabicNumber(touchedCount) + " من " + arabicNumber(extras.length) + ")");
+        } else if (cov >= P.covThr && chunksOk() && !pathOk()) {
+            setStatus("🌟 امشِ على الخط بالترتيب من أوله إلى آخره، أو اضغط «أعد من جديد»");
+        } else if (cov >= P.covThr && chunksOk()) {
+            setStatus("🌟 كدت تنتهي! امشِ ببطء فوق الخط الرمادي، أو اضغط «أعد من جديد»");
+        } else if (inkTotal > 25 && prec < P.precThr) {
+            setStatus("🌟 حاول أن تبقى فوق الخط الرمادي، وخذ وقتك");
+        } else {
+            setStatus(cov > 0.35 ? "👍 أنت تتقدم! أكمل الجزء المتبقي" : (showStart ? "✍️ ابدأ من النقطة الخضراء" : "✍️ ابدأ الكتابة فوق الخط الباهت"));
+        }
+
+        if (stall >= 2 && hintLevel < 2) applyHint(2, true);
+        if (stall >= 4 && o.onSuggestAlt) o.onSuggestAlt();
+        redraw();
+    }
+
+    function finishStroke() {
+        stall = coveredCount > coveredBefore ? 0 : stall + 1;
+        evaluate();
+    }
+
+    canvas.addEventListener("pointerdown", e => {
+        if (destroyed || done || activeId !== null || e.button > 0) return;
+        if (!laidOut) layout();
+        activeId = e.pointerId;
+        stopDemo();
+        try { canvas.setPointerCapture(e.pointerId); } catch (error) { /* غير مدعوم */ }
+        cur = [];
+        strokes.push(cur);
+        coveredBefore = coveredCount;
+        addPoint(toModel(e));
+        redraw();
+        e.preventDefault();
+    });
+
+    canvas.addEventListener("pointermove", e => {
+        if (e.pointerId !== activeId || !cur) return;
+        const list = (e.getCoalescedEvents && e.getCoalescedEvents().length) ? e.getCoalescedEvents() : [e];
+        list.forEach(ev => addPoint(toModel(ev)));
+        redraw();
+        e.preventDefault();
+    });
+
+    const endStroke = e => {
+        if (e.pointerId !== activeId) return;
+        activeId = null;
+        try { canvas.releasePointerCapture(e.pointerId); } catch (error) { /* لا شيء */ }
+        finishStroke();
+    };
+    canvas.addEventListener("pointerup", endStroke);
+    canvas.addEventListener("pointercancel", endStroke);
+
+    function clear() {
+        if (done) return;
+        stopDemo();
+        strokes.length = 0;
+        covered.fill(0); touched.fill(0);
+        coveredCount = 0; touchedCount = 0; inkTotal = 0; inkGood = 0; firstT.fill(-1);
+        bodyDone = false; stall = 0; activeId = null; cur = null;
+        setStatus("من جديد! ابدأ متى شئت ✍️");
+        publish();
+        redraw();
+    }
+
+    root.querySelector(".ltr-tw-clear").onclick = clear;
+    root.querySelector(".ltr-tw-hint").onclick = () => {
+        if (done) return;
+        applyHint(hintLevel >= 4 ? 3 : Math.min(4, hintLevel + 1), false);
+    };
+
+    const onResize = () => {
+        if (!root.isConnected) { window.removeEventListener("resize", onResize); return; }
+        layout();
+    };
+    window.addEventListener("resize", onResize);
+
+    layout();
+    publish();
+
+    return {
+        model, params: P,
+        destroy() {
+            destroyed = true;
+            stopDemo();
+            if (finishTimer) clearTimeout(finishTimer);
+            window.removeEventListener("resize", onResize);
+        }
+    };
+}
+
+/* ---------- بديل ١: اختر المسار الصحيح ---------- */
+
+function ltrDrawPathCard(canvas, model, color) {
+    const g = canvas.getContext("2d");
+    const k = canvas.width / model.W;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.fillStyle = color;
+    const r = Math.max(1.6, k * 1.8);
+    model.skelIdx.forEach(i => {
+        const x = i % model.W, y = (i - x) / model.W;
+        g.beginPath(); g.arc((x + 0.5) * k, (y + 0.5) * k, r, 0, 6.2832); g.fill();
+    });
+    g.fillStyle = "#ef6c00";
+    model.extras.forEach(e => {
+        g.beginPath(); g.arc(e.x * k, e.y * k, Math.max(3.5, Math.sqrt(e.area / Math.PI) * k), 0, 6.2832); g.fill();
+    });
+    if (model.cps.length) {
+        g.fillStyle = "#43a047";
+        g.beginPath(); g.arc(model.cps[0].x * k, model.cps[0].y * k, Math.max(4, k * 5), 0, 6.2832); g.fill();
+    }
+}
+
+function ltrPickPathDistractors(letter, form, count, hard) {
+    const target = ltrBuildGlyphModel(letter, form);
+    if (!target || target.empty) return [];
+    const all = LETTER_UNITS.map(u => u.letter).filter(l => l !== letter && (ltrCharForms(l) || {})[form]);
+    const conf = (LTR_CONFUSABLE[letter] || "").split("").filter(c => all.indexOf(c) !== -1);
+    const rest = shuffle(all.filter(l => conf.indexOf(l) === -1)).slice(0, hard ? 4 : 9);
+    const sample = (hard ? conf : []).concat(rest);
+    const info = [];
+    sample.forEach(l => {
+        const m = ltrBuildGlyphModel(l, form);
+        if (m && !m.empty) info.push({ l, sim: ltrMaskSim(target, m) });
+    });
+    for (const lim of (hard ? [0.97] : [0.55, 0.75, 0.9])) {
+        const ok = info.filter(x => x.sim < lim);
+        if (ok.length >= count || lim === (hard ? 0.97 : 0.9)) {
+            const pref = hard ? ok.filter(x => conf.indexOf(x.l) !== -1) : [];
+            const other = ok.filter(x => pref.indexOf(x) === -1);
+            const ordered = hard ? shuffle(pref).concat(other.sort((a, b) => b.sim - a.sim)) : shuffle(other);
+            return ordered.slice(0, count).map(x => x.l);
+        }
+    }
+    return [];
+}
+
+function ltrPathChoiceWidget(root, o) {
+    const letter = o.letter, form = o.form, level = o.level || 1;
+    const target = ltrBuildGlyphModel(letter, form);
+    if (!target || target.empty) return null;
+
+    const dis = ltrPickPathDistractors(letter, form, level <= 1 ? 1 : 2, level >= 3);
+    if (!dis.length) return null;
+    const alive = o.alive || (() => root.isConnected);
+
+    const options = shuffle([{ l: letter, ok: true }].concat(dis.map(l => ({ l, ok: false }))));
+    root.innerHTML = `
+        <div class="ltr-pc">
+            <div class="ltr-pc-target" lang="ar" dir="rtl" aria-label="الحرف المطلوب">${ltrShapedText(letter, form)}</div>
+            <div class="ltr-pc-sub">${LTR_FORM_NAMES[form]}</div>
+            <div class="ltr-instruction-line">أي مسار يرسم هذا الحرف؟ المس المسار الصحيح</div>
+            <div class="ltr-pc-grid" dir="rtl"></div>
+        </div>`;
+    const grid = root.querySelector(".ltr-pc-grid");
+    let finished = false;
+
+    options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ltr-choice-btn ltr-pathcard";
+        btn.dataset.correct = opt.ok ? "1" : "0";
+        btn.dataset.letter = opt.l;
+        btn.setAttribute("aria-label", "المسار " + arabicNumber(idx + 1));
+        const cv = document.createElement("canvas");
+        cv.width = 240; cv.height = 180;
+        btn.appendChild(cv);
+        ltrDrawPathCard(cv, ltrBuildGlyphModel(opt.l, form), "#1565c0");
+        btn.onclick = () => {
+            if (finished || btn.disabled || !alive()) return;
+            if (opt.ok) {
+                finished = true;
+                btn.classList.add("correct");
+                grid.querySelectorAll("button").forEach(b => { b.disabled = true; b.classList.remove("hinted"); });
+                if (o.onSuccess) o.onSuccess();
+            } else {
+                finishLtrChoiceTask(false, btn);
+                ltrShowHint("🌟 انظر إلى شكل الحرف ونقاطه جيدًا، ثم قارن المسارات");
+            }
+        };
+        grid.appendChild(btn);
+    });
+
+    return { destroy() { finished = true; } };
+}
+
+/* ---------- بديل ٢: رتّب خطوات تكوين الحرف ---------- */
+
+function ltrStepPlan(model, count) {
+    const hasExtras = model.extras.length > 0;
+    if (hasExtras) {
+        return count >= 4
+            ? [{ f: 0.34 }, { f: 0.67 }, { f: 1 }, { f: 1, x: true }]
+            : [{ f: 0.5 }, { f: 1 }, { f: 1, x: true }];
+    }
+    return count >= 4
+        ? [{ f: 0.25 }, { f: 0.5 }, { f: 0.75 }, { f: 1 }]
+        : [{ f: 0.34 }, { f: 0.67 }, { f: 1 }];
+}
+
+function ltrStepPixels(model, step) {
+    const prog = ltrModelProgress(model);
+    let n = 0;
+    for (let i = 0; i < prog.length; i++) {
+        if (model.bodyMask[i] && prog[i] <= step.f + 1e-6) n++;
+        else if (step.x && model.mask[i] && !model.bodyMask[i]) n++;
+    }
+    return n;
+}
+
+function ltrDrawStep(canvas, model, step) {
+    const prog = ltrModelProgress(model);
+    const tmp = document.createElement("canvas");
+    tmp.width = model.W; tmp.height = model.H;
+    const tg = tmp.getContext("2d");
+    const img = tg.createImageData(model.W, model.H);
+    for (let i = 0; i < model.W * model.H; i++) {
+        if (!model.mask[i]) continue;
+        let c = [225, 228, 232, 255];
+        if (model.bodyMask[i]) { if (prog[i] <= step.f + 1e-6) c = [21, 101, 192, 255]; }
+        else if (step.x) c = [239, 108, 0, 255];
+        img.data[i * 4] = c[0]; img.data[i * 4 + 1] = c[1]; img.data[i * 4 + 2] = c[2]; img.data[i * 4 + 3] = c[3];
+    }
+    tg.putImageData(img, 0, 0);
+    const g = canvas.getContext("2d");
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.imageSmoothingEnabled = true;
+    g.drawImage(tmp, 0, 0, canvas.width, canvas.height);
+}
+
+function ltrStepsWidget(root, o) {
+    const letter = o.letter, form = o.form, level = o.level || 1;
+    const model = ltrBuildGlyphModel(letter, form);
+    if (!model || model.empty || model.cps.length < 6) return null;
+    const alive = o.alive || (() => root.isConnected);
+
+    const plan = ltrStepPlan(model, level >= 3 ? 4 : 3);
+    const cards = shuffle(plan.map((s, n) => ({ s, n })));
+    if (cards.length > 1 && cards.every((c, i) => c.n === i)) cards.reverse();
+
+    root.innerHTML = `
+        <div class="ltr-so">
+            <div class="ltr-pc-target ltr-so-target" lang="ar" dir="rtl" aria-label="الحرف المطلوب">${ltrShapedText(letter, form)}</div>
+            <div class="ltr-instruction-line">كيف يُكتب هذا الحرف؟ رتّب الصور من البداية حتى يكتمل</div>
+            <div class="ltr-slots ltr-so-slots" dir="rtl">
+                ${plan.map((s, n) => `<button type="button" class="ltr-slot ltr-stepslot" data-n="${n}" aria-label="الخطوة ${arabicNumber(n + 1)}"><span class="ltr-slot-ghost">${arabicNumber(n + 1)}</span></button>`).join("")}
+            </div>
+            <div class="ltr-tray ltr-so-tray">
+                ${cards.map(c => `<button type="button" class="ltr-ticket ltr-stepcard" data-n="${c.n}" aria-pressed="false" aria-label="صورة خطوة"><canvas width="240" height="180"></canvas></button>`).join("")}
+            </div>
+            <div class="ltr-drag-tip">اسحب الصورة إلى مكانها — أو المسها ثم المس المكان</div>
+        </div>`;
+
+    root.querySelectorAll(".ltr-stepcard").forEach(card => {
+        ltrDrawStep(card.querySelector("canvas"), model, plan[+card.dataset.n]);
+    });
+
+    let filled = 0, finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-stepcard",
+        target: ".ltr-stepslot:not(.filled)",
+        onDrop: (card, slot) => {
+            if (finished || !alive()) return;
+            if (card.dataset.n === slot.dataset.n) {
+                card.dataset.locked = "1";
+                slot.classList.remove("hinted", "armed", "over");
+                slot.classList.add("filled");
+                slot.disabled = true;
+                slot.innerHTML = "";
+                const cv = document.createElement("canvas");
+                cv.width = 240; cv.height = 180;
+                ltrDrawStep(cv, model, plan[+slot.dataset.n]);
+                slot.appendChild(cv);
+                card.remove();
+                filled++;
+                if (filled >= plan.length) {
+                    finished = true;
+                    if (o.onSuccess) setTimeout(() => { if (alive()) o.onSuccess(); }, 600);
+                }
+            } else {
+                card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+                wrongs[card.dataset.n] = (wrongs[card.dataset.n] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                ltrShowHint("🌟 ابدأ بالصورة التي فيها جزء صغير من الحرف، وانتهِ بالحرف كاملًا");
+                if (wrongs[card.dataset.n] >= 2) {
+                    const right = root.querySelector('.ltr-stepcard[data-n="' + slot.dataset.n + '"]');
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    return { destroy() { finished = true; }, plan };
+}
+
+/* ---------- تتبّع مع بدائل (تُستعمل في كل أنشطة التتبّع والرحلة) ---------- */
+
+function ltrTraceWithAlternatives(host, o) {
+    host.innerHTML = `
+        <div class="ltr-tw-main"></div>
+        <div class="ltr-tw-alts" role="group" aria-label="طرق أخرى">
+            <button type="button" class="secondary ltr-tw-alt on" data-m="trace" aria-pressed="true">✍️ أتتبّع</button>
+            <button type="button" class="secondary ltr-tw-alt" data-m="path" aria-pressed="false">🧩 اختر المسار</button>
+            <button type="button" class="secondary ltr-tw-alt" data-m="steps" aria-pressed="false">👣 رتّب الخطوات</button>
+        </div>`;
+    const main = host.querySelector(".ltr-tw-main");
+    const alts = host.querySelectorAll(".ltr-tw-alt");
+    let current = null, mode = "trace", over = false;
+
+    const alive = o.alive || (() => host.isConnected);
+    const ok = m => () => { if (over || !alive()) return; over = true; if (o.onSuccess) o.onSuccess(m); };
+    const common = { letter: o.letter, form: o.form, level: o.level, alive };
+
+    function show(m) {
+        if (over) return;
+        if (current && current.destroy) current.destroy();
+        current = null;
+        mode = m;
+        main.innerHTML = "";
+        alts.forEach(b => {
+            const on = b.dataset.m === m;
+            b.classList.toggle("on", on);
+            b.classList.remove("hinted");
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        if (m === "trace") {
+            current = ltrTraceWidget(main, Object.assign({}, common, {
+                onSuccess: ok("trace"),
+                onHintLevel: o.onHintLevel,
+                onSuggestAlt: () => alts.forEach(b => { if (b.dataset.m !== "trace" && !over) b.classList.add("hinted"); })
+            }));
+        } else if (m === "path") {
+            current = ltrPathChoiceWidget(main, Object.assign({}, common, { onSuccess: ok("path") }));
+        } else {
+            current = ltrStepsWidget(main, Object.assign({}, common, { onSuccess: ok("steps") }));
+        }
+        if (!current) {
+            main.innerHTML = '<div class="ltr-tw-status">تعذّر عرض هذا الشكل على جهازك، جرّب طريقة أخرى 🧩</div>';
+        }
+    }
+
+    alts.forEach(b => { b.onclick = () => { if (!over && b.dataset.m !== mode) show(b.dataset.m); }; });
+    show("trace");
+
+    return {
+        get mode() { return mode; },
+        destroy() { over = true; if (current && current.destroy) current.destroy(); }
+    };
+}
+
+/* ---------- أنشطة التتبّع الموجّه (مرحلة «أتتبّع وأكتب») ---------- */
+
+function ltrRunTraceActivity(stage, letter, o) {
+    const sid = ltrState.sid;
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">${o.title}</div>
+        ${o.practice ? `<div class="ltr-practice-badge" role="note">🌱 تدريب بمساعدة بصرية — نتعلّم شكل الحرف معًا، وهذا ليس اختبارًا</div>` : ""}
+        ${o.headHtml || ""}
+        <div class="ltr-tw-host"></div>
+        ${o.practice ? `<button type="button" class="secondary ltr-practice-skip">⏭ المستوى التالي</button>` : ""}`;
+    const host = stage.querySelector(".ltr-tw-host");
+    const alive = () => host.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    ltrTraceWithAlternatives(host, {
+        letter, form: o.form, level: o.level, alive,
+        onSuccess: () => { if (alive()) finishLtrChoiceTask(true, null); }
+    });
+    /* المستوى مفتوح دائمًا: الانتقال للمستوى التالي متاح بلا نجوم ولا عقاب،
+       ويمكن العودة لهذا التدريب لاحقًا ونيل نجومه مرة واحدة */
+    const skip = stage.querySelector(".ltr-practice-skip");
+    if (skip) skip.onclick = () => { if (alive() && !ltrState.settled) { ltrState.settled = true; advanceLtrActivity(); } };
+    if (o.word) {
+        const replay = stage.querySelector(".ltr-tw-word-replay");
+        if (replay) replay.onclick = () => speakEducational(o.word, { rate: 0.78 });
+        setTimeout(() => { if (alive()) speakEducational(o.word, { rate: 0.78 }); }, 300);
+    }
+}
+
+function ltrLetterFormLine(letter, form) {
+    return "الحرف «" + letter + "» — " + LTR_FORM_NAMES[form];
+}
+
+/* #0 — تتبّع الحرف منفصلًا بأوسع تسامح ومساعدة ظاهرة */
+function activityTracing(stage, letterChar) {
+    const forms = ltrFormsAvailable(letterChar);
+    if (!forms.length) { activityLetterForms(stage, letterChar, 1); return; }
+    ltrRunTraceActivity(stage, letterChar, {
+        form: "isolated", level: 1, practice: true,
+        title: "تدريب: تتبّع الحرف ✍️ — " + ltrLetterFormLine(letterChar, "isolated")
+    });
+}
+
+/* #1 — تتبّع شكل الحرف كما يظهر داخل كلمة حقيقية */
+function activityTraceInWord(stage, letterChar) {
+    const cands = (LTR_TRAIN_WORDS[letterChar] || [])
+        .map(w => ltrAnalyzeWord(w, letterChar))
+        .filter(a => a && EduAudio.has(a.word) && ltrCharForms(letterChar) && ltrCharForms(letterChar)[a.form]);
+    const nonIso = cands.filter(a => a.form !== "isolated");
+    const pool = nonIso.length ? nonIso : cands;
+    if (!pool.length) {
+        ltrRunTraceActivity(stage, letterChar, { form: "isolated", level: 2, title: "تتبّع الحرف ✍️ — " + ltrLetterFormLine(letterChar, "isolated") });
+        return;
+    }
+    const a = pool[Math.floor(Math.random() * pool.length)];
+    const img = ltrVerifiedImage(a.word);
+    const head = `
+        <div class="ltr-tw-word" dir="rtl">
+            ${img ? `<span class="ltr-tw-word-pic">${ltrArt(img)}</span>` : ""}
+            <span class="ltr-tw-word-text">${ltrWordHtml(a.word, letterChar, true)}</span>
+            <button type="button" class="secondary ltr-tw-word-replay" aria-label="استمع للكلمة">🔊</button>
+        </div>`;
+    ltrRunTraceActivity(stage, letterChar, {
+        form: a.form, level: 2, word: a.word, headHtml: head,
+        title: "تتبّع الحرف كما يظهر في الكلمة ✍️ — " + LTR_FORM_NAMES[a.form]
+    });
+}
+
+/* #2 — كتابة بلا إرشاد ظاهر: الخط باهت والتسامح أقل (التلميحات متاحة دائمًا) */
+function activityTraceFree(stage, letterChar) {
+    const forms = ltrFormsAvailable(letterChar);
+    if (!forms.length) { activityLetterForms(stage, letterChar, 3); return; }
+    const pool = forms.filter(f => f !== "isolated");
+    const form = pool.length ? pool[Math.floor(Math.random() * pool.length)] : "isolated";
+    ltrRunTraceActivity(stage, letterChar, {
+        form, level: 3,
+        title: "اكتب بنفسك ✍️ — " + ltrLetterFormLine(letterChar, form)
+    });
+}
+
+/* =========================================================
+   🧭 مرحلة «خطوات الحرف»: اختر المسار الصحيح + رتّب خطوات التكوين
+   (بديلان كاملان لمن لا يستطيع التتبّع الدقيق — ويظهران أيضًا داخل التتبّع)
+========================================================= */
+
+function ltrPickFormFor(letter, level) {
+    const forms = ltrFormsAvailable(letter);
+    if (!forms.length) return null;
+    if (level <= 1) return "isolated";
+    const pool = forms.filter(f => f !== "isolated");
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : "isolated";
+}
+
+function activityPathChoice(stage, letterChar, difficulty) {
+    const level = difficulty || 1;
+    const form = ltrPickFormFor(letterChar, level);
+    if (!form) { activityLetterForms(stage, letterChar, level); return; }
+    const sid = ltrState.sid;
+    stage.innerHTML = `<div class="ltr-tw-host"></div>`;
+    const host = stage.querySelector(".ltr-tw-host");
+    const alive = () => host.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const w = ltrPathChoiceWidget(host, {
+        letter: letterChar, form, level, alive,
+        onSuccess: () => { if (alive()) finishLtrChoiceTask(true, null); }
+    });
+    if (!w) activityLetterForms(stage, letterChar, level);
+}
+
+function activityStepsOrder(stage, letterChar, difficulty) {
+    const level = difficulty || 2;
+    const form = ltrPickFormFor(letterChar, level);
+    if (!form) { activityLetterForms(stage, letterChar, level); return; }
+    const sid = ltrState.sid;
+    stage.innerHTML = `<div class="ltr-tw-host"></div>`;
+    const host = stage.querySelector(".ltr-tw-host");
+    const alive = () => host.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const w = ltrStepsWidget(host, {
+        letter: letterChar, form, level, alive,
+        onSuccess: () => { if (alive()) finishLtrChoiceTask(true, null); }
+    });
+    if (!w) activityPathChoice(stage, letterChar, level);
+}
+
+/* =========================================================
+   🗺️ رحلة الحرف: محطات أشكاله (منفصل ← أول ← وسط ← آخر)، كلها مفتوحة بأي ترتيب
+========================================================= */
+
+function ltrRunJourney(stage, letter, o) {
+    const forms = ltrFormsAvailable(letter);
+    if (!forms.length) { activityLetterForms(stage, letter, 2); return; }
+
+    const sid = ltrState.sid;
+    const stations = forms.map(f => {
+        let word = null;
+        if (o.withWords) {
+            const hits = (LTR_TRAIN_WORDS[letter] || [])
+                .map(w => ltrAnalyzeWord(w, letter))
+                .filter(a => a && a.form === f && EduAudio.has(a.word));
+            if (hits.length) word = hits[Math.floor(Math.random() * hits.length)];
+        }
+        return { form: f, word, done: false };
+    });
+
+    stage.innerHTML = `
+        <div class="ltr-journey">
+            <div class="ltr-instruction-line">${o.title}</div>
+            <div class="ltr-journey-map" dir="rtl" role="tablist" aria-label="محطات الرحلة"></div>
+            <div class="ltr-journey-work"></div>
+        </div>`;
+    const root = stage.querySelector(".ltr-journey");
+    const map = root.querySelector(".ltr-journey-map");
+    const work = root.querySelector(".ltr-journey-work");
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+
+    let index = 0, controller = null, finished = false, advanceTimer = null;
+
+    map.innerHTML = stations.map((s, i) => `
+        <button type="button" class="ltr-station" data-i="${i}" data-form="${s.form}" role="tab" aria-selected="false">
+            <span class="ltr-station-flag">${i === 0 ? "🏁" : "📍"}</span>
+            <span class="ltr-station-glyph" lang="ar">${ltrShapedText(letter, s.form)}</span>
+            <small>${LTR_FORM_NAMES[s.form]}</small>
+        </button>`).join("");
+
+    function refreshMap() {
+        map.querySelectorAll(".ltr-station").forEach((b, i) => {
+            b.classList.toggle("current", i === index);
+            b.classList.toggle("done", stations[i].done);
+            b.setAttribute("aria-selected", i === index ? "true" : "false");
+            b.querySelector(".ltr-station-flag").textContent = stations[i].done ? "✅" : (i === 0 ? "🏁" : "📍");
+        });
+        root.dataset.done = String(stations.filter(s => s.done).length);
+        root.dataset.total = String(stations.length);
+    }
+
+    function open(i) {
+        if (finished) return;
+        if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; }
+        if (controller) controller.destroy();
+        index = i;
+        const s = stations[i];
+        refreshMap();
+        const head = s.word ? `
+            <div class="ltr-tw-word" dir="rtl">
+                ${ltrVerifiedImage(s.word.word) ? `<span class="ltr-tw-word-pic">${ltrArt(ltrVerifiedImage(s.word.word))}</span>` : ""}
+                <span class="ltr-tw-word-text">${ltrWordHtml(s.word.word, letter, true)}</span>
+                <button type="button" class="secondary ltr-tw-word-replay" aria-label="استمع للكلمة">🔊</button>
+            </div>` : "";
+        work.innerHTML = `${head}<div class="ltr-tw-sub">المحطة ${arabicNumber(i + 1)} من ${arabicNumber(stations.length)}: ${LTR_FORM_NAMES[s.form]}</div><div class="ltr-tw-host"></div>`;
+        const host = work.querySelector(".ltr-tw-host");
+        if (s.word) {
+            const rep = work.querySelector(".ltr-tw-word-replay");
+            if (rep) rep.onclick = () => speakEducational(s.word.word, { rate: 0.78 });
+            setTimeout(() => { if (alive() && index === i) speakEducational(s.word.word, { rate: 0.78 }); }, 300);
+        }
+        controller = ltrTraceWithAlternatives(host, {
+            letter, form: s.form, level: o.level, alive,
+            onSuccess: () => {
+                if (!alive() || index !== i) return;
+                s.done = true;
+                refreshMap();
+                const next = stations.findIndex(x => !x.done);
+                if (next === -1) {
+                    finished = true;
+                    work.querySelector(".ltr-tw-sub").textContent = "🎉 وصلت إلى نهاية الرحلة!";
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 700);
+                } else {
+                    advanceTimer = setTimeout(() => { advanceTimer = null; if (alive()) open(next); }, 900);
+                }
+            }
+        });
+    }
+
+    map.querySelectorAll(".ltr-station").forEach(b => {
+        b.onclick = () => { if (!finished && +b.dataset.i !== index) open(+b.dataset.i); };
+    });
+
+    open(0);
+}
+
+function activityLetterJourney(stage, letterChar) {
+    ltrRunJourney(stage, letterChar, {
+        level: 1, withWords: false,
+        title: "رحلة الحرف «" + letterChar + "» 🧭 — مرّ على كل محطة بأي ترتيب"
+    });
+}
+
+function activityLetterJourneyWords(stage, letterChar) {
+    ltrRunJourney(stage, letterChar, {
+        level: 2, withWords: true,
+        title: "رحلة الحرف «" + letterChar + "» في الكلمات 🧭 — زُر المحطات بأي ترتيب"
+    });
+}
 
 const LTR_STAGES = [
     {
@@ -25850,9 +30080,19 @@ const LTR_STAGES = [
         ]
     },
     {
+        id: "sound-box",
+        goal: "أصنّف الأصوات في صندوق الأصوات",
+        activities: [activitySoundBoxInitial, activitySoundBoxAnywhere, activitySoundBoxFind]
+    },
+    {
         id: "sound-to-letter",
         goal: "أربط الصوت بالحرف",
         activities: [activitySoundToLetter, activitySoundToLetterHard, activityLetterRecognition]
+    },
+    {
+        id: "syllable-build",
+        goal: "أبني المقطع بالحركات",
+        activities: [activitySyllableHear, activitySyllableMatch, activitySyllableBuild]
     },
     {
         id: "visual-discrimination",
@@ -25866,9 +30106,29 @@ const LTR_STAGES = [
         ]
     },
     {
+        id: "dots-detective",
+        goal: "أنا محقق النقاط",
+        activities: [activityDotsPlace, activityDotsSort, activityDotsClue]
+    },
+    {
         id: "link-to-picture",
         goal: "أربطه بالصورة",
         activities: [activityConnectWheel, activityLetterToPictureSound]
+    },
+    {
+        id: "letter-house",
+        goal: "أضع الكلمات في بيت الحرف",
+        activities: [activityLetterHouse, activityLetterHouse]
+    },
+    {
+        id: "word-build",
+        goal: "أركّب الكلمة",
+        activities: [activityWordBuild, activityWordBuild, activityWordBuild]
+    },
+    {
+        id: "hidden-letter",
+        goal: "أجد الحرف المختبئ",
+        activities: [activityHiddenLetter, activityHiddenLetter, activityHiddenLetter]
     },
     {
         id: "discover-in-word",
@@ -25879,14 +30139,34 @@ const LTR_STAGES = [
         ]
     },
     {
+        id: "position-train",
+        goal: "أضع الكلمات في قطار المواقع",
+        activities: [activityPositionTrain, activityPositionTrain]
+    },
+    {
+        id: "pattern-complete",
+        goal: "أكمل النمط",
+        activities: [activityPatternAB, activityPatternABB, activityPatternCycle]
+    },
+    {
         id: "shape-by-position",
         goal: "أميز أشكاله",
         activities: [activityPositionInWord, activityLetterForms]
     },
     {
+        id: "letter-steps",
+        goal: "أختار المسار وأرتّب خطوات الحرف",
+        activities: [activityPathChoice, activityStepsOrder, activityPathChoice]
+    },
+    {
+        id: "letter-journey",
+        goal: "أسافر في رحلة الحرف",
+        activities: [activityLetterJourney, activityLetterJourneyWords]
+    },
+    {
         id: "trace-write",
         goal: "أتتبع وأكتب",
-        activities: [activityTracing, activityTraceInWord]
+        activities: [activityTracing, activityTraceInWord, activityTraceFree]
     }
 ];
 
@@ -25896,22 +30176,27 @@ const LTR_STAGES = [
    يضيف مرحلة المراجعة التكيّفية في النهاية
 ========================================================= */
 
-function buildLetterActivityQueue(letterChar) {
+function buildLetterActivityQueue(letterChar, opts) {
+
+    opts = opts || {};
 
     const queue = [];
 
     LTR_STAGES.forEach(stage => {
         stage.activities.forEach((activityFn, posInStage) => {
             /* 🎚️ تدرّج صعوبة حقيقي داخل كل مرحلة: أول نشاط سهل
-               (خيارات أقل)، ثم متوسط، ثم متقدم (خيارات/مشتتات
-               أكثر تدريجيًا) — وليس نفس الصعوبة دائمًا */
+               (خيارات أقل)، ثم متوسط، ثم متقدم */
             const difficulty = posInStage === 0 ? 1 : (posInStage === 1 ? 2 : 3);
 
             queue.push({
                 id: stage.id,
                 stageId: stage.id,
+                key: stage.id + "#" + posInStage,   // مفتاح ثابت لسجل المكافآت
                 goal: stage.goal,
                 difficulty,
+                /* 🌱 المستوى الأول من التتبّع «تدريب بمساعدة بصرية»: يُكافأ على الإكمال (مرة واحدة)
+                   لكنه لا يدخل حساب الإتقان (correct/first) ولا يُعدّ تحققًا من إتقان الكتابة */
+                practice: stage.id === "trace-write" && posInStage === 0,
                 render: activityFn
             });
         });
@@ -25919,10 +30204,30 @@ function buildLetterActivityQueue(letterChar) {
 
     /* مرحلة المراجعة الختامية: نشاطان يسحبان من بنك متنوع،
        بتحيّز نحو المرحلة التي سجّل الطفل فيها أخطاء أكثر */
-    queue.push({ id: "review", stageId: "review", goal: "أراجع", difficulty: 2, render: activityReview });
-    queue.push({ id: "review", stageId: "review", goal: "أراجع", difficulty: 2, render: activityReview });
+    queue.push({ id: "review", stageId: "review", key: "review#0", goal: "أراجع", difficulty: 2, render: activityReview });
+    queue.push({ id: "review", stageId: "review", key: "review#1", goal: "أراجع", difficulty: 2, render: activityReview });
+
+    if (opts.stageId) return queue.filter(q => q.stageId === opts.stageId);
+    if (opts.short) return ltrPickShortSession(letterChar, queue);
 
     return queue;
+}
+
+/* جلسة قصيرة: ٥ أنشطة من المراحل الأقل إتقانًا لهذا الحرف (نشاط واحد من كل
+   مرحلة، يتناوب بين جلسة وأخرى) — لمن يحتاج وقتًا أقصر */
+function ltrPickShortSession(letterChar, queue) {
+
+    const ranked = LTR_STAGE_IDS
+        .map((id, i) => ({ id, i, level: ltrStageLevel(letterChar, id), done: ltrStageDoneCount(letterChar, id) }))
+        .sort((a, b) => (a.level - b.level) || (a.done - b.done) || (a.i - b.i))
+        .slice(0, 5);
+
+    const picked = ranked.map(r => {
+        const items = queue.filter(q => q.stageId === r.id);
+        return items[r.done % items.length];
+    });
+
+    return queue.filter(q => picked.includes(q));
 }
 
 /* =========================================================
