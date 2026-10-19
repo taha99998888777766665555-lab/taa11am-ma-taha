@@ -24242,6 +24242,16 @@ function ltrRecordMastery(letter, stageId, correct, firstTry) {
     ltrWriteJSON(LTR_MASTERY_KEY, m);
 }
 
+/* تدريب بمساعدة بصرية: يُسجَّل عدّاد منفصل (practice) ولا يمسّ correct/wrong/first.
+   السجلات القديمة بلا هذا الحقل تُقرأ كأنه صفر — لا ترحيل ولا إعادة حساب */
+function ltrRecordPractice(letter, stageId) {
+    const m = ltrReadJSON(LTR_MASTERY_KEY, {});
+    const byStage = m[letter] || (m[letter] = {});
+    const s = byStage[stageId] || (byStage[stageId] = { correct: 0, wrong: 0, first: 0, done: 0 });
+    s.practice = (s.practice || 0) + 1;
+    ltrWriteJSON(LTR_MASTERY_KEY, m);
+}
+
 function ltrMarkStageDone(letter, stageId) {
     const m = ltrReadJSON(LTR_MASTERY_KEY, {});
     const byStage = m[letter] || (m[letter] = {});
@@ -24707,9 +24717,9 @@ function finishLtrChoiceTask(isCorrect, button) {
         }
 
         if (messageEl) {
-            messageEl.textContent = firstClaim
-                ? "🎉 أحسنت! إجابة صحيحة ⭐"
-                : "🎉 أحسنت! إجابة صحيحة";
+            messageEl.textContent = activity.practice
+                ? (firstClaim ? "🌱 أحسنت التدريب! ⭐" : "🌱 أحسنت التدريب!")
+                : (firstClaim ? "🎉 أحسنت! إجابة صحيحة ⭐" : "🎉 أحسنت! إجابة صحيحة");
             messageEl.className = "message correct";
         }
 
@@ -24721,7 +24731,8 @@ function finishLtrChoiceTask(isCorrect, button) {
 
         ltrHideHint();
         ltrRecordOutcome(ltrState.letter, activity.id, true, ltrPromptLevel(ltrWrongStreak));
-        ltrRecordMastery(ltrState.letter, activity.stageId, true, !ltrActivityHadWrong);
+        if (activity.practice) ltrRecordPractice(ltrState.letter, activity.stageId);
+        else ltrRecordMastery(ltrState.letter, activity.stageId, true, !ltrActivityHadWrong);
         ltrWrongStreak = 0;
 
         setTimeout(() => {
@@ -24746,7 +24757,7 @@ function finishLtrChoiceTask(isCorrect, button) {
         ltrActivityHadWrong = true;
         ltrWrongStreak++;
         ltrRecordOutcome(ltrState.letter, activity.id, false, ltrPromptLevel(ltrWrongStreak));
-        ltrRecordMastery(ltrState.letter, activity.stageId, false, false);
+        if (!activity.practice) ltrRecordMastery(ltrState.letter, activity.stageId, false, false);
 
         ltrApplyPrompting();
     }
@@ -28624,14 +28635,20 @@ function ltrRunTraceActivity(stage, letter, o) {
     const sid = ltrState.sid;
     stage.innerHTML = `
         <div class="ltr-instruction-line">${o.title}</div>
+        ${o.practice ? `<div class="ltr-practice-badge" role="note">🌱 تدريب بمساعدة بصرية — نتعلّم شكل الحرف معًا، وهذا ليس اختبارًا</div>` : ""}
         ${o.headHtml || ""}
-        <div class="ltr-tw-host"></div>`;
+        <div class="ltr-tw-host"></div>
+        ${o.practice ? `<button type="button" class="secondary ltr-practice-skip">⏭ المستوى التالي</button>` : ""}`;
     const host = stage.querySelector(".ltr-tw-host");
     const alive = () => host.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
     ltrTraceWithAlternatives(host, {
         letter, form: o.form, level: o.level, alive,
         onSuccess: () => { if (alive()) finishLtrChoiceTask(true, null); }
     });
+    /* المستوى مفتوح دائمًا: الانتقال للمستوى التالي متاح بلا نجوم ولا عقاب،
+       ويمكن العودة لهذا التدريب لاحقًا ونيل نجومه مرة واحدة */
+    const skip = stage.querySelector(".ltr-practice-skip");
+    if (skip) skip.onclick = () => { if (alive() && !ltrState.settled) { ltrState.settled = true; advanceLtrActivity(); } };
     if (o.word) {
         const replay = stage.querySelector(".ltr-tw-word-replay");
         if (replay) replay.onclick = () => speakEducational(o.word, { rate: 0.78 });
@@ -28648,8 +28665,8 @@ function activityTracing(stage, letterChar) {
     const forms = ltrFormsAvailable(letterChar);
     if (!forms.length) { activityLetterForms(stage, letterChar, 1); return; }
     ltrRunTraceActivity(stage, letterChar, {
-        form: "isolated", level: 1,
-        title: "تتبّع الحرف ✍️ — " + ltrLetterFormLine(letterChar, "isolated")
+        form: "isolated", level: 1, practice: true,
+        title: "تدريب: تتبّع الحرف ✍️ — " + ltrLetterFormLine(letterChar, "isolated")
     });
 }
 
@@ -28975,6 +28992,9 @@ function buildLetterActivityQueue(letterChar, opts) {
                 key: stage.id + "#" + posInStage,   // مفتاح ثابت لسجل المكافآت
                 goal: stage.goal,
                 difficulty,
+                /* 🌱 المستوى الأول من التتبّع «تدريب بمساعدة بصرية»: يُكافأ على الإكمال (مرة واحدة)
+                   لكنه لا يدخل حساب الإتقان (correct/first) ولا يُعدّ تحققًا من إتقان الكتابة */
+                practice: stage.id === "trace-write" && posInStage === 0,
                 render: activityFn
             });
         });
