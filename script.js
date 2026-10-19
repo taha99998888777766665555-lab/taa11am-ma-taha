@@ -18304,6 +18304,42 @@ function renderTeacherStats() {
     renderTeacherWeeklySummary();
     renderTeacherRecentActivity();
     renderSkillsReview();
+    renderTeacherLettersDetail();
+}
+
+/* 🔤 تفاصيل الحروف للمعلم — قراءة فقط من سجلات الإتقان الحالية للطالب الحالي */
+function renderTeacherLettersDetail() {
+    const box = $("teacherLettersDetail");
+    if (!box || typeof LETTER_UNITS === "undefined") return;
+
+    const rows = [];
+    LETTER_UNITS.forEach(unit => {
+        const l = unit.letter;
+        const sum = ltrLetterSummary(l);
+        const has = sum.done > 0 || sum.practice > 0 || sum.weak.length > 0
+            || Object.keys(ltrReadJSON(LTR_MASTERY_KEY, {})[l] || {}).length > 0;
+        if (has) rows.push({ l, sum });
+    });
+
+    if (!rows.length) {
+        box.innerHTML = '<p class="teacher-empty-note">لا توجد بيانات كافية بعد 🙂</p>';
+        return;
+    }
+
+    const needs = rows.filter(r => r.sum.weak.length);
+    const head = `<p class="teacher-letters-head">بدأ ${arabicNumber(rows.length)} حرفًا — ${needs.length ? arabicNumber(needs.length) + " منها يحتاج تدريبًا إضافيًا" : "لا حرف يحتاج تدريبًا إضافيًا الآن"}</p>`;
+
+    box.innerHTML = head + `<div class="teacher-letters-table" role="table">` + rows.map(r => {
+        const weakNames = r.sum.weak.slice(0, 3).map(w => (LTR_STAGE_META[w.id] || {}).name || w.id).join("، ");
+        return `
+            <div class="teacher-letter-row${r.sum.weak.length ? " needs" : ""}" role="row">
+                <b class="tl-letter">${r.l}</b>
+                <span class="tl-cell">✅ ${arabicNumber(r.sum.done)}/${arabicNumber(r.sum.total)}</span>
+                <span class="tl-cell">⭐ ${arabicNumber(r.sum.mastered)}</span>
+                <span class="tl-cell">🌱 ${arabicNumber(r.sum.practice)}</span>
+                <span class="tl-note">${weakNames ? "يحتاج تدريبًا: " + weakNames : "—"}</span>
+            </div>`;
+    }).join("") + `</div>`;
 }
 
 function renderSkillsReview() {
@@ -24288,6 +24324,62 @@ function ltrLetterStagesDone(letter) {
 }
 
 /* =========================================================
+   🧭 المرحلة ٦ — تنظيم القائمة وتمييز: تدريب ≠ تقدّم ≠ إتقان
+   (قراءة فقط من السجلات الحالية؛ لا مفاتيح جديدة ولا تعديل لأي قيمة)
+     • تقدّم  ✅ = مراحل أُنجزت (done)
+     • إتقان  ⭐ = مراحل بمستوى ٣ (ltrStageLevel)
+     • تدريب  🌱 = إكمالات التدريب بمساعدة بصرية (practice) — لا تدخل الإتقان
+========================================================= */
+
+const LTR_STAGE_GROUPS = [
+    { id: "hear",  icon: "👂", name: "أسمع وأميّز",       stages: ["listen", "auditory-discrimination", "sound-box", "sound-to-letter", "syllable-build"] },
+    { id: "see",   icon: "🔍", name: "أرى وأبحث",         stages: ["visual-discrimination", "dots-detective", "link-to-picture", "letter-house"] },
+    { id: "build", icon: "🧱", name: "أركّب وأكتشف",      stages: ["word-build", "hidden-letter", "discover-in-word", "position-train", "pattern-complete"] },
+    { id: "write", icon: "✏️", name: "شكل الحرف وكتابته", stages: ["shape-by-position", "letter-steps", "letter-journey", "trace-write"] },
+    { id: "check", icon: "⭐", name: "أراجع",             stages: ["review"] }
+];
+
+/* مرحلة «ضعيفة»: ٣ إجابات صحيحة على الأقل ونسبة الصحيح من أول مرة أقل من ٧٠٪ */
+const LTR_WEAK_MIN_CORRECT = 3;
+const LTR_WEAK_ACCURACY = 0.7;
+
+function ltrLetterSummary(letter) {
+    const m = ltrReadJSON(LTR_MASTERY_KEY, {})[letter] || {};
+    const out = { done: 0, total: LTR_STAGE_IDS.length, mastered: 0, practice: 0, weak: [], fresh: [], levels: {} };
+    LTR_STAGE_IDS.forEach(id => {
+        const d = ltrStageDoneCount(letter, id);
+        if (d > 0) out.done++; else out.fresh.push(id);
+        const lv = ltrStageLevel(letter, id);
+        out.levels[id] = lv;
+        if (lv >= 3) out.mastered++;
+        const st = m[id];
+        if (st) {
+            out.practice += Number(st.practice) || 0;
+            if (st.correct >= LTR_WEAK_MIN_CORRECT && st.first / st.correct < LTR_WEAK_ACCURACY) {
+                out.weak.push({ id, accuracy: st.first / st.correct });
+            }
+        }
+    });
+    out.weak.sort((a, b) => a.accuracy - b.accuracy);
+    return out;
+}
+
+/* اقتراح واحد لما بعده — إرشاد فقط، لا يمنع أي اختيار آخر */
+function ltrSuggestStage(letter) {
+    const sum = ltrLetterSummary(letter);
+    if (sum.fresh.length) return { id: sum.fresh[0], reason: "مرحلة جديدة" };
+    if (sum.weak.length) return { id: sum.weak[0].id, reason: "لنتدرّب أكثر" };
+    const ranked = LTR_STAGE_IDS
+        .map((id, i) => ({ id, i, level: sum.levels[id], done: ltrStageDoneCount(letter, id) }))
+        .sort((a, b) => (a.level - b.level) || (a.done - b.done) || (a.i - b.i));
+    return { id: ranked[0].id, reason: "لنقوّي الإتقان" };
+}
+
+function ltrStageGroupOf(stageId) {
+    return LTR_STAGE_GROUPS.find(g => g.stages.indexOf(stageId) !== -1) || LTR_STAGE_GROUPS[0];
+}
+
+/* =========================================================
    🎯 مستويات المساعدة (ABA Prompting) — بدون عقوبة أبدًا
 ========================================================= */
 
@@ -24525,7 +24617,10 @@ function openLetterDetail(letterChar) {
 function ltrSetDetailMode(mode) {
     ltrState.mode = mode;
     const card = $("letterDetailCard");
-    if (card) card.dataset.ltrMode = mode;
+    if (card) {
+        card.dataset.ltrMode = mode;
+        if (mode !== "run") delete card.dataset.ltrView;
+    }
 }
 
 function ltrStageStarsHtml(level) {
@@ -24541,36 +24636,84 @@ function renderLtrActivityMenu() {
     if (!box || !ltrState.letter) return;
 
     const letter = ltrState.letter;
+    const sum = ltrLetterSummary(letter);
+    const suggest = ltrSuggestStage(letter);
+    const suggestMeta = LTR_STAGE_META[suggest.id];
+    const suggestGroup = ltrStageGroupOf(suggest.id);
+    const fullQueue = buildLetterActivityQueue(letter);
 
-    const cards = LTR_STAGE_IDS.map(id => {
+    const shortIcons = [...new Set(ltrPickShortSession(letter, fullQueue).map(q => q.stageId))]
+        .map(id => ltrArt(LTR_STAGE_META[id].icon)).join(" ");
+
+    const cardHtml = id => {
         const meta = LTR_STAGE_META[id];
-        const level = ltrStageLevel(letter, id);
+        const level = sum.levels[id];
+        const isDone = ltrStageDoneCount(letter, id) > 0;
+        const st = (ltrReadJSON(LTR_MASTERY_KEY, {})[letter] || {})[id];
+        const practiced = st && st.practice > 0;
+        const status = (isDone ? "أُنجزت" : "جديدة") + "، إتقان " + arabicNumber(level) + " من ٣" + (practiced ? "، فيها تدريب" : "");
         return `
-            <button class="ltr-stage-card lvl${level}" type="button"
+            <button class="ltr-stage-card lvl${level}${isDone ? " done" : ""}" type="button"
+                    data-stage="${id}"
                     onclick="startLetterSession('stage', '${id}')"
-                    aria-label="${meta.name}">
+                    aria-label="${meta.name} — ${status}">
+                ${isDone ? `<span class="ltr-stage-flag" aria-hidden="true">✅</span>` : ""}
+                ${practiced ? `<span class="ltr-stage-flag practice" aria-hidden="true">🌱</span>` : ""}
                 <span class="ltr-stage-icon">${ltrArt(meta.icon)}</span>
                 <span class="ltr-stage-name">${meta.name}</span>
                 <span class="ltr-stage-stars" aria-hidden="true">${ltrStageStarsHtml(level)}</span>
-            </button>
-        `;
+            </button>`;
+    };
+
+    const groups = LTR_STAGE_GROUPS.map(g => {
+        const doneIn = g.stages.filter(id => ltrStageDoneCount(letter, id) > 0).length;
+        return `
+            <details class="ltr-stage-group" data-group="${g.id}" ${g.id === suggestGroup.id ? "open" : ""}>
+                <summary>
+                    <span class="ltr-group-icon">${ltrArt(g.icon)}</span>
+                    <b>${g.name}</b>
+                    <span class="ltr-group-count">✅ ${arabicNumber(doneIn)}/${arabicNumber(g.stages.length)}</span>
+                </summary>
+                <div class="ltr-stage-grid">${g.stages.map(cardHtml).join("")}</div>
+            </details>`;
     }).join("");
 
+    const pct = Math.round((sum.done / sum.total) * 100);
+
     box.innerHTML = `
+        <div class="ltr-letter-summary" role="group" aria-label="حالة هذا الحرف">
+            <div class="ltr-chip progress"><span>✅ تقدّم</span><b>${arabicNumber(sum.done)} من ${arabicNumber(sum.total)}</b></div>
+            <div class="ltr-chip mastery"><span>⭐ إتقان</span><b>${arabicNumber(sum.mastered)}</b></div>
+            <div class="ltr-chip practice"><span>🌱 تدريب</span><b>${arabicNumber(sum.practice)}</b></div>
+        </div>
+        <div class="ltr-letter-meter big" aria-hidden="true"><i style="width:${pct}%"></i></div>
+
+        <button class="ltr-menu-suggest" type="button" onclick="startLetterSession('stage', '${suggest.id}')">
+            <span class="ltr-menu-suggest-icon">${ltrArt(suggestMeta.icon)}</span>
+            <span class="ltr-menu-suggest-text">
+                <small>▶ اقتراحي لك — ${suggest.reason}</small>
+                <b>${suggestMeta.name}</b>
+            </span>
+        </button>
+
         <div class="ltr-menu-primary">
             <button class="ltr-menu-main" type="button" onclick="startLetterSession('full')">
                 <span class="ltr-menu-main-icon">${ltrArt("🗺️")}</span>
                 <b>المسار الموجّه</b>
-                <small>${arabicNumber(buildLetterActivityQueue(letter).length)} نشاطًا مرتّبة</small>
+                <small>${arabicNumber(fullQueue.length)} نشاطًا — توقّف متى شئت</small>
             </button>
             <button class="ltr-menu-short" type="button" onclick="startLetterSession('short')">
                 <span class="ltr-menu-main-icon">${ltrArt("🚀")}</span>
                 <b>جلسة قصيرة</b>
-                <small>${arabicNumber(5)} أنشطة فقط</small>
+                <small>${arabicNumber(5)} أنشطة · ${shortIcons}</small>
             </button>
         </div>
-        <div class="ltr-menu-caption">أو اختر النشاط الذي تحبه — كل الأنشطة مفتوحة</div>
-        <div class="ltr-stage-grid">${cards}</div>
+        <div class="ltr-menu-caption">أو اختر ما تحب — كل الأنشطة مفتوحة</div>
+        ${groups}
+        <details class="ltr-legend">
+            <summary>ما معنى الرموز؟</summary>
+            <p>✅ <b>تقدّم</b>: مرحلة أنجزتها · ⭐ <b>إتقان</b>: النجوم الصغيرة تزيد كلما أجبت صحيحًا من أول مرة · 🌱 <b>تدريب</b>: تتبّع بمساعدة بصرية، نتعلّم به ولا يُحسب إتقانًا.</p>
+        </details>
     `;
 }
 
@@ -24670,7 +24813,21 @@ function renderCurrentLetterActivity() {
     updateLtrProgressUI();
 
     if (messageEl) { messageEl.textContent = ""; messageEl.className = "message"; }
-    if (goalEl) goalEl.textContent = activity ? activity.goal : "";
+    if (goalEl) {
+        goalEl.textContent = "";
+        if (activity) {
+            const meta = LTR_STAGE_META[activity.stageId];
+            if (meta) {
+                const chip = document.createElement("span");
+                chip.className = "ltr-goal-chip";
+                chip.innerHTML = ltrArt(meta.icon) + " " + meta.name;
+                goalEl.appendChild(chip);
+            }
+            goalEl.appendChild(document.createTextNode(" " + activity.goal));
+        }
+    }
+    const detailCard = $("letterDetailCard");
+    if (detailCard) delete detailCard.dataset.ltrView;
     if (!stage || !activity) return;
 
     activity.render(stage, ltrState.letter, activity.difficulty || 2);
@@ -24686,6 +24843,39 @@ function retryCurrentLetterActivity() {
    الحالي بالضبط — addStars/correctLetters/saveCounters —
    لا نظام مكافآت منفصل)
 ========================================================= */
+
+/* 🔊 ثناء متنوّع من التسجيلات المحلية الموجودة فقط (بلا TTS ولا تسجيلات جديدة).
+   إن غاب أي تسجيل يُستبعد من التدوير، وإن غابت كلها يبقى النص الأصلي */
+const LTR_PRAISE = [
+    { say: "أحسنت! إجابة صحيحة", text: "🎉 أحسنت! إجابة صحيحة" },
+    { say: "صحيح", text: "✔️ صحيح" },
+    { say: "أحسنت يا بطل", text: "🏅 أحسنت يا بطل" }
+];
+let ltrPraiseIdx = -1;
+
+function ltrNextPraise(practice) {
+    if (practice) {
+        const say = EduAudio.has("أحسنت، عمل رائع") ? "أحسنت، عمل رائع" : "أحسنت! إجابة صحيحة";
+        return { say, text: "🌱 أحسنت التدريب!" };
+    }
+    const avail = LTR_PRAISE.filter(p => EduAudio.has(p.say));
+    if (!avail.length) return LTR_PRAISE[0];
+    ltrPraiseIdx = (ltrPraiseIdx + 1) % avail.length;
+    return avail[ltrPraiseIdx];
+}
+
+/* نجمة بصرية قصيرة عند نيل نجوم جديدة (لا تظهر عند الإعادة) */
+function ltrStarPop(n) {
+    const host = $("ltrRunner");
+    if (!host) return;
+    host.querySelectorAll(".ltr-star-pop").forEach(e => e.remove());
+    const el = document.createElement("div");
+    el.className = "ltr-star-pop";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = ltrArt("⭐") + " +" + arabicNumber(n);
+    host.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+}
 
 function finishLtrChoiceTask(isCorrect, button) {
 
@@ -24714,16 +24904,17 @@ function finishLtrChoiceTask(isCorrect, button) {
             saveCounters();
             addStars(LTR_STARS_PER_NEW_ACTIVITY);
             if (ltrState.session) ltrState.session.starsGained += LTR_STARS_PER_NEW_ACTIVITY;
+            ltrStarPop(LTR_STARS_PER_NEW_ACTIVITY);
         }
+        if (activity.practice && ltrState.session) ltrState.session.practiceDone = (ltrState.session.practiceDone || 0) + 1;
+        const praise = ltrNextPraise(!!activity.practice);
 
         if (messageEl) {
-            messageEl.textContent = activity.practice
-                ? (firstClaim ? "🌱 أحسنت التدريب! ⭐" : "🌱 أحسنت التدريب!")
-                : (firstClaim ? "🎉 أحسنت! إجابة صحيحة ⭐" : "🎉 أحسنت! إجابة صحيحة");
+            messageEl.textContent = praise.text + (firstClaim ? " ⭐" : "");
             messageEl.className = "message correct";
         }
 
-        speakEducational("أحسنت! إجابة صحيحة", { rate: 0.8 });
+        speakEducational(praise.say, { rate: 0.8 });
 
         document
             .querySelectorAll("#ltrActivityStage .ltr-choice-btn, #ltrActivityStage .ltr-multi-item, #ltrActivityStage .ltr-audio-choice-btn")
@@ -24747,12 +24938,15 @@ function finishLtrChoiceTask(isCorrect, button) {
             button.disabled = true;
         }
 
+        /* بعد خطأين متتاليين: عبارة أحنّ من التسجيلات الموجودة (إن وُجدت) */
+        const gentle = ltrWrongStreak >= 1 && EduAudio.has("محاولة رائعة، لنحاول مرة أخرى");
+
         if (messageEl) {
-            messageEl.textContent = "😊 حاول مرة أخرى";
+            messageEl.textContent = gentle ? "💪 محاولة رائعة، لنحاول مرة أخرى" : "😊 حاول مرة أخرى";
             messageEl.className = "message wrong";
         }
 
-        speakEducational("حاول مرة أخرى", { rate: 0.8 });
+        speakEducational(gentle ? "محاولة رائعة، لنحاول مرة أخرى" : "حاول مرة أخرى", { rate: 0.8 });
 
         ltrActivityHadWrong = true;
         ltrWrongStreak++;
@@ -24834,6 +25028,16 @@ function renderLtrResultScreen(levelJustCompleted) {
         title = `أحسنت! أنهيت جلسة قصيرة لحرف ${letterGlyph}`;
     }
 
+    const sum = ltrLetterSummary(ltrState.letter);
+    const suggest = ltrSuggestStage(ltrState.letter);
+    const suggestMeta = LTR_STAGE_META[suggest.id];
+    const detailsLines = `
+        <div class="ltr-result-lines">
+            ${session.practiceDone ? `<div>🌱 <b>تدريب</b>: أنجزتَ ${arabicNumber(session.practiceDone)} تدريبًا بمساعدة — يُحسب نجومًا لا إتقانًا</div>` : ""}
+            <div>✅ <b>تقدّم</b>: ${arabicNumber(sum.done)} من ${arabicNumber(sum.total)} مرحلة</div>
+            <div>⭐ <b>إتقان</b>: ${arabicNumber(sum.mastered)} مراحل متقنة</div>
+        </div>`;
+
     const starsLine = session.starsGained > 0
         ? `<div class="ltr-result-score">⭐ نجوم جديدة: ${arabicNumber(session.starsGained)}</div>`
         : `<div class="ltr-result-score ltr-result-soft">💪 تكرار التدريب يقوّي التذكّر</div>`;
@@ -24846,9 +25050,14 @@ function renderLtrResultScreen(levelJustCompleted) {
             ${levelJustCompleted ? `
                 <div class="ltr-result-score">🎊 أكملت كل حروف هذه المجموعة!</div>
             ` : ""}
+            ${detailsLines}
             <button class="success" type="button" onclick="ltrBackFromDetail()">
                 🧭 قائمة الأنشطة
             </button>
+            ${session.kind !== "stage" || session.stageId !== suggest.id ? `
+                <button class="secondary" type="button" onclick="startLetterSession('stage', '${suggest.id}')">
+                    ▶ اقتراحي: ${suggestMeta.name}
+                </button>` : ""}
             ${nextLetterChar ? `
                 <button class="secondary" type="button" onclick="openLetterDetail('${nextLetterChar}')">
                     ➡️ الحرف التالي: ${letterWithFatha(nextLetterChar)}
@@ -24860,8 +25069,13 @@ function renderLtrResultScreen(levelJustCompleted) {
         </div>
     `;
 
+    const card = $("letterDetailCard");
+    if (card) card.dataset.ltrView = "result";
+
     speakEducational(
-        session.kind === "full" ? "أحسنت! أتممت هذا الحرف بنجاح" : "أحسنت! إجابة صحيحة",
+        levelJustCompleted && EduAudio.has("أحسنت! أكملت المستوى بنجاح")
+            ? "أحسنت! أكملت المستوى بنجاح"
+            : (session.kind === "full" ? "أحسنت! أتممت هذا الحرف بنجاح" : "أحسنت! إجابة صحيحة"),
         { rate: 0.8 }
     );
 }
