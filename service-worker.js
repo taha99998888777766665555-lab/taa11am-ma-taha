@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v28";
+const CACHE_VERSION = "taha-app-v29";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -21,6 +21,9 @@ const APP_SHELL = [
 /* رسومات قسم الحروف (SVG محلية) — تُخزَّن بأفضل جهد ومنفصلة عن الهيكل:
    فشل أحدها لا يُفشل تثبيت التطبيق */
 const LETTER_ART = [
+    "./assets/images/letters/1f501.svg",
+    "./assets/images/letters/1f575.svg",
+    "./assets/images/letters/1f648.svg",
     "./assets/images/letters/1f3b5.svg",
     "./assets/images/letters/1f9f1.svg",
     "./assets/images/letters/1f33d.svg",
