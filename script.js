@@ -27966,9 +27966,9 @@ function ltrTraceParams(model, level) {
     const hw = model.hw;
     return {
         level: L,
-        cover: hw + [0, 14, 10, 7][L],
-        covThr: [0, 0.70, 0.80, 0.85][L],
-        precThr: [0, 0.55, 0.60, 0.65][L]
+        cover: hw + [0, 5, 4, 2][L],
+        covThr: [0, 0.80, 0.85, 0.90][L],
+        precThr: [0, 0.65, 0.70, 0.75][L]
     };
 }
 
@@ -28129,7 +28129,7 @@ function ltrTraceWidget(root, o) {
             if (!covered[i] && Math.hypot(cps[i].x - q.x, cps[i].y - q.y) <= P.cover) { covered[i] = 1; coveredCount++; }
         }
         for (let k = 0; k < extras.length; k++) {
-            if (!touched[k] && Math.hypot(extras[k].x - q.x, extras[k].y - q.y) <= extras[k].r + P.cover * 0.6) { touched[k] = 1; touchedCount++; }
+            if (!touched[k] && Math.hypot(extras[k].x - q.x, extras[k].y - q.y) <= extras[k].r + 4) { touched[k] = 1; touchedCount++; }
         }
     }
 
