@@ -27968,7 +27968,8 @@ function ltrTraceParams(model, level) {
         level: L,
         cover: hw + [0, 5, 4, 2][L],
         covThr: [0, 0.80, 0.85, 0.90][L],
-        precThr: [0, 0.65, 0.70, 0.75][L]
+        precThr: [0, 0.65, 0.70, 0.75][L],
+        chunkThr: [0, 0.4, 0.5, 0.6][L]
     };
 }
 
@@ -28212,18 +28213,32 @@ function ltrTraceWidget(root, o) {
         finishTimer = setTimeout(() => { finishTimer = null; if (!destroyed && alive()) o.onSuccess(); }, 700);
     }
 
+    /* لا يكفي مجموع التغطية: كل خُمس من المسار (بترتيب الكتابة) يجب أن يُغطّى بنسبة معقولة،
+       فلا يُقبل تتبّع نصف الحرف فقط */
+    function chunksOk() {
+        const n = cps.length, parts = 5;
+        for (let c = 0; c < parts; c++) {
+            const a = Math.floor(c * n / parts), b = Math.floor((c + 1) * n / parts);
+            if (b <= a) continue;
+            let got = 0;
+            for (let i = a; i < b; i++) got += covered[i];
+            if (got / (b - a) < P.chunkThr) return false;
+        }
+        return true;
+    }
+
     function evaluate() {
         const cov = coveredCount / Math.max(1, cps.length);
         const prec = inkTotal ? inkGood / inkTotal : 1;
         publish();
         if (done) return;
 
-        if (!bodyDone && cov >= P.covThr && prec >= P.precThr) bodyDone = true;
+        if (!bodyDone && cov >= P.covThr && prec >= P.precThr && chunksOk()) bodyDone = true;
 
         if (bodyDone) {
             if (touchedCount >= extras.length) { success(); return; }
             setStatus("👏 أحسنت! الآن المس العلامات الصغيرة ✨ (" + arabicNumber(touchedCount) + " من " + arabicNumber(extras.length) + ")");
-        } else if (cov >= P.covThr) {
+        } else if (cov >= P.covThr && chunksOk()) {
             setStatus("🌟 كدت تنتهي! امشِ ببطء فوق الخط الرمادي، أو اضغط «أعد من جديد»");
         } else if (inkTotal > 25 && prec < P.precThr) {
             setStatus("🌟 حاول أن تبقى فوق الخط الرمادي، وخذ وقتك");
