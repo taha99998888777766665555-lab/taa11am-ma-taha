@@ -27969,7 +27969,10 @@ function ltrTraceParams(model, level) {
         cover: hw + [0, 5, 4, 2][L],
         covThr: [0, 0.80, 0.85, 0.90][L],
         precThr: [0, 0.65, 0.70, 0.75][L],
-        chunkThr: [0, 0.4, 0.5, 0.6][L]
+        chunkThr: [0, 0.4, 0.5, 0.6][L],
+        /* اتساق ترتيب مرور الرسم على نقاط الحرف (يُقبل الاتجاهان لأن اتجاه الكتابة المرجعي تقريبي).
+           المستوى ٣ لا يحتاجه: معاييره الأخرى تكفي (قيس ذلك). */
+        orderThr: [0, 0.4, 0.3, 0][L]
     };
 }
 
@@ -28008,6 +28011,7 @@ function ltrTraceWidget(root, o) {
     const covered = new Uint8Array(cps.length);
     const touched = new Uint8Array(extras.length);
     let coveredCount = 0, touchedCount = 0, inkTotal = 0, inkGood = 0;
+    const firstT = new Int32Array(cps.length).fill(-1);
     let hintLevel = 0, stall = 0, coveredBefore = 0;
     let bodyDone = false, done = false, destroyed = false;
     let activeId = null, cur = null;
@@ -28111,6 +28115,7 @@ function ltrTraceWidget(root, o) {
         box.dataset.cover = (coveredCount / Math.max(1, cps.length)).toFixed(2);
         box.dataset.prec = (inkTotal ? inkGood / inkTotal : 1).toFixed(2);
         box.dataset.touched = touchedCount + "/" + extras.length;
+        box.dataset.order = orderScore().toFixed(2);
         box.dataset.hint = String(hintLevel);
         box.dataset.done = done ? "1" : "0";
     }
@@ -28127,7 +28132,7 @@ function ltrTraceWidget(root, o) {
         if (xi >= 0 && yi >= 0 && xi < W && yi < H) nd = model.near[yi * W + xi];
         if (nd <= P.cover) inkGood++;
         for (let i = 0; i < cps.length; i++) {
-            if (!covered[i] && Math.hypot(cps[i].x - q.x, cps[i].y - q.y) <= P.cover) { covered[i] = 1; coveredCount++; }
+            if (!covered[i] && Math.hypot(cps[i].x - q.x, cps[i].y - q.y) <= P.cover) { covered[i] = 1; coveredCount++; firstT[i] = inkTotal; }
         }
         for (let k = 0; k < extras.length; k++) {
             if (!touched[k] && Math.hypot(extras[k].x - q.x, extras[k].y - q.y) <= extras[k].r + 4) { touched[k] = 1; touchedCount++; }
@@ -28227,17 +28232,43 @@ function ltrTraceWidget(root, o) {
         return true;
     }
 
+    /* اتساق الترتيب: ارتباط رُتب سبيرمان بين ترتيب نقاط الحرف وأول زمن مرّ فيه الرسم عليها (قيمة مطلقة: يقبل الاتجاهين) */
+    function orderScore() {
+        const idx = [];
+        for (let i = 0; i < cps.length; i++) if (firstT[i] >= 0) idx.push(i);
+        const n = idx.length;
+        if (n < 4) return 0;
+        const order = idx.map((i, k) => [firstT[i], k]).sort((a, b) => a[0] - b[0]);
+        const rk = new Array(n);
+        let i = 0;
+        while (i < n) {
+            let j = i;
+            while (j + 1 < n && order[j + 1][0] === order[i][0]) j++;
+            const av = (i + j) / 2;
+            for (let k = i; k <= j; k++) rk[order[k][1]] = av;
+            i = j + 1;
+        }
+        const mn = (n - 1) / 2;
+        let sxy = 0, sxx = 0, syy = 0;
+        for (let k = 0; k < n; k++) { sxy += (k - mn) * (rk[k] - mn); sxx += (k - mn) * (k - mn); syy += (rk[k] - mn) * (rk[k] - mn); }
+        return sxx && syy ? Math.abs(sxy / Math.sqrt(sxx * syy)) : 0;
+    }
+
+    function pathOk() { return orderScore() >= P.orderThr; }
+
     function evaluate() {
         const cov = coveredCount / Math.max(1, cps.length);
         const prec = inkTotal ? inkGood / inkTotal : 1;
         publish();
         if (done) return;
 
-        if (!bodyDone && cov >= P.covThr && prec >= P.precThr && chunksOk()) bodyDone = true;
+        if (!bodyDone && cov >= P.covThr && prec >= P.precThr && chunksOk() && pathOk()) bodyDone = true;
 
         if (bodyDone) {
             if (touchedCount >= extras.length) { success(); return; }
             setStatus("👏 أحسنت! الآن المس العلامات الصغيرة ✨ (" + arabicNumber(touchedCount) + " من " + arabicNumber(extras.length) + ")");
+        } else if (cov >= P.covThr && chunksOk() && !pathOk()) {
+            setStatus("🌟 امشِ على الخط بالترتيب من أوله إلى آخره، أو اضغط «أعد من جديد»");
         } else if (cov >= P.covThr && chunksOk()) {
             setStatus("🌟 كدت تنتهي! امشِ ببطء فوق الخط الرمادي، أو اضغط «أعد من جديد»");
         } else if (inkTotal > 25 && prec < P.precThr) {
@@ -28292,7 +28323,7 @@ function ltrTraceWidget(root, o) {
         stopDemo();
         strokes.length = 0;
         covered.fill(0); touched.fill(0);
-        coveredCount = 0; touchedCount = 0; inkTotal = 0; inkGood = 0;
+        coveredCount = 0; touchedCount = 0; inkTotal = 0; inkGood = 0; firstT.fill(-1);
         bodyDone = false; stall = 0; activeId = null; cur = null;
         setStatus("من جديد! ابدأ متى شئت ✍️");
         publish();
