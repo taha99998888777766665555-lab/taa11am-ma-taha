@@ -7053,6 +7053,8 @@ function raceNormalizeProgress(p) {
                 if (!raceIsObj(r)) return;
                 const rec = { done: r.done === true, stars: Math.max(0, Math.min(3, Number(r.stars) || 0)), plays: Math.max(0, Number(r.plays) || 0) };
                 if (r.migrated === true) rec.migrated = true;
+                /* حقول إضافية من المحرك الجديد (لا تُنشأ للسجلات القديمة) */
+                ["ind", "lvl", "ft"].forEach(k => { if (typeof r[k] === "number" && isFinite(r[k]) && r[k] >= 0) rec[k] = r[k]; });
                 stages[id] = rec;
             });
         }
@@ -7066,6 +7068,8 @@ function raceNormalizeProgress(p) {
                 attempts: Math.max(0, Number(m.attempts) || 0)
             }
         };
+        if (typeof m.ind === "number" && isFinite(m.ind) && m.ind >= 0) out.letters[l].mastery.ind = m.ind;
+        if (m.indPassed === true) out.letters[l].mastery.indPassed = true;
     });
     return out;
 }
@@ -7267,16 +7271,14 @@ function renderRaceStages() {
     }
     const list = $("raceStageList");
     if (!list) return;
-    let prevDone = true;
+    /* كل المراحل مفتوحة دائمًا: لا أقفال ولا اشتراط إنهاء مرحلة سابقة */
     list.innerHTML = stages.map((s, i) => {
         const done = raceStageDone(entry, s.id);
-        const open = i === 0 || prevDone;
-        prevDone = done;
         const st = entry.stages[s.id];
         const starsN = s.id === "mastery" ? (entry.mastery.stars || 0) : (st && st.stars) || 0;
-        const state = done ? "done" : (open ? "open" : "locked");
-        const mark = done ? "✅" : (open ? "▶" : "🔒");
-        return `<button type="button" class="race-stage-btn ${state}" data-stage="${s.id}" ${open ? "" : "disabled"} onclick="startRaceStage('${letter}', ${i})">
+        const state = done ? "done" : "open";
+        const mark = done ? "✅" : "▶";
+        return `<button type="button" class="race-stage-btn ${state}" data-stage="${s.id}" onclick="startRaceStage('${letter}', ${i})">
             <span class="race-stage-no">${arabicNumber(i + 1)}</span>
             <span class="race-stage-icon">${s.icon}</span>
             <span class="race-stage-name">${s.title}</span>
@@ -7284,6 +7286,7 @@ function renderRaceStages() {
             <span class="race-stage-mark">${mark}</span>
         </button>`;
     }).join("");
+    rrDecorateStageView();
 }
 
 function raceBackFromStages() {
@@ -7298,7 +7301,7 @@ function startLetterRace() {
     openLetterRaceMap();
 }
 
-function startRaceStage(letter, stageIdx) {
+function legacyStartRaceStage(letter, stageIdx) {
     const stages = raceStagesFor(letter);
     const stage = stages[stageIdx];
     if (!stage) return;
@@ -7921,6 +7924,943 @@ function exitLetterRace(toGrid) {
         renderRaceStages();
         raceMapShow("stages");
     }
+}
+
+/* =========================================================
+   🛣️ سباق الطريق (RR) — محرك المراحل الجديد لسباق الحروف
+   ---------------------------------------------------------
+   - يُستدعى فقط من الموزّع startRaceStage؛ لا يعمل شيء منه عند تحميل الملف.
+   - المحرك القديم (legacyStartRaceStage وما يتبعه) باقٍ كما هو وهو خيار التراجع.
+   - قواعد المكافآت كما في القديم تمامًا: نجمة عامة واحدة لكل جولة صحيحة من
+     أول محاولة (round.wrong === 0)، نجوم المرحلة بـ raceStageStars نفسها،
+     والإتقان 5 من 6. لا سقف جديد ولا تغيير في الرصيد.
+   - الإتقان المستقل حقل إضافي منفصل (ind / indPassed) لا يدخل في النجوم ولا في passed.
+   - الواجهة والتنسيق يُنشآن بالجافاسكربت عند أول دخول فقط.
+========================================================= */
+
+const RR_ENABLED = true;
+const RR_BUILD = "rr1";
+const RR_SCREEN = "roadRaceGame";
+const RR_CSS_ID = "rr-css";
+const RR_READY_MS = 3000;
+const RR_PHRASES = ["صحيح", "أحسنت يا بطل", "أحسنت، عمل رائع", "حاول مرة أخرى", "محاولة رائعة، لنحاول مرة أخرى", "أحسنت! أكملت المستوى بنجاح", "أحسنت! أتممت هذا الحرف بنجاح"];
+
+/* مالك التشغيل: لا يعمل محركان معًا */
+let rrOwner = null;          /* null | "new" | "legacy" */
+/* يُضبط عند أول فشل ويدوم حتى إعادة تحميل الصفحة (في الذاكرة فقط، بلا مفتاح تخزين) */
+let rrDisabled = false;
+let rrRunSeq = 0;
+/* بوابة المكافأة: كل (تشغيل، جولة) تُحتسب مرة واحدة فقط */
+const rrSettled = new Set();
+
+const RR = { run: null, session: 0, timers: [], keyOn: false, motion: false, drag: null };
+
+const RR_CSS = `
+.rr-probe{--rr-build:rr1;display:none}
+#roadRaceGame{width:100%;min-height:100vh;padding:10px;overflow-x:hidden;overflow-y:auto}
+.rr-wrap{position:relative;width:min(980px,100%);margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.rr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rr-info{display:flex;gap:8px;flex-wrap:wrap}
+.rr-chip{background:rgba(255,255,255,.96);border-radius:16px;padding:6px 14px;box-shadow:0 5px 14px rgba(0,0,0,.12);min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rr-chip small{color:#667085;font-size:12px;font-weight:800}
+.rr-chip b{color:#172033;font-size:22px;font-weight:900}
+.rr-grow{flex:1;min-width:150px}
+.rr-dots{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.rr-dot{width:14px;height:14px;border-radius:50%;background:#cbd5e1}
+.rr-dot.done{background:#22c55e}
+.rr-dot.cur{background:#6366f1;transform:scale(1.3)}
+.rr-board{background:linear-gradient(135deg,#fff,#eef4ff);border-radius:24px;padding:14px 16px;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.14);display:flex;flex-direction:column;align-items:center;gap:6px}
+.rr-badge{font-weight:900;color:#4f46e5;font-size:19px}
+.rr-target{font-size:clamp(60px,17vw,124px);font-weight:900;line-height:1.35;color:#172033;min-height:1.35em;direction:rtl}
+.rr-target.rr-icon{font-size:clamp(56px,14vw,96px)}
+.rr-target.rr-filled{color:#15803d}
+.rr-blank{display:inline-block;min-width:1.1em;height:.9em;vertical-align:baseline;border-bottom:7px dashed #f59e0b;margin:0 4px}
+.rr-sub{color:#475467;font-size:17px;font-weight:800;min-height:1.4em}
+.rr-lvl{color:#6b7280;font-size:13px;font-weight:800}
+.rr-tools{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.rr-tool{min-height:58px;min-width:58px;padding:0 20px;border:0;border-radius:16px;background:#eef2ff;color:#312e81;font-size:18px;font-weight:900;cursor:pointer}
+.rr-tool:active,.rr-ctl:active,.rr-go:active{transform:scale(.95)}
+.rr-road{position:relative;border-radius:26px;background:#374151;padding:14px 8px 6px;box-shadow:inset 0 4px 14px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.18);direction:ltr}
+.rr-lanes{display:flex;align-items:stretch}
+.rr-sign{flex:1;min-width:0;min-height:170px;border:0;border-left:4px dashed rgba(255,255,255,.55);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:4px 6px;cursor:pointer;position:relative}
+.rr-sign:first-child{border-left:0}
+.rr-face{width:min(100%,190px);min-height:120px;display:flex;align-items:center;justify-content:center;background:#fff;border:7px solid #1d4ed8;border-radius:22px;font-size:clamp(56px,15vw,100px);font-weight:900;color:#111827;line-height:1.2;box-shadow:0 6px 0 #1e3a8a}
+.rr-post{width:12px;flex:1;min-height:22px;background:#9ca3af;border-radius:0 0 6px 6px}
+.rr-sign.sel .rr-face{box-shadow:0 0 0 7px #facc15,0 6px 0 #1e3a8a}
+.rr-sign.dim{opacity:.3;pointer-events:none}
+.rr-sign.hint .rr-face{border-color:#16a34a;box-shadow:0 0 0 7px #86efac,0 6px 0 #166534;animation:rrPulse 1.1s ease-in-out infinite}
+.rr-sign.right .rr-face{background:#dcfce7;border-color:#16a34a;box-shadow:0 0 0 7px #4ade80,0 6px 0 #166534}
+.rr-sign.wrong .rr-face{background:#fee2e2;border-color:#ef4444}
+@keyframes rrPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.rr-carrow{position:relative;height:78px}
+.rr-car{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:58px;line-height:1;border:0;background:transparent;padding:0;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;transition:left var(--rr-move,.18s) ease}
+.rr-wrap.rr-motion{--rr-move:.6s}
+.rr-msg{min-height:34px;text-align:center;font-size:20px;font-weight:900;color:#1f2937}
+.rr-controls{display:flex;gap:10px;justify-content:center;align-items:stretch}
+.rr-ctl{width:92px;min-height:68px;border:0;border-radius:18px;background:#fff;color:#1f2937;font-size:32px;font-weight:900;box-shadow:0 5px 14px rgba(0,0,0,.18);cursor:pointer}
+.rr-go{flex:1;max-width:340px;min-height:68px;border:0;border-radius:18px;background:#16a34a;color:#fff;font-size:24px;font-weight:900;box-shadow:0 6px 0 #166534;cursor:pointer}
+.rr-result,.rr-demo{position:absolute;inset:0;border-radius:22px;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:18px;text-align:center}
+.rr-result{background:rgba(255,255,255,.98);z-index:70}
+.rr-demo{background:rgba(238,242,255,.98);z-index:60}
+.rr-result.on,.rr-demo.on{display:flex}
+.rr-result h3{margin:0;font-size:27px;color:#15803d}
+.rr-result p{margin:0;font-size:17px;color:#475467;font-weight:700}
+.rr-result .rr-stars{font-size:44px;color:#f59e0b;letter-spacing:4px}
+.rr-result button{display:block;width:min(340px,100%);min-height:62px;border:0;border-radius:18px;font-size:20px;font-weight:900;cursor:pointer}
+.rr-result .rr-p{background:#4f46e5;color:#fff}
+.rr-result .rr-s{background:#e5e7eb;color:#1f2937}
+.rr-demo-signs{display:flex;gap:12px;direction:ltr}
+.rr-mini{min-width:84px;min-height:84px;display:flex;align-items:center;justify-content:center;background:#fff;border:6px solid #1d4ed8;border-radius:18px;font-size:54px;font-weight:900}
+.rr-mini.hint{border-color:#16a34a;box-shadow:0 0 0 6px #86efac;animation:rrPulse 1.1s ease-in-out infinite}
+.rr-mini.right{background:#dcfce7;border-color:#16a34a}
+.rr-notice{background:#fff7ed;border:2px solid #fdba74;color:#7c2d12;border-radius:14px;padding:10px 14px;margin:8px 0;font-weight:800;text-align:center}
+.rr-prep{margin:10px 0;text-align:center}
+.rr-prep button{min-height:52px;padding:0 18px;border:0;border-radius:14px;background:#e0e7ff;color:#312e81;font-weight:900;font-size:16px;cursor:pointer}
+.rr-prep small{display:block;margin-top:6px;color:#475467;font-weight:700}
+@media (max-width:560px){.rr-sign{min-height:140px}.rr-face{min-height:96px}.rr-ctl{width:72px}.rr-car{font-size:48px}}
+@media (prefers-reduced-motion:reduce){.rr-wrap *{animation:none!important;transition:none!important}}
+.calm-mode .rr-wrap *{animation:none!important;transition:none!important}
+`;
+
+const RR_HTML = `
+<div class="rr-wrap" id="rrWrap">
+  <div class="rr-top">
+    <button type="button" class="race-top-btn" id="rrBack" aria-label="رجوع إلى مراحل الحرف">⬅️</button>
+    <div class="race-title"><span>🛣️</span><strong>سباق الطريق</strong></div>
+    <button type="button" class="race-top-btn" id="rrMotion" aria-pressed="false" aria-label="حركة السيارة">🏎️</button>
+  </div>
+  <div class="rr-info">
+    <div class="rr-chip"><small>الحرف</small><b id="rrLetter"></b></div>
+    <div class="rr-chip rr-grow"><small id="rrStageName"></small><div class="rr-dots" id="rrDots" aria-hidden="true"></div></div>
+    <div class="rr-chip"><small>الجولة</small><b><span id="rrRound">١</span> / <span id="rrTotal">٣</span></b></div>
+    <div class="rr-chip"><small>⭐ نجومي</small><b id="rrStars">٠</b></div>
+  </div>
+  <div class="rr-board" id="rrBoard">
+    <div class="rr-badge" id="rrBadge"></div>
+    <div class="rr-target" id="rrTarget" aria-live="polite"></div>
+    <div class="rr-sub" id="rrSub"></div>
+    <div class="rr-lvl" id="rrLvl"></div>
+    <div class="rr-tools">
+      <button type="button" class="rr-tool" id="rrListen">🔊 اسمع</button>
+      <button type="button" class="rr-tool" id="rrDemoBtn">👀 شاهد مثالًا</button>
+    </div>
+  </div>
+  <div class="rr-road" id="rrRoad">
+    <div class="rr-lanes" id="rrSigns"></div>
+    <div class="rr-carrow"><button type="button" class="rr-car" id="rrCar" aria-label="السيارة: اسحبها إلى اللافتة ثم اضغط انطلق">🚗</button></div>
+  </div>
+  <div class="rr-msg" id="rrMsg" role="status" aria-live="polite"></div>
+  <div class="rr-controls">
+    <button type="button" class="rr-ctl" id="rrLeft" aria-label="اللافتة السابقة">◀</button>
+    <button type="button" class="rr-go" id="rrGo">✔ انطلق</button>
+    <button type="button" class="rr-ctl" id="rrRight" aria-label="اللافتة التالية">▶</button>
+  </div>
+  <div class="rr-demo" id="rrDemo">
+    <div class="rr-badge" id="rrDemoMsg"></div>
+    <div class="rr-target" id="rrDemoTarget"></div>
+    <div class="rr-demo-signs" id="rrDemoSigns"></div>
+    <button type="button" class="rr-tool" id="rrDemoSkip">تخطَّ المثال ⏭</button>
+  </div>
+  <div class="rr-result" id="rrResult">
+    <h3 id="rrResTitle"></h3>
+    <div class="rr-stars" id="rrResStars" aria-hidden="true"></div>
+    <p id="rrResBody"></p>
+    <button type="button" class="rr-p" id="rrResNext"></button>
+    <button type="button" class="rr-s" id="rrResMap">🗺️ مراحل الحرف</button>
+  </div>
+</div>
+`;
+
+/* ---------- أدوات عامة ---------- */
+
+function rrScreenActive() {
+    const el = $(RR_SCREEN);
+    return !!(el && el.classList.contains("active"));
+}
+
+function rrSafe(fn) {
+    return function () {
+        try { return fn.apply(this, arguments); }
+        catch (e) { rrRecover(e); }
+    };
+}
+
+function rrLater(fn, ms) {
+    const s = RR.session;
+    const id = setTimeout(rrSafe(function () {
+        RR.timers = RR.timers.filter(t => t !== id);
+        if (s !== RR.session) return;
+        if (!rrScreenActive()) { rrTeardown(); return; }
+        fn();
+    }), ms);
+    RR.timers.push(id);
+    return id;
+}
+
+/* صوت واحد في اللحظة، ثم done مرة واحدة فقط (مع مهلة أمان) */
+function rrSay(what, done, maxMs) {
+    const s = RR.session;
+    let fired = false;
+    const fin = function () {
+        if (fired || s !== RR.session) return;
+        fired = true;
+        if (done) done();
+    };
+    if (typeof EduAudio === "undefined") { fin(); return; }
+    EduAudio.play(what, { mode: "interrupt", done: rrSafe(fin) });
+    if (done) rrLater(fin, maxMs || 4500);
+}
+
+function rrTeardown() {
+    RR.session++;
+    RR.timers.forEach(t => clearTimeout(t));
+    RR.timers = [];
+    if (RR.keyOn) { document.removeEventListener("keydown", rrKey); RR.keyOn = false; }
+    rrDragEnd();
+    if (RR.run) RR.run.dead = true;
+    RR.run = null;
+    try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
+    const r = $("rrResult"); if (r) r.classList.remove("on");
+    const d = $("rrDemo"); if (d) d.classList.remove("on");
+    if (rrOwner === "new") rrOwner = null;
+}
+
+/* ---------- الأنماط والواجهة (تُنشأ عند أول دخول فقط) ---------- */
+
+function rrCssApplied() {
+    const probe = document.createElement("i");
+    probe.className = "rr-probe";
+    document.body.appendChild(probe);
+    let ok = false;
+    try { ok = getComputedStyle(probe).getPropertyValue("--rr-build").trim() === RR_BUILD; }
+    finally { if (probe.parentNode) probe.parentNode.removeChild(probe); }
+    return ok;
+}
+
+function rrInjectCss() {
+    if (rrCssApplied()) return;
+    try {
+        if (!$(RR_CSS_ID)) {
+            const s = document.createElement("style");
+            s.id = RR_CSS_ID;
+            s.textContent = RR_CSS;
+            document.head.appendChild(s);
+        }
+    } catch (e) { /* نجرّب الطريقة الاحتياطية */ }
+    if (rrCssApplied()) return;
+    try {
+        const sh = new CSSStyleSheet();
+        sh.replaceSync(RR_CSS);
+        document.adoptedStyleSheets = Array.prototype.concat.call(document.adoptedStyleSheets || [], [sh]);
+    } catch (e) { /* يُحسم بالفحص التالي */ }
+    if (!rrCssApplied()) throw new Error("rr-css-not-applied");
+}
+
+function rrEnsureScreen() {
+    let el = $(RR_SCREEN);
+    if (!el) {
+        const legacy = $("letterRaceGame");
+        const host = (legacy && legacy.parentNode) || document.body;
+        el = document.createElement("section");
+        el.id = RR_SCREEN;
+        el.className = "screen";
+        el.innerHTML = RR_HTML;
+        host.appendChild(el);
+    }
+    if (!$("rrSigns") || !$("rrGo")) throw new Error("rr-screen-incomplete");
+    if (el.getAttribute("data-rr-wired") !== "1") {
+        rrWire();
+        el.setAttribute("data-rr-wired", "1");
+    }
+    return el;
+}
+
+function rrWire() {
+    $("rrBack").addEventListener("click", rrSafe(() => rrExit()));
+    $("rrMotion").addEventListener("click", rrSafe(() => {
+        RR.motion = !RR.motion;
+        $("rrWrap").classList.toggle("rr-motion", RR.motion);
+        $("rrMotion").setAttribute("aria-pressed", RR.motion ? "true" : "false");
+    }));
+    $("rrListen").addEventListener("click", rrSafe(() => {
+        const run = RR.run;
+        if (run && run.cur && !run.demoing) rrSayPrompt(run.cur);
+    }));
+    $("rrDemoBtn").addEventListener("click", rrSafe(() => rrDemoRequested()));
+    $("rrDemoSkip").addEventListener("click", rrSafe(() => rrDemoFinish()));
+    $("rrLeft").addEventListener("click", rrSafe(() => rrMoveSel(-1)));
+    $("rrRight").addEventListener("click", rrSafe(() => rrMoveSel(1)));
+    $("rrGo").addEventListener("click", rrSafe(() => { const r = RR.run; if (r) rrSubmit(r.selected); }));
+    const car = $("rrCar");
+    car.addEventListener("pointerdown", rrSafe(rrDragStart));
+}
+
+/* ---------- المحتوى: المتشابهات والكلمات المعروفة وبناء الجولات ---------- */
+
+/* متشابهات الحرف بتماثل كامل (القاموس المشترك LTR_SIMILAR_LETTERS لا يُعدَّل) */
+function rrSimilarOf(letter) {
+    const m = (typeof LTR_SIMILAR_LETTERS !== "undefined" && LTR_SIMILAR_LETTERS) || {};
+    const out = new Set((m[letter] || []).filter(l => l !== letter));
+    Object.keys(m).forEach(k => { if (k !== letter && (m[k] || []).indexOf(letter) >= 0) out.add(k); });
+    return out;
+}
+
+let rrKnownCache = null;
+function rrStripMarks(w) { return String(w).replace(/[ً-ْٰـ]/g, ""); }
+
+/* كل كلمة عربية يعرفها التطبيق (قوائم الحروف والسباق والتدريب وملفات الصوت) */
+function rrKnownWords() {
+    if (rrKnownCache) return rrKnownCache;
+    const s = new Set();
+    try { LETTER_UNITS.forEach(u => (u.words || []).forEach(w => s.add(rrStripMarks(w.word)))); } catch (e) { /* لا شيء */ }
+    try { Object.keys(RACE_WORD_BANK).forEach(l => Object.keys(RACE_WORD_BANK[l]).forEach(p => RACE_WORD_BANK[l][p].forEach(w => s.add(rrStripMarks(w))))); } catch (e) { /* لا شيء */ }
+    try { Object.keys(LTR_TRAIN_WORDS).forEach(l => LTR_TRAIN_WORDS[l].forEach(w => s.add(rrStripMarks(w)))); } catch (e) { /* لا شيء */ }
+    try {
+        const m = EDUCATIONAL_AUDIO_MANIFEST;
+        Object.keys(m).forEach(k => { if (/\/words\//.test(m[k])) s.add(rrStripMarks(k)); });
+    } catch (e) { /* لا شيء */ }
+    rrKnownCache = s;
+    return s;
+}
+
+/* هل استبدال الحرف المطلوب بحرف مشتت يُنتج كلمة أخرى معروفة؟ (التباس) */
+function rrCollides(word, occ, dLetter) {
+    const nw = word.slice(0, occ) + dLetter + word.slice(occ + 1);
+    return nw !== word && rrKnownWords().has(nw);
+}
+
+function rrDistractors(letter, position, count, hard, seed, word, occ) {
+    const sim = rrSimilarOf(letter);
+    const needsConnector = position === "initial" || position === "medial";
+    const eligible = RACE_ALPHABET.filter(l => l !== letter && (!needsConnector || !RACE_NON_CONNECTORS.has(l)));
+    const near = eligible.filter(l => sim.has(l));
+    const far = eligible.filter(l => !sim.has(l));
+    const order = hard
+        ? raceRotate(near, seed).concat(raceRotate(far, seed * 3))
+        : raceRotate(far, seed * 3).concat(raceRotate(near, seed));
+    const correct = raceShapeForLetterAtPosition(letter, position);
+    const shapes = [];
+    order.forEach(l => {
+        if (shapes.length >= count) return;
+        if (word && rrCollides(word, occ, l)) return;
+        const s = raceShapeForLetterAtPosition(l, position);
+        if (s && s !== correct && shapes.indexOf(s) < 0) shapes.push(s);
+    });
+    return shapes;
+}
+
+function rrMakeRound(kind, letter, position, word, occ, distract, r) {
+    const correctShape = raceShapeForLetterAtPosition(letter, position);
+    const correctIndex = r % (distract.length + 1);
+    const options = distract.slice();
+    options.splice(correctIndex, 0, correctShape);
+    return { kind: kind, letter: letter, position: position, word: word, occ: occ, options: options, correctShape: correctShape, correctIndex: options.indexOf(correctShape), wrong: 0, hinted: false, firstTry: false, helped: false, ind: false };
+}
+
+/* كلمة صالحة بلا التباس لهذه الجولة، أو null */
+function rrPickWord(letter, position, offset, used, gateCount, hard, seed) {
+    const list = raceValidWords(letter, position);
+    for (let pass = 0; pass < 2; pass++) {
+        for (let k = 0; k < list.length; k++) {
+            const w = list[(offset + k) % list.length];
+            if (pass === 0 && used.has(w)) continue;
+            const occ = raceFindOccurrence(w, letter, position);
+            const d = rrDistractors(letter, position, gateCount - 1, hard, seed, w, occ);
+            if (d.length === gateCount - 1) return { word: w, occ: occ, distract: d };
+        }
+    }
+    return null;
+}
+
+/* عدد اللافتات وصعوبة كل جولة كما في السباق القديم تمامًا */
+function rrBuildRounds(letter, stage, seed) {
+    const rounds = [];
+    const used = new Set();
+    const P = stage.positions;
+    for (let r = 0; r < stage.rounds; r++) {
+        let kind = stage.kind === "mastery" ? "word" : stage.kind;
+        let position = (kind === "hear" || kind === "see") ? "isolated" : P[r % P.length];
+        const gateCount = kind === "hear" ? 2 : 3;
+        let pick = null;
+        if (kind === "word") {
+            const hardW = stage.kind === "mastery" ? true : (stage.id === "words" ? r >= 2 : r >= 1);
+            pick = rrPickWord(letter, position, seed + r, used, gateCount, hardW, seed + r);
+            if (pick) used.add(pick.word);
+            else { kind = "see"; position = "isolated"; }
+        }
+        if (kind === "word") {
+            rounds.push(rrMakeRound("word", letter, position, pick.word, pick.occ, pick.distract, seed + r));
+        } else {
+            const gc = kind === "hear" ? 2 : 3;
+            const hard = kind === "see" ? r >= 1 : false;
+            rounds.push(rrMakeRound(kind, letter, position, null, -1, rrDistractors(letter, position, gc - 1, hard, seed + r, null, -1), seed + r));
+        }
+    }
+    return rounds;
+}
+
+/* جولة العرض النموذجي: لا تُحتسب ولا تمنح نجمة. كلمة مختلفة عن كلمات المرحلة قدر الإمكان */
+function rrBuildDemo(letter, stage, seed, rounds) {
+    if (stage.id === "mastery") return null;
+    const gateCount = stage.kind === "hear" ? 2 : 3;
+    if (stage.kind === "hear" || stage.kind === "see") {
+        return rrMakeRound(stage.kind, letter, "isolated", null, -1, rrDistractors(letter, "isolated", gateCount - 1, false, seed, null, -1), 0);
+    }
+    const usedWords = new Set(rounds.map(r => r.word));
+    const position = stage.positions[0];
+    const pick = rrPickWord(letter, position, seed + 7, usedWords, 3, false, seed + 7);
+    if (!pick || usedWords.has(pick.word)) return null;
+    return rrMakeRound("word", letter, position, pick.word, pick.occ, pick.distract, 1);
+}
+
+/* مستوى الدعم لهذا التشغيل: ٢ = مثال + تلميحات، ١ = تلميحات بعد الخطأ، ٠ = بلا مساعدة.
+   يُشتق من سجل المرحلة؛ السجل القديم بلا lvl/ft يبدأ من ١ ولا يُعدّ مستقلًا. */
+function rrLevelFor(stage, rec) {
+    if (stage.id === "mastery") return 0;
+    if (!rec || !(rec.plays > 0)) return 2;
+    if (typeof rec.lvl !== "number" || typeof rec.ft !== "number") return 1;
+    const total = stage.rounds;
+    if (rec.ft >= Math.ceil(total * 2 / 3)) return Math.max(0, rec.lvl - 1);
+    if (rec.ft < Math.ceil(total / 2)) return Math.min(2, rec.lvl + 1);
+    return rec.lvl;
+}
+
+/* ---------- البدء: الموزّع والتراجع ---------- */
+
+function rrTryStart(letter, stageIdx, stages, stage) {
+    try {
+        rrTeardown();
+        raceAbortInBackground();
+        const p = raceLoadProgress();
+        const entry = raceLetterEntry(p, letter);
+        const rec = entry.stages[stage.id];
+        const plays = (rec && rec.plays) || 0;
+        const order = raceLetterOrder();
+        const seed = plays * 3 + (order.indexOf(letter) % 3);
+        const rounds = rrBuildRounds(letter, stage, seed);
+        if (!rounds.length) throw new Error("rr-no-rounds");
+        const lvl = rrLevelFor(stage, rec);
+        const demo = rrBuildDemo(letter, stage, seed, rounds);
+        const run = {
+            id: ++rrRunSeq, letter: letter, stageIdx: stageIdx, stage: stage, stages: stages,
+            rounds: rounds, demo: demo, idx: -1, cur: null, lvl: lvl, assisted: false,
+            firstTry: 0, indCount: 0, awarded: 0, locked: true, ready: false, dead: false,
+            finished: false, demoing: false, selected: 0
+        };
+        rrInjectCss();
+        rrEnsureScreen();
+        letterRaceGame.letter = letter;
+        RR.run = run;
+        rrOwner = "new";
+        showScreen(RR_SCREEN);
+        if (!rrScreenActive()) throw new Error("rr-screen-not-active");
+        $("rrResult").classList.remove("on");
+        $("rrDemo").classList.remove("on");
+        document.addEventListener("keydown", rrKey);
+        RR.keyOn = true;
+        rrRenderHeader(run);
+        $("rrMsg").textContent = "";
+        $("rrSigns").textContent = "";
+        const autoDemo = !!(run.demo && run.lvl >= 2);
+        if (!autoDemo) rrArmWatchdog(run);
+        rrLater(function () {
+            if (autoDemo) rrPlayDemo(run, function () { rrNextRound(run); rrArmWatchdog(run); });
+            else rrNextRound(run);
+        }, 200);
+        return true;
+    } catch (e) {
+        try { console.warn("rr-start-fallback", e && e.message); } catch (e2) { /* لا شيء */ }
+        rrDisabled = true;
+        rrTeardown();
+        return false;
+    }
+}
+
+/* مراقب الجاهزية: إن لم تُعرض الجولة الأولى خلال مهلة قصيرة فالشاشة عالقة → الفشل «قبل أي جولة» */
+function rrArmWatchdog(run) {
+    const s = RR.session;
+    const wd = setTimeout(rrSafe(function () {
+        if (s === RR.session && RR.run === run && !run.dead && !run.cur) throw new Error("rr-not-ready");
+    }), RR_READY_MS);
+    RR.timers.push(wd);
+}
+
+/* الموزّع: المحرك الجديد أولًا، وإن لم يبدأ فالقديم فورًا. لا يعمل المحركان معًا أبدًا */
+function startRaceStage(letter, stageIdx) {
+    const stages = raceStagesFor(letter);
+    const stage = stages[stageIdx];
+    if (!stage) return;
+    if (RR_ENABLED && !rrDisabled && rrTryStart(letter, stageIdx, stages, stage)) return;
+    rrTeardown();
+    rrOwner = "legacy";
+    legacyStartRaceStage(letter, stageIdx);
+}
+
+/* خطأ أثناء التشغيل: قبل أي نجمة → القديم فورًا؛ بعدها → قائمة المراحل دون إعادة التشغيل */
+function rrRecover(err) {
+    try { console.warn("rr-recover", err && err.message); } catch (e) { /* لا شيء */ }
+    rrDisabled = true;
+    const run = RR.run;
+    rrTeardown();
+    if (!run) return;
+    if (run.awarded === 0 && !run.finished) {
+        rrOwner = "legacy";
+        try { legacyStartRaceStage(run.letter, run.stageIdx); return; }
+        catch (e2) { /* ننتقل لقائمة المراحل */ }
+    }
+    rrBackToStages(run.letter, run.awarded > 0 && !run.finished ? "تعذّر إكمال هذه المرحلة، لكن نجومك محفوظة. اختر المرحلة لتبدأ من جديد." : "");
+}
+
+function rrBackToStages(letter, note) {
+    try {
+        if (letter) letterRaceGame.letter = letter;
+        showScreen("letterRaceMap");
+        renderRaceStages();
+        raceMapShow("stages");
+        if (note) rrNotice(note);
+    } catch (e) {
+        try { showScreen("games"); } catch (e2) { /* لا شيء */ }
+    }
+}
+
+function rrNotice(text) {
+    const host = $("raceStageView");
+    if (!host) return;
+    let n = $("rrNotice");
+    if (!n) {
+        n = document.createElement("div");
+        n.id = "rrNotice";
+        n.className = "rr-notice";
+        host.insertBefore(n, host.firstChild);
+    }
+    n.textContent = text;
+}
+
+function rrExit() {
+    const run = RR.run;
+    const letter = run ? run.letter : letterRaceGame.letter;
+    rrTeardown();
+    rrBackToStages(letter, "");
+}
+
+/* ---------- الجولات ---------- */
+
+function rrRenderHeader(run) {
+    $("rrLetter").textContent = run.letter;
+    $("rrStageName").textContent = run.stage.icon + " " + run.stage.title;
+    $("rrTotal").textContent = arabicNumber(run.rounds.length);
+    $("rrRound").textContent = arabicNumber(Math.max(1, Math.min(run.idx + 1, run.rounds.length)));
+    $("rrStars").textContent = arabicNumber(typeof stars !== "undefined" ? stars : 0);
+    $("rrDots").innerHTML = run.rounds.map((r, i) => `<span class="rr-dot ${i === run.idx ? "cur" : (i < run.idx ? "done" : "")}"></span>`).join("");
+    $("rrLvl").textContent = run.stage.id === "mastery" ? "اختبار بلا مساعدة" : (run.lvl >= 2 ? "🧩 مع مثال وتلميحات" : (run.lvl === 1 ? "🧩 تلميحات عند الحاجة" : "⭐ بلا مساعدة"));
+    $("rrDemoBtn").style.display = run.demo ? "" : "none";
+}
+
+function rrRenderWord(container, word, letter, position, occ) {
+    container.textContent = "";
+    const index = (typeof occ === "number" && occ >= 0) ? occ : word.indexOf(letter);
+    if (index < 0) { container.textContent = word; return; }
+    let before = word.slice(0, index);
+    let after = word.slice(index + 1);
+    if ((position === "medial" || position === "final") && before) before += RACE_TATWEEL;
+    if ((position === "medial" || position === "initial") && after) after = RACE_TATWEEL + after;
+    const a = document.createElement("span"); a.textContent = before; container.appendChild(a);
+    const b = document.createElement("span"); b.className = "rr-blank"; b.id = container.id === "rrDemoTarget" ? "rrDemoBlank" : "rrBlank"; container.appendChild(b);
+    const c = document.createElement("span"); c.textContent = after; container.appendChild(c);
+}
+
+function rrRenderTarget(round, t, withLabels) {
+    t.textContent = "";
+    t.className = "rr-target";
+    let badge = "", sub = "";
+    if (round.kind === "hear") { badge = "🎧 اسمع الحرف"; sub = "اسمع الصوت ثم اختر شكل الحرف"; t.textContent = "🔊"; t.classList.add("rr-icon"); }
+    else if (round.kind === "see") { badge = "👀 انظر"; sub = "اختر الشكل المطابق"; t.textContent = round.correctShape; }
+    else { badge = "🔎 أكمل الكلمة"; sub = RACE_POSITION_TITLES[round.position] || ""; rrRenderWord(t, round.word, round.letter, round.position, round.occ); }
+    if (withLabels) { $("rrBadge").textContent = badge; $("rrSub").textContent = sub; }
+}
+
+function rrFillTarget(round, t) {
+    if (round.kind === "word" && round.word) t.textContent = round.word;
+    else t.textContent = round.correctShape;
+    t.classList.remove("rr-icon");
+    t.classList.add("rr-filled");
+}
+
+function rrSayPrompt(round) {
+    if (round.kind === "word" && round.word && EduAudio.has(round.word)) EduAudio.play(round.word, { mode: "interrupt" });
+    else EduAudio.play(letterWithFatha(round.letter), { mode: "interrupt" });
+}
+
+function rrSignEls() { return Array.prototype.slice.call(document.querySelectorAll("#rrSigns .rr-sign")); }
+
+function rrRenderSigns(round) {
+    const box = $("rrSigns");
+    box.textContent = "";
+    round.options.forEach((shape, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "rr-sign";
+        b.setAttribute("data-i", String(i));
+        b.setAttribute("aria-label", "لافتة الشكل " + shape);
+        const face = document.createElement("span"); face.className = "rr-face"; face.textContent = shape;
+        const post = document.createElement("span"); post.className = "rr-post";
+        b.appendChild(face); b.appendChild(post);
+        b.addEventListener("click", rrSafe(() => {
+            const run = RR.run;
+            if (!run || run.locked) return;
+            rrSelect(run, i, false);
+            rrSubmit(i);
+        }));
+        box.appendChild(b);
+    });
+}
+
+function rrCarTo(run, lane) {
+    const car = $("rrCar");
+    const n = Math.max(1, run.cur ? run.cur.options.length : 1);
+    car.style.left = (((lane + 0.5) / n) * 100) + "%";
+}
+
+function rrSelect(run, lane, focus) {
+    run.selected = lane;
+    rrSignEls().forEach((el, i) => el.classList.toggle("sel", i === lane));
+    rrCarTo(run, lane);
+    if (focus) { const el = rrSignEls()[lane]; if (el) { try { el.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ } } }
+}
+
+function rrMoveSel(dir) {
+    const run = RR.run;
+    if (!run || run.locked || !run.cur) return;
+    const els = rrSignEls();
+    let lane = run.selected + dir;
+    while (lane >= 0 && lane < els.length && els[lane].classList.contains("dim")) lane += dir;
+    if (lane < 0 || lane >= els.length) return;
+    rrSelect(run, lane, true);
+}
+
+function rrNextRound(run) {
+    if (run.dead || RR.run !== run) return;
+    run.idx++;
+    if (run.idx >= run.rounds.length) { rrFinish(run); return; }
+    const round = run.rounds[run.idx];
+    run.cur = round;
+    rrRenderHeader(run);
+    rrRenderTarget(round, $("rrTarget"), true);
+    rrRenderSigns(round);
+    $("rrMsg").textContent = "";
+    rrSelect(run, Math.min(1, round.options.length - 1), false);
+    run.ready = true;
+    run.locked = false;
+    rrSayPrompt(round);
+}
+
+/* ---------- الإجابة: بوابة واحدة لا تُحتسب فيها الجولة مرتين ---------- */
+
+/* الدالة الوحيدة التي تُضيف نجمة عامة في المحرك الجديد */
+function rrAwardRound(run, idx) {
+    if (rrOwner !== "new" || !run || run.dead || RR.run !== run) return false;
+    const key = run.id + ":" + idx;
+    if (rrSettled.has(key)) return false;
+    rrSettled.add(key);
+    run.awarded++;
+    if (typeof addStars === "function") addStars(1);
+    return true;
+}
+
+function rrSubmit(index) {
+    const run = RR.run;
+    if (!run || run.dead || run.locked || run.demoing || !run.cur) return;
+    const els = rrSignEls();
+    const el = els[index];
+    if (!el || el.classList.contains("dim")) return;
+    run.locked = true;                       /* قفل متزامن: نقرة + Enter معًا تُحسب مرة واحدة */
+    rrSelect(run, index, false);
+    const round = run.cur;
+    if (round.options[index] === round.correctShape) rrCorrect(run, round, el);
+    else rrWrong(run, round, el);
+}
+
+function rrCorrect(run, round, el) {
+    el.classList.remove("sel");
+    el.classList.add("right");
+    const first = round.wrong === 0 && !round.helped;     /* القاعدة القديمة: بلا خطأ؛ والمثال المطلوب أثناء الجولة لا يمنح نجمة */
+    round.firstTry = first;
+    if (first) {
+        run.firstTry++;
+        if (run.lvl === 0 && !run.assisted) { run.indCount++; round.ind = true; }
+        rrAwardRound(run, run.idx);
+    }
+    rrFillTarget(round, $("rrTarget"));
+    const phrase = RACE_SUCCESS_PHRASES[(run.idx + run.stageIdx) % RACE_SUCCESS_PHRASES.length];
+    $("rrMsg").textContent = "🎉 " + phrase;
+    rrRenderHeader(run);
+    rrSay(phrase, function () { rrLater(function () { rrNextRound(run); }, RR.motion ? 700 : 450); }, 4000);
+}
+
+function rrWrong(run, round, el) {
+    round.wrong++;
+    el.classList.remove("sel");
+    el.classList.add("wrong", "dim");
+    $("rrMsg").textContent = "😊 حاول مرة أخرى";
+    const remaining = rrSignEls().filter(x => !x.classList.contains("dim"));
+    /* التلميح المتدرّج: بعد أول خطأ تخفّت الخاطئة وتُعاد الكلمة/الصوت (للمستويين ١ و٢)،
+       وبعد الثاني (أو حين تبقى لافتة واحدة) تُضاء الصحيحة */
+    const showHint = round.wrong >= 2 || remaining.length === 1;
+    if (showHint && !round.hinted) {
+        round.hinted = true;
+        const right = rrSignEls().filter(x => x.classList.contains("dim") === false && x.querySelector(".rr-face").textContent === round.correctShape)[0];
+        if (right) right.classList.add("hint");
+    }
+    const replay = showHint || run.lvl >= 1;
+    rrSay("حاول مرة أخرى", function () { if (replay && RR.run === run && !run.demoing) rrSayPrompt(round); }, 3000);
+    rrLater(function () {
+        el.classList.remove("wrong");
+        const els = rrSignEls();
+        let lane = -1;
+        els.forEach((x, i) => { if (lane < 0 && !x.classList.contains("dim")) lane = i; });
+        if (lane >= 0) rrSelect(run, lane, false);
+        run.locked = false;
+    }, 700);
+}
+
+/* ---------- المثال النموذجي ---------- */
+
+function rrPlayDemo(run, after) {
+    const d = run.demo;
+    if (!d) { after(); return; }
+    run.demoing = true;
+    run.locked = true;
+    run.demoAfter = after;
+    const panel = $("rrDemo");
+    panel.classList.add("on");
+    $("rrDemoMsg").textContent = "👀 شاهد هذا المثال";
+    rrRenderTarget(d, $("rrDemoTarget"), false);
+    const ds = $("rrDemoSigns");
+    ds.textContent = "";
+    d.options.forEach(shape => { const m = document.createElement("div"); m.className = "rr-mini"; m.textContent = shape; m.setAttribute("data-s", shape); ds.appendChild(m); });
+    rrSayPrompt(d);
+    rrLater(function () {
+        if (!run.demoing) return;
+        const m = Array.prototype.slice.call(ds.children).filter(x => x.getAttribute("data-s") === d.correctShape)[0];
+        if (m) m.classList.add("hint");
+        $("rrDemoMsg").textContent = "هذه هي الإجابة الصحيحة";
+    }, 1700);
+    rrLater(function () {
+        if (!run.demoing) return;
+        const m = ds.querySelector(".hint");
+        if (m) { m.classList.remove("hint"); m.classList.add("right"); }
+        rrFillTarget(d, $("rrDemoTarget"));
+        EduAudio.play("صحيح", { mode: "interrupt" });
+    }, 3200);
+    rrLater(function () { rrDemoFinish(); }, 5000);
+}
+
+function rrDemoFinish() {
+    const run = RR.run;
+    if (!run || !run.demoing) return;
+    run.demoing = false;
+    $("rrDemo").classList.remove("on");
+    const after = run.demoAfter;
+    run.demoAfter = null;
+    if (after) after();
+}
+
+/* زر «شاهد مثالًا» أثناء الجولة: الجولة التي استُعين فيها بالمثال لا تمنح نجمة ولا تُعدّ من أول مرة */
+function rrDemoRequested() {
+    const run = RR.run;
+    if (!run || run.dead || run.locked || run.demoing || !run.cur || !run.demo) return;
+    run.cur.helped = true;
+    run.assisted = true;
+    rrPlayDemo(run, function () {
+        if (RR.run !== run) return;
+        run.locked = false;
+        $("rrMsg").textContent = "هيا جرّب أنت";
+        rrSayPrompt(run.cur);
+    });
+}
+
+/* ---------- التحكم: لوحة المفاتيح والسحب ---------- */
+
+function rrKey(ev) {
+    const run = RR.run;
+    if (!run || !rrScreenActive()) return;
+    const k = ev.key;
+    if (k === "ArrowRight") { rrMoveSel(1); ev.preventDefault(); }
+    else if (k === "ArrowLeft") { rrMoveSel(-1); ev.preventDefault(); }
+    else if (k === "Enter" || k === " ") {
+        /* إن كان التركيز على زر فنقرته الأصلية تتولى الأمر (لا إدخال مزدوج) */
+        const a = document.activeElement;
+        if (a && a.tagName === "BUTTON" && $(RR_SCREEN).contains(a)) return;
+        rrSubmit(run.selected);
+        ev.preventDefault();
+    }
+}
+
+function rrLaneFromX(run, clientX) {
+    const road = $("rrSigns").getBoundingClientRect();
+    const n = Math.max(1, run.cur ? run.cur.options.length : 1);
+    const x = Math.min(Math.max(clientX - road.left, 0), Math.max(1, road.width) - 1);
+    return Math.min(n - 1, Math.floor((x / road.width) * n));
+}
+
+function rrDragStart(ev) {
+    const run = RR.run;
+    if (!run || run.locked || !run.cur) return;
+    RR.drag = { id: ev.pointerId };
+    try { $("rrCar").setPointerCapture(ev.pointerId); } catch (e) { /* لا شيء */ }
+    document.addEventListener("pointermove", rrDragMove);
+    document.addEventListener("pointerup", rrDragEnd);
+    document.addEventListener("pointercancel", rrDragEnd);
+    ev.preventDefault();
+}
+
+function rrDragMove(ev) {
+    const run = RR.run;
+    if (!RR.drag || !run || run.locked) return;
+    const lane = rrLaneFromX(run, ev.clientX);
+    const els = rrSignEls();
+    if (els[lane] && !els[lane].classList.contains("dim")) rrSelect(run, lane, false);
+}
+
+/* السحب يختار اللافتة فقط؛ الإجابة تُسجَّل بزر «انطلق» أو بنقر اللافتة */
+function rrDragEnd() {
+    if (!RR.drag) return;
+    RR.drag = null;
+    document.removeEventListener("pointermove", rrDragMove);
+    document.removeEventListener("pointerup", rrDragEnd);
+    document.removeEventListener("pointercancel", rrDragEnd);
+}
+
+/* ---------- نهاية المرحلة (نفس قواعد القديم + حقول إضافية منفصلة) ---------- */
+
+function rrFinish(run) {
+    if (run.finished) return;
+    const stage = run.stage;
+    const total = run.rounds.length;
+    const ft = run.firstTry;
+    const isMastery = stage.id === "mastery";
+    const p = raceLoadProgress();
+    const entry = raceLetterEntry(p, run.letter);
+    const rec = entry.stages[stage.id] || { done: false, stars: 0, plays: 0 };
+    rec.plays = (rec.plays || 0) + 1;
+
+    let passed = true, starsEarned;
+    if (isMastery) {
+        entry.mastery.attempts = (entry.mastery.attempts || 0) + 1;
+        entry.mastery.best = Math.max(entry.mastery.best || 0, ft);
+        passed = ft >= RACE_MASTERY_PASS;
+        starsEarned = passed ? (ft >= total ? 3 : 2) : 0;
+        if (passed) {
+            entry.mastery.passed = true;
+            entry.mastery.stars = Math.max(entry.mastery.stars || 0, starsEarned);
+            rec.done = true;
+            rec.stars = entry.mastery.stars;
+        }
+        /* الإتقان المستقل منفصل عن النجاح: سجلات هذا المحرك فقط */
+        entry.mastery.ind = Math.max(entry.mastery.ind || 0, run.indCount);
+        if (run.indCount >= RACE_MASTERY_PASS) entry.mastery.indPassed = true;
+    } else {
+        starsEarned = raceStageStars(total, ft);
+        rec.done = true;
+        rec.stars = Math.max(rec.stars || 0, starsEarned);
+    }
+    rec.lvl = run.lvl;
+    rec.ft = ft;
+    rec.ind = Math.max(rec.ind || 0, run.indCount);
+    entry.stages[stage.id] = rec;
+    p.lastLetter = run.letter;
+    raceSaveProgress(p);
+    run.finished = true;
+    run.locked = true;
+
+    rrRenderHeader(run);
+    const lastStage = run.stageIdx >= run.stages.length - 1;
+    const title = $("rrResTitle"), body = $("rrResBody"), next = $("rrResNext"), map = $("rrResMap");
+    let phrase = "أحسنت! أكملت المستوى بنجاح";
+    map.style.display = "";
+    map.textContent = "🗺️ مراحل الحرف";
+    map.onclick = rrSafe(() => rrExit());
+    if (isMastery && passed) {
+        title.textContent = "🏅 أتقنتَ حرف " + run.letter + "!";
+        body.textContent = "أجبتَ " + arabicNumber(ft) + " من " + arabicNumber(total) + " من أول مرة" + (run.indCount >= RACE_MASTERY_PASS ? " — وبلا أي مساعدة" : "");
+        next.textContent = "🗺️ اختر حرفًا آخر";
+        next.onclick = rrSafe(() => { rrTeardown(); showScreen("letterRaceMap"); renderRaceMap(); });
+        map.style.display = "none";
+        phrase = "أحسنت! أتممت هذا الحرف بنجاح";
+    } else if (isMastery) {
+        title.textContent = "💪 قريب جدًا!";
+        body.textContent = "أجبتَ " + arabicNumber(ft) + " من " + arabicNumber(total) + " من أول مرة. نتدرّب قليلًا ثم نحاول مرة أخرى";
+        next.textContent = "🔁 أعد الاختبار";
+        next.onclick = rrSafe(() => startRaceStage(run.letter, run.stageIdx));
+        phrase = "محاولة رائعة، لنحاول مرة أخرى";
+    } else {
+        title.textContent = "🌟 أحسنت! أكملت المرحلة";
+        body.textContent = stage.title + " — " + arabicNumber(ft) + " من " + arabicNumber(total) + " من أول مرة";
+        if (lastStage) {
+            next.textContent = "🔁 العب المرحلة مرة أخرى";
+            next.onclick = rrSafe(() => startRaceStage(run.letter, run.stageIdx));
+        } else {
+            next.textContent = "▶ المرحلة التالية";
+            next.onclick = rrSafe(() => startRaceStage(run.letter, run.stageIdx + 1));
+        }
+    }
+    $("rrResStars").textContent = (isMastery && !passed) ? "" : raceStarsText(starsEarned);
+    $("rrResult").classList.add("on");
+    rrSay(phrase);
+}
+
+/* ---------- تجهيز الصوت دون اتصال (اختياري، بطلب من المستخدم) ---------- */
+
+function rrAudioPathsFor(letter) {
+    const texts = [letterWithFatha(letter)];
+    ["isolated", "initial", "medial", "final"].forEach(pos => raceValidWords(letter, pos).forEach(w => { if (texts.indexOf(w) < 0) texts.push(w); }));
+    RR_PHRASES.forEach(t => texts.push(t));
+    const paths = [];
+    texts.forEach(t => { const r = EduAudio.resolve(t); if (r) r.forEach(x => { if (paths.indexOf(x) < 0) paths.push(x); }); });
+    return paths;
+}
+
+/* fetch بقراءة الجسم كاملًا (استجابة ٢٠٠) فيخزّنها Service Worker الحالي؛ لا تعديل عليه.
+   لم يُختبر هذا على iOS/Safari ولا يُعدّ مدعومًا هناك قبل التجربة */
+function rrPrepareOffline(letter, statusEl) {
+    const paths = rrAudioPathsFor(letter);
+    let ok = 0, fail = 0, i = 0;
+    const show = () => { if (statusEl) statusEl.textContent = "جُهِّز " + arabicNumber(ok) + " من " + arabicNumber(paths.length) + (fail ? " — تعذّر " + arabicNumber(fail) : ""); };
+    show();
+    const worker = () => {
+        if (i >= paths.length) return Promise.resolve();
+        const p = paths[i++];
+        return fetch(p).then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error("http"))).then(() => { ok++; }, () => { fail++; }).then(() => { show(); return worker(); });
+    };
+    return Promise.all([worker(), worker(), worker()]).then(() => ({ ok: ok, fail: fail, total: paths.length }));
+}
+
+function rrDecorateStageView() {
+    try {
+        const list = $("raceStageList");
+        if (!list || !list.parentNode) return;
+        let wrap = $("rrPrep");
+        if (!wrap) {
+            wrap = document.createElement("div");
+            wrap.id = "rrPrep";
+            wrap.className = "rr-prep";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.id = "rrPrepBtn";
+            btn.textContent = "📥 جهّز صوت هذا الحرف دون اتصال";
+            const st = document.createElement("small");
+            st.id = "rrPrepStatus";
+            btn.addEventListener("click", function () {
+                btn.disabled = true;
+                rrPrepareOffline(letterRaceGame.letter, st).then(function () { btn.disabled = false; }, function () { btn.disabled = false; });
+            });
+            wrap.appendChild(btn);
+            wrap.appendChild(st);
+            list.parentNode.insertBefore(wrap, list.nextSibling);
+        }
+        const st2 = $("rrPrepStatus");
+        if (st2) st2.textContent = "";
+    } catch (e) { /* ميزة اختيارية: لا تُعطّل قائمة المراحل */ }
 }
 
 /* =========================================================
