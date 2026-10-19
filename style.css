@@ -15487,3 +15487,57 @@ body.calm-mode .ltr-activity-menu {
 .ltr-hide-slot { border-color:#ef6c00; background:#fff3e0; }
 .ltr-slot-static { cursor:default; border-style:solid; border-color:#90caf9; background:#e3f2fd; }
 @media (max-width:420px) { .ltr-sort-bins { gap:5px; } .ltr-seq { gap:5px; } }
+
+/* =========================================================
+   المرحلة ٥: التتبّع الموجّه + رحلة الحرف
+========================================================= */
+.ltr-tw { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.ltr-tw-box { position:relative; width:min(92vw, 380px); aspect-ratio:4 / 3; background:#fff; border-radius:20px; box-shadow:0 4px 14px rgba(0,0,0,.12); overflow:hidden; touch-action:none; border:3px solid #bbdefb; }
+.ltr-tw-box.done { border-color:#43a047; }
+.ltr-tw-canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:crosshair; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.ltr-tw-status { min-height:30px; font-size:clamp(16px,4.4vw,19px); font-weight:700; color:#37474f; text-align:center; padding:0 8px; }
+.ltr-tw-btns, .ltr-tw-alts { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:4px; }
+.ltr-tw-btns { width:100%; }
+.ltr-tw-alts { width:100%; }
+.ltr-tw-btns button, .ltr-tw-alts button { flex:1 1 30%; min-height:52px; min-width:0; padding:8px 6px; font-size:clamp(16px,4.4vw,19px); border-radius:16px; }
+.ltr-tw-alts { margin-top:14px; padding-top:12px; border-top:2px dashed #cfd8dc; }
+.ltr-tw-alt.on { background:#e3f2fd; border-color:#1976d2; color:#0d47a1; }
+.ltr-tw-alt.hinted { box-shadow:0 0 0 6px rgba(46,125,50,.35); border-color:#2e7d32; }
+.ltr-tw-word { display:flex; align-items:center; justify-content:center; gap:12px; margin:6px 0 10px; flex-wrap:wrap; }
+.ltr-tw-word-pic .ltr-art { width:64px; height:64px; }
+.ltr-tw-word-text { font-size:clamp(34px,9vw,48px); font-weight:800; color:#37474f; }
+.ltr-tw-word-text .ltr-hit { color:#d84315; }
+.ltr-tw-word-replay { min-width:52px; min-height:52px; font-size:24px; border-radius:50%; }
+.ltr-tw-sub { text-align:center; font-size:17px; font-weight:700; color:#546e7a; margin-bottom:8px; }
+
+.ltr-pc, .ltr-so { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.ltr-pc-target { font-size:clamp(76px,24vw,120px); line-height:1.25; font-weight:800; color:#1565c0; direction:rtl; }
+.ltr-pc-sub { font-size:16px; font-weight:700; color:#78909c; margin-top:-8px; }
+.ltr-so-target { font-size:clamp(58px,18vw,90px); }
+.ltr-pc-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; width:100%; }
+.ltr-pathcard { padding:8px; min-height:0; width:clamp(118px,28vw,170px); display:flex; align-items:center; justify-content:center; }
+.ltr-pathcard canvas { width:100%; aspect-ratio:4 / 3; display:block; pointer-events:none; }
+.ltr-stepcard { padding:6px; min-width:0; flex:1 1 0; width:auto; max-width:130px; min-height:0; }
+.ltr-stepcard canvas { width:100%; aspect-ratio:4 / 3; display:block; pointer-events:none; }
+.ltr-stepslot { flex:1 1 0; width:auto; max-width:130px; min-width:0; min-height:0; padding:6px; }
+.ltr-stepslot canvas { width:100%; aspect-ratio:4 / 3; display:block; pointer-events:none; }
+.ltr-so-slots { flex-wrap:nowrap; width:100%; }
+.ltr-so-tray { width:100%; flex-wrap:nowrap; }
+.ltr-so { width:100%; }
+
+.ltr-journey-map { display:flex; justify-content:center; gap:8px; flex-wrap:nowrap; margin:6px 0 12px; }
+.ltr-station { flex:1 1 0; max-width:96px; min-height:84px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:6px 4px; border:3px solid #b0bec5; border-radius:16px; background:#fff; color:#37474f; font:inherit; cursor:pointer; touch-action:manipulation; }
+.ltr-station small { font-size:12px; font-weight:700; color:#607d8b; line-height:1.2; }
+.ltr-station-glyph { font-size:clamp(28px,8vw,40px); font-weight:800; line-height:1.2; direction:rtl; }
+.ltr-station-flag { font-size:16px; }
+.ltr-station.current { border-color:#1976d2; background:#e3f2fd; box-shadow:0 0 0 4px rgba(25,118,210,.25); }
+.ltr-station.done { border-color:#43a047; background:#e8f5e9; }
+@media (max-width:420px) { .ltr-journey-map { gap:5px; } .ltr-station small { font-size:11px; } }
+
+body.dark-mode .ltr-tw-box { background:#232946; border-color:#3f51b5; }
+body.dark-mode .ltr-tw-status, body.dark-mode .ltr-tw-word-text, body.dark-mode .ltr-tw-sub { color:#e8eaf6; }
+body.dark-mode .ltr-pc-target { color:#90caf9; }
+body.dark-mode .ltr-station { background:#232946; border-color:#546e7a; color:#e8eaf6; }
+body.dark-mode .ltr-station.current { background:#1a237e; }
+body.dark-mode .ltr-station.done { background:#1b5e20; }
+body.dark-mode .ltr-pathcard canvas, body.dark-mode .ltr-stepcard canvas { background:#fff; border-radius:10px; }

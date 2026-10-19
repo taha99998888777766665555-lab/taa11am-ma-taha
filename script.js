@@ -24099,7 +24099,7 @@ const LTR_STAGE_IDS = [
     "listen", "auditory-discrimination", "sound-box", "sound-to-letter", "syllable-build",
     "visual-discrimination", "dots-detective", "link-to-picture", "letter-house", "word-build",
     "hidden-letter", "discover-in-word", "position-train", "pattern-complete",
-    "shape-by-position", "trace-write", "review"
+    "shape-by-position", "letter-steps", "letter-journey", "trace-write", "review"
 ];
 
 /* المراحل التسع الأصلية (قبل المرحلة ٢) — تُستعمل فقط لاستنتاج تقدّم الطلاب القدامى */
@@ -24124,11 +24124,13 @@ const LTR_STAGE_META = {
     "position-train":         { name: "قطار المواقع",   icon: "🚂" },
     "discover-in-word":       { name: "داخل الكلمات",   icon: "📖" },
     "shape-by-position":      { name: "أشكال الحرف",    icon: "🧩" },
+    "letter-steps":           { name: "خطوات الحرف",    icon: "👣" },
+    "letter-journey":         { name: "رحلة الحرف",     icon: "🧭" },
     "trace-write":            { name: "أتتبّع وأكتب",   icon: "✏️" },
     "review":                 { name: "مراجعة",         icon: "⭐" }
 };
 
-const LTR_ART_FILES = new Set(["1f501", "1f575", "1f648", "1f3b5", "1f9f1", "1f33d", "1f4fa", "1f682", "1f99d", "1f309", "1f30c", "1f311", "1f313", "1f319", "1f31f", "1f333", "1f334", "1f335", "1f338", "1f339", "1f347", "1f348", "1f349", "1f34a", "1f34b", "1f34c", "1f34d", "1f34e", "1f351", "1f352", "1f353", "1f35e", "1f36f", "1f374", "1f37d", "1f380", "1f381", "1f382", "1f392", "1f3a7", "1f3c6", "1f3ca", "1f3d6", "1f3e0", "1f3eb", "1f3ee", "1f3f0", "1f404", "1f40a", "1f40d", "1f40e", "1f411", "1f412", "1f413", "1f414", "1f418", "1f419", "1f41d", "1f41f", "1f426", "1f426-200d-2b1b", "1f42a", "1f42c", "1f42d", "1f42f", "1f430", "1f433", "1f436", "1f438", "1f43a", "1f43b", "1f441", "1f442", "1f445", "1f451", "1f455", "1f457", "1f45e", "1f466", "1f467", "1f468-200d-1f373", "1f468-200d-2695-fe0f", "1f469", "1f46e-200d-2642-fe0f", "1f476", "1f485", "1f487", "1f4a1", "1f4aa", "1f4d3", "1f4d6", "1f4d8", "1f4e6", "1f4ef", "1f4f1", "1f50d", "1f511", "1f514", "1f519", "1f524", "1f53a", "1f54c", "1f56f", "1f5bc", "1f5e3", "1f5fa", "1f60a", "1f680", "1f697", "1f6a2", "1f6a9", "1f6aa", "1f6b2", "1f6cb", "1f6cf", "1f6e5", "1f947", "1f952", "1f955", "1f95b", "1f969", "1f96c", "1f981", "1f985", "1f986", "1f98a", "1f98b", "1f98c", "1f98d", "1f992", "1f99a", "1f9a4", "1f9b7", "1f9c0", "1f9c3", "1f9c4", "1f9ca", "1f9cd", "1f9e4", "1f9e9", "1f9f8", "1f9fa", "1fa80", "1fa91", "1fa9f", "1fab0", "1fab6", "1fad0", "1fad2", "23f0", "2600", "2601", "26bd", "26f0", "26fa", "2702", "2708", "2709", "270b", "270f", "2744", "2764", "2b50"]);
+const LTR_ART_FILES = new Set(["1f463", "1f9ed", "1f501", "1f575", "1f648", "1f3b5", "1f9f1", "1f33d", "1f4fa", "1f682", "1f99d", "1f309", "1f30c", "1f311", "1f313", "1f319", "1f31f", "1f333", "1f334", "1f335", "1f338", "1f339", "1f347", "1f348", "1f349", "1f34a", "1f34b", "1f34c", "1f34d", "1f34e", "1f351", "1f352", "1f353", "1f35e", "1f36f", "1f374", "1f37d", "1f380", "1f381", "1f382", "1f392", "1f3a7", "1f3c6", "1f3ca", "1f3d6", "1f3e0", "1f3eb", "1f3ee", "1f3f0", "1f404", "1f40a", "1f40d", "1f40e", "1f411", "1f412", "1f413", "1f414", "1f418", "1f419", "1f41d", "1f41f", "1f426", "1f426-200d-2b1b", "1f42a", "1f42c", "1f42d", "1f42f", "1f430", "1f433", "1f436", "1f438", "1f43a", "1f43b", "1f441", "1f442", "1f445", "1f451", "1f455", "1f457", "1f45e", "1f466", "1f467", "1f468-200d-1f373", "1f468-200d-2695-fe0f", "1f469", "1f46e-200d-2642-fe0f", "1f476", "1f485", "1f487", "1f4a1", "1f4aa", "1f4d3", "1f4d6", "1f4d8", "1f4e6", "1f4ef", "1f4f1", "1f50d", "1f511", "1f514", "1f519", "1f524", "1f53a", "1f54c", "1f56f", "1f5bc", "1f5e3", "1f5fa", "1f60a", "1f680", "1f697", "1f6a2", "1f6a9", "1f6aa", "1f6b2", "1f6cb", "1f6cf", "1f6e5", "1f947", "1f952", "1f955", "1f95b", "1f969", "1f96c", "1f981", "1f985", "1f986", "1f98a", "1f98b", "1f98c", "1f98d", "1f992", "1f99a", "1f9a4", "1f9b7", "1f9c0", "1f9c3", "1f9c4", "1f9ca", "1f9cd", "1f9e4", "1f9e9", "1f9f8", "1f9fa", "1fa80", "1fa91", "1fa9f", "1fab0", "1fab6", "1fad0", "1fad2", "23f0", "2600", "2601", "26bd", "26f0", "26fa", "2702", "2708", "2709", "270b", "270f", "2744", "2764", "2b50"]);
 
 function ltrArtFallback(img) {
     if (!img || !img.parentNode) return;
@@ -25268,33 +25270,6 @@ function ltrSetupTraceCanvas(canvas) {
    9️⃣ التتبع والكتابة
 ========================================================= */
 
-function activityTracing(stage, letterChar) {
-    stage.innerHTML = `
-        <div class="ltr-instruction-line">تتبّع شكل الحرف بإصبعك ✍️</div>
-        <div class="ltr-trace-wrapper">
-            <div class="ltr-trace-canvas-box">
-                <div class="ltr-trace-guide">${letterWithFatha(letterChar)}</div>
-                <canvas class="ltr-trace-canvas" id="ltrTraceCanvas"></canvas>
-            </div>
-            <div>
-                <button class="secondary" type="button" id="ltrTraceClearBtn">🧹 مسح</button>
-                <button class="primary" type="button" id="ltrTraceDoneBtn">✅ تم</button>
-            </div>
-        </div>
-    `;
-
-    const canvas = stage.querySelector("#ltrTraceCanvas");
-    const controls = ltrSetupTraceCanvas(canvas);
-
-    stage.querySelector("#ltrTraceClearBtn").onclick = () => controls.clear();
-
-    const traceDoneBtn = stage.querySelector("#ltrTraceDoneBtn");
-    traceDoneBtn.onclick = () => {
-        if (traceDoneBtn.disabled) return;
-        traceDoneBtn.disabled = true;
-        finishLtrChoiceTask(true, null);
-    };
-}
 
 /* =========================================================
    🔟 المراجعة: مزيج عشوائي من الأنشطة السابقة
@@ -26139,38 +26114,6 @@ function activityPictureToWordSound(stage, letterChar) {
    من كل حرف في الكتاب — ديك/دب لحرف الدال مثلًا)
 ========================================================= */
 
-function activityTraceInWord(stage, letterChar) {
-    const item = pickRandomSoundWord(letterChar);
-
-    stage.innerHTML = `
-        <div class="ltr-instruction-line">تتبّع الحرف ${letterWithFatha(letterChar)} داخل هذه الكلمة ✍️</div>
-        <div class="ltr-trace-wrapper">
-            <div class="ltr-display-emoji">${ltrArt(item.image)}</div>
-            <div class="ltr-trace-canvas-box">
-                <div class="ltr-trace-guide" style="font-size:clamp(60px,14vw,120px);">${item.word}</div>
-                <canvas class="ltr-trace-canvas" id="ltrTraceWordCanvas"></canvas>
-            </div>
-            <div>
-                <button class="secondary" type="button" id="ltrTraceWordClearBtn">🧹 مسح</button>
-                <button class="primary" type="button" id="ltrTraceWordDoneBtn">✅ تم</button>
-            </div>
-        </div>
-    `;
-
-    const canvas = stage.querySelector("#ltrTraceWordCanvas");
-    const controls = ltrSetupTraceCanvas(canvas);
-
-    stage.querySelector("#ltrTraceWordClearBtn").onclick = () => controls.clear();
-
-    const traceWordDoneBtn = stage.querySelector("#ltrTraceWordDoneBtn");
-    traceWordDoneBtn.onclick = () => {
-        if (traceWordDoneBtn.disabled) return;
-        traceWordDoneBtn.disabled = true;
-        finishLtrChoiceTask(true, null);
-    };
-
-    speakEducational(item.word, { rate: 0.75 });
-}
 
 /* =========================================================================
    📋 سجل المراحل التسع — كل مرحلة تحوي عدة أنشطة بديلة (بنك غني)
@@ -27716,6 +27659,1144 @@ function activityHiddenLetter(stage, letterChar, difficulty) {
     setTimeout(() => { if (alive()) speakEducational(word, { rate: 0.78 }); }, 300);
 }
 
+/* =========================================================
+   ✍️🗺️ المرحلة ٥: التتبّع الموجّه + رحلة الحرف
+   • مسار التتبّع لا يُكتب يدويًا: يُستخرج من رسم الحرف نفسه (بالخط الظاهر على الجهاز)
+     بحسب شكله في الموضع (منفصل/أول/وسط/آخر)، فلا يمكن أن يختلف الشكل المُتتبَّع
+     عن الشكل المعروض. الهيكل العظمي للحرف ⇒ نقاط تفتيش، والنقاط/الهمزة ⇒ أهداف لمس.
+   • القبول يعتمد على التغطية (هل مررتَ على الحرف) والدقة (هل بقيتَ قريبًا منه)،
+     بلا أي مؤقّت أو عقوبة، ويمكن الإعادة بلا حدود.
+   • بديلان لمن لا يستطيع التتبّع الدقيق: «اختر المسار» و«رتّب الخطوات».
+   • كل شيء مفتوح دون أقفال، والمكافأة مرة واحدة لكل نشاط (finishLtrChoiceTask).
+========================================================= */
+
+const LTR_GM_W = 240;
+const LTR_GM_H = 180;
+const LTR_GM_FONT = '"Tahoma","Arial","Traditional Arabic","Noto Naskh Arabic","DejaVu Sans",sans-serif';
+const LTR_FORM_NAMES = { isolated: "منفصل", initial: "أول الكلمة", medial: "وسط الكلمة", final: "آخر الكلمة" };
+const ltrGlyphCache = new Map();
+
+function ltrFormsAvailable(letter) {
+    const f = ltrCharForms(letter);
+    if (!f) return [];
+    return ["isolated", "initial", "medial", "final"].filter(k => f[k]);
+}
+
+/* نص يُشكَّل بحسب الموضع بواسطة محرك الخط نفسه (ZWJ) — هو المرجع الذي يُرسم ويُتتبَّع */
+function ltrShapedText(letter, form) {
+    if (form === "initial") return letter + "‍";
+    if (form === "medial") return "‍" + letter + "‍";
+    if (form === "final") return "‍" + letter;
+    return letter;
+}
+
+function ltrChamfer(src, W, H) {
+    const N = W * H, d = new Float32Array(N), INF = 1e9;
+    for (let i = 0; i < N; i++) d[i] = src[i] ? 0 : INF;
+    for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+            const i = y * W + x;
+            let v = d[i];
+            if (x > 0 && d[i - 1] + 3 < v) v = d[i - 1] + 3;
+            if (y > 0) {
+                if (d[i - W] + 3 < v) v = d[i - W] + 3;
+                if (x > 0 && d[i - W - 1] + 4 < v) v = d[i - W - 1] + 4;
+                if (x < W - 1 && d[i - W + 1] + 4 < v) v = d[i - W + 1] + 4;
+            }
+            d[i] = v;
+        }
+    }
+    for (let y = H - 1; y >= 0; y--) {
+        for (let x = W - 1; x >= 0; x--) {
+            const i = y * W + x;
+            let v = d[i];
+            if (x < W - 1 && d[i + 1] + 3 < v) v = d[i + 1] + 3;
+            if (y < H - 1) {
+                if (d[i + W] + 3 < v) v = d[i + W] + 3;
+                if (x < W - 1 && d[i + W + 1] + 4 < v) v = d[i + W + 1] + 4;
+                if (x > 0 && d[i + W - 1] + 4 < v) v = d[i + W - 1] + 4;
+            }
+            d[i] = v;
+        }
+    }
+    for (let i = 0; i < N; i++) d[i] = d[i] / 3;
+    return d;
+}
+
+function ltrComponents(mask, W, H) {
+    const label = new Int32Array(W * H);
+    const list = [];
+    const stack = [];
+    let id = 0;
+    for (let s = 0; s < W * H; s++) {
+        if (!mask[s] || label[s]) continue;
+        id++;
+        let area = 0, sx = 0, sy = 0;
+        stack.length = 0;
+        stack.push(s);
+        label[s] = id;
+        while (stack.length) {
+            const p = stack.pop();
+            const px = p % W, py = (p - px) / W;
+            area++; sx += px; sy += py;
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (!dx && !dy) continue;
+                    const nx = px + dx, ny = py + dy;
+                    if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+                    const q = ny * W + nx;
+                    if (mask[q] && !label[q]) { label[q] = id; stack.push(q); }
+                }
+            }
+        }
+        list.push({ id, area, cx: sx / area, cy: sy / area });
+    }
+    return { label, list };
+}
+
+/* تنحيف Zhang–Suen: يُرجع الهيكل العظمي (سُمك بكسل واحد) للحرف */
+function ltrThin(src, W, H) {
+    const img = Uint8Array.from(src);
+    const del = [];
+    let changed = true;
+    let guard = 0;
+    while (changed && guard++ < 60) {
+        changed = false;
+        for (let pass = 0; pass < 2; pass++) {
+            del.length = 0;
+            for (let y = 1; y < H - 1; y++) {
+                for (let x = 1; x < W - 1; x++) {
+                    const i = y * W + x;
+                    if (!img[i]) continue;
+                    const p2 = img[i - W], p3 = img[i - W + 1], p4 = img[i + 1], p5 = img[i + W + 1];
+                    const p6 = img[i + W], p7 = img[i + W - 1], p8 = img[i - 1], p9 = img[i - W - 1];
+                    const B = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+                    if (B < 2 || B > 6) continue;
+                    const A = ((p2 === 0 && p3 === 1) ? 1 : 0) + ((p3 === 0 && p4 === 1) ? 1 : 0) +
+                              ((p4 === 0 && p5 === 1) ? 1 : 0) + ((p5 === 0 && p6 === 1) ? 1 : 0) +
+                              ((p6 === 0 && p7 === 1) ? 1 : 0) + ((p7 === 0 && p8 === 1) ? 1 : 0) +
+                              ((p8 === 0 && p9 === 1) ? 1 : 0) + ((p9 === 0 && p2 === 1) ? 1 : 0);
+                    if (A !== 1) continue;
+                    if (pass === 0) { if (p2 * p4 * p6 !== 0 || p4 * p6 * p8 !== 0) continue; }
+                    else { if (p2 * p4 * p8 !== 0 || p2 * p6 * p8 !== 0) continue; }
+                    del.push(i);
+                }
+            }
+            if (del.length) { changed = true; for (let k = 0; k < del.length; k++) img[del[k]] = 0; }
+        }
+    }
+    return img;
+}
+
+/* نموذج الحرف في موضع معيّن: قناع الرسم، الجسم، النقاط/الهمزة، نقاط التفتيش مرتّبة */
+function ltrBuildGlyphModel(letter, form) {
+    const key = letter + "|" + form;
+    if (ltrGlyphCache.has(key)) {
+        const hit = ltrGlyphCache.get(key);
+        ltrGlyphCache.delete(key);
+        ltrGlyphCache.set(key, hit);
+        return hit;
+    }
+
+    const W = LTR_GM_W, H = LTR_GM_H, N = W * H;
+    const text = ltrShapedText(letter, form);
+    const model = { letter, form, text, W, H, empty: true };
+
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const cx = cv.getContext("2d", { willReadFrequently: true });
+
+    const paint = (fs, ox, oy) => {
+        cx.clearRect(0, 0, W, H);
+        cx.font = "700 " + fs + "px " + LTR_GM_FONT;
+        cx.direction = "rtl";
+        cx.textAlign = "center";
+        cx.textBaseline = "alphabetic";
+        cx.fillStyle = "#000";
+        cx.fillText(text, ox, oy);
+        const d = cx.getImageData(0, 0, W, H).data;
+        const m = new Uint8Array(N);
+        let minx = W, maxx = -1, miny = H, maxy = -1;
+        for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+                if (d[(y * W + x) * 4 + 3] >= 110) {
+                    m[y * W + x] = 1;
+                    if (x < minx) minx = x;
+                    if (x > maxx) maxx = x;
+                    if (y < miny) miny = y;
+                    if (y > maxy) maxy = y;
+                }
+            }
+        }
+        return { m, minx, maxx, miny, maxy };
+    };
+
+    try {
+        const r1 = paint(100, W / 2, H * 0.62);
+        if (r1.maxx < 0) { ltrGlyphCache.set(key, model); return model; }
+
+        const bw = r1.maxx - r1.minx + 1, bh = r1.maxy - r1.miny + 1;
+        let s = Math.min(3.5, (W * 0.8) / bw, (H * 0.78) / bh);
+        const bcx = (r1.minx + r1.maxx) / 2, bcy = (r1.miny + r1.maxy) / 2;
+        let fs = 100 * s;
+        let ox = W / 2 - (bcx - W / 2) * s;
+        let oy = H / 2 - (bcy - H * 0.62) * s;
+        let r2 = paint(fs, ox, oy);
+
+        for (let tries = 0; tries < 3 && (r2.minx < 2 || r2.miny < 2 || r2.maxx > W - 3 || r2.maxy > H - 3); tries++) {
+            s *= 0.9;
+            fs = 100 * s;
+            ox = W / 2 - (bcx - W / 2) * s;
+            oy = H / 2 - (bcy - H * 0.62) * s;
+            r2 = paint(fs, ox, oy);
+        }
+        if (r2.maxx < 0) { ltrGlyphCache.set(key, model); return model; }
+
+        const mask = r2.m;
+        const comps = ltrComponents(mask, W, H);
+        let body = comps.list[0];
+        comps.list.forEach(c => { if (c.area > body.area) body = c; });
+
+        const bodyMask = new Uint8Array(N);
+        for (let i = 0; i < N; i++) if (comps.label[i] === body.id) bodyMask[i] = 1;
+
+        const extras = comps.list
+            .filter(c => c.id !== body.id && c.area >= 12)
+            .map(c => ({ x: c.cx, y: c.cy, area: c.area, r: Math.max(8, Math.sqrt(c.area / Math.PI) + 6), id: c.id }))
+            .sort((a, b) => (b.x - a.x) || (a.y - b.y));
+
+        const skel = ltrThin(bodyMask, W, H);
+        const skelIdx = [];
+        for (let i = 0; i < N; i++) if (skel[i]) skelIdx.push(i);
+
+        const inner = ltrChamfer(bodyMask.map(v => v ? 0 : 1), W, H);
+        const widths = skelIdx.map(i => inner[i]).sort((a, b) => a - b);
+        let hw = widths.length ? widths[Math.floor(widths.length / 2)] : 5;
+        hw = Math.max(3, Math.min(20, hw));
+
+        /* نقاط تفتيش: عيّنة من الهيكل بتباعد ثابت */
+        const sp = 7;
+        const pts = [];
+        const sourceList = skelIdx.length ? skelIdx : (() => {
+            const a = [];
+            for (let i = 0; i < N; i += 7) if (bodyMask[i]) a.push(i);
+            return a;
+        })();
+        sourceList.forEach(i => {
+            const x = i % W, y = (i - x) / W;
+            for (let k = 0; k < pts.length; k++) {
+                if (Math.abs(pts[k].x - x) < sp && Math.abs(pts[k].y - y) < sp && Math.hypot(pts[k].x - x, pts[k].y - y) < sp) return;
+            }
+            pts.push({ x, y });
+        });
+
+        /* ترتيب تقريبي للكتابة: من أعلى اليمين (اتجاه الكتابة العربية) ثم الأقرب فالأقرب */
+        let start = 0;
+        const maxX = pts.reduce((m, q) => Math.max(m, q.x), -1);
+        pts.forEach((q, k) => {
+            if (q.x >= maxX - 8 && (pts[start].x < maxX - 8 || q.y < pts[start].y)) start = k;
+        });
+        const left = pts.slice();
+        const cps = [left.splice(start, 1)[0]];
+        while (left.length) {
+            const last = cps[cps.length - 1];
+            let bi = 0, bd = 1e9;
+            for (let k = 0; k < left.length; k++) {
+                const dd = Math.hypot(left[k].x - last.x, left[k].y - last.y);
+                if (dd < bd) { bd = dd; bi = k; }
+            }
+            cps.push(left.splice(bi, 1)[0]);
+        }
+
+        /* خريطة القرب من الهيكل ومن النقاط: أساس قياس الدقة */
+        const nearSrc = new Uint8Array(N);
+        skelIdx.forEach(i => { nearSrc[i] = 1; });
+        extras.forEach(e => {
+            for (let i = 0; i < N; i++) if (comps.label[i] === e.id) nearSrc[i] = 1;
+        });
+        if (!skelIdx.length) for (let i = 0; i < N; i++) if (bodyMask[i]) nearSrc[i] = 1;
+        const near = ltrChamfer(nearSrc, W, H);
+
+        Object.assign(model, {
+            empty: false, mask, bodyMask, skelCount: skelIdx.length, skelIdx, cps, extras, hw, near,
+            layout: { fs, ox, oy }, bbox: { minx: r2.minx, maxx: r2.maxx, miny: r2.miny, maxy: r2.maxy }
+        });
+    } catch (error) {
+        model.empty = true;
+    }
+
+    ltrGlyphCache.set(key, model);
+    if (ltrGlyphCache.size > 24) ltrGlyphCache.delete(ltrGlyphCache.keys().next().value);
+    return model;
+}
+
+/* تقدّم كل بكسل من الجسم على مسار الكتابة (٠ ← ١): أقرب نقطة تفتيش */
+function ltrModelProgress(model) {
+    if (model.prog) return model.prog;
+    const { W, H, cps, bodyMask } = model;
+    const prog = new Float32Array(W * H);
+    const n = Math.max(1, cps.length - 1);
+    for (let i = 0; i < W * H; i++) {
+        if (!bodyMask[i]) continue;
+        const x = i % W, y = (i - x) / W;
+        let bi = 0, bd = 1e9;
+        for (let k = 0; k < cps.length; k++) {
+            const dd = (cps[k].x - x) * (cps[k].x - x) + (cps[k].y - y) * (cps[k].y - y);
+            if (dd < bd) { bd = dd; bi = k; }
+        }
+        prog[i] = bi / n;
+    }
+    model.prog = prog;
+    return prog;
+}
+
+function ltrMaskSim(a, b) {
+    let inter = 0, uni = 0;
+    for (let i = 0; i < a.mask.length; i++) {
+        const x = a.mask[i], y = b.mask[i];
+        if (x && y) inter++;
+        if (x || y) uni++;
+    }
+    return uni ? inter / uni : 0;
+}
+
+/* مستوى ١ أوسع تسامحًا ← مستوى ٣ أدق */
+function ltrTraceParams(model, level) {
+    const L = Math.max(1, Math.min(3, level | 0 || 2));
+    const hw = model.hw;
+    return {
+        level: L,
+        cover: hw + [0, 14, 10, 7][L],
+        covThr: [0, 0.70, 0.80, 0.85][L],
+        precThr: [0, 0.55, 0.60, 0.65][L]
+    };
+}
+
+/* ---------- أداة التتبّع ---------- */
+
+function ltrTraceWidget(root, o) {
+
+    const model = ltrBuildGlyphModel(o.letter, o.form);
+    if (!model || model.empty) return null;
+
+    const level = Math.max(1, Math.min(3, o.level || 2));
+    const P = ltrTraceParams(model, level);
+    const W = model.W, H = model.H;
+    const alive = o.alive || (() => root.isConnected);
+    const cps = model.cps;
+    const extras = model.extras;
+
+    root.innerHTML = `
+        <div class="ltr-tw">
+            <div class="ltr-tw-box" role="img" aria-label="مساحة تتبّع الحرف"><canvas class="ltr-tw-canvas"></canvas></div>
+            <div class="ltr-tw-status" aria-live="polite"></div>
+            <div class="ltr-tw-btns">
+                <button type="button" class="secondary ltr-tw-hint">💡 ساعدني</button>
+                <button type="button" class="secondary ltr-tw-clear">🧹 أعد من جديد</button>
+            </div>
+        </div>`;
+
+    const box = root.querySelector(".ltr-tw-box");
+    box.dataset.letter = o.letter;
+    box.dataset.form = o.form;
+    box.dataset.level = String(level);
+    const canvas = root.querySelector(".ltr-tw-canvas");
+    const statusEl = root.querySelector(".ltr-tw-status");
+    const ctx = canvas.getContext("2d");
+
+    const covered = new Uint8Array(cps.length);
+    const touched = new Uint8Array(extras.length);
+    let coveredCount = 0, touchedCount = 0, inkTotal = 0, inkGood = 0;
+    let hintLevel = 0, stall = 0, coveredBefore = 0;
+    let bodyDone = false, done = false, destroyed = false;
+    let activeId = null, cur = null;
+    const strokes = [];
+    let showStart = level <= 2;
+    let guideBoost = level < 3;
+    let demoPos = null, demoTrail = [], demoTimer = null;
+    let finishTimer = null;
+    let kx = 1, dpr = 1, guideCv = null, laidOut = false;
+    const dark = document.body.classList.contains("dark-mode");
+
+    const setStatus = t => { statusEl.textContent = t; };
+    setStatus(level === 1 ? "ابدأ من النقطة الخضراء ▶ وامشِ ببطء على الخط الرمادي"
+        : (level === 2 ? "تتبّع الحرف بإصبعك على الخط الرمادي" : "اكتب الحرف بنفسك فوق الخط الباهت"));
+
+    function drawGuide(g) {
+        g.setTransform(dpr * kx, 0, 0, dpr * kx, 0, 0);
+        g.font = "700 " + model.layout.fs + "px " + LTR_GM_FONT;
+        g.direction = "rtl";
+        g.textAlign = "center";
+        g.textBaseline = "alphabetic";
+        const a = done ? 0.9 : (guideBoost ? 0.30 : 0.13);
+        g.fillStyle = done ? "rgba(46,125,50," + a + ")" : (dark ? "rgba(144,202,249," + a + ")" : "rgba(21,101,192," + a + ")");
+        g.fillText(model.text, model.layout.ox, model.layout.oy);
+    }
+
+    function layout() {
+        if (destroyed) return;
+        const r = box.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        canvas.width = Math.round(r.width * dpr);
+        canvas.height = Math.round(r.height * dpr);
+        kx = r.width / W;
+        guideCv = document.createElement("canvas");
+        guideCv.width = canvas.width;
+        guideCv.height = canvas.height;
+        drawGuide(guideCv.getContext("2d"));
+        laidOut = true;
+        redraw();
+    }
+
+    function redraw() {
+        if (!laidOut) return;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(guideCv, 0, 0);
+        ctx.setTransform(dpr * kx, 0, 0, dpr * kx, 0, 0);
+
+        const hw = model.hw;
+        ctx.fillStyle = "rgba(67,160,71,0.38)";
+        for (let i = 0; i < cps.length; i++) {
+            if (covered[i]) { ctx.beginPath(); ctx.arc(cps[i].x, cps[i].y, hw * 0.95, 0, 6.2832); ctx.fill(); }
+        }
+        if (hintLevel >= 2 && !done && !bodyDone) {
+            ctx.fillStyle = "rgba(255,152,0,0.5)";
+            for (let i = 0; i < cps.length; i++) {
+                if (!covered[i]) { ctx.beginPath(); ctx.arc(cps[i].x, cps[i].y, hw * 0.95, 0, 6.2832); ctx.fill(); }
+            }
+        }
+        extras.forEach((e, k) => {
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, e.r, 0, 6.2832);
+            if (touched[k]) { ctx.fillStyle = "rgba(67,160,71,0.45)"; ctx.fill(); }
+            else if (bodyDone || hintLevel >= 2) { ctx.lineWidth = 3; ctx.strokeStyle = "#ff9800"; ctx.stroke(); }
+        });
+        if (showStart && !coveredCount && !done && cps.length) {
+            ctx.beginPath(); ctx.arc(cps[0].x, cps[0].y, 9, 0, 6.2832);
+            ctx.fillStyle = "#43a047"; ctx.fill();
+            ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+        }
+        if (demoTrail.length > 1) {
+            ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.lineJoin = "round";
+            ctx.strokeStyle = "rgba(255,111,0,0.75)";
+            ctx.beginPath();
+            demoTrail.forEach((p, k) => {
+                const prev = demoTrail[k - 1];
+                if (k === 0 || Math.hypot(p.x - prev.x, p.y - prev.y) > model.hw * 4) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.stroke();
+        }
+        ctx.lineWidth = 5.5; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.strokeStyle = done ? "#2e7d32" : (dark ? "#ffd54f" : "#1565c0");
+        strokes.forEach(s => {
+            if (!s.length) return;
+            ctx.beginPath();
+            ctx.moveTo(s[0].x, s[0].y);
+            if (s.length === 1) ctx.lineTo(s[0].x + 0.1, s[0].y);
+            for (let k = 1; k < s.length; k++) ctx.lineTo(s[k].x, s[k].y);
+            ctx.stroke();
+        });
+        if (demoPos) {
+            ctx.beginPath(); ctx.arc(demoPos.x, demoPos.y, 11, 0, 6.2832);
+            ctx.fillStyle = "#ff6f00"; ctx.fill();
+            ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+        }
+    }
+
+    function publish() {
+        box.dataset.cover = (coveredCount / Math.max(1, cps.length)).toFixed(2);
+        box.dataset.prec = (inkTotal ? inkGood / inkTotal : 1).toFixed(2);
+        box.dataset.touched = touchedCount + "/" + extras.length;
+        box.dataset.hint = String(hintLevel);
+        box.dataset.done = done ? "1" : "0";
+    }
+
+    function toModel(e) {
+        const r = canvas.getBoundingClientRect();
+        return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
+    }
+
+    function handle(q) {
+        inkTotal++;
+        const xi = Math.round(q.x), yi = Math.round(q.y);
+        let nd = 1e9;
+        if (xi >= 0 && yi >= 0 && xi < W && yi < H) nd = model.near[yi * W + xi];
+        if (nd <= P.cover) inkGood++;
+        for (let i = 0; i < cps.length; i++) {
+            if (!covered[i] && Math.hypot(cps[i].x - q.x, cps[i].y - q.y) <= P.cover) { covered[i] = 1; coveredCount++; }
+        }
+        for (let k = 0; k < extras.length; k++) {
+            if (!touched[k] && Math.hypot(extras[k].x - q.x, extras[k].y - q.y) <= extras[k].r + P.cover * 0.6) { touched[k] = 1; touchedCount++; }
+        }
+    }
+
+    function addPoint(p) {
+        if (cur.length > 6000) return;
+        if (cur.length) {
+            const last = cur[cur.length - 1];
+            const dist = Math.hypot(p.x - last.x, p.y - last.y);
+            const steps = Math.max(1, Math.ceil(dist / 3));
+            for (let k = 1; k <= steps; k++) {
+                const q = { x: last.x + (p.x - last.x) * k / steps, y: last.y + (p.y - last.y) * k / steps };
+                handle(q);
+                cur.push(q);
+            }
+        } else {
+            handle(p);
+            cur.push(p);
+        }
+    }
+
+    function stopDemo() {
+        if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; }
+        demoPos = null;
+        demoTrail = [];
+    }
+
+    function runDemo() {
+        stopDemo();
+        let i = 0;
+        const step = () => {
+            if (destroyed || done || !alive()) { stopDemo(); return; }
+            if (i >= cps.length) {
+                demoPos = null;
+                redraw();
+                demoTimer = setTimeout(() => { demoTrail = []; demoTimer = null; redraw(); }, 1400);
+                return;
+            }
+            demoPos = cps[i];
+            demoTrail.push(cps[i]);
+            i++;
+            redraw();
+            demoTimer = setTimeout(step, Math.max(18, Math.min(45, Math.round(2200 / Math.max(1, cps.length)))));
+        };
+        step();
+    }
+
+    function applyHint(lv, auto) {
+        hintLevel = Math.max(hintLevel, lv);
+        guideBoost = true;
+        if (guideCv) drawGuide(guideCv.getContext("2d"));
+        if (lv === 1) {
+            showStart = true;
+            setStatus("ابدأ من النقطة الخضراء ▶ ثم تحرّك ببطء");
+        } else if (lv === 2) {
+            showStart = true;
+            setStatus(extras.length && bodyDone ? "المس الدوائر البرتقالية ✨" : "الأجزاء البرتقالية ما زالت تنتظرك 🟠");
+        } else if (lv === 3) {
+            showStart = true;
+            setStatus("شاهد أولًا 👀 ثم جرّب أنت");
+            runDemo();
+            if (o.onHintLevel) o.onHintLevel(3);
+        } else {
+            setStatus("إن أحببت جرّب طريقة أخرى: «اختر المسار» أو «رتّب الخطوات» 🧩");
+            if (o.onSuggestAlt) o.onSuggestAlt();
+        }
+        publish();
+        redraw();
+    }
+
+    function success() {
+        done = true;
+        guideBoost = true;
+        if (guideCv) drawGuide(guideCv.getContext("2d"));
+        stopDemo();
+        setStatus("🎉 ممتاز! تتبّعت الحرف");
+        box.classList.add("done");
+        canvas.style.pointerEvents = "none";
+        publish();
+        redraw();
+        finishTimer = setTimeout(() => { finishTimer = null; if (!destroyed && alive()) o.onSuccess(); }, 700);
+    }
+
+    function evaluate() {
+        const cov = coveredCount / Math.max(1, cps.length);
+        const prec = inkTotal ? inkGood / inkTotal : 1;
+        publish();
+        if (done) return;
+
+        if (!bodyDone && cov >= P.covThr && prec >= P.precThr) bodyDone = true;
+
+        if (bodyDone) {
+            if (touchedCount >= extras.length) { success(); return; }
+            setStatus("👏 أحسنت! الآن المس العلامات الصغيرة ✨ (" + arabicNumber(touchedCount) + " من " + arabicNumber(extras.length) + ")");
+        } else if (cov >= P.covThr) {
+            setStatus("🌟 كدت تنتهي! امشِ ببطء فوق الخط الرمادي، أو اضغط «أعد من جديد»");
+        } else if (inkTotal > 25 && prec < P.precThr) {
+            setStatus("🌟 حاول أن تبقى فوق الخط الرمادي، وخذ وقتك");
+        } else {
+            setStatus(cov > 0.35 ? "👍 أنت تتقدم! أكمل الجزء المتبقي" : (showStart ? "✍️ ابدأ من النقطة الخضراء" : "✍️ ابدأ الكتابة فوق الخط الباهت"));
+        }
+
+        if (stall >= 2 && hintLevel < 2) applyHint(2, true);
+        if (stall >= 4 && o.onSuggestAlt) o.onSuggestAlt();
+        redraw();
+    }
+
+    function finishStroke() {
+        stall = coveredCount > coveredBefore ? 0 : stall + 1;
+        evaluate();
+    }
+
+    canvas.addEventListener("pointerdown", e => {
+        if (destroyed || done || activeId !== null || e.button > 0) return;
+        if (!laidOut) layout();
+        activeId = e.pointerId;
+        stopDemo();
+        try { canvas.setPointerCapture(e.pointerId); } catch (error) { /* غير مدعوم */ }
+        cur = [];
+        strokes.push(cur);
+        coveredBefore = coveredCount;
+        addPoint(toModel(e));
+        redraw();
+        e.preventDefault();
+    });
+
+    canvas.addEventListener("pointermove", e => {
+        if (e.pointerId !== activeId || !cur) return;
+        const list = (e.getCoalescedEvents && e.getCoalescedEvents().length) ? e.getCoalescedEvents() : [e];
+        list.forEach(ev => addPoint(toModel(ev)));
+        redraw();
+        e.preventDefault();
+    });
+
+    const endStroke = e => {
+        if (e.pointerId !== activeId) return;
+        activeId = null;
+        try { canvas.releasePointerCapture(e.pointerId); } catch (error) { /* لا شيء */ }
+        finishStroke();
+    };
+    canvas.addEventListener("pointerup", endStroke);
+    canvas.addEventListener("pointercancel", endStroke);
+
+    function clear() {
+        if (done) return;
+        stopDemo();
+        strokes.length = 0;
+        covered.fill(0); touched.fill(0);
+        coveredCount = 0; touchedCount = 0; inkTotal = 0; inkGood = 0;
+        bodyDone = false; stall = 0; activeId = null; cur = null;
+        setStatus("من جديد! ابدأ متى شئت ✍️");
+        publish();
+        redraw();
+    }
+
+    root.querySelector(".ltr-tw-clear").onclick = clear;
+    root.querySelector(".ltr-tw-hint").onclick = () => {
+        if (done) return;
+        applyHint(hintLevel >= 4 ? 3 : Math.min(4, hintLevel + 1), false);
+    };
+
+    const onResize = () => {
+        if (!root.isConnected) { window.removeEventListener("resize", onResize); return; }
+        layout();
+    };
+    window.addEventListener("resize", onResize);
+
+    layout();
+    publish();
+
+    return {
+        model, params: P,
+        destroy() {
+            destroyed = true;
+            stopDemo();
+            if (finishTimer) clearTimeout(finishTimer);
+            window.removeEventListener("resize", onResize);
+        }
+    };
+}
+
+/* ---------- بديل ١: اختر المسار الصحيح ---------- */
+
+function ltrDrawPathCard(canvas, model, color) {
+    const g = canvas.getContext("2d");
+    const k = canvas.width / model.W;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.fillStyle = color;
+    const r = Math.max(1.6, k * 1.8);
+    model.skelIdx.forEach(i => {
+        const x = i % model.W, y = (i - x) / model.W;
+        g.beginPath(); g.arc((x + 0.5) * k, (y + 0.5) * k, r, 0, 6.2832); g.fill();
+    });
+    g.fillStyle = "#ef6c00";
+    model.extras.forEach(e => {
+        g.beginPath(); g.arc(e.x * k, e.y * k, Math.max(3.5, Math.sqrt(e.area / Math.PI) * k), 0, 6.2832); g.fill();
+    });
+    if (model.cps.length) {
+        g.fillStyle = "#43a047";
+        g.beginPath(); g.arc(model.cps[0].x * k, model.cps[0].y * k, Math.max(4, k * 5), 0, 6.2832); g.fill();
+    }
+}
+
+function ltrPickPathDistractors(letter, form, count, hard) {
+    const target = ltrBuildGlyphModel(letter, form);
+    if (!target || target.empty) return [];
+    const all = LETTER_UNITS.map(u => u.letter).filter(l => l !== letter && (ltrCharForms(l) || {})[form]);
+    const conf = (LTR_CONFUSABLE[letter] || "").split("").filter(c => all.indexOf(c) !== -1);
+    const rest = shuffle(all.filter(l => conf.indexOf(l) === -1)).slice(0, hard ? 4 : 9);
+    const sample = (hard ? conf : []).concat(rest);
+    const info = [];
+    sample.forEach(l => {
+        const m = ltrBuildGlyphModel(l, form);
+        if (m && !m.empty) info.push({ l, sim: ltrMaskSim(target, m) });
+    });
+    for (const lim of (hard ? [0.97] : [0.55, 0.75, 0.9])) {
+        const ok = info.filter(x => x.sim < lim);
+        if (ok.length >= count || lim === (hard ? 0.97 : 0.9)) {
+            const pref = hard ? ok.filter(x => conf.indexOf(x.l) !== -1) : [];
+            const other = ok.filter(x => pref.indexOf(x) === -1);
+            const ordered = hard ? shuffle(pref).concat(other.sort((a, b) => b.sim - a.sim)) : shuffle(other);
+            return ordered.slice(0, count).map(x => x.l);
+        }
+    }
+    return [];
+}
+
+function ltrPathChoiceWidget(root, o) {
+    const letter = o.letter, form = o.form, level = o.level || 1;
+    const target = ltrBuildGlyphModel(letter, form);
+    if (!target || target.empty) return null;
+
+    const dis = ltrPickPathDistractors(letter, form, level <= 1 ? 1 : 2, level >= 3);
+    if (!dis.length) return null;
+    const alive = o.alive || (() => root.isConnected);
+
+    const options = shuffle([{ l: letter, ok: true }].concat(dis.map(l => ({ l, ok: false }))));
+    root.innerHTML = `
+        <div class="ltr-pc">
+            <div class="ltr-pc-target" lang="ar" dir="rtl" aria-label="الحرف المطلوب">${ltrShapedText(letter, form)}</div>
+            <div class="ltr-pc-sub">${LTR_FORM_NAMES[form]}</div>
+            <div class="ltr-instruction-line">أي مسار يرسم هذا الحرف؟ المس المسار الصحيح</div>
+            <div class="ltr-pc-grid" dir="rtl"></div>
+        </div>`;
+    const grid = root.querySelector(".ltr-pc-grid");
+    let finished = false;
+
+    options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ltr-choice-btn ltr-pathcard";
+        btn.dataset.correct = opt.ok ? "1" : "0";
+        btn.dataset.letter = opt.l;
+        btn.setAttribute("aria-label", "المسار " + arabicNumber(idx + 1));
+        const cv = document.createElement("canvas");
+        cv.width = 240; cv.height = 180;
+        btn.appendChild(cv);
+        ltrDrawPathCard(cv, ltrBuildGlyphModel(opt.l, form), "#1565c0");
+        btn.onclick = () => {
+            if (finished || btn.disabled || !alive()) return;
+            if (opt.ok) {
+                finished = true;
+                btn.classList.add("correct");
+                grid.querySelectorAll("button").forEach(b => { b.disabled = true; b.classList.remove("hinted"); });
+                if (o.onSuccess) o.onSuccess();
+            } else {
+                finishLtrChoiceTask(false, btn);
+                ltrShowHint("🌟 انظر إلى شكل الحرف ونقاطه جيدًا، ثم قارن المسارات");
+            }
+        };
+        grid.appendChild(btn);
+    });
+
+    return { destroy() { finished = true; } };
+}
+
+/* ---------- بديل ٢: رتّب خطوات تكوين الحرف ---------- */
+
+function ltrStepPlan(model, count) {
+    const hasExtras = model.extras.length > 0;
+    if (hasExtras) {
+        return count >= 4
+            ? [{ f: 0.34 }, { f: 0.67 }, { f: 1 }, { f: 1, x: true }]
+            : [{ f: 0.5 }, { f: 1 }, { f: 1, x: true }];
+    }
+    return count >= 4
+        ? [{ f: 0.25 }, { f: 0.5 }, { f: 0.75 }, { f: 1 }]
+        : [{ f: 0.34 }, { f: 0.67 }, { f: 1 }];
+}
+
+function ltrStepPixels(model, step) {
+    const prog = ltrModelProgress(model);
+    let n = 0;
+    for (let i = 0; i < prog.length; i++) {
+        if (model.bodyMask[i] && prog[i] <= step.f + 1e-6) n++;
+        else if (step.x && model.mask[i] && !model.bodyMask[i]) n++;
+    }
+    return n;
+}
+
+function ltrDrawStep(canvas, model, step) {
+    const prog = ltrModelProgress(model);
+    const tmp = document.createElement("canvas");
+    tmp.width = model.W; tmp.height = model.H;
+    const tg = tmp.getContext("2d");
+    const img = tg.createImageData(model.W, model.H);
+    for (let i = 0; i < model.W * model.H; i++) {
+        if (!model.mask[i]) continue;
+        let c = [225, 228, 232, 255];
+        if (model.bodyMask[i]) { if (prog[i] <= step.f + 1e-6) c = [21, 101, 192, 255]; }
+        else if (step.x) c = [239, 108, 0, 255];
+        img.data[i * 4] = c[0]; img.data[i * 4 + 1] = c[1]; img.data[i * 4 + 2] = c[2]; img.data[i * 4 + 3] = c[3];
+    }
+    tg.putImageData(img, 0, 0);
+    const g = canvas.getContext("2d");
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.imageSmoothingEnabled = true;
+    g.drawImage(tmp, 0, 0, canvas.width, canvas.height);
+}
+
+function ltrStepsWidget(root, o) {
+    const letter = o.letter, form = o.form, level = o.level || 1;
+    const model = ltrBuildGlyphModel(letter, form);
+    if (!model || model.empty || model.cps.length < 6) return null;
+    const alive = o.alive || (() => root.isConnected);
+
+    const plan = ltrStepPlan(model, level >= 3 ? 4 : 3);
+    const cards = shuffle(plan.map((s, n) => ({ s, n })));
+    if (cards.length > 1 && cards.every((c, i) => c.n === i)) cards.reverse();
+
+    root.innerHTML = `
+        <div class="ltr-so">
+            <div class="ltr-pc-target ltr-so-target" lang="ar" dir="rtl" aria-label="الحرف المطلوب">${ltrShapedText(letter, form)}</div>
+            <div class="ltr-instruction-line">كيف يُكتب هذا الحرف؟ رتّب الصور من البداية حتى يكتمل</div>
+            <div class="ltr-slots ltr-so-slots" dir="rtl">
+                ${plan.map((s, n) => `<button type="button" class="ltr-slot ltr-stepslot" data-n="${n}" aria-label="الخطوة ${arabicNumber(n + 1)}"><span class="ltr-slot-ghost">${arabicNumber(n + 1)}</span></button>`).join("")}
+            </div>
+            <div class="ltr-tray ltr-so-tray">
+                ${cards.map(c => `<button type="button" class="ltr-ticket ltr-stepcard" data-n="${c.n}" aria-pressed="false" aria-label="صورة خطوة"><canvas width="240" height="180"></canvas></button>`).join("")}
+            </div>
+            <div class="ltr-drag-tip">اسحب الصورة إلى مكانها — أو المسها ثم المس المكان</div>
+        </div>`;
+
+    root.querySelectorAll(".ltr-stepcard").forEach(card => {
+        ltrDrawStep(card.querySelector("canvas"), model, plan[+card.dataset.n]);
+    });
+
+    let filled = 0, finished = false;
+    const wrongs = {};
+
+    ltrMakeDraggable(root, {
+        chip: ".ltr-stepcard",
+        target: ".ltr-stepslot:not(.filled)",
+        onDrop: (card, slot) => {
+            if (finished || !alive()) return;
+            if (card.dataset.n === slot.dataset.n) {
+                card.dataset.locked = "1";
+                slot.classList.remove("hinted", "armed", "over");
+                slot.classList.add("filled");
+                slot.disabled = true;
+                slot.innerHTML = "";
+                const cv = document.createElement("canvas");
+                cv.width = 240; cv.height = 180;
+                ltrDrawStep(cv, model, plan[+slot.dataset.n]);
+                slot.appendChild(cv);
+                card.remove();
+                filled++;
+                if (filled >= plan.length) {
+                    finished = true;
+                    if (o.onSuccess) setTimeout(() => { if (alive()) o.onSuccess(); }, 600);
+                }
+            } else {
+                card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+                wrongs[card.dataset.n] = (wrongs[card.dataset.n] || 0) + 1;
+                finishLtrChoiceTask(false, null);
+                ltrShowHint("🌟 ابدأ بالصورة التي فيها جزء صغير من الحرف، وانتهِ بالحرف كاملًا");
+                if (wrongs[card.dataset.n] >= 2) {
+                    const right = root.querySelector('.ltr-stepcard[data-n="' + slot.dataset.n + '"]');
+                    if (right) right.classList.add("hinted");
+                }
+            }
+        }
+    });
+
+    return { destroy() { finished = true; }, plan };
+}
+
+/* ---------- تتبّع مع بدائل (تُستعمل في كل أنشطة التتبّع والرحلة) ---------- */
+
+function ltrTraceWithAlternatives(host, o) {
+    host.innerHTML = `
+        <div class="ltr-tw-main"></div>
+        <div class="ltr-tw-alts" role="group" aria-label="طرق أخرى">
+            <button type="button" class="secondary ltr-tw-alt on" data-m="trace" aria-pressed="true">✍️ أتتبّع</button>
+            <button type="button" class="secondary ltr-tw-alt" data-m="path" aria-pressed="false">🧩 اختر المسار</button>
+            <button type="button" class="secondary ltr-tw-alt" data-m="steps" aria-pressed="false">👣 رتّب الخطوات</button>
+        </div>`;
+    const main = host.querySelector(".ltr-tw-main");
+    const alts = host.querySelectorAll(".ltr-tw-alt");
+    let current = null, mode = "trace", over = false;
+
+    const alive = o.alive || (() => host.isConnected);
+    const ok = m => () => { if (over || !alive()) return; over = true; if (o.onSuccess) o.onSuccess(m); };
+    const common = { letter: o.letter, form: o.form, level: o.level, alive };
+
+    function show(m) {
+        if (over) return;
+        if (current && current.destroy) current.destroy();
+        current = null;
+        mode = m;
+        main.innerHTML = "";
+        alts.forEach(b => {
+            const on = b.dataset.m === m;
+            b.classList.toggle("on", on);
+            b.classList.remove("hinted");
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        if (m === "trace") {
+            current = ltrTraceWidget(main, Object.assign({}, common, {
+                onSuccess: ok("trace"),
+                onHintLevel: o.onHintLevel,
+                onSuggestAlt: () => alts.forEach(b => { if (b.dataset.m !== "trace" && !over) b.classList.add("hinted"); })
+            }));
+        } else if (m === "path") {
+            current = ltrPathChoiceWidget(main, Object.assign({}, common, { onSuccess: ok("path") }));
+        } else {
+            current = ltrStepsWidget(main, Object.assign({}, common, { onSuccess: ok("steps") }));
+        }
+        if (!current) {
+            main.innerHTML = '<div class="ltr-tw-status">تعذّر عرض هذا الشكل على جهازك، جرّب طريقة أخرى 🧩</div>';
+        }
+    }
+
+    alts.forEach(b => { b.onclick = () => { if (!over && b.dataset.m !== mode) show(b.dataset.m); }; });
+    show("trace");
+
+    return {
+        get mode() { return mode; },
+        destroy() { over = true; if (current && current.destroy) current.destroy(); }
+    };
+}
+
+/* ---------- أنشطة التتبّع الموجّه (مرحلة «أتتبّع وأكتب») ---------- */
+
+function ltrRunTraceActivity(stage, letter, o) {
+    const sid = ltrState.sid;
+    stage.innerHTML = `
+        <div class="ltr-instruction-line">${o.title}</div>
+        ${o.headHtml || ""}
+        <div class="ltr-tw-host"></div>`;
+    const host = stage.querySelector(".ltr-tw-host");
+    const alive = () => host.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    ltrTraceWithAlternatives(host, {
+        letter, form: o.form, level: o.level, alive,
+        onSuccess: () => { if (alive()) finishLtrChoiceTask(true, null); }
+    });
+    if (o.word) {
+        const replay = stage.querySelector(".ltr-tw-word-replay");
+        if (replay) replay.onclick = () => speakEducational(o.word, { rate: 0.78 });
+        setTimeout(() => { if (alive()) speakEducational(o.word, { rate: 0.78 }); }, 300);
+    }
+}
+
+function ltrLetterFormLine(letter, form) {
+    return "الحرف «" + letter + "» — " + LTR_FORM_NAMES[form];
+}
+
+/* #0 — تتبّع الحرف منفصلًا بأوسع تسامح ومساعدة ظاهرة */
+function activityTracing(stage, letterChar) {
+    const forms = ltrFormsAvailable(letterChar);
+    if (!forms.length) { activityLetterForms(stage, letterChar, 1); return; }
+    ltrRunTraceActivity(stage, letterChar, {
+        form: "isolated", level: 1,
+        title: "تتبّع الحرف ✍️ — " + ltrLetterFormLine(letterChar, "isolated")
+    });
+}
+
+/* #1 — تتبّع شكل الحرف كما يظهر داخل كلمة حقيقية */
+function activityTraceInWord(stage, letterChar) {
+    const cands = (LTR_TRAIN_WORDS[letterChar] || [])
+        .map(w => ltrAnalyzeWord(w, letterChar))
+        .filter(a => a && EduAudio.has(a.word) && ltrCharForms(letterChar) && ltrCharForms(letterChar)[a.form]);
+    const nonIso = cands.filter(a => a.form !== "isolated");
+    const pool = nonIso.length ? nonIso : cands;
+    if (!pool.length) {
+        ltrRunTraceActivity(stage, letterChar, { form: "isolated", level: 2, title: "تتبّع الحرف ✍️ — " + ltrLetterFormLine(letterChar, "isolated") });
+        return;
+    }
+    const a = pool[Math.floor(Math.random() * pool.length)];
+    const img = ltrVerifiedImage(a.word);
+    const head = `
+        <div class="ltr-tw-word" dir="rtl">
+            ${img ? `<span class="ltr-tw-word-pic">${ltrArt(img)}</span>` : ""}
+            <span class="ltr-tw-word-text">${ltrWordHtml(a.word, letterChar, true)}</span>
+            <button type="button" class="secondary ltr-tw-word-replay" aria-label="استمع للكلمة">🔊</button>
+        </div>`;
+    ltrRunTraceActivity(stage, letterChar, {
+        form: a.form, level: 2, word: a.word, headHtml: head,
+        title: "تتبّع الحرف كما يظهر في الكلمة ✍️ — " + LTR_FORM_NAMES[a.form]
+    });
+}
+
+/* #2 — كتابة بلا إرشاد ظاهر: الخط باهت والتسامح أقل (التلميحات متاحة دائمًا) */
+function activityTraceFree(stage, letterChar) {
+    const forms = ltrFormsAvailable(letterChar);
+    if (!forms.length) { activityLetterForms(stage, letterChar, 3); return; }
+    const pool = forms.filter(f => f !== "isolated");
+    const form = pool.length ? pool[Math.floor(Math.random() * pool.length)] : "isolated";
+    ltrRunTraceActivity(stage, letterChar, {
+        form, level: 3,
+        title: "اكتب بنفسك ✍️ — " + ltrLetterFormLine(letterChar, form)
+    });
+}
+
+/* =========================================================
+   🧭 مرحلة «خطوات الحرف»: اختر المسار الصحيح + رتّب خطوات التكوين
+   (بديلان كاملان لمن لا يستطيع التتبّع الدقيق — ويظهران أيضًا داخل التتبّع)
+========================================================= */
+
+function ltrPickFormFor(letter, level) {
+    const forms = ltrFormsAvailable(letter);
+    if (!forms.length) return null;
+    if (level <= 1) return "isolated";
+    const pool = forms.filter(f => f !== "isolated");
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : "isolated";
+}
+
+function activityPathChoice(stage, letterChar, difficulty) {
+    const level = difficulty || 1;
+    const form = ltrPickFormFor(letterChar, level);
+    if (!form) { activityLetterForms(stage, letterChar, level); return; }
+    const sid = ltrState.sid;
+    stage.innerHTML = `<div class="ltr-tw-host"></div>`;
+    const host = stage.querySelector(".ltr-tw-host");
+    const alive = () => host.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const w = ltrPathChoiceWidget(host, {
+        letter: letterChar, form, level, alive,
+        onSuccess: () => { if (alive()) finishLtrChoiceTask(true, null); }
+    });
+    if (!w) activityLetterForms(stage, letterChar, level);
+}
+
+function activityStepsOrder(stage, letterChar, difficulty) {
+    const level = difficulty || 2;
+    const form = ltrPickFormFor(letterChar, level);
+    if (!form) { activityLetterForms(stage, letterChar, level); return; }
+    const sid = ltrState.sid;
+    stage.innerHTML = `<div class="ltr-tw-host"></div>`;
+    const host = stage.querySelector(".ltr-tw-host");
+    const alive = () => host.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+    const w = ltrStepsWidget(host, {
+        letter: letterChar, form, level, alive,
+        onSuccess: () => { if (alive()) finishLtrChoiceTask(true, null); }
+    });
+    if (!w) activityPathChoice(stage, letterChar, level);
+}
+
+/* =========================================================
+   🗺️ رحلة الحرف: محطات أشكاله (منفصل ← أول ← وسط ← آخر)، كلها مفتوحة بأي ترتيب
+========================================================= */
+
+function ltrRunJourney(stage, letter, o) {
+    const forms = ltrFormsAvailable(letter);
+    if (!forms.length) { activityLetterForms(stage, letter, 2); return; }
+
+    const sid = ltrState.sid;
+    const stations = forms.map(f => {
+        let word = null;
+        if (o.withWords) {
+            const hits = (LTR_TRAIN_WORDS[letter] || [])
+                .map(w => ltrAnalyzeWord(w, letter))
+                .filter(a => a && a.form === f && EduAudio.has(a.word));
+            if (hits.length) word = hits[Math.floor(Math.random() * hits.length)];
+        }
+        return { form: f, word, done: false };
+    });
+
+    stage.innerHTML = `
+        <div class="ltr-journey">
+            <div class="ltr-instruction-line">${o.title}</div>
+            <div class="ltr-journey-map" dir="rtl" role="tablist" aria-label="محطات الرحلة"></div>
+            <div class="ltr-journey-work"></div>
+        </div>`;
+    const root = stage.querySelector(".ltr-journey");
+    const map = root.querySelector(".ltr-journey-map");
+    const work = root.querySelector(".ltr-journey-work");
+    const alive = () => root.isConnected && ltrState.mode === "run" && ltrState.sid === sid;
+
+    let index = 0, controller = null, finished = false, advanceTimer = null;
+
+    map.innerHTML = stations.map((s, i) => `
+        <button type="button" class="ltr-station" data-i="${i}" data-form="${s.form}" role="tab" aria-selected="false">
+            <span class="ltr-station-flag">${i === 0 ? "🏁" : "📍"}</span>
+            <span class="ltr-station-glyph" lang="ar">${ltrShapedText(letter, s.form)}</span>
+            <small>${LTR_FORM_NAMES[s.form]}</small>
+        </button>`).join("");
+
+    function refreshMap() {
+        map.querySelectorAll(".ltr-station").forEach((b, i) => {
+            b.classList.toggle("current", i === index);
+            b.classList.toggle("done", stations[i].done);
+            b.setAttribute("aria-selected", i === index ? "true" : "false");
+            b.querySelector(".ltr-station-flag").textContent = stations[i].done ? "✅" : (i === 0 ? "🏁" : "📍");
+        });
+        root.dataset.done = String(stations.filter(s => s.done).length);
+        root.dataset.total = String(stations.length);
+    }
+
+    function open(i) {
+        if (finished) return;
+        if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; }
+        if (controller) controller.destroy();
+        index = i;
+        const s = stations[i];
+        refreshMap();
+        const head = s.word ? `
+            <div class="ltr-tw-word" dir="rtl">
+                ${ltrVerifiedImage(s.word.word) ? `<span class="ltr-tw-word-pic">${ltrArt(ltrVerifiedImage(s.word.word))}</span>` : ""}
+                <span class="ltr-tw-word-text">${ltrWordHtml(s.word.word, letter, true)}</span>
+                <button type="button" class="secondary ltr-tw-word-replay" aria-label="استمع للكلمة">🔊</button>
+            </div>` : "";
+        work.innerHTML = `${head}<div class="ltr-tw-sub">المحطة ${arabicNumber(i + 1)} من ${arabicNumber(stations.length)}: ${LTR_FORM_NAMES[s.form]}</div><div class="ltr-tw-host"></div>`;
+        const host = work.querySelector(".ltr-tw-host");
+        if (s.word) {
+            const rep = work.querySelector(".ltr-tw-word-replay");
+            if (rep) rep.onclick = () => speakEducational(s.word.word, { rate: 0.78 });
+            setTimeout(() => { if (alive() && index === i) speakEducational(s.word.word, { rate: 0.78 }); }, 300);
+        }
+        controller = ltrTraceWithAlternatives(host, {
+            letter, form: s.form, level: o.level, alive,
+            onSuccess: () => {
+                if (!alive() || index !== i) return;
+                s.done = true;
+                refreshMap();
+                const next = stations.findIndex(x => !x.done);
+                if (next === -1) {
+                    finished = true;
+                    work.querySelector(".ltr-tw-sub").textContent = "🎉 وصلت إلى نهاية الرحلة!";
+                    setTimeout(() => { if (alive()) finishLtrChoiceTask(true, null); }, 700);
+                } else {
+                    advanceTimer = setTimeout(() => { advanceTimer = null; if (alive()) open(next); }, 900);
+                }
+            }
+        });
+    }
+
+    map.querySelectorAll(".ltr-station").forEach(b => {
+        b.onclick = () => { if (!finished && +b.dataset.i !== index) open(+b.dataset.i); };
+    });
+
+    open(0);
+}
+
+function activityLetterJourney(stage, letterChar) {
+    ltrRunJourney(stage, letterChar, {
+        level: 1, withWords: false,
+        title: "رحلة الحرف «" + letterChar + "» 🧭 — مرّ على كل محطة بأي ترتيب"
+    });
+}
+
+function activityLetterJourneyWords(stage, letterChar) {
+    ltrRunJourney(stage, letterChar, {
+        level: 2, withWords: true,
+        title: "رحلة الحرف «" + letterChar + "» في الكلمات 🧭 — زُر المحطات بأي ترتيب"
+    });
+}
+
 const LTR_STAGES = [
     {
         id: "listen",
@@ -27808,9 +28889,19 @@ const LTR_STAGES = [
         activities: [activityPositionInWord, activityLetterForms]
     },
     {
+        id: "letter-steps",
+        goal: "أختار المسار وأرتّب خطوات الحرف",
+        activities: [activityPathChoice, activityStepsOrder, activityPathChoice]
+    },
+    {
+        id: "letter-journey",
+        goal: "أسافر في رحلة الحرف",
+        activities: [activityLetterJourney, activityLetterJourneyWords]
+    },
+    {
         id: "trace-write",
         goal: "أتتبع وأكتب",
-        activities: [activityTracing, activityTraceInWord]
+        activities: [activityTracing, activityTraceInWord, activityTraceFree]
     }
 ];
 
