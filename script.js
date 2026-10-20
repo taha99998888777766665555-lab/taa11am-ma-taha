@@ -9785,13 +9785,16 @@ function rr3CreateEngine(cfg) {
     function perfWatch(rawMs) {
         if (!HEAVY || !S.started || S.paused || rawMs > 250) return;
         perfSince += rawMs; perfAcc += rawMs; perfN++;
-        if (perfSince < 1500) return;
+        if (perfSince < 1000) return;
         const avg = perfAcc / Math.max(1, perfN);
         perfSince = 0; perfAcc = 0; perfN = 0;
-        if (avg > 34 && perfK > 0.5) { perfK = Math.max(0.5, perfK - 0.15); perfLog.push(avg | 0); }
+        if (avg > 34 && perfK > 0.5) { perfK = Math.max(0.5, perfK - 0.15); perfLog.push(avg | 0); fitDirty = true; }
     }
     const perfLog = [];
+    let fitDirty = true;
+    function markFit() { fitDirty = true; }
     function fit() {
+        fitDirty = false;
         const r = root.getBoundingClientRect();
         const cw = Math.max(200, r.width), ch = Math.max(200, r.height);
         let sc = Math.min(window.devicePixelRatio || 1, 1.5) * perfK;
@@ -9813,6 +9816,7 @@ function rr3CreateEngine(cfg) {
         hjKey = sc; hjTex = [];
         for (let v = 0; v < WE.nv; v++) hjTex.push(WE.fac(v, Math.round(240 * sc), Math.round(WE.th * sc)));
     }
+    let smState = true;
     function hjWalls(f, n, fog) {
         const P = WE.per, bi = Math.floor(f.abs / P);
         const nSub = n < 4 ? 3 : (n < 11 ? 2 : 1), flat = n >= 28;
@@ -9842,11 +9846,14 @@ function rr3CreateEngine(cfg) {
                 const srcT = Math.max(0, Math.min(THt - 2, THt - (base + 4) / kd));
                 ctx.globalAlpha = Math.max(0.1, 1 - Math.min(0.9, fog * 0.95));
                 ctx.setTransform(ka, kb, 0, kd, XL - ka * sx0, Le.y - kb * sx0 - THt * kd);
+                const smo = kd < 0.7 || kd > 1.6;   /* قرب المقياس ١:١ لا يحتاج تنعيمًا (أرخص بنحو الربع بلا فرق مرئي)؛ التصغير الكبير يبقى منعَّمًا لئلا يتلألأ */
+                if (smo !== smState) { ctx.imageSmoothingEnabled = smo; smState = smo; }
                 ctx.drawImage(tex, srcL, srcT, srcR - srcL, THt - srcT, srcL, srcT, srcR - srcL, THt - srcT);
             }
         }
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalAlpha = 1;
+        if (!smState) { ctx.imageSmoothingEnabled = true; smState = true; }
     }
     function hjBirds(W, hy) {
         ctx.strokeStyle = "rgba(70,60,60,.7)"; ctx.lineWidth = Math.max(1.4, W / 520); ctx.lineCap = "round";
@@ -10300,7 +10307,7 @@ function rr3CreateEngine(cfg) {
         last = ts;
         try {
             if (document.hidden) return;
-            fit();
+            if (fitDirty) fit();
             update(dt);
             render();
         } catch (e) { fail(e); }
@@ -10371,7 +10378,10 @@ function rr3CreateEngine(cfg) {
     cv.addEventListener("pointercancel", function () { S.dragging = false; });
     root.addEventListener("click", onClick);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("resize", fit);
+    window.addEventListener("resize", markFit);
+    window.addEventListener("orientationchange", markFit);
+    let fitRO = null;
+    try { if (typeof ResizeObserver !== "undefined") { fitRO = new ResizeObserver(markFit); fitRO.observe(root); } } catch (e) { fitRO = null; }
 
     /* ---------- إعدادات المعلم: شدة التصادم (رمز المعلم إن وُجد، وإلا سؤال حسابي بسيط) ---------- */
     let tq = null;
@@ -10458,7 +10468,9 @@ function rr3CreateEngine(cfg) {
         cancelAnimationFrame(raf);
         timers.forEach(clearTimeout); timers.length = 0;
         document.removeEventListener("keydown", onKey);
-        window.removeEventListener("resize", fit);
+        window.removeEventListener("resize", markFit);
+        window.removeEventListener("orientationchange", markFit);
+        try { if (fitRO) fitRO.disconnect(); } catch (e) { /* لا شيء */ }
         try { root.innerHTML = ""; } catch (e) { /* لا شيء */ }
     }
     return { start: start, destroy: destroy, state: S, cfg: cfg };
