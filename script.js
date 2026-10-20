@@ -9645,10 +9645,11 @@ const RR3_CSS = `
 .rr3-ctl{justify-content:space-between;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));pointer-events:none}
 .rr3-ctl button{pointer-events:auto;height:64px;min-width:84px;font-size:28px;border-radius:20px}
 .rr3-ctl .rr3-go{position:absolute;right:calc(max(12px,env(safe-area-inset-right)) + 96px);bottom:0;min-width:128px;font-size:20px}
-.rr3-msg{bottom:auto;top:max(8px,env(safe-area-inset-top));font-size:17px;line-height:38px}
-.rr3-target{top:calc(max(8px,env(safe-area-inset-top)) + 70px)}
+.rr3-msg{bottom:auto;top:calc(max(8px,env(safe-area-inset-top)) + 60px);left:max(12px,env(safe-area-inset-left));transform:none;max-width:calc(100% - 230px);white-space:normal;font-size:17px;line-height:24px;padding:6px 16px}
+.rr3-target{left:auto;right:max(16px,env(safe-area-inset-right));transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 64px)}
 .rr3-tg{font-size:46px}
 }
+@media (orientation:landscape) and (max-width:620px){.rr3-top .rr3-chip:not(.rr3-starchip){display:none}.rr3-msg{max-width:calc(100% - 190px)}}
 .rr3-lv{position:absolute;left:0;right:0;top:calc(max(8px,env(safe-area-inset-top)) + 64px);bottom:0;display:none;align-items:flex-start;justify-content:center;background:rgba(2,6,23,.66);z-index:4;padding:8px 12px 12px;overflow:auto}
 .rr3-lv.on{display:flex}
 .rr3-lvp{background:#0f172a;border:2px solid #334155;border-radius:22px;padding:14px;max-width:560px;width:100%;display:flex;flex-direction:column;gap:8px;color:#fff}
@@ -9721,7 +9722,7 @@ function rr3Rel(a, b, form) {
 }
 function rr3Rot(arr, k) { if (!arr.length) return []; const n = ((k % arr.length) + arr.length) % arr.length; return arr.slice(n).concat(arr.slice(0, n)); }
 /* tier: 0 بعيدة جدًا (صارمة) · "F" بعيدة · 1 متوسطة (حرف متوسط + بعيد) · 2 متشابهة (قريبة جدًا أولًا ثم الأعلى تشابهًا) */
-function rr3Distractors(letter, tier, seed, n) {
+function rr3Distractors(letter, tier, seed, n, sd, ri) {
     const all = RACE_ALPHABET.filter(function (l) { return l !== letter; });
     const sc = function (l) { return rr3Score(letter, l); };
     const near = all.filter(function (l) { return rr3Rel(letter, l) === 2; });
@@ -9742,7 +9743,22 @@ function rr3Distractors(letter, tier, seed, n) {
     const byScoreDesc = function (arr) { return arr.slice().sort(function (a, b) { return sc(b) - sc(a) || (a < b ? -1 : 1); }); };
     const byScoreAsc = function (arr) { return arr.slice().sort(function (a, b) { return sc(a) - sc(b) || (a < b ? -1 : 1); }); };
     const rep = n > 1 ? 2 : 1;
-    if (tier === 2) { for (let i = 0; i < rep; i++) take(byScoreDesc(near), null) || take(byScoreDesc(mid), null) || take(byScoreDesc(far), null); }
+    if (tier === 2) {
+        /* المتشابهات مقصودة وغير عشوائية: التوائم أولًا (بترتيب الدرجة)، ثم أعلى المتوسطات بدرجة مرجّحة بقاموس التطبيق،
+           ثم أقرب البعيدة عند عدم توفر متوسط؛ ويتبدّل الاختيار بين الجولات بدوران ثابت داخل أفضل ٤ مرشحين فقط */
+        const prior = function (l) { for (let i = 0; i < RR3_PRIOR.length; i++) if (RR3_PRIOR[i].indexOf(letter) >= 0 && RR3_PRIOR[i].indexOf(l) >= 0) return 15; return 0; };
+        const rank = function (arr) { return arr.slice().sort(function (a, b) { return (sc(b) + prior(b)) - (sc(a) + prior(a)) || (a < b ? -1 : 1); }); };
+        const nearD = rank(near), farW = rank(far).slice(0, 3);
+        const need = n - Math.min(nearD.length, n);
+        let midW = rank(mid.filter(function (l) { return sc(l) >= 30; })).slice(0, 4);   /* الأعلى تشابهًا مقيسًا */
+        if (midW.length < need) midW = midW.concat(rank(mid.filter(function (l) { return sc(l) < 30; }))).slice(0, Math.max(need, midW.length));   /* مجموعات التطبيق بلا قياس: احتياط */
+        const off = (sd || 0) + (ri || 0);
+        const pick = function (pool, o) { for (let i = 0; i < pool.length; i++) { const c = pool[(o + i) % pool.length]; if (out.indexOf(c) < 0) { out.push(c); return true; } } return false; };
+        if (nearD.length > n) { for (let s2 = 0; s2 < n; s2++) pick(nearD, off + s2); }
+        else nearD.forEach(function (c) { out.push(c); });
+        for (let s2 = out.length; s2 < n; s2++) pick(midW, off + s2) || pick(farW, off + s2);
+        return out.slice(0, n);
+    }
     else if (tier === 1) { take(byScoreAsc(mid), null) || take(far, 45); for (let i = 1; i < rep; i++) take(far, 45) || take(far, null); }
     else if (tier === "F") { for (let i = 0; i < rep; i++) take(far, 45) || take(far, null); }
     else { for (let i = 0; i < rep; i++) take(strictPool, 30) || take(far, 45) || take(far, null); }
@@ -9760,22 +9776,35 @@ const RR3_LEVELS = [
 function rr3Level(id) { for (let i = 0; i < RR3_LEVELS.length; i++) if (RR3_LEVELS[i].id === id) return RR3_LEVELS[i]; return RR3_LEVELS[0]; }
 
 function rr3SimSetting() { try { const v = localStorage.getItem("taha_rr3_similar"); return v === "0" || v === "1" || v === "2" ? v : "auto"; } catch (e) { return "auto"; } }
+/* تسلسل مواضع الدوران: كل ثلاث جولات تستعمل كل المواضع الثلاثة مرة واحدة، ولا يتكرر الموضع في جولتين متتاليتين، فلا يُخمَّن مكان الإجابة */
+function rr3PosSeq(seed, n) {
+    const P = [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [2, 1, 0], [1, 0, 2]];
+    const out = []; let b = 0;
+    while (out.length < n) {
+        let use = P[(seed + b * 2) % 6];
+        for (let t = 0; t < 6; t++) { const c = P[(seed + b * 2 + t) % 6]; if (!out.length || c[0] !== out[out.length - 1]) { use = c; break; } }
+        use.forEach(function (x) { out.push(x); }); b++;
+    }
+    return out.slice(0, n);
+}
 function rr3BuildLevelRounds(letter, lv, seed, simSetting) {
     const tier = simSetting === "0" ? 0 : (simSetting === "1" ? 1 : (simSetting === "2" ? 2 : lv.tier));
     const shape = function (l) { return raceShapeForLetterAtPosition(l, "isolated") || l; };
     const correct = shape(letter);
     const rounds = [];
+    const pos = rr3PosSeq(seed, lv.rounds);
     for (let r = 0; r < lv.rounds; r++) {
         /* «مرة أو مرتين»: الجولات الزوجية حرفان صحيحان + مختلف، والفردية حرف صحيح + حرفان مختلفان متطابقان.
            فلا ينفع اختيار «الشاذ» أو «الأكثر تكرارًا»؛ لا بد من مطابقة الحرف المطلوب */
         const twin = lv.targets === 2;
         const two = twin && r % 2 === 0;
-        const d = rr3Distractors(letter, tier, seed * 5 + r * 3, twin ? 1 : 2);
+        const d = rr3Distractors(letter, tier, seed * 5 + r * 3, twin ? 1 : 2, seed, r);
         let lets;
         if (!twin) lets = [letter, d[0], d[1]];
         else if (two) lets = [letter, letter, d[0]];
         else lets = [letter, d[0], d[0]];
-        const k = (seed + r) % 3;
+        const k = pos[r];
+        if ((seed + r) % 2 === 1 && !twin) lets = [lets[0], lets[2], lets[1]];
         const rl = lets.slice(k).concat(lets.slice(0, k));
         const rot = rl.map(shape);
         rounds.push({ kind: "see", letter: letter, correctShape: correct, options: rot, letters: rl, correctIndex: rot.indexOf(correct), tier: tier });
