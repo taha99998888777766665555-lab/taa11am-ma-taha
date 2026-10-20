@@ -8692,7 +8692,7 @@ function rr3CreateEngine(cfg) {
         bg: 0, msgT: 0, firstTry: 0, started: false, tilt: 0,
         dragging: false, downX: 0, downY: 0, moved: false, ctlOn: true,
         paused: false, crash: null, shake: 0, shakeX: 0, ring: null, carPx: null,
-        collision: (cfg.collision === 0 || cfg.collision === 1) ? cfg.collision : 2
+        collision: (cfg.collision === 0 || cfg.collision === 2) ? cfg.collision : 1
     };
     const layout = cfg.layout === "gate" || cfg.layout === "road" ? cfg.layout : "mixed";
     rounds.forEach(function (r, i) {
@@ -8812,7 +8812,7 @@ function rr3CreateEngine(cfg) {
 
     function resolveGate() {
         const g = S.gate, r = rounds[g.r];
-        const lane = S.mode === "step" ? S.laneIdx : nearestLane(S.playerX);
+        const lane = nearestLane(S.playerX);   /* الالتقاط بموقع السيارة الفعلي لا بالزر */
         g.resolved = true; g.lane = lane; g.flash = 1;
         S.busy = true;
         const ok = (lane === r.correctIndex) && !r.dim[lane];
@@ -8852,7 +8852,7 @@ function rr3CreateEngine(cfg) {
         const left = [0, 1, 2].filter(function (i) { return !r.dim[i]; });
         if (r.wrong >= 2 || left.length === 1) r.hint = true;
         let lv = S.collision;
-        if (reduced) lv = Math.min(lv, 1);
+        if (reduced) lv = 0;
         S.crash = { t: 0, lv: lv, from: S.pos, back: lv === 2 ? 1500 : (lv === 1 ? 1350 : 1250), dur: lv === 2 ? 1.25 : 1.0, burst: false, wait: false };
         S.speed = 0;
         S.wobble = lv === 2 ? 1 : (lv === 1 ? 0.35 : 0);
@@ -8951,7 +8951,14 @@ function rr3CreateEngine(cfg) {
         }
         S.cars.forEach(function (c) {
             if (gate && !c.over && c.z < gate.z + (gate.kind === "road" ? 1900 : 900)) c.v += (cr * 1.55 - c.v) * Math.min(1, dt * 2.5);
-            c.z += c.v * dt; c.ph += dt * 6;
+            if (gate && gate.kind === "road" && c.over && c.z < gate.z) {
+                /* المتجاوِزون من الخلف لا يمرّون فوق حروف الطريق قبل أن يختار الطفل: يبقون بمحاذاة السيارة */
+                const lim = gate.hitZ - 250;
+                if (c.z > lim - 1400) c.v += (Math.min(c.v, S.speed + 250) - c.v) * Math.min(1, dt * 3);
+            }
+            c.z += c.v * dt;
+            if (gate && gate.kind === "road" && c.over && c.z > gate.hitZ - 250 && c.z < gate.z) c.z = gate.hitZ - 250;
+            c.ph += dt * 6;
         });
         S.cars = S.cars.filter(function (c) { return c.z > S.pos - 2500 && c.z < S.pos + (DRAW + 30) * SEG; });
         let want = 0;
@@ -9173,7 +9180,7 @@ function rr3CreateEngine(cfg) {
     function laneState(r, gate, j) {
         if (gate.resolved && gate.lane === j) return gate.good ? "good" : "bad";
         if (r.dim[j]) return "dim";
-        if (r.hint && r.correctIndex === j && !gate.resolved && Math.sin(S.t * 6) > 0) return "hint";
+        if (r.hint && r.correctIndex === j && !gate.resolved && Math.sin(S.t * 3.2) > -0.2) return "hint";
         if (S.laneIdx === j && !gate.resolved) return "sel";
         return "n";
     }
@@ -9501,13 +9508,14 @@ function rr3CreateEngine(cfg) {
         const cur = S.collision;
         const b = function (v, label, sub) { return '<button type="button" class="rr3-opt' + (cur === v ? " on" : "") + '" data-a="tlv" data-v="' + v + '" aria-pressed="' + (cur === v) + '"><b>' + label + '</b><small>' + sub + '</small></button>'; };
         el.teach.innerHTML = '<div class="rr3-tp"><h4>🔧 شدة التصادم مع الحرف الخاطئ</h4>' +
-            b(2, "عادي", "ارتجاج خفيف وغبار قصير وتوقف مؤقت") +
-            b(1, "خفيف جدًا", "حركة طفيفة بلا شرر") +
+            b(1, "لطيف (الافتراضي)", "اهتزاز طفيف جدًا وغبار قصير وتوقف مؤقت") +
+            b(2, "أوضح", "اهتزاز خفيف وشرارات صغيرة") +
             b(0, "بدون حركة تصادم", "توقف هادئ وارتداد بلا اهتزاز") +
+            '<p class="rr3-terr">يُخفَّض تلقائيًا إلى «بدون حركة» إذا فعّل الجهاز تقليل الحركة</p>' +
             '<p class="rr3-terr">لا نجوم تُخصم ولا تقدّم يضيع في أي حال</p><div class="rr3-trow"><button type="button" class="rr3-s" data-a="tclose">إغلاق</button></div></div>';
     }
     function setCollision(v) {
-        S.collision = (v === 0 || v === 1) ? v : 2;
+        S.collision = (v === 0 || v === 2) ? v : 1;
         try { if (hooks.collisionChanged) hooks.collisionChanged(S.collision); } catch (e) { /* لا شيء */ }
         teacherPanel();
     }
@@ -9590,6 +9598,14 @@ const RR3_CSS = `
 .rr3-opt{min-height:64px;border-radius:16px;border:3px solid #475569;background:#1e293b;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:6px 10px}
 .rr3-opt b{font-size:19px}.rr3-opt small{font-size:13px;color:#cbd5e1}
 .rr3-opt.on{border-color:#4ade80;background:#14532d}
+@media (orientation:landscape) and (max-height:520px){
+.rr3-ctl{justify-content:space-between;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));pointer-events:none}
+.rr3-ctl button{pointer-events:auto;height:64px;min-width:84px;font-size:28px;border-radius:20px}
+.rr3-ctl .rr3-go{position:absolute;right:calc(max(12px,env(safe-area-inset-right)) + 96px);bottom:0;min-width:128px;font-size:20px}
+.rr3-msg{bottom:auto;top:max(8px,env(safe-area-inset-top));font-size:17px;line-height:38px}
+.rr3-target{top:calc(max(8px,env(safe-area-inset-top)) + 70px)}
+.rr3-tg{font-size:46px}
+}
 @media (orientation:landscape) and (min-width:700px){.rr3-target{left:auto;right:24px;transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 84px)}.rr3-dots{display:none}}
 `;
 
@@ -9649,8 +9665,8 @@ function rr3TryStart(letter, stageIdx, stages, stage) {
         if (!root.classList.contains("active")) throw new Error("rr3-screen-not-active");
         let mode = "step";
         try { mode = localStorage.getItem("taha_rr3_mode") === "free" ? "free" : "step"; } catch (e) { /* لا شيء */ }
-        let collision = 2;
-        try { const cv0 = localStorage.getItem("taha_rr3_collision"); collision = cv0 === "0" ? 0 : (cv0 === "1" ? 1 : 2); } catch (e) { /* لا شيء */ }
+        let collision = 1;
+        try { const cv0 = localStorage.getItem("taha_rr3_collision"); collision = cv0 === "0" ? 0 : (cv0 === "2" ? 2 : 1); } catch (e) { /* لا شيء */ }
         let reduced = false;
         try { reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { /* لا شيء */ }
         const hooks = {
