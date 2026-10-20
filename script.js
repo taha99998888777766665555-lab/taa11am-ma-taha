@@ -8626,6 +8626,8 @@ function rr3CreateEngine(cfg) {
     const CAMD = 1 / Math.tan((96 / 2) * Math.PI / 180);
     const LANE_X = [-2 / 3, 0, 2 / 3];
     const GATE_AHEAD = 60;
+    const ROADK = 7, LW = 0.29, SUB = 8, TW = 224, TH = 416;   /* حروف الطريق: ٦ مقاطع عمقًا، نصف عرض الحرف من نصف عرض الطريق */
+    const ROAD_WAIT = 220, HIT_PRE = 350;
     const hooks = cfg.hooks || {};
     const rounds = cfg.rounds;
     const th = RR3_THEMES[(cfg.theme || 0) % RR3_THEMES.length];
@@ -8688,9 +8690,15 @@ function rr3CreateEngine(cfg) {
         chosen: false, busy: true, spawnAt: 0, spawnRound: -1,
         cars: [], carTimer: 1.2, particles: [], t: 0, wheel: 0, glow: 0, wobble: 0,
         bg: 0, msgT: 0, firstTry: 0, started: false, tilt: 0,
-        dragging: false, downX: 0, downY: 0, moved: false, ctlOn: true
+        dragging: false, downX: 0, downY: 0, moved: false, ctlOn: true,
+        paused: false, crash: null, shake: 0, shakeX: 0, ring: null, carPx: null,
+        collision: (cfg.collision === 0 || cfg.collision === 1) ? cfg.collision : 2
     };
-    rounds.forEach(function (r) { r.wrong = 0; r.dim = [false, false, false]; r.hint = false; });
+    const layout = cfg.layout === "gate" || cfg.layout === "road" ? cfg.layout : "mixed";
+    rounds.forEach(function (r, i) {
+        r.wrong = 0; r.dim = [false, false, false]; r.hint = false;
+        r.kind = layout === "gate" ? "gate" : (layout === "road" ? "road" : (i % 2 === 1 ? "gate" : "road"));
+    });
 
     function cruise() {
         const base = S.mode === "step" ? 3500 : 5600;
@@ -8708,6 +8716,7 @@ function rr3CreateEngine(cfg) {
         '<div class="rr3-chip rr3-starchip" aria-label="نجومي">⭐ <b class="rr3-stars"></b></div>' +
         '<button type="button" class="rr3-btn" data-a="mode" aria-pressed="false" aria-label="طريقة اللعب">🐢</button>' +
         '<button type="button" class="rr3-btn" data-a="listen" aria-label="اسمع الحرف">🔊</button>' +
+        '<button type="button" class="rr3-btn rr3-tbtn" data-a="teach" aria-label="إعدادات المعلم">🔧</button>' +
         '</div>' +
         '<div class="rr3-dots" aria-hidden="true"></div>' +
         '<div class="rr3-target" data-a="listen"><small>ابحث عن هذا الحرف</small><b class="rr3-tg"></b></div>' +
@@ -8717,6 +8726,7 @@ function rr3CreateEngine(cfg) {
         '<button type="button" class="rr3-go" data-a="go" aria-label="انطلق">✔ انطلق</button>' +
         '<button type="button" data-a="right" aria-label="حارة اليمين">▶</button>' +
         '</div>' +
+        '<div class="rr3-teach" role="dialog" aria-label="إعدادات المعلم"></div>' +
         '<div class="rr3-result"><h3></h3><div class="rr3-rstars" aria-hidden="true"></div><p></p><button type="button" class="rr3-p"></button><button type="button" class="rr3-s"></button></div>' +
         '</div>';
     const cv = root.querySelector(".rr3-cv");
@@ -8725,7 +8735,7 @@ function rr3CreateEngine(cfg) {
         letter: root.querySelector(".rr3-letter"), stage: root.querySelector(".rr3-stage"), stars: root.querySelector(".rr3-stars"),
         dots: root.querySelector(".rr3-dots"), tg: root.querySelector(".rr3-tg"), msg: root.querySelector(".rr3-msg"),
         mode: root.querySelector('[data-a="mode"]'), go: root.querySelector(".rr3-go"), result: root.querySelector(".rr3-result"),
-        top: root.querySelector(".rr3-top"), ctl: root.querySelector(".rr3-ctl")
+        top: root.querySelector(".rr3-top"), ctl: root.querySelector(".rr3-ctl"), teach: root.querySelector(".rr3-teach")
     };
     el.letter.textContent = cfg.letter;
     el.stage.textContent = (cfg.stageIcon || "") + " " + (cfg.stageTitle || "");
@@ -8759,14 +8769,20 @@ function rr3CreateEngine(cfg) {
 
     /* ---------- البوابات والجولات ---------- */
     function spawnGate(ri) {
+        const r = rounds[ri], road = r.kind === "road";
         const base = Math.floor((S.pos + PLAYERZ) / SEG) + GATE_AHEAD;
         let pick = base;
         for (let k = 0; k < 90; k++) {
             let ok = true;
-            for (let q = -12; q <= 3 && ok; q++) if (Math.abs(segs[(base + k + q) % N].curve) > 0.45) ok = false;
+            for (let q = (road ? -20 : -12); q <= (road ? 6 : 3) && ok; q++) if (Math.abs(segs[(base + k + q) % N].curve) > 0.45) ok = false;
             if (ok) { pick = base + k; break; }
         }
-        S.gate = { z: pick * SEG, r: ri, resolved: false, lane: -1, good: false, flash: 0 };
+        if (road) {
+            const a0 = pick - 2;
+            S.gate = { kind: "road", z: (a0 + ROADK / 2) * SEG, a0: a0, hitZ: a0 * SEG - HIT_PRE, wait: ROAD_WAIT, r: ri, resolved: false, lane: -1, good: false, flash: 0 };
+        } else {
+            S.gate = { kind: "gate", z: pick * SEG, hitZ: pick * SEG, wait: WAITD, r: ri, resolved: false, lane: -1, good: false, flash: 0 };
+        }
         S.chosen = false;
         S.waitMsg = false;
         S.busy = false;
@@ -8805,11 +8821,14 @@ function rr3CreateEngine(cfg) {
             const first = r.wrong === 0;
             if (first) { S.firstTry++; try { if (hooks.award) hooks.award(g.r); } catch (e) { fail(e); } }
             S.glow = 1;
+            if (g.kind === "road") S.ring = { t: 0 };
             if (!reduced) burst();
             const phrase = (cfg.phrases && cfg.phrases[(g.r + 1) % cfg.phrases.length]) || "صحيح";
             msg("🎉 " + phrase);
             updateHud();
             say(phrase, function () { afterCorrect(); }, 4000);
+        } else if (g.kind === "road") {
+            crashInto(g, r, lane);
         } else {
             r.wrong++;
             r.dim[lane] = true;
@@ -8823,6 +8842,48 @@ function rr3CreateEngine(cfg) {
                 S.spawnAt = S.pos + 10 * SEG;
                 sayPrompt();
             }, 3000);
+        }
+    }
+    /* تصادم ناعم مع حرف خاطئ على الطريق: ارتجاج خفيف + غبار قصير + توقف مؤقت + ارتداد للخلف.
+       لا خصم نجوم ولا فقد تقدم ولا إعادة مرحلة. الحرف الخاطئ يُعتَّم، ثم يُعاد توضيح الحرف المطلوب صوتيًا */
+    function crashInto(g, r, lane) {
+        r.wrong++;
+        r.dim[lane] = true;
+        const left = [0, 1, 2].filter(function (i) { return !r.dim[i]; });
+        if (r.wrong >= 2 || left.length === 1) r.hint = true;
+        let lv = S.collision;
+        if (reduced) lv = Math.min(lv, 1);
+        S.crash = { t: 0, lv: lv, from: S.pos, back: lv === 2 ? 1500 : (lv === 1 ? 1350 : 1250), dur: lv === 2 ? 1.25 : 1.0, burst: false, wait: false };
+        S.speed = 0;
+        S.wobble = lv === 2 ? 1 : (lv === 1 ? 0.35 : 0);
+        S.shake = lv === 2 ? 1 : (lv === 1 ? 0.3 : 0);
+        msg("😊 حاول مرة أخرى");
+        updateHud();
+    }
+    function crashDone() {
+        const c = S.crash;
+        if (!c || c.wait) return;
+        c.wait = true;
+        say("حاول مرة أخرى", function () {
+            const g = S.gate;
+            S.crash = null;
+            if (!g) return;
+            g.resolved = false; g.lane = -1; g.flash = 0;
+            S.chosen = false; S.waitMsg = false; S.busy = false;
+            syncGo();
+            sayPrompt();
+        }, 3000);
+    }
+    function dust(n, sparks) {
+        const px = S.carPx;
+        if (!px) return;
+        for (let i = 0; i < n; i++) {
+            const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, sp = (0.05 + Math.random() * 0.12) * px.w;
+            S.particles.push({ x: px.cx + (Math.random() - 0.5) * px.w * 0.7, y: px.cy - px.w * 0.22, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.7 + Math.random() * 0.4, t: 0, c: "rgba(203,213,225,.85)", s: px.w * (0.05 + Math.random() * 0.04), sq: false, g: 0, grow: px.w * 0.12 });
+        }
+        if (sparks) for (let i = 0; i < 8; i++) {
+            const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.6, sp = (0.25 + Math.random() * 0.35) * px.w;
+            S.particles.push({ x: px.cx + (Math.random() - 0.5) * px.w * 0.5, y: px.cy - px.w * 0.3, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.55 + Math.random() * 0.3, t: 0, c: "#fdba74", s: Math.max(3, px.w * 0.03), sq: true, g: 0.8 });
         }
     }
     function afterCorrect() {
@@ -8889,7 +8950,7 @@ function rr3CreateEngine(cfg) {
             }
         }
         S.cars.forEach(function (c) {
-            if (gate && !c.over && c.z < gate.z + 900) c.v += (cr * 1.55 - c.v) * Math.min(1, dt * 2.5);
+            if (gate && !c.over && c.z < gate.z + (gate.kind === "road" ? 1900 : 900)) c.v += (cr * 1.55 - c.v) * Math.min(1, dt * 2.5);
             c.z += c.v * dt; c.ph += dt * 6;
         });
         S.cars = S.cars.filter(function (c) { return c.z > S.pos - 2500 && c.z < S.pos + (DRAW + 30) * SEG; });
@@ -8906,6 +8967,7 @@ function rr3CreateEngine(cfg) {
 
     /* ---------- التحديث ---------- */
     function update(dt) {
+        if (S.paused) return;
         S.t += dt;
         S.playerX += (S.targetX - S.playerX) * Math.min(1, dt * 7);
         S.visX = Math.max(-0.9, Math.min(0.9, S.playerX + S.avoid));
@@ -8921,24 +8983,33 @@ function rr3CreateEngine(cfg) {
         /* انتظار اختيار الطفل (خطوة خطوة): السيارة تتمهّل وتقف قبل البوابة دون أي ضغط */
         const g = S.gate;
         if (g && !g.resolved) {
-            const dist = g.z - (S.pos + PLAYERZ);
+            const dist = g.hitZ - (S.pos + PLAYERZ), WD = g.wait;
             if (S.mode === "step") {
                 const arrived = Math.abs(S.playerX - LANE_X[S.laneIdx]) < 0.14;
                 let vmax = 1e9;
-                if (!S.chosen) vmax = Math.sqrt(2 * 3200 * Math.max(0, dist - WAITD));
+                if (!S.chosen) vmax = Math.sqrt(2 * 3200 * Math.max(0, dist - WD));
                 else if (!arrived) vmax = Math.max(500, Math.sqrt(2 * 3200 * Math.max(0, dist - 90)));
                 S.speed = Math.min(S.speed, vmax);
-                if (!S.chosen && dist < 2200 && !S.waitMsg) { S.waitMsg = true; msg("اختر حارة ثم اضغط ✔"); }
-                if (!S.chosen && dist < WAITD + 2) S.pos = Math.min(S.pos, g.z - PLAYERZ - WAITD);
-                if (S.chosen && !arrived && dist < 60) S.pos = Math.min(S.pos, g.z - PLAYERZ - 60);
+                if (!S.chosen && dist < 2200 && !S.waitMsg && !S.crash) { S.waitMsg = true; msg(g.kind === "road" ? "وجّه السيارة إلى الحرف ثم اضغط ✔" : "اختر حارة ثم اضغط ✔"); }
+                if (!S.chosen && dist < WD + 2 && !S.crash) S.pos = Math.min(S.pos, g.hitZ - PLAYERZ - WD);
+                if (S.chosen && !arrived && dist < 60 && !S.crash) S.pos = Math.min(S.pos, g.hitZ - PLAYERZ - 60);
             }
         }
-        const dPos = S.speed * dt;
-        S.pos += dPos;
+        if (S.crash) {
+            const c = S.crash;
+            c.t += dt;
+            S.speed = 0;
+            const t0 = 0.16 * c.dur;
+            if (!c.burst) { c.burst = true; dust(c.lv === 0 ? 0 : (c.lv === 1 ? 5 : 11), c.lv === 2 && !reduced); }
+            if (c.t > t0) { const u = Math.min(1, (c.t - t0) / (c.dur - t0)); const e = 1 - Math.pow(1 - u, 3); S.pos = c.from - c.back * e; }
+            if (c.t >= c.dur) crashDone();
+        }
+        const dPos = S.crash ? 0 : S.speed * dt;
+        if (!S.crash) S.pos += dPos;
         S.wheel += dPos * 0.0016;
         const pSeg = segs[Math.floor((S.pos + PLAYERZ) / SEG) % N];
         S.bg += pSeg.curve * (dPos / SEG) * 0.0016;
-        if (g && !g.resolved && S.pos + PLAYERZ >= g.z) resolveGate();
+        if (g && !g.resolved && !S.crash && S.pos + PLAYERZ >= g.hitZ) resolveGate();
         if (S.spawnRound >= 0 && !S.busy && S.pos >= S.spawnAt) {
             const gateOn = S.gate && !S.gate.resolved;
             if (!gateOn && !S.finishing) {
@@ -8948,9 +9019,12 @@ function rr3CreateEngine(cfg) {
         if (S.finishing && !S.finished && S.speed < 60 && S.pos + PLAYERZ > S.finishZ + 3 * SEG) finishRace();
         S.glow = Math.max(0, S.glow - dt * 0.6);
         S.wobble = Math.max(0, S.wobble - dt * 1.6);
+        S.shake = Math.max(0, S.shake - dt * 0.9);
+        S.shakeX = Math.sin(S.t * 38) * S.shake * 0.035;
+        if (S.ring) { S.ring.t += dt; if (S.ring.t > 1.2) S.ring = null; }
         if (g) g.flash = Math.max(0, g.flash - dt * 0.7);
         updateCars(dt);
-        S.particles.forEach(function (p) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += cv.height * 1.1 * dt; });
+        S.particles.forEach(function (p) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += cv.height * 1.1 * dt * (p.g == null ? 1 : p.g); if (p.grow) p.s += p.grow * dt; });
         S.particles = S.particles.filter(function (p) { return p.t < p.life; });
         syncGo();
     }
@@ -9056,15 +9130,74 @@ function rr3CreateEngine(cfg) {
                 ctx.lineWidth = Math.max(4, nw * 0.03);
                 ctx.stroke();
             }
-            if (!dim) {
-                const cxm = (nx + c * nw + fx + c * fw) / 2, cym = (ny + fy) / 2;
-                const padW = hw * 2 * nw;
-                const sy = Math.max(0.34, Math.min(1, (ny - fy) / (padW * 0.8)));
-                ctx.save(); ctx.translate(cxm, cym); ctx.scale(1, sy);
-                ctx.fillStyle = "#1e293b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                ctx.font = "900 " + Math.round(padW * 0.78) + "px 'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif";
-                ctx.fillText(r.options[j], 0, 0);
-                ctx.restore();
+        }
+    }
+
+    const RC = { W: 0, hy: 0, U: 0, camX: 0, camY: 0 };
+    const texCache = {};
+    const TEXPAL = {
+        n: ["#1458a0", "#ffffff", "#ffffff"], sel: ["#2b7be0", "#fde047", "#ffffff"], hint: ["#1458a0", "#22c55e", "#ffffff"],
+        dim: ["#4b5563", "#94a3b8", "#cbd5e1"], good: ["#16a34a", "#dcfce7", "#ffffff"], bad: ["#6b7280", "#fca5a5", "#ffffff"]
+    };
+    /* لوح الحرف المرسوم على الأسفلت: يُرسم مرة في نسيج ثم يُسقَط على مقاطع الطريق بمنظور صحيح */
+    function letterTex(ch, st) {
+        const key = ch + "|" + st;
+        if (texCache[key]) return texCache[key];
+        const pal = TEXPAL[st] || TEXPAL.n;
+        const c = document.createElement("canvas"); c.width = TW; c.height = TH;
+        const g = c.getContext("2d");
+        const rr = function (x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+        rr(4, 4, TW - 8, TH - 8, 38);
+        const gr = g.createLinearGradient(0, 0, 0, TH);
+        gr.addColorStop(0, pal[0]); gr.addColorStop(1, rr3Mix(rr3Hex(pal[0]), [0, 0, 0], 0.35));
+        g.fillStyle = gr; g.fill();
+        g.lineWidth = 12; g.strokeStyle = pal[1]; g.stroke();
+        rr(22, 22, TW - 44, TH - 44, 26);
+        g.lineWidth = 3; g.strokeStyle = "rgba(255,255,255,.28)"; g.stroke();
+        if (st !== "dim") {
+            g.save();
+            g.translate(TW / 2, TH * 0.52); g.scale(1, 1.7);
+            g.textAlign = "center"; g.textBaseline = "middle";
+            g.font = "900 " + Math.round(TW * 0.86) + "px 'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif";
+            g.lineJoin = "round"; g.lineWidth = 16; g.strokeStyle = "rgba(2,6,23,.55)";
+            g.strokeText(ch, 0, 0);
+            g.fillStyle = pal[2]; g.fillText(ch, 0, 0);
+            g.restore();
+        } else {
+            g.strokeStyle = "rgba(226,232,240,.55)"; g.lineWidth = 10; g.lineCap = "round";
+            g.beginPath(); g.moveTo(TW * 0.3, TH * 0.4); g.lineTo(TW * 0.7, TH * 0.6); g.moveTo(TW * 0.7, TH * 0.4); g.lineTo(TW * 0.3, TH * 0.6); g.stroke();
+        }
+        texCache[key] = c;
+        return c;
+    }
+    function laneState(r, gate, j) {
+        if (gate.resolved && gate.lane === j) return gate.good ? "good" : "bad";
+        if (r.dim[j]) return "dim";
+        if (r.hint && r.correctIndex === j && !gate.resolved && Math.sin(S.t * 6) > 0) return "hint";
+        if (S.laneIdx === j && !gate.resolved) return "sel";
+        return "n";
+    }
+    function projAt(f, t) {
+        const sg = f.sg, zz = f.z1 + t * SEG, s = CAMD / zz;
+        const wy = sg.y1 + (sg.y2 - sg.y1) * t;
+        return { y: RC.hy - s * (wy - RC.camY) * RC.U, xc: RC.W / 2 + s * (-RC.camX + f.cur + (f.nx - f.cur) * t) * RC.U, w: s * ROADW * RC.U };
+    }
+    function drawRoadLetters(f, gate) {
+        if (!f.ok && !(f.z1 > CAMD)) return;
+        const r = rounds[gate.r], m = f.abs - gate.a0;
+        const rows = ROADK * SUB, sh = TH / rows;
+        for (let j = 0; j < 3; j++) {
+            const tex = letterTex(r.options[j], laneState(r, gate, j)), c = LANE_X[j];
+            let p0 = projAt(f, 0);
+            for (let q = 0; q < SUB; q++) {
+                const p1 = projAt(f, (q + 1) / SUB);
+                if (p1.y < p0.y) {
+                    const u = m * SUB + q, sy = TH - (u + 1) * sh;
+                    const xl = ((p0.xc + (c - LW) * p0.w) + (p1.xc + (c - LW) * p1.w)) / 2;
+                    const wd = (p0.w + p1.w) * LW;
+                    ctx.drawImage(tex, 0, sy, TW, sh + 0.5, xl, p1.y - 0.4, wd, (p0.y - p1.y) + 0.9);
+                }
+                p0 = p1;
             }
         }
     }
@@ -9124,6 +9257,7 @@ function rr3CreateEngine(cfg) {
         const U = W > H * 1.2 ? H * 0.31 : Math.min(H * 0.272, W / 2);
         UU = U;
         drawBackground(W, H, hy);
+        RC.W = W; RC.hy = hy; RC.U = U;
         const baseIdx = Math.floor(S.pos / SEG);
         const basePct = (S.pos - baseIdx * SEG) / SEG;
         const baseSeg = segs[baseIdx % N];
@@ -9133,6 +9267,7 @@ function rr3CreateEngine(cfg) {
         const playerY = pSeg.y1 + (pSeg.y2 - pSeg.y1) * pPct;
         const camY = CAMH + playerY;
         const camX = S.visX * ROADW * 0.3;
+        RC.camX = camX; RC.camY = camY;
         let x = 0, dx = -(baseSeg.curve * basePct), maxY = H;
         for (let n = 0; n < DRAW; n++) {
             const abs = baseIdx + n, sg = segs[abs % N];
@@ -9147,6 +9282,7 @@ function rr3CreateEngine(cfg) {
                 f.cur = x;
             }
             x += dx; dx += sg.curve;
+            f.nx = x;
             if (z1 <= CAMD || f.y2 >= f.y1 || f.y2 >= maxY) { f.clip = maxY; continue; }
             f.ok = true; f.clip = maxY;
             const fog = 1 - Math.exp(-Math.pow(n / DRAW, 2) * 3.0);
@@ -9194,8 +9330,11 @@ function rr3CreateEngine(cfg) {
             const sP = CAMD / PLAYERZ;
             let cx = W / 2 + sP * (S.visX * ROADW - camX) * U;
             if (fP && fP.ok) { const rc = fP.x1 + (fP.x2 - fP.x1) * pPct; cx = rc + sP * (S.visX * ROADW) * U; }
-            const cy = hy + sP * CAMH * U;
+            const cy0 = hy + sP * CAMH * U;
             const wpx = CARW * sP * U;
+            cx += S.shakeX * wpx;
+            const cy = cy0 + (S.shake ? Math.abs(Math.sin(S.t * 26)) * S.shake * wpx * -0.02 : 0);
+            S.carPx = { cx: cx, cy: cy, w: wpx };
             const ph = (S.wheel * 6) % 0.3;
             const bounce = S.speed > 50 ? Math.sin(S.t * 22) * 0.004 : 0;
             const tilt = S.tilt + (S.wobble ? Math.sin(S.t * 30) * S.wobble * 0.5 : 0);
@@ -9219,7 +9358,8 @@ function rr3CreateEngine(cfg) {
                 rr3DrawSprite(ctx, sp.type, sx, f.y1, f.s1 * U * sp.sc, sp.v, th);
             }
             ctx.globalAlpha = 1;
-            if (f.abs === gateAbs && S.gate) { drawPad(n, S.gate, W, hy); ctx.globalAlpha = Math.max(0.2, 1 - fog * 0.6); drawGantry(f, S.gate); ctx.globalAlpha = 1; }
+            if (S.gate && S.gate.kind === "road" && f.abs >= S.gate.a0 && f.abs < S.gate.a0 + ROADK) { ctx.globalAlpha = Math.max(0.25, 1 - fog * 0.55); drawRoadLetters(f, S.gate); ctx.globalAlpha = 1; }
+            else if (f.abs === gateAbs && S.gate && S.gate.kind !== "road") { drawPad(n, S.gate, W, hy); ctx.globalAlpha = Math.max(0.2, 1 - fog * 0.6); drawGantry(f, S.gate); ctx.globalAlpha = 1; }
             if (f.abs === finAbs) drawFinish(n, f);
             const cs = byAbs[f.abs];
             if (cs) cs.forEach(function (c) {
@@ -9234,6 +9374,13 @@ function rr3CreateEngine(cfg) {
             if (clipped) ctx.restore();
         }
         if (!carDone) drawPlayer();
+        if (S.ring && S.carPx) {
+            const k = S.ring.t / 1.2, px = S.carPx;
+            ctx.globalAlpha = Math.max(0, 0.75 * (1 - k));
+            ctx.strokeStyle = "#86efac"; ctx.lineWidth = Math.max(3, px.w * 0.05 * (1 - k * 0.5));
+            ctx.beginPath(); ctx.ellipse(px.cx, px.cy - px.w * 0.1, px.w * (0.55 + k * 1.3), px.w * (0.2 + k * 0.5), 0, 0, Math.PI * 2); ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
         /* جسيمات الاحتفال */
         S.particles.forEach(function (p) {
             ctx.globalAlpha = Math.max(0, 1 - p.t / p.life);
@@ -9286,6 +9433,7 @@ function rr3CreateEngine(cfg) {
     }
     function onKey(ev) {
         if (root.closest && !root.closest(".active") && !cfg.standalone) return;
+        if (S.paused) return;
         const k = ev.key;
         if (k === "ArrowLeft" || k === "a" || k === "A") { setLane(S.laneIdx - 1, false); ev.preventDefault(); }
         else if (k === "ArrowRight" || k === "d" || k === "D") { setLane(S.laneIdx + 1, false); ev.preventDefault(); }
@@ -9301,6 +9449,10 @@ function rr3CreateEngine(cfg) {
         else if (a === "go") setLane(S.laneIdx, true);
         else if (a === "back") { if (hooks.exit) hooks.exit(); }
         else if (a === "listen") sayPrompt();
+        else if (a === "teach") openTeacher();
+        else if (a === "tclose") closeTeacher();
+        else if (a === "tok") teacherCheck();
+        else if (a === "tlv") { setCollision(parseInt(b.getAttribute("data-v"), 10)); }
         else if (a === "mode") {
             S.mode = S.mode === "step" ? "free" : "step";
             try { if (hooks.modeChanged) hooks.modeChanged(S.mode); } catch (e) { /* لا شيء */ }
@@ -9316,6 +9468,49 @@ function rr3CreateEngine(cfg) {
     root.addEventListener("click", onClick);
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", fit);
+
+    /* ---------- إعدادات المعلم: شدة التصادم (رمز المعلم إن وُجد، وإلا سؤال حسابي بسيط) ---------- */
+    let tq = null;
+    function closeTeacher() { el.teach.classList.remove("on"); el.teach.innerHTML = ""; S.paused = false; last = 0; }
+    function openTeacher() {
+        S.paused = true;
+        el.teach.classList.add("on");
+        let unlocked = false;
+        try { unlocked = !!(cfg.teacherUnlocked && cfg.teacherUnlocked()); } catch (e) { /* لا شيء */ }
+        if (unlocked) { teacherPanel(); return; }
+        let pin = "";
+        try { pin = (cfg.teacherPin && cfg.teacherPin()) || ""; } catch (e) { /* لا شيء */ }
+        let q;
+        if (pin) q = "🔢 أدخل الرمز السري (٤ أرقام)";
+        else { const a = 3 + Math.floor(Math.random() * 6), b2 = 2 + Math.floor(Math.random() * 7); tq = { ans: String(a + b2) }; q = "للمعلم فقط: كم ناتج " + a + " + " + b2 + " ؟"; }
+        tq = tq || {}; tq.pin = pin;
+        el.teach.innerHTML = '<div class="rr3-tp"><h4>🔧 للمعلم فقط</h4><p>' + q + '</p><input type="text" inputmode="numeric" autocomplete="off" class="rr3-tin" aria-label="الإجابة"><p class="rr3-terr" role="status"></p><div class="rr3-trow"><button type="button" class="rr3-p" data-a="tok">تأكيد</button><button type="button" class="rr3-s" data-a="tclose">إغلاق</button></div></div>';
+        const inp = el.teach.querySelector(".rr3-tin");
+        inp.addEventListener("keydown", function (e) { if (e.key === "Enter") teacherCheck(); e.stopPropagation(); });
+        setTimeout(function () { try { inp.focus(); } catch (e) { /* لا شيء */ } }, 30);
+    }
+    function teacherCheck() {
+        const inp = el.teach.querySelector(".rr3-tin");
+        if (!inp || !tq) return;
+        const v = inp.value.trim();
+        const ok = tq.pin ? v === tq.pin : v === tq.ans;
+        if (ok) teacherPanel();
+        else el.teach.querySelector(".rr3-terr").textContent = "😊 حاول مرة أخرى";
+    }
+    function teacherPanel() {
+        const cur = S.collision;
+        const b = function (v, label, sub) { return '<button type="button" class="rr3-opt' + (cur === v ? " on" : "") + '" data-a="tlv" data-v="' + v + '" aria-pressed="' + (cur === v) + '"><b>' + label + '</b><small>' + sub + '</small></button>'; };
+        el.teach.innerHTML = '<div class="rr3-tp"><h4>🔧 شدة التصادم مع الحرف الخاطئ</h4>' +
+            b(2, "عادي", "ارتجاج خفيف وغبار قصير وتوقف مؤقت") +
+            b(1, "خفيف جدًا", "حركة طفيفة بلا شرر") +
+            b(0, "بدون حركة تصادم", "توقف هادئ وارتداد بلا اهتزاز") +
+            '<p class="rr3-terr">لا نجوم تُخصم ولا تقدّم يضيع في أي حال</p><div class="rr3-trow"><button type="button" class="rr3-s" data-a="tclose">إغلاق</button></div></div>';
+    }
+    function setCollision(v) {
+        S.collision = (v === 0 || v === 1) ? v : 2;
+        try { if (hooks.collisionChanged) hooks.collisionChanged(S.collision); } catch (e) { /* لا شيء */ }
+        teacherPanel();
+    }
 
     function start() {
         fit();
@@ -9383,6 +9578,18 @@ const RR3_CSS = `
 .rr3-result p{font-size:20px;margin:0;max-width:520px}
 .rr3-result button{min-height:64px;min-width:230px;border-radius:20px;border:0;font-size:22px;font-weight:900;cursor:pointer}
 .rr3-p{background:#22c55e;color:#fff}.rr3-s{background:#e0e7ff;color:#312e81}
+.rr3-tbtn{opacity:.78}
+.rr3-teach{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.72);z-index:5;padding:16px}
+.rr3-teach.on{display:flex}
+.rr3-tp{background:#0f172a;border:2px solid #334155;border-radius:22px;padding:18px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:10px;color:#fff;max-height:92%;overflow:auto}
+.rr3-tp h4{margin:0;font-size:20px}.rr3-tp p{margin:0;font-size:16px}
+.rr3-tin{height:56px;border-radius:14px;border:2px solid #64748b;background:#fff;color:#0f172a;font-size:24px;text-align:center;font-family:inherit}
+.rr3-terr{min-height:20px;font-size:14px;color:#cbd5e1}
+.rr3-trow{display:flex;gap:10px;flex-wrap:wrap}
+.rr3-trow button{min-height:56px;min-width:120px;border-radius:16px;border:0;font-size:18px;font-weight:900;cursor:pointer;font-family:inherit}
+.rr3-opt{min-height:64px;border-radius:16px;border:3px solid #475569;background:#1e293b;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:6px 10px}
+.rr3-opt b{font-size:19px}.rr3-opt small{font-size:13px;color:#cbd5e1}
+.rr3-opt.on{border-color:#4ade80;background:#14532d}
 @media (orientation:landscape) and (min-width:700px){.rr3-target{left:auto;right:24px;transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 84px)}.rr3-dots{display:none}}
 `;
 
@@ -9442,6 +9649,8 @@ function rr3TryStart(letter, stageIdx, stages, stage) {
         if (!root.classList.contains("active")) throw new Error("rr3-screen-not-active");
         let mode = "step";
         try { mode = localStorage.getItem("taha_rr3_mode") === "free" ? "free" : "step"; } catch (e) { /* لا شيء */ }
+        let collision = 2;
+        try { const cv0 = localStorage.getItem("taha_rr3_collision"); collision = cv0 === "0" ? 0 : (cv0 === "1" ? 1 : 2); } catch (e) { /* لا شيء */ }
         let reduced = false;
         try { reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { /* لا شيء */ }
         const hooks = {
@@ -9460,6 +9669,7 @@ function rr3TryStart(letter, stageIdx, stages, stage) {
             stars: function () { return arabicNumber(typeof stars !== "undefined" ? stars : 0); },
             alive: function () { return rr3Cur === eng && root.classList.contains("active"); },
             exit: function () { rr3Teardown(); rrBackToStages(letter, ""); },
+            collisionChanged: function (v) { try { localStorage.setItem("taha_rr3_collision", String(v)); } catch (e) { /* لا شيء */ } },
             modeChanged: function (m) { try { localStorage.setItem("taha_rr3_mode", m); } catch (e) { /* لا شيء */ } },
             error: function (e) { rr3Recover(run, e); },
             finish: function (sum) {
@@ -9495,7 +9705,10 @@ function rr3TryStart(letter, stageIdx, stages, stage) {
             root: root, letter: letter, stageIcon: stage.icon, stageTitle: stage.title,
             rounds: built.map(function (r) { return { correctShape: r.correctShape, options: r.options.slice(), correctIndex: r.correctIndex }; }),
             theme: Math.max(0, order.indexOf(letter)) % 4, mode: mode, reduced: reduced,
-            promptText: letterWithFatha(letter), phrases: RACE_SUCCESS_PHRASES, hooks: hooks
+            promptText: letterWithFatha(letter), phrases: RACE_SUCCESS_PHRASES, hooks: hooks,
+            layout: "mixed", collision: collision,
+            teacherPin: function () { try { return localStorage.getItem("taha_teacher_pin") || ""; } catch (e) { return ""; } },
+            teacherUnlocked: function () { try { return typeof teacherUnlockedSession !== "undefined" && !!teacherUnlockedSession; } catch (e) { return false; } }
         });
         rr3Cur = eng;
         rr3Fails = 0;
