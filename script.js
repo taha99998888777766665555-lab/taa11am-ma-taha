@@ -8628,7 +8628,7 @@ function rr3CreateEngine(cfg) {
     const CAMD = 1 / Math.tan((96 / 2) * Math.PI / 180);
     const LANE_X = [-2 / 3, 0, 2 / 3];
     const GATE_AHEAD = 60;
-    const ROADK = 7, LW = 0.29, SUB = 8, TW = 224, TH = 416;   /* حروف الطريق: ٦ مقاطع عمقًا، نصف عرض الحرف من نصف عرض الطريق */
+    const ROADK = 7, LW = 0.26, SUB = 8, TW = 224, TH = 416;   /* حروف الطريق: ٦ مقاطع عمقًا، نصف عرض الحرف من نصف عرض الطريق */
     const ROAD_WAIT = 220, HIT_PRE = 350;
     const hooks = cfg.hooks || {};
     const rounds = cfg.rounds;
@@ -9742,7 +9742,7 @@ function rr3Distractors(letter, tier, seed, n) {
     const byScoreDesc = function (arr) { return arr.slice().sort(function (a, b) { return sc(b) - sc(a) || (a < b ? -1 : 1); }); };
     const byScoreAsc = function (arr) { return arr.slice().sort(function (a, b) { return sc(a) - sc(b) || (a < b ? -1 : 1); }); };
     const rep = n > 1 ? 2 : 1;
-    if (tier === 2) { for (let i = 0; i < rep; i++) take(byScoreDesc(near).concat(byScoreDesc(mid)), null) || take(far, 45); }
+    if (tier === 2) { for (let i = 0; i < rep; i++) take(byScoreDesc(near), null) || take(byScoreDesc(mid), null) || take(byScoreDesc(far), null); }
     else if (tier === 1) { take(byScoreAsc(mid), null) || take(far, 45); for (let i = 1; i < rep; i++) take(far, 45) || take(far, null); }
     else if (tier === "F") { for (let i = 0; i < rep; i++) take(far, 45) || take(far, null); }
     else { for (let i = 0; i < rep; i++) take(strictPool, 30) || take(far, 45) || take(far, null); }
