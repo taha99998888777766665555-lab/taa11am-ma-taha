@@ -8688,7 +8688,7 @@ function rr3CreateEngine(cfg) {
         pos: 0, speed: 0, playerX: 0, targetX: 0, visX: 0, avoid: 0, laneIdx: 1,
         mode: cfg.mode === "free" ? "free" : "step",
         roundIdx: 0, gate: null, finishZ: 0, finishing: false, finished: false,
-        chosen: false, busy: true, spawnAt: 0, spawnRound: -1,
+        chosen: false, steered: false, settle: 0, pxPrev: 0, gateX: 0, busy: true, spawnAt: 0, spawnRound: -1,
         cars: [], carTimer: 1.2, particles: [], t: 0, wheel: 0, glow: 0, wobble: 0,
         bg: 0, msgT: 0, firstTry: 0, started: false, tilt: 0,
         dragging: false, downX: 0, downY: 0, moved: false, ctlOn: true,
@@ -8807,6 +8807,7 @@ function rr3CreateEngine(cfg) {
     function setLane(i, choose) {
         S.laneIdx = Math.max(0, Math.min(2, i));
         S.targetX = LANE_X[S.laneIdx];
+        if (!choose) S.steered = true;
         if (choose) { S.chosen = true; if (el.msg.textContent.indexOf("اختر حارة") === 0) msg(""); }
         syncGo();
     }
@@ -8815,9 +8816,19 @@ function rr3CreateEngine(cfg) {
         el.go.classList.toggle("pulse", !!wait && !reduced);
     }
 
+    /* حارة العبور: موضع السيارة مُقدَّر لحظة بلوغ الواجهة للبوابة (استيفاء بين الإطارين فلا تفوّته السرعة العالية).
+       وإن كانت السيارة بين حارتين وهدف توجيه الطفل قد استقر على حارة، تُحتسب الحارة التي توجّه إليها فعلًا */
+    function gateLane() {
+        const x = S.gateX;
+        let lane = nearestLane(x);
+        const tg = nearestLane(S.targetX);
+        if (tg !== lane && Math.abs(S.targetX - LANE_X[tg]) < 0.2 && Math.abs(x - LANE_X[lane]) > 0.12) lane = tg;
+        return lane;
+    }
     function resolveGate() {
         const g = S.gate, r = rounds[g.r];
-        const lane = nearestLane(S.playerX);   /* الالتقاط بموقع السيارة الفعلي لا بالزر */
+        const lane = gateLane();   /* الالتقاط بموقع السيارة الفعلي لحظة العبور لا بالزر */
+        S.steered = false; S.settle = 0;
         g.resolved = true; g.lane = lane; g.flash = 1;
         S.busy = true;
         const ok = isRight(r, lane) && !r.dim[lane];
@@ -8879,7 +8890,7 @@ function rr3CreateEngine(cfg) {
             S.crash = null;
             if (!g) return;
             g.resolved = false; g.lane = -1; g.flash = 0;
-            S.chosen = false; S.waitMsg = false; S.busy = false;
+            S.chosen = false; S.steered = false; S.settle = 0; S.waitMsg = false; S.busy = false;
             syncGo();
             sayPrompt();
         }, 3000);
@@ -8986,6 +8997,7 @@ function rr3CreateEngine(cfg) {
     function update(dt) {
         if (S.paused) return;
         S.t += dt;
+        S.pxPrev = S.playerX;
         S.playerX += (S.targetX - S.playerX) * Math.min(1, dt * 7);
         S.visX = Math.max(-0.9, Math.min(0.9, S.playerX + S.avoid));
         S.tilt += ((S.targetX - S.playerX) * 1.6 + S.avoid * 0.8 - S.tilt) * Math.min(1, dt * 8);
@@ -9007,7 +9019,10 @@ function rr3CreateEngine(cfg) {
                 if (!S.chosen) vmax = Math.sqrt(2 * 3200 * Math.max(0, dist - WD));
                 else if (!arrived) vmax = Math.max(500, Math.sqrt(2 * 3200 * Math.max(0, dist - 90)));
                 S.speed = Math.min(S.speed, vmax);
-                if (!S.chosen && dist < 2200 && !S.waitMsg && !S.crash) { S.waitMsg = true; { const rr = rounds[g.r]; const nt = rr.options.filter(function (o) { return o === rr.correctShape; }).length; msg(g.kind === "road" ? (nt > 1 ? "قد يظهر الحرف مرتين: اختر أيًّا منهما ثم ✔" : "وجّه السيارة إلى الحرف ثم اضغط ✔") : "اختر حارة ثم اضغط ✔"); } }
+                if (!S.chosen && dist < 2200 && !S.waitMsg && !S.crash) { S.waitMsg = true; { const rr = rounds[g.r]; const nt = rr.options.filter(function (o) { return o === rr.correctShape; }).length; msg(g.kind === "road" ? (nt > 1 ? "قد يظهر الحرف مرتين: وجّه السيارة إلى أيٍّ منهما" : "وجّه السيارة إلى الحرف (أو اضغط ✔)") : "اختر حارة (أو اضغط ✔)"); } }
+                /* توجيه الطفل للسيارة اختيار بحد ذاته: بعد استقرارها في الحارة قليلًا تواصل دون ضغط ✔ (✔ يبقى للتأكيد الفوري) */
+                if (!S.chosen && S.steered && arrived && !S.crash && S.started) { S.settle += dt; if (S.settle >= 0.7) { S.chosen = true; if (el.msg.textContent.indexOf("اختر") === 0 || el.msg.textContent.indexOf("وجّه") === 0 || el.msg.textContent.indexOf("قد يظهر") === 0) msg(""); syncGo(); } }
+                else if (!S.chosen) S.settle = 0;
                 if (!S.chosen && dist < WD + 2 && !S.crash) S.pos = Math.min(S.pos, g.hitZ - PLAYERZ - WD);
                 if (S.chosen && !arrived && dist < 60 && !S.crash) S.pos = Math.min(S.pos, g.hitZ - PLAYERZ - 60);
             }
@@ -9021,12 +9036,17 @@ function rr3CreateEngine(cfg) {
             if (c.t > t0) { const u = Math.min(1, (c.t - t0) / (c.dur - t0)); const e = 1 - Math.pow(1 - u, 3); S.pos = c.from - c.back * e; }
             if (c.t >= c.dur) crashDone();
         }
+        const front0 = S.pos + PLAYERZ;
         const dPos = S.crash ? 0 : S.speed * dt;
         if (!S.crash) S.pos += dPos;
         S.wheel += dPos * 0.0016;
         const pSeg = segs[Math.floor((S.pos + PLAYERZ) / SEG) % N];
         S.bg += pSeg.curve * (dPos / SEG) * 0.0016;
-        if (g && !g.resolved && !S.crash && S.pos + PLAYERZ >= g.hitZ) resolveGate();
+        if (g && !g.resolved && !S.crash && S.pos + PLAYERZ >= g.hitZ) {
+            const span = S.pos + PLAYERZ - front0, f = span > 0 ? Math.max(0, Math.min(1, (g.hitZ - front0) / span)) : 1;
+            S.gateX = S.pxPrev + (S.playerX - S.pxPrev) * f;
+            resolveGate();
+        }
         if (S.spawnRound >= 0 && !S.busy && S.pos >= S.spawnAt) {
             const gateOn = S.gate && !S.gate.resolved;
             if (!gateOn && !S.finishing) {
@@ -9437,7 +9457,7 @@ function rr3CreateEngine(cfg) {
         if (S.moved) {
             const t = ((ev.clientX - r.left) / r.width - 0.5) * 2;
             S.targetX = Math.max(-0.667, Math.min(0.667, t * 0.9));
-            S.laneIdx = nearestLane(S.targetX);
+            S.laneIdx = nearestLane(S.targetX); S.steered = true;
         }
     }
     function onUp(ev) {
