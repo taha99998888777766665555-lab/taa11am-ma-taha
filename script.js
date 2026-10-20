@@ -8411,11 +8411,1125 @@ function rrArmWatchdog(run) {
     RR.timers.push(wd);
 }
 
+/* =========================================================
+   🏁 سباق الطريق ثلاثي الأبعاد — نموذج أولي (تحدي «اعرف شكله» فقط)
+   فرع تجريبي: يبقى المحرك الحالي كخطة تراجع، وأي فشل يعود إليه.
+========================================================= */
+/* RR3-ENGINE-BEGIN */
+/* =========================================================
+   🏁 RR3 — محرك السباق ثلاثي الأبعاد (منظور زائف على canvas)
+   مستقل عن بقية التطبيق: يتلقى الجولات والخطّافات (hooks) من المضيف.
+   لا وقت ضاغط ولا خسارة ولا عقوبات؛ الخطأ يُعيد عرض الجولة نفسها.
+========================================================= */
+
+const RR3_THEMES = [
+    { name: "نهار", sky: ["#4aa8ff", "#8fd3ff", "#e3f6ff"], sun: { x: 0.74, y: 0.34, r: 0.07, c: "#fff6c2" }, mount: "#7fa6c9", far: "#5f9bbd", hill: "#4caf50", hill2: "#3b9a45",
+      grass: ["#3fae49", "#38a043"], road: ["#4d525c", "#565c67"], rumble: ["#e63946", "#f8f9fa"], fog: [200, 232, 250], sprites: ["tree", "tree", "palm", "bush", "lamp"], stars: false, city: false, clouds: true },
+    { name: "غروب", sky: ["#3a2a6b", "#e0607e", "#ffc27a"], sun: { x: 0.3, y: 0.42, r: 0.11, c: "#ffe9a8" }, mount: "#6b3f7a", far: "#8a4a7f", hill: "#6f8f3e", hill2: "#5a7c34",
+      grass: ["#6b9137", "#628630"], road: ["#4a4452", "#544d5c"], rumble: ["#f4a261", "#fff3e0"], fog: [250, 190, 140], sprites: ["palm", "palm", "bush", "lamp", "rock"], stars: false, city: false, clouds: true },
+    { name: "مدينة", sky: ["#0a1128", "#1b2a52", "#3c4f86"], sun: { x: 0.72, y: 0.26, r: 0.045, c: "#f1f5ff" }, mount: "#1d2a4d", far: "#16213f", hill: "#16335a", hill2: "#12294a",
+      grass: ["#14483f", "#113f37"], road: ["#2c3039", "#343944"], rumble: ["#38bdf8", "#e0f2fe"], fog: [48, 66, 112], sprites: ["building", "lamp", "building", "lamp", "sign"], stars: true, city: true, clouds: false },
+    { name: "صحراء", sky: ["#3f9cf5", "#9ad4fb", "#fdf3d0"], sun: { x: 0.28, y: 0.3, r: 0.075, c: "#fffbe0" }, mount: "#d9a85f", far: "#c99853", hill: "#e2b567", hill2: "#d6a85a",
+      grass: ["#e8c26a", "#dfb85f"], road: ["#585b61", "#62666d"], rumble: ["#e76f51", "#fff7e6"], fog: [248, 228, 190], sprites: ["cactus", "rock", "cactus", "bush", "sign"], stars: false, city: false, clouds: true }
+];
+
+const RR3_CAR_COLORS = [
+    { b: "#e63946", a: "#ffffff" }, { b: "#2a9df4", a: "#ffd166" }, { b: "#ffb703", a: "#023047" },
+    { b: "#06d6a0", a: "#073b4c" }, { b: "#9b5de5", a: "#ffffff" }, { b: "#f1f5f9", a: "#e63946" }
+];
+
+function rr3Rng(seed) {
+    let a = seed >>> 0;
+    return function () {
+        a = (a + 0x6D2B79F5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function rr3Mix(c, f, t) {
+    return "rgb(" + Math.round(c[0] + (f[0] - c[0]) * t) + "," + Math.round(c[1] + (f[1] - c[1]) * t) + "," + Math.round(c[2] + (f[2] - c[2]) * t) + ")";
+}
+
+function rr3Hex(h) {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/* ---------- رسم السيارة (من الخلف) — وحدة العرض = عرض السيارة ---------- */
+function rr3DrawCar(ctx, cx, by, w, o) {
+    const col = o.color || RR3_CAR_COLORS[0];
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(w, w);
+    if (o.alpha != null) ctx.globalAlpha = o.alpha;
+    /* ظل */
+    ctx.fillStyle = "rgba(0,0,0,.34)";
+    ctx.beginPath(); ctx.ellipse(0, 0.01, 0.62, 0.075, 0, 0, Math.PI * 2); ctx.fill();
+    /* وهج النجاح */
+    if (o.glow) {
+        const g = ctx.createRadialGradient(0, -0.3, 0.1, 0, -0.3, 0.95);
+        g.addColorStop(0, "rgba(74,222,128," + (0.55 * o.glow) + ")"); g.addColorStop(1, "rgba(74,222,128,0)");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -0.3, 0.95, 0, Math.PI * 2); ctx.fill();
+    }
+    const bounce = o.bounce || 0;
+    ctx.translate(0, bounce);
+    ctx.transform(1, 0, -(o.tilt || 0) * 0.16, 1, 0, 0);
+    /* إطارات */
+    const ph = o.phase || 0;
+    [-1, 1].forEach(function (s) {
+        ctx.fillStyle = "#101216";
+        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(s < 0 ? -0.56 : 0.39, -0.3, 0.17, 0.3, 0.04) : ctx.rect(s < 0 ? -0.56 : 0.39, -0.3, 0.17, 0.3); ctx.fill();
+        ctx.fillStyle = "#2b2f36";
+        for (let i = 0; i < 4; i++) {
+            const yy = -0.3 + ((i * 0.075 + ph) % 0.3);
+            ctx.fillRect(s < 0 ? -0.55 : 0.4, yy, 0.15, 0.022);
+        }
+    });
+    /* الهيكل السفلي */
+    let g = ctx.createLinearGradient(0, -0.46, 0, -0.08);
+    g.addColorStop(0, col.b); g.addColorStop(1, "rgba(0,0,0,.55)");
+    ctx.fillStyle = col.b;
+    ctx.beginPath();
+    ctx.moveTo(-0.52, -0.10); ctx.lineTo(0.52, -0.10); ctx.lineTo(0.53, -0.28); ctx.quadraticCurveTo(0.5, -0.43, 0.4, -0.45);
+    ctx.lineTo(-0.4, -0.45); ctx.quadraticCurveTo(-0.5, -0.43, -0.53, -0.28); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = g; ctx.fill();
+    /* مقصورة */
+    ctx.fillStyle = col.b;
+    ctx.beginPath(); ctx.moveTo(-0.37, -0.44); ctx.lineTo(-0.28, -0.66); ctx.lineTo(0.28, -0.66); ctx.lineTo(0.37, -0.44); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.fill();
+    /* زجاج خلفي */
+    g = ctx.createLinearGradient(0, -0.64, 0, -0.46);
+    g.addColorStop(0, "#9ad7ff"); g.addColorStop(1, "#16324f");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(-0.31, -0.47); ctx.lineTo(-0.24, -0.62); ctx.lineTo(0.24, -0.62); ctx.lineTo(0.31, -0.47); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.28)";
+    ctx.beginPath(); ctx.moveTo(-0.2, -0.61); ctx.lineTo(-0.08, -0.61); ctx.lineTo(-0.2, -0.48); ctx.lineTo(-0.28, -0.48); ctx.closePath(); ctx.fill();
+    /* خط تزيين على الصندوق */
+    ctx.fillStyle = col.a;
+    ctx.fillRect(-0.5, -0.43, 1.0, 0.025);
+    /* جناح خلفي */
+    ctx.fillStyle = "#15171c";
+    ctx.fillRect(-0.4, -0.68, 0.035, 0.12); ctx.fillRect(0.365, -0.68, 0.035, 0.12);
+    ctx.fillStyle = col.a;
+    ctx.fillRect(-0.5, -0.72, 1.0, 0.07);
+    ctx.fillStyle = "#15171c";
+    ctx.fillRect(-0.52, -0.74, 0.04, 0.11); ctx.fillRect(0.48, -0.74, 0.04, 0.11);
+    /* مصابيح خلفية */
+    const lit = o.brake ? 1 : 0.8;
+    [-1, 1].forEach(function (s) {
+        const x0 = s < 0 ? -0.5 : 0.26;
+        const lg = ctx.createLinearGradient(0, -0.4, 0, -0.3);
+        lg.addColorStop(0, "#ff6b6b"); lg.addColorStop(1, "#b91c1c");
+        ctx.fillStyle = lg; ctx.fillRect(x0, -0.4, 0.24, 0.085);
+        ctx.fillStyle = "rgba(255,120,120," + (0.35 * lit) + ")";
+        ctx.beginPath(); ctx.ellipse(x0 + 0.12, -0.357, 0.2, 0.09, 0, 0, Math.PI * 2); ctx.fill();
+    });
+    /* لوحة وممتص صدمات */
+    ctx.fillStyle = "#101216"; ctx.fillRect(-0.5, -0.22, 1.0, 0.12);
+    ctx.fillStyle = "#f8fafc"; ctx.fillRect(-0.1, -0.2, 0.2, 0.08);
+    ctx.fillStyle = "#334155"; ctx.fillRect(-0.07, -0.18, 0.14, 0.035);
+    /* عوادم */
+    ctx.fillStyle = "#6b7280";
+    ctx.beginPath(); ctx.arc(-0.3, -0.07, 0.04, 0, Math.PI * 2); ctx.arc(0.3, -0.07, 0.04, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+}
+
+/* ---------- عناصر جانب الطريق (وحدات = وحدات العالم، k = بكسل لكل وحدة) ---------- */
+function rr3DrawSprite(ctx, type, cx, by, k, v, th) {
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(k, k);
+    switch (type) {
+    case "tree": {
+        ctx.fillStyle = "#6b4423"; ctx.fillRect(-60, -620, 120, 620);
+        ctx.fillStyle = th.hill2;
+        ctx.beginPath(); ctx.ellipse(0, -820, 420, 360, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = th.hill;
+        ctx.beginPath(); ctx.ellipse(-130, -900, 300, 260, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(140, -940, 260, 240, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "palm": {
+        ctx.strokeStyle = "#7a5230"; ctx.lineWidth = 90; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(70 * v, -700, 20 * v, -1350); ctx.stroke();
+        ctx.fillStyle = "#2f9e44";
+        for (let i = 0; i < 6; i++) {
+            const a = (-150 + i * 60) * Math.PI / 180;
+            ctx.save(); ctx.translate(20 * v, -1350); ctx.rotate(a * 0.55);
+            ctx.beginPath(); ctx.ellipse(i < 3 ? -260 : 260, 40, 330, 70, i < 3 ? 0.35 : -0.35, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+        ctx.fillStyle = "#8d5a2b"; ctx.beginPath(); ctx.arc(20 * v, -1330, 55, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "bush": {
+        ctx.fillStyle = th.hill2; ctx.beginPath(); ctx.ellipse(0, -160, 360, 190, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = th.hill; ctx.beginPath(); ctx.ellipse(-110, -210, 230, 150, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "lamp": {
+        ctx.fillStyle = "#9aa3ad"; ctx.fillRect(-35, -1500, 70, 1500);
+        const lx = v > 0 ? -330 : 330;
+        ctx.fillRect(Math.min(0, lx), -1500, Math.abs(lx), 60);
+        const gl = ctx.createRadialGradient(lx, -1420, 20, lx, -1420, 330);
+        gl.addColorStop(0, "rgba(255,236,160,.95)"); gl.addColorStop(1, "rgba(255,236,160,0)");
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(lx, -1420, 330, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#fff7cc"; ctx.fillRect(lx - 110, -1450, 220, 50);
+        break;
+    }
+    case "building": {
+        const h = 1500 + (Math.abs(v) * 7919 % 2200), w = 900 + (Math.abs(v) * 104729 % 500);
+        const g = ctx.createLinearGradient(0, -h, 0, 0);
+        g.addColorStop(0, "#27365f"); g.addColorStop(1, "#18213f");
+        ctx.fillStyle = g; ctx.fillRect(-w / 2, -h, w, h);
+        for (let yy = 140; yy < h - 140; yy += 220) {
+            for (let xx = -w / 2 + 90; xx < w / 2 - 120; xx += 190) {
+                const on = ((Math.floor(xx / 190) * 31 + Math.floor(yy / 220) * 17 + Math.floor(Math.abs(v) * 13)) % 5) < 3;
+                ctx.fillStyle = on ? "#ffd86b" : "#2e3d6b";
+                ctx.fillRect(xx, -h + yy, 110, 130);
+            }
+        }
+        break;
+    }
+    case "cactus": {
+        ctx.fillStyle = "#2f8f4e";
+        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-70, -900, 140, 900, 70) : ctx.rect(-70, -900, 140, 900); ctx.fill();
+        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-290, -650, 120, 340, 60) : ctx.rect(-290, -650, 120, 340); ctx.fill();
+        ctx.fillRect(-250, -380, 200, 90);
+        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(170, -760, 120, 340, 60) : ctx.rect(170, -760, 120, 340); ctx.fill();
+        ctx.fillRect(60, -480, 200, 90);
+        break;
+    }
+    case "rock": {
+        ctx.fillStyle = "#8b8f98";
+        ctx.beginPath(); ctx.moveTo(-330, 0); ctx.lineTo(-240, -300); ctx.lineTo(-30, -420); ctx.lineTo(220, -290); ctx.lineTo(340, 0); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.beginPath(); ctx.moveTo(-240, -300); ctx.lineTo(-30, -420); ctx.lineTo(0, -200); ctx.closePath(); ctx.fill();
+        break;
+    }
+    case "sign": {
+        ctx.fillStyle = "#9aa3ad"; ctx.fillRect(-200, -900, 50, 900); ctx.fillRect(150, -900, 50, 900);
+        const cols = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0"];
+        ctx.fillStyle = cols[Math.abs(Math.floor(v * 10)) % 4]; ctx.fillRect(-300, -1400, 600, 520);
+        ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.fillRect(-250, -1330, 500, 60); ctx.fillRect(-250, -1220, 340, 50);
+        break;
+    }
+    default: break;
+    }
+    ctx.restore();
+}
+
+function rr3CreateEngine(cfg) {
+    const SEG = 200, ROADW = 1300, LANES = 3, CAMH = 1500, PLAYERZ = 1100, WAITD = 560, CARW = 620;
+    const CAMD = 1 / Math.tan((96 / 2) * Math.PI / 180);
+    const LANE_X = [-2 / 3, 0, 2 / 3];
+    const GATE_AHEAD = 60;
+    const hooks = cfg.hooks || {};
+    const rounds = cfg.rounds;
+    const th = RR3_THEMES[(cfg.theme || 0) % RR3_THEMES.length];
+    const fogRGB = th.fog;
+    const reduced = !!cfg.reduced;
+    const root = cfg.root;
+    const timers = [];
+    let raf = 0, last = 0, destroyed = false;
+    let DRAW = 85;
+
+    /* ---------- المسار ---------- */
+    const segs = [];
+    function lastY() { return segs.length ? segs[segs.length - 1].y2 : 0; }
+    function addSeg(curve, y) {
+        const n = segs.length;
+        segs.push({ i: n, y1: lastY(), y2: y, curve: curve * (reduced ? 0.45 : 1), sprites: [], dark: Math.floor(n / 3) % 2 === 0 });
+    }
+    function eio(a, b, p) { return a + (b - a) * (-Math.cos(p * Math.PI) / 2 + 0.5); }
+    function ein(a, b, p) { return a + (b - a) * p * p; }
+    function addRoad(enter, hold, leave, curve, yd) {
+        const y0 = lastY(), y1 = y0 + yd * SEG, tot = enter + hold + leave;
+        for (let n = 0; n < enter; n++) addSeg(ein(0, curve, n / enter), eio(y0, y1, n / tot));
+        for (let n = 0; n < hold; n++) addSeg(curve, eio(y0, y1, (enter + n) / tot));
+        for (let n = 0; n < leave; n++) addSeg(eio(curve, 0, n / leave), eio(y0, y1, (enter + hold + n) / tot));
+    }
+    addRoad(25, 20, 25, 0, 0);
+    addRoad(20, 30, 20, 2.1, 0);
+    addRoad(15, 15, 15, 0, 7);
+    addRoad(15, 25, 15, -2.3, -7);
+    addRoad(20, 30, 20, -1.7, 0);
+    addRoad(20, 25, 20, 2.5, 0);
+    addRoad(25, 30, 25, 0, 0);
+    addRoad(15, 20, 15, 1.4, 6);
+    addRoad(15, 20, 15, -1.6, -6);
+    addRoad(10, 20, 10, 0, -lastY() / SEG);
+    const N = segs.length;
+    const rng = rr3Rng(7 + (cfg.theme || 0) * 131);
+    for (let n = 6; n < N; n++) {
+        const sg = segs[n];
+        if (n % 4 === 0) {
+            const side = (n / 4 | 0) % 2 ? 1 : -1;
+            const type = th.sprites[Math.floor(rng() * th.sprites.length)];
+            const far = type === "building" ? 2.0 + rng() * 1.4 : 1.35 + rng() * 1.5;
+            sg.sprites.push({ type: type, off: side * far, v: side * (0.5 + rng()), sc: 0.85 + rng() * 0.5 });
+        }
+        if (n % 6 === 3) {
+            const side = (n / 6 | 0) % 2 ? -1 : 1;
+            const type = th.sprites[Math.floor(rng() * th.sprites.length)];
+            sg.sprites.push({ type: type, off: side * (1.4 + rng() * 2.2), v: side * (0.5 + rng()), sc: 0.8 + rng() * 0.6 });
+        }
+        if (n % 14 === 5) sg.sprites.push({ type: "lamp", off: -1.3, v: -1, sc: 1 });
+        if (n % 14 === 12) sg.sprites.push({ type: "lamp", off: 1.3, v: 1, sc: 1 });
+    }
+
+    /* ---------- الحالة ---------- */
+    const S = {
+        pos: 0, speed: 0, playerX: 0, targetX: 0, visX: 0, avoid: 0, laneIdx: 1,
+        mode: cfg.mode === "free" ? "free" : "step",
+        roundIdx: 0, gate: null, finishZ: 0, finishing: false, finished: false,
+        chosen: false, busy: true, spawnAt: 0, spawnRound: -1,
+        cars: [], carTimer: 1.2, particles: [], t: 0, wheel: 0, glow: 0, wobble: 0,
+        bg: 0, msgT: 0, firstTry: 0, started: false, tilt: 0,
+        dragging: false, downX: 0, downY: 0, moved: false, ctlOn: true
+    };
+    rounds.forEach(function (r) { r.wrong = 0; r.dim = [false, false, false]; r.hint = false; });
+
+    function cruise() {
+        const base = S.mode === "step" ? 3500 : 5600;
+        return reduced ? base * 0.8 : base;
+    }
+
+    /* ---------- DOM ---------- */
+    root.innerHTML =
+        '<div class="rr3-root">' +
+        '<canvas class="rr3-cv" aria-label="مضمار السباق"></canvas>' +
+        '<div class="rr3-top">' +
+        '<button type="button" class="rr3-btn" data-a="back" aria-label="رجوع">⬅️</button>' +
+        '<div class="rr3-chip"><b class="rr3-letter"></b><span class="rr3-stage"></span></div>' +
+        '<span class="rr3-sp"></span>' +
+        '<div class="rr3-chip rr3-starchip" aria-label="نجومي">⭐ <b class="rr3-stars"></b></div>' +
+        '<button type="button" class="rr3-btn" data-a="mode" aria-pressed="false" aria-label="طريقة اللعب">🐢</button>' +
+        '<button type="button" class="rr3-btn" data-a="listen" aria-label="اسمع الحرف">🔊</button>' +
+        '</div>' +
+        '<div class="rr3-dots" aria-hidden="true"></div>' +
+        '<div class="rr3-target" data-a="listen"><small>ابحث عن هذا الحرف</small><b class="rr3-tg"></b></div>' +
+        '<div class="rr3-msg" role="status" aria-live="polite"></div>' +
+        '<div class="rr3-ctl">' +
+        '<button type="button" data-a="left" aria-label="حارة اليسار">◀</button>' +
+        '<button type="button" class="rr3-go" data-a="go" aria-label="انطلق">✔ انطلق</button>' +
+        '<button type="button" data-a="right" aria-label="حارة اليمين">▶</button>' +
+        '</div>' +
+        '<div class="rr3-result"><h3></h3><div class="rr3-rstars" aria-hidden="true"></div><p></p><button type="button" class="rr3-p"></button><button type="button" class="rr3-s"></button></div>' +
+        '</div>';
+    const cv = root.querySelector(".rr3-cv");
+    const ctx = cv.getContext("2d");
+    const el = {
+        letter: root.querySelector(".rr3-letter"), stage: root.querySelector(".rr3-stage"), stars: root.querySelector(".rr3-stars"),
+        dots: root.querySelector(".rr3-dots"), tg: root.querySelector(".rr3-tg"), msg: root.querySelector(".rr3-msg"),
+        mode: root.querySelector('[data-a="mode"]'), go: root.querySelector(".rr3-go"), result: root.querySelector(".rr3-result"),
+        top: root.querySelector(".rr3-top"), ctl: root.querySelector(".rr3-ctl")
+    };
+    el.letter.textContent = cfg.letter;
+    el.stage.textContent = (cfg.stageIcon || "") + " " + (cfg.stageTitle || "");
+
+    function later(fn, ms) {
+        const id = setTimeout(function () {
+            const i = timers.indexOf(id); if (i >= 0) timers.splice(i, 1);
+            if (!destroyed) { try { fn(); } catch (e) { fail(e); } }
+        }, ms);
+        timers.push(id);
+        return id;
+    }
+    function fail(e) { try { if (hooks.error) hooks.error(e); } catch (e2) { /* لا شيء */ } }
+    function say(text, done, maxMs) {
+        let fired = false;
+        const fin = function () { if (fired || destroyed) return; fired = true; if (done) done(); };
+        try { if (hooks.say) hooks.say(text, fin); else fin(); } catch (e) { fin(); }
+        if (done) later(fin, maxMs || 4200);
+    }
+    function msg(text) { el.msg.textContent = text || ""; }
+    function updateHud() {
+        el.stars.textContent = (typeof hooks.stars === "function") ? hooks.stars() : "";
+        let d = "";
+        for (let i = 0; i < rounds.length; i++) d += '<span class="rr3-dot ' + (i === S.roundIdx ? "cur" : (i < S.roundIdx ? "done" : "")) + '"></span>';
+        el.dots.innerHTML = d;
+        const r = rounds[Math.min(S.roundIdx, rounds.length - 1)];
+        el.tg.textContent = r ? r.correctShape : "";
+        el.mode.textContent = S.mode === "step" ? "🐢" : "🏎️";
+        el.mode.setAttribute("aria-label", S.mode === "step" ? "الوضع: خطوة خطوة" : "الوضع: سباق حر");
+    }
+
+    /* ---------- البوابات والجولات ---------- */
+    function spawnGate(ri) {
+        const base = Math.floor((S.pos + PLAYERZ) / SEG) + GATE_AHEAD;
+        let pick = base;
+        for (let k = 0; k < 90; k++) {
+            let ok = true;
+            for (let q = -12; q <= 3 && ok; q++) if (Math.abs(segs[(base + k + q) % N].curve) > 0.45) ok = false;
+            if (ok) { pick = base + k; break; }
+        }
+        S.gate = { z: pick * SEG, r: ri, resolved: false, lane: -1, good: false, flash: 0 };
+        S.chosen = false;
+        S.waitMsg = false;
+        S.busy = false;
+        S.spawnRound = -1;
+        updateHud();
+    }
+    function sayPrompt() {
+        const r = rounds[S.roundIdx];
+        if (!r) return;
+        say(cfg.promptText, null);
+    }
+    function nearestLane(x) {
+        let b = 0, bd = 9;
+        for (let i = 0; i < 3; i++) { const d = Math.abs(x - LANE_X[i]); if (d < bd) { bd = d; b = i; } }
+        return b;
+    }
+    function setLane(i, choose) {
+        S.laneIdx = Math.max(0, Math.min(2, i));
+        S.targetX = LANE_X[S.laneIdx];
+        if (choose) { S.chosen = true; if (el.msg.textContent.indexOf("اختر حارة") === 0) msg(""); }
+        syncGo();
+    }
+    function syncGo() {
+        const wait = S.mode === "step" && S.gate && !S.gate.resolved && !S.chosen;
+        el.go.classList.toggle("pulse", !!wait && !reduced);
+    }
+
+    function resolveGate() {
+        const g = S.gate, r = rounds[g.r];
+        const lane = S.mode === "step" ? S.laneIdx : nearestLane(S.playerX);
+        g.resolved = true; g.lane = lane; g.flash = 1;
+        S.busy = true;
+        const ok = (lane === r.correctIndex) && !r.dim[lane];
+        if (ok) {
+            g.good = true;
+            const first = r.wrong === 0;
+            if (first) { S.firstTry++; try { if (hooks.award) hooks.award(g.r); } catch (e) { fail(e); } }
+            S.glow = 1;
+            if (!reduced) burst();
+            const phrase = (cfg.phrases && cfg.phrases[(g.r + 1) % cfg.phrases.length]) || "صحيح";
+            msg("🎉 " + phrase);
+            updateHud();
+            say(phrase, function () { afterCorrect(); }, 4000);
+        } else {
+            r.wrong++;
+            r.dim[lane] = true;
+            const left = [0, 1, 2].filter(function (i) { return !r.dim[i]; });
+            if (r.wrong >= 2 || left.length === 1) r.hint = true;
+            S.wobble = 1;
+            msg("😊 حاول مرة أخرى");
+            say("حاول مرة أخرى", function () {
+                S.busy = false;
+                S.spawnRound = g.r;
+                S.spawnAt = S.pos + 10 * SEG;
+                sayPrompt();
+            }, 3000);
+        }
+    }
+    function afterCorrect() {
+        S.busy = false;
+        S.roundIdx++;
+        updateHud();
+        if (S.roundIdx >= rounds.length) {
+            S.finishZ = (Math.floor((S.pos + PLAYERZ) / SEG) + 62) * SEG;
+            S.finishing = true; S.gate = null;
+            msg("🏁 الخط النهائي أمامك");
+        } else {
+            S.spawnRound = S.roundIdx;
+            S.spawnAt = S.pos + 14 * SEG;
+            msg("");
+            later(sayPrompt, 800);
+        }
+    }
+    function burst() {
+        const W = cv.width, H = cv.height;
+        const cols = ["#fde047", "#4ade80", "#38bdf8", "#f472b6", "#fb923c", "#ffffff"];
+        for (let i = 0; i < 46; i++) {
+            const a = Math.random() * Math.PI * 2, sp = (0.25 + Math.random() * 0.9) * W * 0.55;
+            S.particles.push({ x: W / 2, y: H * 0.5, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - H * 0.25, life: 1.3 + Math.random() * 0.7, t: 0, c: cols[i % cols.length], s: 5 + Math.random() * 8, sq: i % 3 === 0 });
+        }
+    }
+    function finishRace() {
+        if (S.finished) return;
+        S.finished = true;
+        msg("");
+        let cfgRes = null;
+        try { cfgRes = hooks.finish ? hooks.finish({ firstTry: S.firstTry, total: rounds.length }) : null; } catch (e) { fail(e); }
+        cfgRes = cfgRes || { title: "🌟 أحسنت!", body: "", stars: "", next: "إغلاق", onNext: function () { if (hooks.exit) hooks.exit(); } };
+        const h = el.result;
+        h.querySelector("h3").textContent = cfgRes.title || "";
+        h.querySelector(".rr3-rstars").textContent = cfgRes.stars || "";
+        h.querySelector("p").textContent = cfgRes.body || "";
+        const bn = h.querySelector(".rr3-p"), bm = h.querySelector(".rr3-s");
+        bn.textContent = cfgRes.next || ""; bn.onclick = function () { try { cfgRes.onNext && cfgRes.onNext(); } catch (e) { fail(e); } };
+        if (cfgRes.map) { bm.style.display = ""; bm.textContent = cfgRes.map; bm.onclick = function () { try { cfgRes.onMap && cfgRes.onMap(); } catch (e) { fail(e); } }; } else bm.style.display = "none";
+        h.classList.add("on");
+        try { bn.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ }
+        if (cfgRes.phrase) say(cfgRes.phrase, null);
+    }
+
+    /* ---------- المنافسون ---------- */
+    /* سيارات بطيئة أمامك تتجاوزها، وسيارات أسرع تتجاوزك من الخلف. لا تصادم ولا عقوبة:
+       إن اقتربت من حارتك ينحرف عرضك البصري بلطف ثم يعود. وقبل أي بوابة تنطلق كل سيارة قريبة منها بعيدًا */
+    function updateCars(dt) {
+        const cr = cruise();
+        const pz = S.pos + PLAYERZ;
+        const gate = (S.gate && !S.gate.resolved) ? S.gate : null;
+        S.carTimer -= dt;
+        if (S.started && !S.finishing && S.carTimer <= 0 && S.cars.length < 3) {
+            S.carTimer = 2.2 + Math.random() * 3.2;
+            const lane = Math.floor(Math.random() * 3);
+            const col = RR3_CAR_COLORS[1 + Math.floor(Math.random() * (RR3_CAR_COLORS.length - 1))];
+            if (Math.random() < 0.62) {
+                const z = S.pos + (DRAW - 8) * SEG;
+                if (!S.cars.some(function (c) { return Math.abs(c.z - z) < 14 * SEG; }))
+                    S.cars.push({ z: z, x: LANE_X[lane], v: cr * (0.42 + Math.random() * 0.22), col: col, ph: Math.random(), over: false });
+            } else {
+                const ln = (S.laneIdx + 1 + Math.floor(Math.random() * 2)) % 3;
+                S.cars.push({ z: S.pos - 500, x: LANE_X[ln], v: cr * (1.28 + Math.random() * 0.18), col: col, ph: Math.random(), over: true });
+            }
+        }
+        S.cars.forEach(function (c) {
+            if (gate && !c.over && c.z < gate.z + 900) c.v += (cr * 1.55 - c.v) * Math.min(1, dt * 2.5);
+            c.z += c.v * dt; c.ph += dt * 6;
+        });
+        S.cars = S.cars.filter(function (c) { return c.z > S.pos - 2500 && c.z < S.pos + (DRAW + 30) * SEG; });
+        let want = 0;
+        S.cars.forEach(function (c) {
+            const d = c.z - pz;
+            if (d > -500 && d < 1500 && Math.abs(c.x - S.playerX) < 0.5) {
+                const side = (c.x >= S.playerX) ? -1 : 1;
+                want = side * 0.5;
+            }
+        });
+        S.avoid += (want - S.avoid) * Math.min(1, dt * 4.5);
+    }
+
+    /* ---------- التحديث ---------- */
+    function update(dt) {
+        S.t += dt;
+        S.playerX += (S.targetX - S.playerX) * Math.min(1, dt * 7);
+        S.visX = Math.max(-0.9, Math.min(0.9, S.playerX + S.avoid));
+        S.tilt += ((S.targetX - S.playerX) * 1.6 + S.avoid * 0.8 - S.tilt) * Math.min(1, dt * 8);
+        const cr = cruise();
+        let vt = cr;
+        if (!S.started) vt = 0;
+        if (S.finishing) {
+            const pastFinish = S.pos + PLAYERZ - S.finishZ;
+            if (pastFinish > 0) vt = Math.max(0, cr * (1 - pastFinish / (14 * SEG)));
+        }
+        S.speed += (vt - S.speed) * Math.min(1, dt * (vt > S.speed ? 1.6 : 2.6));
+        /* انتظار اختيار الطفل (خطوة خطوة): السيارة تتمهّل وتقف قبل البوابة دون أي ضغط */
+        const g = S.gate;
+        if (g && !g.resolved) {
+            const dist = g.z - (S.pos + PLAYERZ);
+            if (S.mode === "step") {
+                const arrived = Math.abs(S.playerX - LANE_X[S.laneIdx]) < 0.14;
+                let vmax = 1e9;
+                if (!S.chosen) vmax = Math.sqrt(2 * 3200 * Math.max(0, dist - WAITD));
+                else if (!arrived) vmax = Math.max(500, Math.sqrt(2 * 3200 * Math.max(0, dist - 90)));
+                S.speed = Math.min(S.speed, vmax);
+                if (!S.chosen && dist < 2200 && !S.waitMsg) { S.waitMsg = true; msg("اختر حارة ثم اضغط ✔"); }
+                if (!S.chosen && dist < WAITD + 2) S.pos = Math.min(S.pos, g.z - PLAYERZ - WAITD);
+                if (S.chosen && !arrived && dist < 60) S.pos = Math.min(S.pos, g.z - PLAYERZ - 60);
+            }
+        }
+        const dPos = S.speed * dt;
+        S.pos += dPos;
+        S.wheel += dPos * 0.0016;
+        const pSeg = segs[Math.floor((S.pos + PLAYERZ) / SEG) % N];
+        S.bg += pSeg.curve * (dPos / SEG) * 0.0016;
+        if (g && !g.resolved && S.pos + PLAYERZ >= g.z) resolveGate();
+        if (S.spawnRound >= 0 && !S.busy && S.pos >= S.spawnAt) {
+            const gateOn = S.gate && !S.gate.resolved;
+            if (!gateOn && !S.finishing) {
+                spawnGate(S.spawnRound);
+            }
+        }
+        if (S.finishing && !S.finished && S.speed < 60 && S.pos + PLAYERZ > S.finishZ + 3 * SEG) finishRace();
+        S.glow = Math.max(0, S.glow - dt * 0.6);
+        S.wobble = Math.max(0, S.wobble - dt * 1.6);
+        if (g) g.flash = Math.max(0, g.flash - dt * 0.7);
+        updateCars(dt);
+        S.particles.forEach(function (p) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += cv.height * 1.1 * dt; });
+        S.particles = S.particles.filter(function (p) { return p.t < p.life; });
+        syncGo();
+    }
+
+    /* ---------- الرسم ---------- */
+    function fit() {
+        const r = root.getBoundingClientRect();
+        const cw = Math.max(200, r.width), ch = Math.max(200, r.height);
+        let sc = Math.min(window.devicePixelRatio || 1, 1.5);
+        while (cw * ch * sc * sc > 1.7e6 && sc > 0.6) sc -= 0.1;
+        const w = Math.round(cw * sc), h = Math.round(ch * sc);
+        if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+        DRAW = cw < 600 ? 80 : 100;
+    }
+
+    function drawBackground(W, H, hy) {
+        let g = ctx.createLinearGradient(0, 0, 0, hy);
+        g.addColorStop(0, th.sky[0]); g.addColorStop(0.62, th.sky[1]); g.addColorStop(1, th.sky[2]);
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy + 2);
+        if (th.stars) {
+            ctx.fillStyle = "rgba(255,255,255,.85)";
+            const r = rr3Rng(99);
+            for (let i = 0; i < 70; i++) { const sx = r() * W, sy = r() * hy * 0.7; ctx.fillRect(sx, sy, 1.6, 1.6); }
+        }
+        const sun = th.sun, sx = W * sun.x - S.bg * W * 0.06, sy = hy * sun.y * 1.6;
+        const sg = ctx.createRadialGradient(sx, sy, 2, sx, sy, W * sun.r * 4);
+        sg.addColorStop(0, "rgba(255,250,210,.9)"); sg.addColorStop(1, "rgba(255,250,210,0)");
+        ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, W * sun.r * 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = sun.c; ctx.beginPath(); ctx.arc(sx, sy, W * sun.r, 0, Math.PI * 2); ctx.fill();
+        if (th.clouds) {
+            ctx.fillStyle = "rgba(255,255,255,.78)";
+            for (let i = 0; i < 4; i++) {
+                const cw = W * (0.22 + 0.05 * i), cx = ((i * 0.31 * W + S.t * 7 * (i + 1) + S.bg * W * 0.12) % (W + cw * 2)) - cw, cy = hy * (0.18 + 0.12 * i);
+                ctx.beginPath(); ctx.ellipse(cx, cy, cw * 0.5, cw * 0.075, 0, 0, Math.PI * 2); ctx.ellipse(cx - cw * 0.18, cy - cw * 0.04, cw * 0.26, cw * 0.075, 0, 0, Math.PI * 2); ctx.ellipse(cx + cw * 0.2, cy - cw * 0.03, cw * 0.28, cw * 0.065, 0, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        const layer = function (color, amp, off, f1, f2, lift) {
+            ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(0, hy + 2);
+            for (let x = 0; x <= W + 8; x += 8) {
+                const t = (x + off);
+                const h = (0.55 * Math.sin(t * f1 + 1) + 0.3 * Math.sin(t * f2 + 2) + 0.15 * Math.sin(t * f1 * 3.1)) * amp + amp * 0.9 + lift;
+                ctx.lineTo(x, hy - h);
+            }
+            ctx.lineTo(W, hy + 2); ctx.closePath(); ctx.fill();
+        };
+        layer(th.far, H * 0.07, S.bg * W * 0.5, 0.0045, 0.011, 0);
+        layer(th.mount, H * 0.055, S.bg * W * 0.9, 0.0062, 0.017, 0);
+        if (th.city) {
+            const off = S.bg * W * 1.4, bw = Math.max(26, W * 0.07);
+            const first = Math.floor(off / bw);
+            for (let b = first - 1; b < first + Math.ceil(W / bw) + 2; b++) {
+                const hh = H * (0.04 + ((b * 7919) % 13 + 13) % 13 / 13 * 0.12);
+                const x = b * bw - off;
+                ctx.fillStyle = "#101a36"; ctx.fillRect(x, hy - hh, bw - 3, hh + 2);
+                ctx.fillStyle = "rgba(255,216,107,.8)";
+                for (let wy = hy - hh + 6; wy < hy - 6; wy += 11) for (let wx = x + 5; wx < x + bw - 10; wx += 10) if (((b * 31 + wy * 7 + wx * 3) | 0) % 5 < 2) ctx.fillRect(wx, wy, 4, 5);
+            }
+        } else {
+            layer(th.hill2, H * 0.04, S.bg * W * 1.4, 0.0085, 0.021, 0);
+            layer(th.hill, H * 0.028, S.bg * W * 1.9, 0.011, 0.027, 0);
+        }
+        ctx.fillStyle = th.grass[0]; ctx.fillRect(0, hy, W, H - hy);
+    }
+
+    function poly(c, x1, y1, x2, y2, x3, y3, x4, y4) {
+        ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.lineTo(x4, y4); ctx.closePath(); ctx.fill();
+    }
+
+    const rgbCache = {
+        roadD: rr3Hex(th.road[0]), roadL: rr3Hex(th.road[1]), gD: rr3Hex(th.grass[0]), gL: rr3Hex(th.grass[1]),
+        rD: rr3Hex(th.rumble[0]), rL: rr3Hex(th.rumble[1]), white: [250, 250, 250]
+    };
+    const info = [];
+
+    function roundRectPath(x, y, w, h, r) {
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+        else ctx.rect(x, y, w, h);
+    }
+
+    function drawPad(nI, gate, W, hy) {
+        const f1 = info[nI], f0 = nI > 0 && info[nI - 1] && info[nI - 1].ok ? info[nI - 1] : null;
+        if (!f1 || !f1.ok) return;
+        const r = rounds[gate.r];
+        const nx = f0 ? f0.x1 : f1.x1, ny = f0 ? f0.y1 : f1.y1, nw = f0 ? f0.w1 : f1.w1;
+        const fx = f1.x2, fy = f1.y2, fw = f1.w2;
+        for (let j = 0; j < 3; j++) {
+            const c = LANE_X[j], hw = 0.29;
+            const dim = r.dim[j];
+            const sel = (S.laneIdx === j) && !gate.resolved;
+            const isRight = r.correctIndex === j;
+            let fill = "rgba(250,204,21,.94)";
+            if (dim) fill = "rgba(110,115,125,.7)";
+            if (gate.resolved && gate.lane === j) fill = gate.good ? "rgba(74,222,128,.96)" : "rgba(148,163,184,.9)";
+            const k = 0.97;
+            poly(fill, nx + (c - hw) * nw, ny, nx + (c + hw) * nw, ny, fx + (c + hw) * fw * k, fy, fx + (c - hw) * fw * k, fy);
+            /* إطار */
+            ctx.strokeStyle = sel ? "#ffffff" : "rgba(255,255,255,.75)";
+            ctx.lineWidth = sel ? Math.max(3, nw * 0.02) : Math.max(1.5, nw * 0.01);
+            ctx.beginPath(); ctx.moveTo(nx + (c - hw) * nw, ny); ctx.lineTo(nx + (c + hw) * nw, ny); ctx.lineTo(fx + (c + hw) * fw * k, fy); ctx.lineTo(fx + (c - hw) * fw * k, fy); ctx.closePath(); ctx.stroke();
+            if (r.hint && isRight && !dim && !gate.resolved) {
+                ctx.strokeStyle = "rgba(34,197,94," + (0.55 + 0.45 * Math.sin(S.t * 6)) + ")";
+                ctx.lineWidth = Math.max(4, nw * 0.03);
+                ctx.stroke();
+            }
+            if (!dim) {
+                const cxm = (nx + c * nw + fx + c * fw) / 2, cym = (ny + fy) / 2;
+                const padW = hw * 2 * nw;
+                const sy = Math.max(0.34, Math.min(1, (ny - fy) / (padW * 0.8)));
+                ctx.save(); ctx.translate(cxm, cym); ctx.scale(1, sy);
+                ctx.fillStyle = "#1e293b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.font = "900 " + Math.round(padW * 0.78) + "px 'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif";
+                ctx.fillText(r.options[j], 0, 0);
+                ctx.restore();
+            }
+        }
+    }
+
+    function drawGantry(f, gate) {
+        if (!f || !f.ok) return;
+        const r = rounds[gate.r], s = f.s1, k = s * UU;
+        const bx = f.x1, by = f.y1;
+        const postX = 1.18 * f.w1;
+        ctx.fillStyle = "#cbd5e1";
+        ctx.fillRect(bx - postX - 45 * k, by - 2900 * k, 90 * k, 2900 * k);
+        ctx.fillRect(bx + postX - 45 * k, by - 2900 * k, 90 * k, 2900 * k);
+        ctx.fillStyle = "#94a3b8"; ctx.fillRect(bx - postX - 45 * k, by - 2900 * k, 2 * postX + 90 * k, 260 * k);
+        for (let j = 0; j < 3; j++) {
+            const cx = bx + LANE_X[j] * f.w1, pw = 0.6 * f.w1, ph = 800 * k, top = by - 2700 * k;
+            const dim = r.dim[j];
+            const sel = (S.laneIdx === j) && !gate.resolved;
+            ctx.fillStyle = "#cbd5e1"; ctx.fillRect(cx - pw * 0.3, top - 40 * k, 14 * k, 50 * k); ctx.fillRect(cx + pw * 0.3 - 14 * k, top - 40 * k, 14 * k, 50 * k);
+            roundRectPath(cx - pw / 2, top, pw, ph, 50 * k);
+            ctx.fillStyle = dim ? "#475569" : "#0f4c81"; ctx.fill();
+            ctx.lineWidth = Math.max(2, (sel ? 70 : 38) * k);
+            ctx.strokeStyle = (gate.resolved && gate.lane === j) ? (gate.good ? "#4ade80" : "#94a3b8") : (sel ? "#fde047" : "#ffffff");
+            ctx.stroke();
+            if (r.hint && r.correctIndex === j && !dim && !gate.resolved) {
+                ctx.strokeStyle = "rgba(34,197,94," + (0.55 + 0.45 * Math.sin(S.t * 6)) + ")"; ctx.lineWidth = Math.max(4, 90 * k); ctx.stroke();
+            }
+            if (!dim) {
+                ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.font = "900 " + Math.round(ph * 0.7) + "px 'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif";
+                ctx.fillText(r.options[j], cx, top + ph * 0.58);
+            }
+        }
+    }
+
+    function drawFinish(nI, f) {
+        if (!f || !f.ok) return;
+        const k = f.s1 * UU, bx = f.x1, by = f.y1;
+        const postX = 1.18 * f.w1;
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillRect(bx - postX - 45 * k, by - 2900 * k, 90 * k, 2900 * k);
+        ctx.fillRect(bx + postX - 45 * k, by - 2900 * k, 90 * k, 2900 * k);
+        const x0 = bx - postX, bw = 2 * postX, top = by - 2900 * k, bh = 520 * k, cells = 16;
+        for (let i = 0; i < cells; i++) for (let j = 0; j < 2; j++) {
+            ctx.fillStyle = ((i + j) % 2) ? "#111827" : "#f8fafc";
+            ctx.fillRect(x0 + bw * i / cells, top + bh * j / 2, bw / cells + 1, bh / 2 + 1);
+        }
+        ctx.fillStyle = "#fde047"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.font = "900 " + Math.round(bh * 0.9) + "px 'Segoe UI',Tahoma,sans-serif";
+        ctx.fillText("🏁", bx, top + bh * 1.75);
+    }
+
+    let UU = 195;
+
+    function render() {
+        const W = cv.width, H = cv.height;
+        const hy = Math.round(H * 0.46);
+        const U = W > H * 1.2 ? H * 0.31 : Math.min(H * 0.272, W / 2);
+        UU = U;
+        drawBackground(W, H, hy);
+        const baseIdx = Math.floor(S.pos / SEG);
+        const basePct = (S.pos - baseIdx * SEG) / SEG;
+        const baseSeg = segs[baseIdx % N];
+        const pAbs = Math.floor((S.pos + PLAYERZ) / SEG);
+        const pSeg = segs[pAbs % N];
+        const pPct = (S.pos + PLAYERZ - pAbs * SEG) / SEG;
+        const playerY = pSeg.y1 + (pSeg.y2 - pSeg.y1) * pPct;
+        const camY = CAMH + playerY;
+        const camX = S.visX * ROADW * 0.3;
+        let x = 0, dx = -(baseSeg.curve * basePct), maxY = H;
+        for (let n = 0; n < DRAW; n++) {
+            const abs = baseIdx + n, sg = segs[abs % N];
+            const z1 = abs * SEG - S.pos, z2 = z1 + SEG;
+            const f = info[n] || (info[n] = {});
+            f.ok = false; f.abs = abs; f.sg = sg; f.z1 = z1;
+            if (z1 > CAMD) {
+                const s1 = CAMD / z1, s2 = CAMD / z2;
+                f.s1 = s1; f.s2 = s2;
+                f.x1 = W / 2 + s1 * (-(camX) + x) * U; f.y1 = hy - s1 * (sg.y1 - camY) * U; f.w1 = s1 * ROADW * U;
+                f.x2 = W / 2 + s2 * (-(camX) + x + dx) * U; f.y2 = hy - s2 * (sg.y2 - camY) * U; f.w2 = s2 * ROADW * U;
+                f.cur = x;
+            }
+            x += dx; dx += sg.curve;
+            if (z1 <= CAMD || f.y2 >= f.y1 || f.y2 >= maxY) { f.clip = maxY; continue; }
+            f.ok = true; f.clip = maxY;
+            const fog = 1 - Math.exp(-Math.pow(n / DRAW, 2) * 3.0);
+            const dark = sg.dark;
+            const grass = rr3Mix(dark ? rgbCache.gD : rgbCache.gL, fogRGB, fog);
+            const road = rr3Mix(dark ? rgbCache.roadD : rgbCache.roadL, fogRGB, fog);
+            const rum = rr3Mix(dark ? rgbCache.rD : rgbCache.rL, fogRGB, fog);
+            const ye = f.y2 - 1;
+            ctx.fillStyle = grass; ctx.fillRect(0, ye, W, f.y1 - ye);
+            const r1 = f.w1 / Math.max(6, 2 * LANES), r2 = f.w2 / Math.max(6, 2 * LANES);
+            poly(rum, f.x1 - f.w1 - r1, f.y1, f.x1 - f.w1, f.y1, f.x2 - f.w2, ye, f.x2 - f.w2 - r2, ye);
+            poly(rum, f.x1 + f.w1 + r1, f.y1, f.x1 + f.w1, f.y1, f.x2 + f.w2, ye, f.x2 + f.w2 + r2, ye);
+            poly(road, f.x1 - f.w1, f.y1, f.x1 + f.w1, f.y1, f.x2 + f.w2, ye, f.x2 - f.w2, ye);
+            const edge = rr3Mix(rgbCache.white, fogRGB, fog);
+            const e1 = f.w1 / 60, e2 = f.w2 / 60;
+            poly(edge, f.x1 - f.w1 * 0.97 - e1, f.y1, f.x1 - f.w1 * 0.97 + e1, f.y1, f.x2 - f.w2 * 0.97 + e2, f.y2, f.x2 - f.w2 * 0.97 - e2, f.y2);
+            poly(edge, f.x1 + f.w1 * 0.97 - e1, f.y1, f.x1 + f.w1 * 0.97 + e1, f.y1, f.x2 + f.w2 * 0.97 + e2, f.y2, f.x2 + f.w2 * 0.97 - e2, f.y2);
+            if (!dark) {
+                const m1 = f.w1 / 38, m2 = f.w2 / 38;
+                for (let l = 1; l < LANES; l++) {
+                    const lx1 = f.x1 - f.w1 + (f.w1 * 2 / LANES) * l, lx2 = f.x2 - f.w2 + (f.w2 * 2 / LANES) * l;
+                    poly(edge, lx1 - m1 / 2, f.y1, lx1 + m1 / 2, f.y1, lx2 + m2 / 2, f.y2, lx2 - m2 / 2, f.y2);
+                }
+            }
+            /* خط النهاية على الأسفلت */
+            if (S.finishing && abs === S.finishZ / SEG) {
+                const cells = 12;
+                for (let i = 0; i < cells; i++) {
+                    const a = -1 + 2 * i / cells, b = -1 + 2 * (i + 1) / cells;
+                    poly((i % 2) ? "#111827" : "#f8fafc", f.x1 + a * f.w1, f.y1, f.x1 + b * f.w1, f.y1, f.x2 + b * f.w2, f.y2, f.x2 + a * f.w2, f.y2);
+                }
+            }
+            maxY = f.y1;
+        }
+        /* الكائنات من الأبعد إلى الأقرب؛ السيارة تُرسم بين ما هو أبعد منها وما هو أقرب */
+        const gateAbs = S.gate ? S.gate.z / SEG : -1;
+        const finAbs = S.finishing ? S.finishZ / SEG : -1;
+        const byAbs = {};
+        S.cars.forEach(function (c) { const a = Math.floor(c.z / SEG); (byAbs[a] = byAbs[a] || []).push(c); });
+        let carDone = false;
+        const playerBase = baseIdx;
+        const drawPlayer = function () {
+            if (carDone) return; carDone = true;
+            const nP = pAbs - baseIdx, fP = info[nP];
+            const sP = CAMD / PLAYERZ;
+            let cx = W / 2 + sP * (S.visX * ROADW - camX) * U;
+            if (fP && fP.ok) { const rc = fP.x1 + (fP.x2 - fP.x1) * pPct; cx = rc + sP * (S.visX * ROADW) * U; }
+            const cy = hy + sP * CAMH * U;
+            const wpx = CARW * sP * U;
+            const ph = (S.wheel * 6) % 0.3;
+            const bounce = S.speed > 50 ? Math.sin(S.t * 22) * 0.004 : 0;
+            const tilt = S.tilt + (S.wobble ? Math.sin(S.t * 30) * S.wobble * 0.5 : 0);
+            rr3DrawCar(ctx, cx, cy, wpx, { color: RR3_CAR_COLORS[0], tilt: reduced ? tilt * 0.4 : tilt, bounce: bounce, phase: ph, brake: S.speed < 600 && S.started, glow: S.glow });
+        };
+        for (let n = DRAW - 1; n >= 0; n--) {
+            const f = info[n];
+            if (!f) continue;
+            if (!carDone && f.abs * SEG - S.pos < PLAYERZ - SEG * 0.0 && f.abs <= pAbs) drawPlayer();
+            if (!f.ok) {
+                continue;
+            }
+            const sg = f.sg;
+            const fog = 1 - Math.exp(-Math.pow(n / DRAW, 2) * 3.0);
+            const clipped = f.clip < f.y1;
+            if (clipped) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, f.clip); ctx.clip(); }
+            ctx.globalAlpha = Math.max(0.15, 1 - fog * 0.85);
+            for (let i = 0; i < sg.sprites.length; i++) {
+                const sp = sg.sprites[i];
+                const sx = f.x1 + f.s1 * sp.off * ROADW * U;
+                rr3DrawSprite(ctx, sp.type, sx, f.y1, f.s1 * U * sp.sc, sp.v, th);
+            }
+            ctx.globalAlpha = 1;
+            if (f.abs === gateAbs && S.gate) { drawPad(n, S.gate, W, hy); ctx.globalAlpha = Math.max(0.2, 1 - fog * 0.6); drawGantry(f, S.gate); ctx.globalAlpha = 1; }
+            if (f.abs === finAbs) drawFinish(n, f);
+            const cs = byAbs[f.abs];
+            if (cs) cs.forEach(function (c) {
+                const pct = (c.z - f.abs * SEG) / SEG;
+                const cx = f.x1 + (f.x2 - f.x1) * pct + (f.s1 + (f.s2 - f.s1) * pct) * c.x * ROADW * U;
+                const cy = f.y1 + (f.y2 - f.y1) * pct;
+                const sc = f.s1 + (f.s2 - f.s1) * pct;
+                ctx.globalAlpha = Math.max(0.2, 1 - fog * 0.7);
+                rr3DrawCar(ctx, cx, cy, CARW * sc * U, { color: c.col, phase: (c.ph * 0.2) % 0.3, tilt: 0, brake: false });
+                ctx.globalAlpha = 1;
+            });
+            if (clipped) ctx.restore();
+        }
+        if (!carDone) drawPlayer();
+        /* جسيمات الاحتفال */
+        S.particles.forEach(function (p) {
+            ctx.globalAlpha = Math.max(0, 1 - p.t / p.life);
+            ctx.fillStyle = p.c;
+            if (p.sq) ctx.fillRect(p.x, p.y, p.s, p.s * 0.6); else { ctx.beginPath(); ctx.arc(p.x, p.y, p.s * 0.5, 0, Math.PI * 2); ctx.fill(); }
+        });
+        ctx.globalAlpha = 1;
+    }
+
+    /* ---------- الحلقة ---------- */
+    function frame(ts) {
+        if (destroyed) return;
+        raf = requestAnimationFrame(frame);
+        if (hooks.alive && !hooks.alive()) { destroy(); return; }
+        if (!last) last = ts;
+        let dt = Math.min(0.05, Math.max(0, (ts - last) / 1000));
+        last = ts;
+        try {
+            if (document.hidden) return;
+            fit();
+            update(dt);
+            render();
+        } catch (e) { fail(e); }
+    }
+
+    /* ---------- التحكم ---------- */
+    function onDown(ev) {
+        S.dragging = true; S.moved = false; S.downX = ev.clientX; S.downY = ev.clientY;
+        try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* لا شيء */ }
+    }
+    function onMove(ev) {
+        if (!S.dragging) return;
+        const r = cv.getBoundingClientRect();
+        if (!S.moved && Math.abs(ev.clientX - S.downX) > 10) S.moved = true;
+        if (S.moved) {
+            const t = ((ev.clientX - r.left) / r.width - 0.5) * 2;
+            S.targetX = Math.max(-0.667, Math.min(0.667, t * 0.9));
+            S.laneIdx = nearestLane(S.targetX);
+        }
+    }
+    function onUp(ev) {
+        if (!S.dragging) return;
+        S.dragging = false;
+        const r = cv.getBoundingClientRect();
+        if (S.moved) setLane(nearestLane(S.targetX), true);
+        else {
+            const t = (ev.clientX - r.left) / r.width;
+            setLane(t < 0.36 ? 0 : (t > 0.64 ? 2 : 1), true);
+        }
+    }
+    function onKey(ev) {
+        if (root.closest && !root.closest(".active") && !cfg.standalone) return;
+        const k = ev.key;
+        if (k === "ArrowLeft" || k === "a" || k === "A") { setLane(S.laneIdx - 1, false); ev.preventDefault(); }
+        else if (k === "ArrowRight" || k === "d" || k === "D") { setLane(S.laneIdx + 1, false); ev.preventDefault(); }
+        else if (k === " " ) { setLane((S.laneIdx + 1) % 3, false); ev.preventDefault(); }
+        else if (k === "Enter" && !el.result.classList.contains("on")) { setLane(S.laneIdx, true); ev.preventDefault(); }
+    }
+    function onClick(ev) {
+        const b = ev.target.closest ? ev.target.closest("[data-a]") : null;
+        if (!b) return;
+        const a = b.getAttribute("data-a");
+        if (a === "left") setLane(S.laneIdx - 1, false);
+        else if (a === "right") setLane(S.laneIdx + 1, false);
+        else if (a === "go") setLane(S.laneIdx, true);
+        else if (a === "back") { if (hooks.exit) hooks.exit(); }
+        else if (a === "listen") sayPrompt();
+        else if (a === "mode") {
+            S.mode = S.mode === "step" ? "free" : "step";
+            try { if (hooks.modeChanged) hooks.modeChanged(S.mode); } catch (e) { /* لا شيء */ }
+            msg(S.mode === "step" ? "🐢 خطوة خطوة: السيارة تنتظر اختيارك" : "🏎️ سباق حر: السيارة تواصل السير");
+            b.setAttribute("aria-pressed", S.mode === "free" ? "true" : "false");
+            updateHud();
+        }
+    }
+    cv.addEventListener("pointerdown", onDown);
+    cv.addEventListener("pointermove", onMove);
+    cv.addEventListener("pointerup", onUp);
+    cv.addEventListener("pointercancel", function () { S.dragging = false; });
+    root.addEventListener("click", onClick);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", fit);
+
+    function start() {
+        fit();
+        updateHud();
+        msg("🏁 استعد للانطلاق");
+        spawnGate(0);
+        S.busy = false;
+        later(function () { S.started = true; msg("اختر الحرف الصحيح"); sayPrompt(); }, 900);
+        later(function () { if (el.msg.textContent === "اختر الحرف الصحيح") msg(""); }, 5200);
+        raf = requestAnimationFrame(frame);
+    }
+    function destroy() {
+        if (destroyed) return;
+        destroyed = true;
+        cancelAnimationFrame(raf);
+        timers.forEach(clearTimeout); timers.length = 0;
+        document.removeEventListener("keydown", onKey);
+        window.removeEventListener("resize", fit);
+        try { root.innerHTML = ""; } catch (e) { /* لا شيء */ }
+    }
+    return { start: start, destroy: destroy, state: S, cfg: cfg };
+}
+/* RR3-ENGINE-END */
+
+/* RR3-HOST-BEGIN */
+/* ---------- مضيف التطبيق: يربط المحرك بالمحتوى والصوت والنجوم والتقدّم الحالية ---------- */
+const RR3_ENABLED = true;
+const RR3_SCREEN = "roadRace3D";
+const RR3_CSS_ID = "rr3-css";
+let rr3Disabled = false;
+let rr3Cur = null;
+let rr3Fails = 0;
+
+const RR3_CSS = `
+#roadRace3D{position:fixed;inset:0;z-index:900;display:none;background:#0b1020;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+#roadRace3D.active{display:block}
+.rr3-root{position:absolute;inset:0;direction:rtl;color:#fff;font-family:inherit}
+.rr3-cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.rr3-top{position:absolute;top:max(8px,env(safe-area-inset-top));left:8px;right:8px;display:flex;gap:6px;align-items:center}
+.rr3-btn{min-width:52px;height:52px;border-radius:16px;border:0;background:rgba(15,23,42,.74);color:#fff;font-size:24px;cursor:pointer}
+.rr3-btn:focus-visible,.rr3-ctl button:focus-visible,.rr3-result button:focus-visible{outline:4px solid #fde047;outline-offset:2px}
+.rr3-chip{height:52px;border-radius:16px;background:rgba(15,23,42,.74);padding:0 12px;display:flex;align-items:center;gap:8px;font-weight:800;white-space:nowrap}
+.rr3-sp{flex:1}
+.rr3-letter{font-size:28px;line-height:1.7;height:52px;display:flex;align-items:center}
+.rr3-stage{font-size:14px;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:460px){.rr3-stage{display:none}}
+.rr3-dots{position:absolute;top:calc(max(8px,env(safe-area-inset-top)) + 58px);left:0;right:0;display:flex;justify-content:center;gap:8px}
+.rr3-dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid #fff}
+.rr3-dot.cur{background:#fde047}.rr3-dot.done{background:#4ade80}
+.rr3-target{position:absolute;top:calc(max(8px,env(safe-area-inset-top)) + 82px);left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);color:#1e293b;border-radius:22px;padding:4px 20px 2px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.35);min-width:128px;cursor:pointer}
+.rr3-target small{display:block;font-size:14px;font-weight:800;color:#475569}
+.rr3-tg{font-size:56px;line-height:1.55;display:block;font-weight:900;margin-top:-4px}
+.rr3-msg{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(max(12px,env(safe-area-inset-bottom)) + 92px);max-width:94%;font-size:19px;font-weight:900;text-align:center;background:rgba(15,23,42,.8);border-radius:18px;padding:0 16px;min-height:0;line-height:44px;white-space:nowrap}
+.rr3-msg:empty{display:none}
+.rr3-ctl{position:absolute;left:0;right:0;bottom:max(12px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:14px;padding:0 12px;direction:ltr}
+.rr3-ctl button{height:76px;min-width:92px;border-radius:24px;border:0;font-size:34px;font-weight:900;color:#fff;background:rgba(15,23,42,.8);cursor:pointer;touch-action:manipulation}
+.rr3-ctl .rr3-go{min-width:140px;background:linear-gradient(#22c55e,#16a34a);font-size:22px}
+.rr3-ctl .rr3-go.pulse{animation:rr3pulse 1.1s ease-in-out infinite}
+@keyframes rr3pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){.rr3-ctl .rr3-go.pulse{animation:none;outline:4px solid #fde047}}
+.rr3-result{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:linear-gradient(#1e1b4b,#312e81);padding:24px;text-align:center;z-index:5}
+.rr3-result.on{display:flex}
+.rr3-result h3{font-size:30px;margin:0}
+.rr3-rstars{font-size:46px;color:#fde047;letter-spacing:6px}
+.rr3-result p{font-size:20px;margin:0;max-width:520px}
+.rr3-result button{min-height:64px;min-width:230px;border-radius:20px;border:0;font-size:22px;font-weight:900;cursor:pointer}
+.rr3-p{background:#22c55e;color:#fff}.rr3-s{background:#e0e7ff;color:#312e81}
+@media (orientation:landscape) and (min-width:700px){.rr3-target{left:auto;right:24px;transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 84px)}.rr3-dots{display:none}}
+`;
+
+function rr3Teardown() {
+    if (rr3Cur) { try { rr3Cur.destroy(); } catch (e) { /* لا شيء */ } rr3Cur = null; }
+}
+
+function rr3EnsureScreen() {
+    if (!$(RR3_CSS_ID)) {
+        const s = document.createElement("style");
+        s.id = RR3_CSS_ID;
+        s.textContent = RR3_CSS;
+        document.head.appendChild(s);
+    }
+    let el = $(RR3_SCREEN);
+    if (!el) {
+        const legacy = $("letterRaceGame");
+        const host = (legacy && legacy.parentNode) || document.body;
+        el = document.createElement("section");
+        el.id = RR3_SCREEN;
+        el.className = "screen";
+        host.appendChild(el);
+    }
+    return el;
+}
+
+/* لا يُستخدم المحرك إلا إن كانت كل الجولات صحيحة: ٣ أشكال مختلفة والشكل الصحيح هو شكل الحرف منفصلًا */
+function rr3ContentOk(letter, rounds) {
+    if (!rounds || !rounds.length) return false;
+    const want = raceShapeForLetterAtPosition(letter, "isolated");
+    return rounds.every(function (r) {
+        return r.kind === "see" && r.options.length === 3 && new Set(r.options).size === 3 &&
+            r.correctShape === want && r.options[r.correctIndex] === want;
+    });
+}
+
+function rr3TryStart(letter, stageIdx, stages, stage) {
+    try {
+        rr3Teardown();
+        rrTeardown();
+        raceAbortInBackground();
+        const p = raceLoadProgress();
+        const entry = raceLetterEntry(p, letter);
+        const rec = entry.stages[stage.id];
+        const plays = (rec && rec.plays) || 0;
+        const order = raceLetterOrder();
+        const seed = plays * 3 + (order.indexOf(letter) % 3);
+        const built = rrBuildRounds(letter, stage, seed);
+        if (!rr3ContentOk(letter, built)) return false;
+        const lvl = rrLevelFor(stage, rec);
+        const runId = ++rrRunSeq;
+        const run = { id: runId, letter: letter, stageIdx: stageIdx, stage: stage, awarded: 0, finished: false };
+        const root = rr3EnsureScreen();
+        letterRaceGame.letter = letter;
+        rrOwner = "rr3";
+        showScreen(RR3_SCREEN);
+        if (!root.classList.contains("active")) throw new Error("rr3-screen-not-active");
+        let mode = "step";
+        try { mode = localStorage.getItem("taha_rr3_mode") === "free" ? "free" : "step"; } catch (e) { /* لا شيء */ }
+        let reduced = false;
+        try { reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { /* لا شيء */ }
+        const hooks = {
+            say: function (text, done) {
+                if (typeof EduAudio === "undefined") { done(); return; }
+                EduAudio.play(text, { mode: "interrupt", done: done });
+            },
+            award: function (i) {
+                const key = "r3:" + runId + ":" + i;
+                if (rrSettled.has(key) || run.finished) return false;
+                rrSettled.add(key);
+                run.awarded++;
+                if (typeof addStars === "function") addStars(1);
+                return true;
+            },
+            stars: function () { return arabicNumber(typeof stars !== "undefined" ? stars : 0); },
+            alive: function () { return rr3Cur === eng && root.classList.contains("active"); },
+            exit: function () { rr3Teardown(); rrBackToStages(letter, ""); },
+            modeChanged: function (m) { try { localStorage.setItem("taha_rr3_mode", m); } catch (e) { /* لا شيء */ } },
+            error: function (e) { rr3Recover(run, e); },
+            finish: function (sum) {
+                const total = sum.total, ft = sum.firstTry;
+                const pr = raceLoadProgress();
+                const en = raceLetterEntry(pr, letter);
+                const rc = en.stages[stage.id] || { done: false, stars: 0, plays: 0 };
+                rc.plays = (rc.plays || 0) + 1;
+                const earned = raceStageStars(total, ft);
+                rc.done = true;
+                rc.stars = Math.max(rc.stars || 0, earned);
+                rc.lvl = lvl;
+                rc.ft = ft;
+                rc.ind = Math.max(rc.ind || 0, 0);
+                en.stages[stage.id] = rc;
+                pr.lastLetter = letter;
+                raceSaveProgress(pr);
+                run.finished = true;
+                const lastStage = stageIdx >= stages.length - 1;
+                return {
+                    title: "🌟 أحسنت! أكملت المرحلة",
+                    stars: raceStarsText(earned),
+                    body: stage.title + " — " + arabicNumber(ft) + " من " + arabicNumber(total) + " من أول مرة",
+                    next: lastStage ? "🔁 العب المرحلة مرة أخرى" : "▶ المرحلة التالية",
+                    onNext: function () { startRaceStage(letter, lastStage ? stageIdx : stageIdx + 1); },
+                    map: "🗺️ مراحل الحرف",
+                    onMap: function () { rr3Teardown(); rrBackToStages(letter, ""); },
+                    phrase: "أحسنت! أكملت المستوى بنجاح"
+                };
+            }
+        };
+        const eng = rr3CreateEngine({
+            root: root, letter: letter, stageIcon: stage.icon, stageTitle: stage.title,
+            rounds: built.map(function (r) { return { correctShape: r.correctShape, options: r.options.slice(), correctIndex: r.correctIndex }; }),
+            theme: Math.max(0, order.indexOf(letter)) % 4, mode: mode, reduced: reduced,
+            promptText: letterWithFatha(letter), phrases: RACE_SUCCESS_PHRASES, hooks: hooks
+        });
+        rr3Cur = eng;
+        rr3Fails = 0;
+        eng.start();
+        return true;
+    } catch (e) {
+        try { console.warn("rr3-start-fallback", e && e.message); } catch (e2) { /* لا شيء */ }
+        rr3Disabled = true;
+        rr3Teardown();
+        return false;
+    }
+}
+
+/* خطأ أثناء التشغيل: قبل أي نجمة → المحرك الثنائي الأبعاد فورًا؛ بعدها → قائمة المراحل (النجوم محفوظة) */
+function rr3Recover(run, err) {
+    if (!rr3Cur) return;
+    rr3Fails++;
+    try { console.warn("rr3-recover", err && err.message); } catch (e) { /* لا شيء */ }
+    if (rr3Fails > 2) {
+        rr3Disabled = true;
+        rr3Teardown();
+        if (run.awarded === 0 && !run.finished) { try { startRaceStage(run.letter, run.stageIdx); return; } catch (e) { /* القائمة */ } }
+        rrBackToStages(run.letter, run.awarded > 0 && !run.finished ? "تعذّر إكمال هذه المرحلة، لكن نجومك محفوظة. اختر المرحلة لتبدأ من جديد." : "");
+    }
+}
+/* RR3-HOST-END */
+
 /* الموزّع: المحرك الجديد أولًا، وإن لم يبدأ فالقديم فورًا. لا يعمل المحركان معًا أبدًا */
 function startRaceStage(letter, stageIdx) {
     const stages = raceStagesFor(letter);
     const stage = stages[stageIdx];
     if (!stage) return;
+    rr3Teardown();
+    if (RR3_ENABLED && !rr3Disabled && stage.id === "see" && rr3TryStart(letter, stageIdx, stages, stage)) return;
     if (RR_ENABLED && !rrDisabled && rrTryStart(letter, stageIdx, stages, stage)) return;
     rrTeardown();
     rrOwner = "legacy";
