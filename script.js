@@ -8430,7 +8430,9 @@ const RR3_THEMES = [
     { name: "مدينة", sky: ["#0a1128", "#1b2a52", "#3c4f86"], sun: { x: 0.72, y: 0.26, r: 0.045, c: "#f1f5ff" }, mount: "#1d2a4d", far: "#16213f", hill: "#16335a", hill2: "#12294a",
       grass: ["#14483f", "#113f37"], road: ["#2c3039", "#343944"], rumble: ["#38bdf8", "#e0f2fe"], fog: [48, 66, 112], sprites: ["building", "lamp", "building", "lamp", "sign"], stars: true, city: true, clouds: false },
     { name: "صحراء", sky: ["#3f9cf5", "#9ad4fb", "#fdf3d0"], sun: { x: 0.28, y: 0.3, r: 0.075, c: "#fffbe0" }, mount: "#d9a85f", far: "#c99853", hill: "#e2b567", hill2: "#d6a85a",
-      grass: ["#e8c26a", "#dfb85f"], road: ["#585b61", "#62666d"], rumble: ["#e76f51", "#fff7e6"], fog: [248, 228, 190], sprites: ["cactus", "rock", "cactus", "bush", "sign"], stars: false, city: false, clouds: true }
+      grass: ["#e8c26a", "#dfb85f"], road: ["#585b61", "#62666d"], rumble: ["#e76f51", "#fff7e6"], fog: [248, 228, 190], sprites: ["cactus", "rock", "cactus", "bush", "sign"], stars: false, city: false, clouds: true },
+    { name: "جدة التاريخية", env: "hijaz", sky: ["#4f9fe0", "#a6d3ef", "#fbe7c4"], sun: { x: 0.7, y: 0.3, r: 0.055, c: "#fff3c4" }, mount: "#c4a98a", far: "#dac3a4", hill: "#d8c7a3", hill2: "#cdbb94",
+      grass: ["#d9c9a6", "#d1c09a"], road: ["#4b494c", "#575458"], rumble: ["#b9a688", "#eee3cb"], fog: [248, 228, 192], sprites: [], stars: false, city: false, clouds: true }
 ];
 
 const RR3_CAR_COLORS = [
@@ -8609,6 +8611,7 @@ function rr3DrawSprite(ctx, type, cx, by, k, v, th) {
         ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.beginPath(); ctx.moveTo(-240, -300); ctx.lineTo(-30, -420); ctx.lineTo(0, -200); ctx.closePath(); ctx.fill();
         break;
     }
+    case "fanous": case "jar": case "datepalm": case "minaret": rr3DrawHjSprite(ctx, type, v); break;
     case "sign": {
         ctx.fillStyle = "#9aa3ad"; ctx.fillRect(-200, -900, 50, 900); ctx.fillRect(150, -900, 50, 900);
         const cols = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0"];
@@ -8622,6 +8625,261 @@ function rr3DrawSprite(ctx, type, cx, by, k, v, th) {
 }
 
 function rr3Rgb(c) { const h = function (v) { const x = Math.max(0, Math.min(255, Math.round(v))).toString(16); return x.length < 2 ? "0" + x : x; }; return "#" + h(c[0]) + h(c[1]) + h(c[2]); }
+
+/* =========================================================
+   🕌 بيئة «جدة التاريخية» (البلد) — رسم إجرائي بالكامل على canvas بلا أي صور خارجية.
+   واجهات حجازية من حجر المنقبي الأبيض/الرملي بالرواشين الخشبية والمشربيات، وأفق بمآذن وقباب.
+   تُبنى الواجهات مرة واحدة في ذاكرة مؤقتة (canvas خارج الشاشة) ثم تُسقَط على جانبي الطريق شرائح منظورية.
+========================================================= */
+const RR3_HJ_PAL = [
+    { wall: "#efe0c4", wood: "#5b3a22", acc: "#2f6f62", trim: "#fbf4e4" },
+    { wall: "#f5ead7", wood: "#7a4a2a", acc: "#2b5d7a", trim: "#fffaf0" },
+    { wall: "#e8d2ab", wood: "#2f5d4a", acc: "#8b3a2b", trim: "#f8eed8" },
+    { wall: "#f1ddc9", wood: "#6b4430", acc: "#b3873f", trim: "#fff4e6" },
+    { wall: "#fbf3e4", wood: "#3d6b78", acc: "#7a4a2a", trim: "#ffffff" },
+    { wall: "#dfc79f", wood: "#5a3b26", acc: "#3d6b5a", trim: "#f5ead2" }
+];
+const RR3_HJ_PERIOD = 6;            /* عرض كل بيت = ٦ مقاطع طريق */
+const RR3_HJ_WALL_H = 3300;         /* ارتفاع اللوحة بوحدات العالم */
+const RR3_HJ_VARIANTS = 8;
+
+/* أي بيت يقع على جانب ما: رقم النوع أو -1 لفسحة (ساحة بنخيل) */
+function rr3HjVariant(side, bi) {
+    const h = ((bi * 2654435761 + (side > 0 ? 97 : 13) * 40503) >>> 0) % 100;
+    if (bi < 1) return (bi + (side > 0 ? 2 : 0) + 3) % 6;
+    if (h < 7) return -1;
+    return (h * 7 + bi * 3 + (side > 0 ? 1 : 0)) % RR3_HJ_VARIANTS;
+}
+
+function rr3HjRoshan(g, x, y, w, h, P) {
+    /* ظل خفيف أسفل البروز */
+    g.fillStyle = "rgba(40,20,5,.28)"; g.fillRect(x + 3, y + h, w - 2, 7);
+    /* السقيفة */
+    g.fillStyle = P.wood; g.beginPath(); g.moveTo(x - 7, y); g.lineTo(x + w + 7, y); g.lineTo(x + w + 2, y - 12); g.lineTo(x - 2, y - 12); g.closePath(); g.fill();
+    g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(x - 5, y - 2, w + 10, 2);
+    /* البدن الخشبي */
+    const gr = g.createLinearGradient(x, y, x + w, y);
+    gr.addColorStop(0, "rgba(255,255,255,.12)"); gr.addColorStop(0.5, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,.2)");
+    g.fillStyle = P.wood; g.fillRect(x, y, w, h);
+    g.fillStyle = gr; g.fillRect(x, y, w, h);
+    /* الدرفات والمشربية */
+    const cols = Math.max(2, Math.round(w / 28));
+    const cw = w / cols;
+    g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+    for (let c = 0; c < cols; c++) {
+        const px = x + c * cw + 3, pw = cw - 6, py = y + 6, ph = h - 12;
+        g.fillStyle = "rgba(20,10,0,.35)"; g.fillRect(px, py, pw, ph);
+        g.strokeStyle = "rgba(250,236,205,.55)"; g.lineWidth = 1;
+        g.beginPath();
+        for (let t = -ph; t < pw + ph; t += 5) { g.moveTo(px + t, py); g.lineTo(px + t + ph, py + ph); g.moveTo(px + t + ph, py); g.lineTo(px + t, py + ph); }
+        g.stroke();
+        g.strokeStyle = P.trim; g.lineWidth = 2; g.strokeRect(px, py, pw, ph);
+    }
+    g.restore();
+    g.strokeStyle = P.trim; g.lineWidth = 2; g.strokeRect(x, y, w, h);
+    /* كوابيل أسفل الروشان */
+    g.fillStyle = P.wood;
+    for (let i = 0; i < 3; i++) { const cx = x + 8 + i * (w - 22) / 2; g.beginPath(); g.moveTo(cx, y + h); g.lineTo(cx + 12, y + h); g.lineTo(cx + 6, y + h + 12); g.closePath(); g.fill(); }
+}
+
+function rr3HjWindow(g, x, y, w, h, P) {
+    /* نافذة مقوّسة بدرفتين من الشيش */
+    g.fillStyle = "#2a2018";
+    g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y + w / 2); g.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); g.lineTo(x + w, y + h); g.closePath(); g.fill();
+    g.fillStyle = P.acc;
+    g.fillRect(x + 1, y + w / 2, w / 2 - 1, h - w / 2); g.fillRect(x + w / 2 + 1, y + w / 2, w / 2 - 2, h - w / 2);
+    g.strokeStyle = "rgba(0,0,0,.28)"; g.lineWidth = 1;
+    g.beginPath(); for (let t = y + w / 2 + 4; t < y + h - 2; t += 5) { g.moveTo(x + 1, t); g.lineTo(x + w - 1, t); } g.stroke();
+    g.strokeStyle = P.trim; g.lineWidth = 2.5;
+    g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y + w / 2); g.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); g.lineTo(x + w, y + h); g.stroke();
+}
+
+/* لوحة واجهة بيت حجازي بحجم TW×TH بكسل (إحداثيات الرسم الداخلية ٢٤٠×٧٢٠) */
+function rr3HjFacade(v, TW, TH) {
+    const c = document.createElement("canvas"); c.width = TW; c.height = TH;
+    const g = c.getContext("2d");
+    g.scale(TW / 240, TH / 720);
+    const W = 240, H = 720, P = RR3_HJ_PAL[v % RR3_HJ_PAL.length];
+    const rnd = rr3Rng(4001 + v * 131);
+    const floors = 3 + (v % 3), fh = 128, gh = 150;
+    const top = H - gh - floors * fh;
+    /* جسم الجدار بتدرّج إضاءة */
+    const wl = rr3Hex(P.wall);
+    const gb = g.createLinearGradient(0, top, 0, H);
+    gb.addColorStop(0, rr3Mix(wl, [255, 255, 255], 0.28)); gb.addColorStop(0.55, P.wall); gb.addColorStop(1, rr3Mix(wl, [120, 80, 40], 0.3));
+    g.fillStyle = gb; g.fillRect(0, top, W, H - top);
+    /* ملمس الحجر: مداميك وبقع */
+    g.fillStyle = "rgba(110,80,40,.07)";
+    for (let y = top + 10; y < H; y += 16) g.fillRect(0, y, W, 1.4);
+    for (let i = 0; i < 90; i++) {
+        g.fillStyle = rnd() < 0.5 ? "rgba(120,90,50,.07)" : "rgba(255,255,255,.08)";
+        g.fillRect(rnd() * W, top + rnd() * (H - top), 8 + rnd() * 26, 3 + rnd() * 3);
+    }
+    /* حافة السطح ومسننات الشرفة */
+    g.fillStyle = P.trim; g.fillRect(0, top - 12, W, 12);
+    g.fillStyle = "rgba(90,60,30,.25)"; g.fillRect(0, top - 1, W, 3);
+    for (let x = 4; x < W - 8; x += 18) { g.fillStyle = P.trim; g.fillRect(x, top - 22, 11, 11); g.fillStyle = "rgba(90,60,30,.18)"; g.fillRect(x + 8, top - 22, 3, 11); }
+    /* عنصر على السطح: خزان/غرفة/قبة صغيرة */
+    if (v % 3 === 0) { g.fillStyle = P.wall; g.fillRect(150, top - 62, 56, 40); g.fillStyle = P.trim; g.fillRect(146, top - 66, 64, 6); rr3HjWindow(g, 166, top - 54, 24, 32, P); }
+    else if (v % 3 === 1) { g.fillStyle = P.trim; g.beginPath(); g.arc(70, top - 22, 26, Math.PI, 0); g.fill(); g.fillStyle = P.acc; g.fillRect(66, top - 58, 8, 12); }
+    /* الأدوار */
+    for (let f = 0; f < floors; f++) {
+        const yT = top + f * fh, yB = yT + fh;
+        /* كورنيش بين الأدوار */
+        g.fillStyle = "rgba(90,60,30,.22)"; g.fillRect(0, yB - 4, W, 4);
+        g.fillStyle = "rgba(255,255,255,.35)"; g.fillRect(0, yB - 8, W, 4);
+        const pat = (v + f) % 3;
+        if (pat === 0) { rr3HjRoshan(g, 62, yT + 26, 116, fh - 46, P); rr3HjWindow(g, 14, yT + 30, 32, 70, P); rr3HjWindow(g, 194, yT + 30, 32, 70, P); }
+        else if (pat === 1) { rr3HjRoshan(g, 12, yT + 28, 84, fh - 48, P); rr3HjRoshan(g, 144, yT + 28, 84, fh - 48, P); rr3HjWindow(g, 108, yT + 38, 24, 62, P); }
+        else { rr3HjWindow(g, 24, yT + 26, 40, 82, P); rr3HjWindow(g, 100, yT + 26, 40, 82, P); rr3HjWindow(g, 176, yT + 26, 40, 82, P); }
+    }
+    /* الدور الأرضي */
+    const gy = H - gh;
+    g.fillStyle = "rgba(90,60,30,.22)"; g.fillRect(0, gy - 4, W, 4);
+    g.fillStyle = "rgba(255,255,255,.35)"; g.fillRect(0, gy - 8, W, 4);
+    const dx = 24 + ((v * 53) % 100);
+    /* الباب الخشبي المقوّس بمسامير نحاسية */
+    const dw = 58, dh = 112, dyT = H - dh - 14;
+    g.fillStyle = P.trim; g.beginPath(); g.moveTo(dx - 7, H - 14); g.lineTo(dx - 7, dyT + dw / 2); g.arc(dx + dw / 2, dyT + dw / 2, dw / 2 + 7, Math.PI, 0); g.lineTo(dx + dw + 7, H - 14); g.closePath(); g.fill();
+    g.fillStyle = P.wood; g.beginPath(); g.moveTo(dx, H - 14); g.lineTo(dx, dyT + dw / 2); g.arc(dx + dw / 2, dyT + dw / 2, dw / 2, Math.PI, 0); g.lineTo(dx + dw, H - 14); g.closePath(); g.fill();
+    g.strokeStyle = "rgba(0,0,0,.35)"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(dx + dw / 2, dyT); g.lineTo(dx + dw / 2, H - 14); g.stroke();
+    g.fillStyle = "#c9972b";
+    for (let yy = dyT + dw / 2 + 4; yy < H - 20; yy += 12) for (let xx = dx + 8; xx < dx + dw - 4; xx += 14) { g.beginPath(); g.arc(xx, yy, 2, 0, Math.PI * 2); g.fill(); }
+    g.beginPath(); g.arc(dx + dw / 2 - 7, H - 66, 3.4, 0, Math.PI * 2); g.arc(dx + dw / 2 + 7, H - 66, 3.4, 0, Math.PI * 2); g.fill();
+    /* نافذة مشربية أرضية + (محل قهوة أحيانًا) */
+    const wx = dx > 120 ? 22 : 170;
+    if (v % 2 === 0) {
+        rr3HjWindow(g, wx, H - 112, 34, 70, P);
+        g.strokeStyle = "rgba(20,10,0,.65)"; g.lineWidth = 2; g.beginPath(); for (let t = wx + 6; t < wx + 32; t += 7) { g.moveTo(t, H - 100); g.lineTo(t, H - 46); } g.stroke();
+    } else {
+        /* واجهة محل بمظلة مخططة وأيقونة فنجان (بلا أي كتابة حتى لا تُربك تعلّم الحروف) */
+        g.fillStyle = "#1f160e"; g.fillRect(wx - 6, H - 108, 52, 70);
+        g.fillStyle = "rgba(255,214,120,.55)"; g.fillRect(wx, H - 100, 40, 54);
+        for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? "#fbf4e4" : P.acc; g.fillRect(wx - 10 + i * 10, H - 118, 10, 16); }
+        g.fillStyle = "#fbf4e4"; g.fillRect(wx + 12, H - 78, 16, 12); g.fillRect(wx + 28, H - 75, 4, 6);
+        g.fillStyle = "rgba(255,255,255,.7)"; g.fillRect(wx + 15, H - 86, 2, 6); g.fillRect(wx + 21, H - 88, 2, 8);
+    }
+    /* قاعدة حجرية وظل الشارع */
+    g.fillStyle = "rgba(70,50,30,.38)"; g.fillRect(0, H - 14, W, 14);
+    const sh = g.createLinearGradient(0, H * 0.55, 0, H);
+    sh.addColorStop(0, "rgba(40,20,0,0)"); sh.addColorStop(1, "rgba(40,20,0,.26)");
+    g.fillStyle = sh; g.fillRect(0, H * 0.55, W, H * 0.45);
+    /* ظل جانبي بسيط لإيحاء العمق بين البيوت */
+    const sd = g.createLinearGradient(0, 0, W, 0);
+    sd.addColorStop(0, "rgba(40,20,0,.16)"); sd.addColorStop(0.07, "rgba(40,20,0,0)"); sd.addColorStop(0.93, "rgba(40,20,0,0)"); sd.addColorStop(1, "rgba(40,20,0,.2)");
+    g.fillStyle = sd; g.fillRect(0, top - 22, W, H - top + 22);
+    return c;
+}
+
+/* أفق جدة التاريخية: كتل بيوت ومآذن وقباب بطبقتين متباعدتين (تأثير منظور بالإزاحة) */
+function rr3HjSkyline(seed, n, spanW) {
+    const r = rr3Rng(seed), out = []; let x = 0;
+    while (x < spanW && out.length < n) {
+        const t = r(), w = 70 + r() * 90;
+        if (t < 0.12) out.push({ k: "minaret", x: x, w: 26, h: 0.62 + r() * 0.3 });
+        else if (t < 0.24) out.push({ k: "dome", x: x, w: w, h: 0.28 + r() * 0.18 });
+        else out.push({ k: "block", x: x, w: w, h: 0.22 + r() * 0.34, roof: r() < 0.5 });
+        x += (out[out.length - 1].w) + 4 + r() * 10;
+    }
+    out.span = x;
+    return out;
+}
+
+function rr3DrawHjSkyline(ctx, W, H, hy, list, scrollPx, color, accent, unit) {
+    const span = list.span;
+    const off = ((scrollPx % span) + span) % span;
+    for (let rep = -1; rep < Math.ceil(W / span) + 1; rep++) {
+        for (let i = 0; i < list.length; i++) {
+            const b = list[i], bx = b.x + rep * span - off, bw = b.w * unit;
+            const sx = bx * unit;
+            if (sx > W + 40 || sx + bw < -40) continue;
+            const bh = H * b.h * 0.34;
+            ctx.fillStyle = color;
+            if (b.k === "block") {
+                ctx.fillRect(sx, hy - bh, bw, bh + 2);
+                if (b.roof) ctx.fillRect(sx + bw * 0.18, hy - bh - bh * 0.18, bw * 0.4, bh * 0.2);
+                ctx.fillStyle = accent; ctx.fillRect(sx + bw * 0.14, hy - bh * 0.72, bw * 0.16, bh * 0.2); ctx.fillRect(sx + bw * 0.58, hy - bh * 0.72, bw * 0.16, bh * 0.2);
+            } else if (b.k === "dome") {
+                ctx.fillRect(sx, hy - bh * 0.62, bw, bh * 0.62 + 2);
+                ctx.beginPath(); ctx.ellipse(sx + bw / 2, hy - bh * 0.62, bw * 0.34, bh * 0.38, 0, Math.PI, 0); ctx.fill();
+                ctx.fillRect(sx + bw / 2 - 1.5, hy - bh * 1.2, 3, bh * 0.2);
+            } else {
+                const mw = Math.max(8, b.w * unit);
+                ctx.fillRect(sx, hy - bh, mw, bh + 2);
+                ctx.fillRect(sx - mw * 0.25, hy - bh * 0.78, mw * 1.5, bh * 0.07);
+                ctx.beginPath(); ctx.moveTo(sx + mw * 0.1, hy - bh); ctx.lineTo(sx + mw / 2, hy - bh - bh * 0.28); ctx.lineTo(sx + mw * 0.9, hy - bh); ctx.closePath(); ctx.fill();
+                ctx.fillRect(sx + mw / 2 - 1, hy - bh - bh * 0.4, 2, bh * 0.14);
+                ctx.fillStyle = accent; ctx.fillRect(sx + mw * 0.36, hy - bh * 0.92, mw * 0.28, bh * 0.11);
+            }
+        }
+    }
+}
+
+/* عناصر جانبية خاصة بالبيئة (وحدات العالم كبقية العناصر) */
+function rr3DrawHjSprite(ctx, type, v) {
+    switch (type) {
+    case "fanous": {
+        ctx.fillStyle = "#2b2a2e"; ctx.fillRect(-30, -1500, 60, 1500);
+        ctx.fillRect(-62, -90, 124, 90);
+        const lx = v > 0 ? -300 : 300;
+        ctx.strokeStyle = "#2b2a2e"; ctx.lineWidth = 46; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(0, -1470); ctx.quadraticCurveTo(lx * 0.4, -1700, lx, -1530); ctx.stroke();
+        ctx.lineWidth = 16; ctx.beginPath(); ctx.moveTo(lx, -1530); ctx.lineTo(lx, -1450); ctx.stroke();
+        const gl = ctx.createRadialGradient(lx, -1330, 20, lx, -1330, 360);
+        gl.addColorStop(0, "rgba(255,200,90,.7)"); gl.addColorStop(1, "rgba(255,200,90,0)");
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(lx, -1330, 360, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#2b2a2e"; ctx.beginPath(); ctx.moveTo(lx - 95, -1440); ctx.lineTo(lx + 95, -1440); ctx.lineTo(lx + 40, -1500); ctx.lineTo(lx - 40, -1500); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#ffcf6b"; ctx.beginPath(); ctx.moveTo(lx - 80, -1440); ctx.lineTo(lx + 80, -1440); ctx.lineTo(lx + 55, -1190); ctx.lineTo(lx - 55, -1190); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = "#2b2a2e"; ctx.lineWidth = 12;
+        ctx.beginPath(); ctx.moveTo(lx, -1440); ctx.lineTo(lx, -1190); ctx.moveTo(lx - 68, -1320); ctx.lineTo(lx + 68, -1320); ctx.stroke();
+        ctx.fillStyle = "#2b2a2e"; ctx.fillRect(lx - 65, -1200, 130, 34);
+        break;
+    }
+    case "jar": {
+        ctx.fillStyle = "#b8622f";
+        ctx.beginPath(); ctx.moveTo(-120, -380); ctx.quadraticCurveTo(-210, -200, -110, 0); ctx.lineTo(110, 0); ctx.quadraticCurveTo(210, -200, 120, -380); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#d98a50"; ctx.fillRect(-135, -415, 270, 50);
+        ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.fillRect(40, -380, 70, 380);
+        ctx.fillStyle = "#2f8f4a";
+        ctx.beginPath(); ctx.ellipse(0, -520, 230, 150, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#47ad60"; ctx.beginPath(); ctx.ellipse(-70, -560, 140, 100, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#f4a3b5"; ctx.beginPath(); ctx.arc(80, -600, 38, 0, Math.PI * 2); ctx.arc(-120, -520, 32, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "datepalm": {
+        const lean = 55 * v;
+        ctx.strokeStyle = "#7a5636"; ctx.lineCap = "round";
+        ctx.lineWidth = 120; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(lean, -900, lean * 0.4, -1900); ctx.stroke();
+        ctx.lineWidth = 8; ctx.strokeStyle = "rgba(60,36,16,.55)";
+        for (let y = -120; y > -1850; y -= 110) { ctx.beginPath(); ctx.moveTo(-50 + lean * (-y / 1900) * 0.6, y); ctx.lineTo(50 + lean * (-y / 1900) * 0.6, y - 26); ctx.stroke(); }
+        const cx = lean * 0.4, cy = -1900;
+        for (let i = 0; i < 9; i++) {
+            const a = (-160 + i * 40) * Math.PI / 180, L = 640 + (i % 3) * 90;
+            const ex = cx + Math.cos(a) * L, ey = cy + Math.sin(a) * L * 0.55 + (Math.abs(Math.cos(a)) * 260);
+            const mx = cx + Math.cos(a) * L * 0.55, my = cy + Math.sin(a) * L * 0.55 - 150;
+            ctx.fillStyle = i % 2 ? "#2f8f3f" : "#3aa24c";
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.quadraticCurveTo(mx, my - 70, ex, ey); ctx.quadraticCurveTo(mx, my + 70, cx, cy + 20); ctx.fill();
+        }
+        ctx.fillStyle = "#b8742b";
+        ctx.beginPath(); ctx.arc(cx - 70, cy + 70, 52, 0, Math.PI * 2); ctx.arc(cx + 55, cy + 85, 48, 0, Math.PI * 2); ctx.arc(cx - 10, cy + 120, 44, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "minaret": {
+        const bw = 330, h = 4300;
+        const gr = ctx.createLinearGradient(-bw / 2, 0, bw / 2, 0);
+        gr.addColorStop(0, "#efe2c8"); gr.addColorStop(0.6, "#f7eddb"); gr.addColorStop(1, "#d9c6a4");
+        ctx.fillStyle = gr; ctx.fillRect(-bw / 2, -h * 0.72, bw, h * 0.72);
+        ctx.fillStyle = "#d9c6a4"; ctx.fillRect(-bw * 0.62, -h * 0.72, bw * 1.24, 90);
+        ctx.fillStyle = gr; ctx.fillRect(-bw * 0.36, -h * 0.9, bw * 0.72, h * 0.18);
+        ctx.fillStyle = "#d9c6a4"; ctx.fillRect(-bw * 0.5, -h * 0.9, bw, 70);
+        ctx.fillStyle = "#2f7a5c"; ctx.beginPath(); ctx.moveTo(-bw * 0.4, -h * 0.9); ctx.quadraticCurveTo(0, -h * 1.06, bw * 0.4, -h * 0.9); ctx.closePath(); ctx.fill();
+        ctx.fillRect(-7, -h * 1.1, 14, h * 0.16);
+        ctx.fillStyle = "#3b2f22";
+        for (let y = h * 0.18; y < h * 0.7; y += h * 0.13) { ctx.beginPath(); ctx.moveTo(-34, -y); ctx.lineTo(-34, -y - 110); ctx.arc(0, -y - 110, 34, Math.PI, 0); ctx.lineTo(34, -y); ctx.closePath(); ctx.fill(); }
+        break;
+    }
+    }
+}
 
 function rr3CreateEngine(cfg) {
     const SEG = 200, ROADW = 1300, LANES = 3, CAMH = 1500, PLAYERZ = 1100, WAITD = 560, CARW = 620;
@@ -8660,14 +8918,32 @@ function rr3CreateEngine(cfg) {
         rolling: [[25, 20, 25, 0, 0], [15, 15, 15, 0, 7], [15, 25, 15, -0.6, -7], [25, 40, 25, 0, 0], [15, 20, 15, 0.9, 6], [15, 25, 15, -0.9, -6], [25, 40, 25, 0, 0], [10, 20, 10, 0, 0]],
         city: [[25, 20, 25, 0, 0], [20, 30, 20, 1.6, 0], [25, 30, 25, 0, 0], [20, 30, 20, -1.6, 0], [25, 40, 25, 0, 0], [20, 30, 20, 1.2, 0], [20, 30, 20, -1.2, 0], [10, 30, 10, 0, 0]],
         winding: [[25, 20, 25, 0, 0], [20, 30, 20, 2.1, 0], [15, 15, 15, 0, 7], [15, 25, 15, -2.3, -7], [20, 30, 20, -1.7, 0], [20, 25, 20, 2.5, 0], [25, 30, 25, 0, 0], [15, 20, 15, 1.4, 6], [15, 20, 15, -1.6, -6]],
+        souq: [[25, 20, 25, 0, 0], [20, 30, 20, 0.9, 0], [25, 30, 25, 0, 0], [20, 30, 20, -1.0, 0], [25, 40, 25, 0, 0], [20, 30, 20, 0.7, 0], [20, 30, 20, -0.8, 0], [10, 30, 10, 0, 0]],
         alpine: [[25, 20, 25, 0, 0], [15, 15, 15, 1.4, 9], [15, 25, 15, -1.8, -9], [20, 25, 20, 2.0, 0], [15, 15, 15, -1.2, 8], [15, 15, 15, 0, -8], [25, 30, 25, 0, 0]]
     };
     (TRACKS[cfg.track] || TRACKS.winding).forEach(function (t) { addRoad(t[0], t[1], t[2], t[3], t[4]); });
     addRoad(10, 20, 10, 0, -lastY() / SEG);
     const N = segs.length;
     const rng = rr3Rng(7 + (cfg.theme || 0) * 131);
+    const HJ = th.env === "hijaz";
     for (let n = 6; n < N; n++) {
         const sg = segs[n];
+        if (HJ) {
+            if (n % 14 === 5) sg.sprites.push({ type: "fanous", off: -1.3, v: -1, sc: 1 });
+            if (n % 14 === 12) sg.sprites.push({ type: "fanous", off: 1.3, v: 1, sc: 1 });
+            if (n % 9 === 2) { const sd = (n / 9 | 0) % 2 ? 1 : -1; sg.sprites.push({ type: "jar", off: sd * 1.27, v: sd, sc: 0.9 + rng() * 0.3 }); }
+            if (n % 18 === 8) { const sd = (n / 18 | 0) % 2 ? -1 : 1; sg.sprites.push({ type: "datepalm", off: sd * 1.36, v: sd, sc: 0.95 + rng() * 0.2 }); }
+            if (n % RR3_HJ_PERIOD === 2) {
+                const bi = Math.floor(n / RR3_HJ_PERIOD);
+                [-1, 1].forEach(function (sd) {
+                    if (rr3HjVariant(sd, bi) < 0) {
+                        sg.sprites.push({ type: "datepalm", off: sd * 1.85, v: sd, sc: 1.15 });
+                        if (bi % 2 === 0) sg.sprites.push({ type: "minaret", off: sd * 2.6, v: sd, sc: 1, bg: true });
+                    }
+                });
+            }
+            continue;
+        }
         if (n % 4 === 0) {
             const side = (n / 4 | 0) % 2 ? 1 : -1;
             const type = th.sprites[Math.floor(rng() * th.sprites.length)];
@@ -9067,14 +9343,81 @@ function rr3CreateEngine(cfg) {
     }
 
     /* ---------- الرسم ---------- */
+    /* جودة تكيفية للبيئات الثقيلة (جدة التاريخية): إن بقي زمن الإطار طويلًا تُخفَّض دقة اللوحة تدريجيًا حتى تسلس الحركة */
+    let perfK = 1, perfAcc = 0, perfN = 0, perfSince = 0;
+    function perfWatch(rawMs) {
+        if (!HJ || !S.started || S.paused || rawMs > 250) return;
+        perfSince += rawMs; perfAcc += rawMs; perfN++;
+        if (perfSince < 1500) return;
+        const avg = perfAcc / Math.max(1, perfN);
+        perfSince = 0; perfAcc = 0; perfN = 0;
+        if (avg > 34 && perfK > 0.5) { perfK = Math.max(0.5, perfK - 0.15); perfLog.push(avg | 0); }
+    }
+    const perfLog = [];
     function fit() {
         const r = root.getBoundingClientRect();
         const cw = Math.max(200, r.width), ch = Math.max(200, r.height);
-        let sc = Math.min(window.devicePixelRatio || 1, 1.5);
-        while (cw * ch * sc * sc > 1.7e6 && sc > 0.6) sc -= 0.1;
+        let sc = Math.min(window.devicePixelRatio || 1, 1.5) * perfK;
+        while (cw * ch * sc * sc > 1.7e6 && sc > 0.5) sc -= 0.1;
         const w = Math.round(cw * sc), h = Math.round(ch * sc);
         if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
         DRAW = cw < 600 ? 80 : 100;
+    }
+
+    /* ---------- بيئة جدة التاريخية: واجهات منظورية + أفق ---------- */
+    const hjSky = HJ ? [rr3HjSkyline(31, 80, 1800), rr3HjSkyline(77, 80, 2300)] : null;
+    let hjTex = null, hjKey = 0;
+    const hjAvg = RR3_HJ_PAL.map(function (p) { return rr3Mix(rr3Hex(p.wall), [150, 105, 70], 0.18).match(/\d+/g).map(Number); });
+    hjAvg.push(hjAvg[0], hjAvg[1]);
+    const HJ_OFF = 1.72;
+    function hjEnsure(H) {
+        const sc = H > 1000 ? 1.25 : 1;
+        if (hjKey === sc) return;
+        hjKey = sc; hjTex = [];
+        for (let v = 0; v < RR3_HJ_VARIANTS; v++) hjTex.push(rr3HjFacade(v, Math.round(240 * sc), Math.round(720 * sc)));
+    }
+    function hjWalls(f, n, fog) {
+        const P = RR3_HJ_PERIOD, bi = Math.floor(f.abs / P);
+        const nSub = n < 6 ? 3 : (n < 20 ? 2 : 1), flat = n >= 44;
+        for (let side = -1; side <= 1; side += 2) {
+            const v = rr3HjVariant(side, bi);
+            if (v < 0) continue;
+            const tex = hjTex[v], TWt = tex.width, THt = tex.height, ppS = TWt / P, off = f.abs % P;
+            for (let q = nSub - 1; q >= 0; q--) {
+                const t0 = q / nSub, t1 = (q + 1) / nSub;
+                const p0 = projAt(f, t0), p1 = projAt(f, t1);
+                const Le = side < 0 ? p0 : p1, Re = side < 0 ? p1 : p0;
+                const XL = Le.xc + side * HJ_OFF * Le.w, XR = Re.xc + side * HJ_OFF * Re.w;
+                if (XR - XL < 0.15) continue;
+                const hL = RR3_HJ_WALL_H * Le.w / ROADW, hR = RR3_HJ_WALL_H * Re.w / ROADW;
+                if (flat) {
+                    /* بعيدًا جدًا: كتلة بلون متوسط الواجهة ممزوجة بالضباب بدل الملمس (أرخص بكثير ولا يُرى الفرق) */
+                    ctx.fillStyle = rr3Mix(hjAvg[v], fogRGB, Math.min(0.95, fog * 0.95));
+                    ctx.beginPath(); ctx.moveTo(XL, Le.y); ctx.lineTo(XR + 0.6, Re.y); ctx.lineTo(XR + 0.6, Re.y - hR * 0.9); ctx.lineTo(XL, Le.y - hL * 0.9); ctx.closePath(); ctx.fill();
+                    continue;
+                }
+                const sx0 = side < 0 ? (off + t0) * ppS : (P - (off + t1)) * ppS, sw0 = (t1 - t0) * ppS;
+                const ka = (XR - XL) / sw0, kb = (Re.y - Le.y) / sw0, kd = ((hL + hR) / 2) / THt;
+                const srcL = Math.max(0, side > 0 ? sx0 - 0.9 : sx0), srcR = Math.min(TWt, side < 0 ? sx0 + sw0 + 0.9 : sx0 + sw0);
+                if (srcR - srcL <= 0) continue;
+                /* لا نرسم من اللوحة إلا الصفوف الظاهرة فوق حافة الشاشة العليا */
+                const base = Math.min(Le.y, Re.y);
+                const srcT = Math.max(0, Math.min(THt - 2, THt - (base + 4) / kd));
+                ctx.globalAlpha = Math.max(0.1, 1 - Math.min(0.9, fog * 0.95));
+                ctx.setTransform(ka, kb, 0, kd, XL - ka * sx0, Le.y - kb * sx0 - THt * kd);
+                ctx.drawImage(tex, srcL, srcT, srcR - srcL, THt - srcT, srcL, srcT, srcR - srcL, THt - srcT);
+            }
+        }
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+    }
+    function hjBirds(W, hy) {
+        ctx.strokeStyle = "rgba(70,60,60,.7)"; ctx.lineWidth = Math.max(1.4, W / 520); ctx.lineCap = "round";
+        for (let i = 0; i < 4; i++) {
+            const bx = ((i * 0.27 * W + S.t * (reduced ? 0 : 18 + i * 5) + 40 * i) % (W + 80)) - 40, by = hy * (0.2 + 0.1 * i) + Math.sin(S.t * 0.8 + i) * 6;
+            const fl = reduced ? 0.6 : Math.sin(S.t * 7 + i * 2) * 0.7, w = W * 0.012;
+            ctx.beginPath(); ctx.moveTo(bx - w, by - fl * w * 0.5); ctx.quadraticCurveTo(bx - w * 0.4, by - w * 0.6 - fl * w, bx, by); ctx.quadraticCurveTo(bx + w * 0.4, by - w * 0.6 - fl * w, bx + w, by - fl * w * 0.5); ctx.stroke();
+        }
     }
 
     function drawBackground(W, H, hy) {
@@ -9107,9 +9450,16 @@ function rr3CreateEngine(cfg) {
             }
             ctx.lineTo(W, hy + 2); ctx.closePath(); ctx.fill();
         };
+        if (HJ) {
+            const unit = Math.max(0.55, W / 1100);
+            rr3DrawHjSkyline(ctx, W, H, hy, hjSky[0], S.bg * W * 0.35 / unit, th.far, "rgba(150,120,90,.35)", unit * 0.8);
+            rr3DrawHjSkyline(ctx, W, H, hy, hjSky[1], S.bg * W * 0.7 / unit, th.mount, "rgba(110,85,60,.4)", unit);
+            hjBirds(W, hy);
+        } else {
         layer(th.far, H * 0.07, S.bg * W * 0.5, 0.0045, 0.011, 0);
         layer(th.mount, H * 0.055, S.bg * W * 0.9, 0.0062, 0.017, 0);
-        if (th.city) {
+        }
+        if (HJ) { /* لا طبقات تلال */ } else if (th.city) {
             const off = S.bg * W * 1.4, bw = Math.max(26, W * 0.07);
             const first = Math.floor(off / bw);
             for (let b = first - 1; b < first + Math.ceil(W / bw) + 2; b++) {
@@ -9177,7 +9527,7 @@ function rr3CreateEngine(cfg) {
         dim: ["#4b5563", "#94a3b8", "#cbd5e1"], good: ["#16a34a", "#dcfce7", "#ffffff"], bad: ["#6b7280", "#fca5a5", "#ffffff"]
     };
     /* لوح الحرف المرسوم على الأسفلت: يُرسم مرة في نسيج ثم يُسقَط على مقاطع الطريق بمنظور صحيح */
-    const SLAB = ["#1458a0", "#7a2a8f", "#0f6b6b", "#8a4a12"][(cfg.theme || 0) % 4];
+    const SLAB = ["#1458a0", "#7a2a8f", "#0f6b6b", "#8a4a12", "#12508f"][(cfg.theme || 0) % 5];
     function letterTex(ch, st) {
         const key = ch + "|" + st;
         if (texCache[key]) return texCache[key];
@@ -9384,6 +9734,8 @@ function rr3CreateEngine(cfg) {
             if (!f) continue;
             if (!carDone && f.abs * SEG - S.pos < PLAYERZ - SEG * 0.0 && f.abs <= pAbs) drawPlayer();
             if (!f.ok) {
+                /* واجهات الجانبين ترتفع فوق قاع الشاشة: تُرسم حتى لو كان سطح الطريق نفسه تحت حافة الشاشة */
+                if (HJ && f.z1 > CAMD && f.y2 >= H) { hjEnsure(H); hjWalls(f, n, 1 - Math.exp(-Math.pow(n / DRAW, 2) * 3.0)); }
                 continue;
             }
             const sg = f.sg;
@@ -9391,8 +9743,16 @@ function rr3CreateEngine(cfg) {
             const clipped = f.clip < f.y1;
             if (clipped) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, f.clip); ctx.clip(); }
             ctx.globalAlpha = Math.max(0.15, 1 - fog * 0.85);
+            if (HJ) {
+                for (let i = 0; i < sg.sprites.length; i++) {
+                    const sp = sg.sprites[i];
+                    if (sp.bg) rr3DrawSprite(ctx, sp.type, f.x1 + f.s1 * sp.off * ROADW * U, f.y1, f.s1 * U * sp.sc, sp.v, th);
+                }
+                ctx.globalAlpha = 1; hjEnsure(H); hjWalls(f, n, fog); ctx.globalAlpha = Math.max(0.15, 1 - fog * 0.85);
+            }
             for (let i = 0; i < sg.sprites.length; i++) {
                 const sp = sg.sprites[i];
+                if (HJ && sp.bg) continue;
                 const sx = f.x1 + f.s1 * sp.off * ROADW * U;
                 rr3DrawSprite(ctx, sp.type, sx, f.y1, f.s1 * U * sp.sc, sp.v, th);
             }
@@ -9435,6 +9795,7 @@ function rr3CreateEngine(cfg) {
         raf = requestAnimationFrame(frame);
         if (hooks.alive && !hooks.alive()) { destroy(); return; }
         if (!last) last = ts;
+        perfWatch(ts - last);
         let dt = Math.min(0.05, Math.max(0, (ts - last) / 1000));
         last = ts;
         try {
@@ -9787,7 +10148,7 @@ function rr3Distractors(letter, tier, seed, n, sd, ri) {
 
 /* ---------- مستويات الحرف: كلها مفتوحة بلا أقفال؛ كل مستوى يختلف في المضمار والبيئة وشكل التحدي وتوزيع الحروف ---------- */
 const RR3_LEVELS = [
-    { id: "see1", icon: "🔎", title: "تعرّف على الحرف", desc: "اختر الحرف المطلوب من حروف مختلفة تمامًا في الشكل", layout: "road", track: "calm", theme: 0, tier: 0, rounds: 3, targets: 1, legacy: true },
+    { id: "see1", icon: "🔎", title: "تعرّف على الحرف", desc: "اختر الحرف المطلوب من حروف مختلفة تمامًا في الشكل", layout: "road", track: "souq", theme: 4, tier: 0, rounds: 3, targets: 1, legacy: true },
     { id: "drive", icon: "🏎️", title: "التقط الحرف وأنت تقود", desc: "صفوف متتالية بلا توقف: التقط الحرف المطلوب أثناء السير", layout: "road", track: "rolling", theme: 1, tier: "F", rounds: 5, targets: 1, flow: "drive", mode: "free" },
     { id: "gates", icon: "🚦", title: "بوابات الحروف", desc: "ارفع نظرك إلى اللافتات ومرّ من تحت الحرف المطلوب", layout: "gate", track: "city", theme: 2, tier: "F", rounds: 4, targets: 1 },
     { id: "twins", icon: "🎯", title: "طابق الحرف: مرة أو مرتين", desc: "قد يظهر الحرف المطلوب في حارتين، والحرف المختلف لا يمنح نجمة", layout: "road", track: "winding", theme: 3, tier: "F", rounds: 4, targets: 2 },
