@@ -8440,7 +8440,17 @@ const RR3_THEMES = [
     { name: "طريق صحراوي", env: "desert", sky: ["#2f87e0", "#8fc9f2", "#fcebcb"], sun: { x: 0.26, y: 0.3, r: 0.07, c: "#fff6cf" }, mount: "#b4694c", far: "#cba2a0", hill: "#e6bd78", hill2: "#7d4a37",
       grass: ["#e3b873", "#dbae68"], road: ["#5b5a5e", "#66656a"], rumble: ["#c8643f", "#f7ead0"], fog: [246, 224, 190], sprites: [], stars: false, city: false, clouds: true },
     { name: "طريق صحراوي (غروب)", env: "desert", sky: ["#3a2a72", "#d9684f", "#ffbf72"], sun: { x: 0.3, y: 0.46, r: 0.1, c: "#ffe2a0" }, mount: "#8c4a52", far: "#b0708a", hill: "#d89b62", hill2: "#4a2c3c",
-      grass: ["#d29a62", "#c88f58"], road: ["#4a4650", "#55525c"], rumble: ["#e0713f", "#fbe3c0"], fog: [240, 170, 140], sprites: [], stars: false, city: false, clouds: true }
+      grass: ["#d29a62", "#c88f58"], road: ["#4a4650", "#55525c"], rumble: ["#e0713f", "#fbe3c0"], fog: [240, 170, 140], sprites: [], stars: false, city: false, clouds: true },
+    { name: "حلبة النهار", env: "circuit", lit: 0, sky: ["#2a82e6", "#78c1f4", "#e2f2fb"], sun: { x: 0.72, y: 0.3, r: 0.06, c: "#fffbe0" }, mount: "#6f9d86", far: "#9db9cc", hill: "#4a9a52", hill2: "#2f7d3f",
+      grass: ["#3a9645", "#41a24c"], road: ["#3a3e46", "#434750"], rumble: ["#d62f3a", "#f5f5f2"], fog: [205, 230, 246], sprites: [], stars: false, city: false, clouds: true },
+    { name: "حلبة العصر الذهبي", env: "circuit", lit: 0.12, tint: "rgba(255,168,60,.11)", sky: ["#3b78c8", "#efb86f", "#ffe5b4"], sun: { x: 0.27, y: 0.4, r: 0.075, c: "#fff0b8" }, mount: "#8d8a62", far: "#c9a27a", hill: "#6a9a3c", hill2: "#4b7d30",
+      grass: ["#5f9638", "#69a23f"], road: ["#3f3e45", "#4a4950"], rumble: ["#d9433a", "#fbf3e2"], fog: [250, 214, 160], sprites: [], stars: false, city: false, clouds: true },
+    { name: "حلبة الليل", env: "circuit", lit: 1, sky: ["#04070f", "#0b1633", "#25396c"], sun: { x: 0.78, y: 0.22, r: 0.04, c: "#eef3ff" }, mount: "#16224a", far: "#1c2b52", hill: "#0f3320", hill2: "#0b2616",
+      grass: ["#0f3321", "#133b27"], road: ["#2a2d36", "#33363f"], rumble: ["#e11d48", "#e8eaee"], fog: [22, 34, 66], sprites: [], stars: true, city: false, clouds: false },
+    { name: "حلبة الصباح", env: "circuit", lit: 0.05, tint: "rgba(205,224,240,.10)", sky: ["#8fb1d4", "#c9dcea", "#f3f2ea"], sun: { x: 0.3, y: 0.44, r: 0.06, c: "#fffbe8" }, mount: "#8da79c", far: "#b0c0cc", hill: "#6a9868", hill2: "#4e7f55",
+      grass: ["#5c9860", "#66a46a"], road: ["#444850", "#4e525a"], rumble: ["#e04a52", "#f4f4f0"], fog: [222, 231, 238], sprites: [], stars: false, city: false, clouds: true },
+    { name: "حلبة الغروب", env: "circuit", lit: 0.5, tint: "rgba(255,96,70,.10)", sky: ["#2a2a6a", "#df5f80", "#ffb56d"], sun: { x: 0.3, y: 0.46, r: 0.1, c: "#ffe2a0" }, mount: "#5f3a6b", far: "#8d4f80", hill: "#587a3a", hill2: "#3f6130",
+      grass: ["#527532", "#5b8037"], road: ["#3f3c49", "#494653"], rumble: ["#f05a3c", "#fde7c8"], fog: [248, 178, 140], sprites: [], stars: false, city: false, clouds: true }
 ];
 
 const RR3_CAR_COLORS = [
@@ -8469,7 +8479,7 @@ function rr3Hex(h) {
 }
 
 /* ---------- رسم السيارة (من الخلف) — وحدة العرض = عرض السيارة ---------- */
-function rr3DrawCar(ctx, cx, by, w, o) {
+function rr3DrawCarClassic(ctx, cx, by, w, o) {
     const col = o.color || RR3_CAR_COLORS[0];
     ctx.save();
     ctx.translate(cx, by);
@@ -8547,6 +8557,8 @@ function rr3DrawCar(ctx, cx, by, w, o) {
     ctx.restore();
 }
 
+function rr3DrawCar(ctx, cx, by, w, o) { if (o.classic) rr3DrawCarClassic(ctx, cx, by, w, o); else rr3DrawCarPro(ctx, cx, by, w, o); }
+
 /* ---------- عناصر جانب الطريق (وحدات = وحدات العالم، k = بكسل لكل وحدة) ---------- */
 function rr3DrawSprite(ctx, type, cx, by, k, v, th) {
     ctx.save();
@@ -8621,6 +8633,7 @@ function rr3DrawSprite(ctx, type, cx, by, k, v, th) {
     }
     case "fanous": case "jar": case "datepalm": case "minaret": rr3DrawHjSprite(ctx, type, v); break;
     case "cpalm": case "clamp": case "rail": case "bench": case "slamp": case "ptree": case "parasol": case "bollard": case "dboulder": case "acacia": case "shrub": case "camel": case "dsign": case "reststop": rr3DrawSaSprite(ctx, type, v); break;
+    case "ciflood": case "cistand": case "cibill": case "citire": case "ciflag": case "cipit": case "cipine": rr3DrawCiSprite(ctx, type, v, th, k, ctx.canvas.width); break;
     case "sign": {
         ctx.fillStyle = "#9aa3ad"; ctx.fillRect(-200, -900, 50, 900); ctx.fillRect(150, -900, 50, 900);
         const cols = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0"];
@@ -9282,6 +9295,429 @@ function rr3DrawSaSprite(ctx, type, v) {
     }
 }
 
+/* =========================================================
+   🏁 حلبة السباق الاحترافية — رسم برمجي على canvas (بلا صور ولا شبكة)
+   الأجواء: نهار · ذهبي · ليل مضاء · صباح ضبابي · غروب
+   كل ما هنا رسم فقط؛ منطق السباق والحارات والبوابات في المحرك لم يتغير.
+========================================================= */
+
+/* ---------- نسيج مخزّن عام ---------- */
+const RR3_CI_CACHE = {};
+function rr3CiTex(key, w, h, draw) {
+    if (RR3_CI_CACHE[key]) return RR3_CI_CACHE[key];
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    draw(c.getContext("2d"), w, h);
+    RR3_CI_CACHE[key] = c; return c;
+}
+/* وهج ناعم مرسوم مرة واحدة ويُعاد رسمه بشفافية (أرخص بكثير من تدرّج شعاعي في كل إطار) */
+function rr3CiGlowTex() {
+    return rr3CiTex("glow", 96, 96, function (g, w, h) {
+        const gr = g.createRadialGradient(w / 2, h / 2, 1, w / 2, h / 2, w / 2);
+        gr.addColorStop(0, "rgba(255,246,214,1)"); gr.addColorStop(0.35, "rgba(255,240,200,.45)"); gr.addColorStop(1, "rgba(255,240,200,0)");
+        g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    });
+}
+function rr3CiShadowTex() {
+    return rr3CiTex("shadow", 128, 32, function (g, w, h) {
+        g.translate(w / 2, h / 2); g.scale(1, h / w);
+        const gr = g.createRadialGradient(0, 0, 3, 0, 0, w / 2);
+        gr.addColorStop(0, "rgba(0,0,0,.66)"); gr.addColorStop(0.55, "rgba(0,0,0,.32)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+        g.fillStyle = gr; g.beginPath(); g.arc(0, 0, w / 2, 0, Math.PI * 2); g.fill();
+    });
+}
+function rr3CiRedGlowTex() {
+    return rr3CiTex("redglow", 128, 40, function (g, w, h) {
+        g.translate(w / 2, h / 2); g.scale(1, h / w);
+        const gr = g.createRadialGradient(0, 0, 3, 0, 0, w / 2);
+        gr.addColorStop(0, "rgba(255,40,40,.9)"); gr.addColorStop(1, "rgba(255,40,40,0)");
+        g.fillStyle = gr; g.beginPath(); g.arc(0, 0, w / 2, 0, Math.PI * 2); g.fill();
+    });
+}
+
+/* ---------- سيارة السباق (من الخلف) — وحدة العرض = عرض السيارة ----------
+   الهيكل الثابت (الجسم والمقصورة والجناح والمصابيح) يُرسم مرة في نسيج لكل لون وحالة فرامل،
+   أما الإطارات الدوّارة والظل واللهب والحركة فتُرسم مباشرة */
+const RR3_CAR_SC = 260, RR3_CAR_X0 = 0.62, RR3_CAR_Y0 = 0.92, RR3_CAR_W = 1.24, RR3_CAR_H = 1.12;
+function rr3CarBody(ctx, col, brake, night) {
+    const bc = rr3Hex(col.b), ac = col.a;
+    const lt = rr3Mix(bc, [255, 255, 255], 0.38), md = col.b, dk = rr3Mix(bc, [0, 0, 0], 0.5), vd = rr3Mix(bc, [0, 0, 0], 0.72);
+    const rrect = function (x, y, ww, hh, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, ww, hh, r); else ctx.rect(x, y, ww, hh); };
+    let g = ctx.createLinearGradient(0, -0.17, 0, 0);
+    g.addColorStop(0, "#20232a"); g.addColorStop(1, "#07080a");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(-0.4, 0); ctx.lineTo(0.4, 0); ctx.lineTo(0.44, -0.17); ctx.lineTo(-0.44, -0.17); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 0.008;
+    for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(i * 0.105, -0.01); ctx.lineTo(i * 0.115, -0.165); ctx.stroke(); }
+    ctx.fillStyle = "#6b7280";
+    [-1, 1].forEach(function (s) { ctx.beginPath(); ctx.arc(s * 0.17, -0.1, 0.034, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#111318"; ctx.beginPath(); ctx.arc(s * 0.17, -0.1, 0.02, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#6b7280"; });
+    g = ctx.createLinearGradient(0, -0.47, 0, -0.14);
+    g.addColorStop(0, lt); g.addColorStop(0.28, md); g.addColorStop(1, dk);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(-0.455, -0.15); ctx.lineTo(0.455, -0.15);
+    ctx.bezierCurveTo(0.5, -0.2, 0.505, -0.32, 0.46, -0.4);
+    ctx.quadraticCurveTo(0.43, -0.465, 0.35, -0.47);
+    ctx.lineTo(-0.35, -0.47);
+    ctx.quadraticCurveTo(-0.43, -0.465, -0.46, -0.4);
+    ctx.bezierCurveTo(-0.505, -0.32, -0.5, -0.2, -0.455, -0.15);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.42)"; ctx.lineWidth = 0.014; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(-0.34, -0.462); ctx.lineTo(0.34, -0.462); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.2)"; ctx.lineWidth = 0.01;
+    ctx.beginPath(); ctx.moveTo(-0.46, -0.38); ctx.quadraticCurveTo(-0.5, -0.3, -0.455, -0.18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0.46, -0.38); ctx.quadraticCurveTo(0.5, -0.3, 0.455, -0.18); ctx.stroke();
+    ctx.fillStyle = "rgba(0,0,0,.28)";
+    [-1, 1].forEach(function (s) { ctx.beginPath(); ctx.ellipse(s * 0.455, -0.32, 0.07, 0.16, 0, 0, Math.PI * 2); ctx.fill(); });
+    g = ctx.createLinearGradient(0, -0.72, 0, -0.46);
+    g.addColorStop(0, lt); g.addColorStop(1, md);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(-0.355, -0.46); ctx.bezierCurveTo(-0.33, -0.58, -0.28, -0.68, -0.23, -0.71); ctx.lineTo(0.23, -0.71); ctx.bezierCurveTo(0.28, -0.68, 0.33, -0.58, 0.355, -0.46); ctx.closePath(); ctx.fill();
+    g = ctx.createLinearGradient(0, -0.69, 0, -0.48);
+    g.addColorStop(0, "#3d5f80"); g.addColorStop(0.5, "#14263b"); g.addColorStop(1, "#070d16");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(-0.3, -0.485); ctx.bezierCurveTo(-0.285, -0.57, -0.25, -0.65, -0.205, -0.685); ctx.lineTo(0.205, -0.685); ctx.bezierCurveTo(0.25, -0.65, 0.285, -0.57, 0.3, -0.485); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.2)";
+    ctx.beginPath(); ctx.moveTo(-0.2, -0.68); ctx.lineTo(-0.07, -0.68); ctx.lineTo(-0.2, -0.5); ctx.lineTo(-0.285, -0.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = ac;
+    ctx.beginPath(); ctx.moveTo(-0.075, -0.15); ctx.lineTo(-0.035, -0.15); ctx.lineTo(-0.035, -0.465); ctx.lineTo(-0.075, -0.465); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0.075, -0.15); ctx.lineTo(0.035, -0.15); ctx.lineTo(0.035, -0.465); ctx.lineTo(0.075, -0.465); ctx.closePath(); ctx.fill();
+    ctx.fillRect(-0.12, -0.725, 0.24, 0.018);
+    const lit = brake ? 1 : 0.78;
+    g = ctx.createLinearGradient(0, -0.4, 0, -0.3);
+    g.addColorStop(0, "rgba(255,110,110," + lit + ")"); g.addColorStop(1, "rgba(190,15,25," + lit + ")");
+    ctx.fillStyle = "#14090b"; rrect(-0.43, -0.415, 0.86, 0.12, 0.02); ctx.fill();
+    ctx.fillStyle = g; rrect(-0.42, -0.405, 0.38, 0.1, 0.018); ctx.fill(); rrect(0.04, -0.405, 0.38, 0.1, 0.018); ctx.fill();
+    ctx.fillStyle = "rgba(255,230,230," + (0.5 * lit) + ")";
+    ctx.fillRect(-0.4, -0.37, 0.34, 0.012); ctx.fillRect(0.06, -0.37, 0.34, 0.012);
+    ctx.save(); ctx.translate(0, -0.355); ctx.scale(1, 0.45);
+    g = ctx.createRadialGradient(0, 0, 0.02, 0, 0, 0.5);
+    g.addColorStop(0, "rgba(255,60,60," + ((night ? 0.5 : 0.28) * lit) + ")"); g.addColorStop(1, "rgba(255,60,60,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 0.5, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.fillStyle = "#f8fafc"; ctx.beginPath(); ctx.arc(0, -0.235, 0.062, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = vd; ctx.lineWidth = 0.014; ctx.stroke();
+    ctx.fillStyle = vd;
+    ctx.beginPath(); ctx.moveTo(-0.028, -0.262); ctx.lineTo(0.03, -0.262); ctx.lineTo(0.03, -0.248); ctx.lineTo(-0.002, -0.2); ctx.lineTo(-0.02, -0.2); ctx.lineTo(0.008, -0.248); ctx.lineTo(-0.028, -0.248); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#12141a";
+    ctx.fillRect(-0.2, -0.56, 0.032, 0.12); ctx.fillRect(0.168, -0.56, 0.032, 0.12);
+    g = ctx.createLinearGradient(0, -0.64, 0, -0.55);
+    g.addColorStop(0, "#2a2e38"); g.addColorStop(0.55, "#0c0d11"); g.addColorStop(1, "#1d2028");
+    ctx.fillStyle = g; rrect(-0.5, -0.64, 1.0, 0.085, 0.012); ctx.fill();
+    ctx.fillStyle = ac; ctx.fillRect(-0.49, -0.64, 0.98, 0.014);
+    ctx.fillStyle = "rgba(255,255,255,.28)"; ctx.fillRect(-0.47, -0.627, 0.94, 0.006);
+    [-1, 1].forEach(function (s) {
+        const x0 = s < 0 ? -0.53 : 0.49;
+        g = ctx.createLinearGradient(x0, 0, x0 + 0.04, 0); g.addColorStop(0, md); g.addColorStop(1, dk);
+        ctx.fillStyle = g; rrect(x0, -0.68, 0.04, 0.2, 0.01); ctx.fill();
+        ctx.fillStyle = ac; ctx.fillRect(x0, -0.668, 0.04, 0.016);
+    });
+}
+function rr3CarBodyTex(col, brake, night) {
+    return rr3CiTex("car" + col.b + col.a + (brake ? 1 : 0) + (night ? 1 : 0), Math.round(RR3_CAR_W * RR3_CAR_SC), Math.round(RR3_CAR_H * RR3_CAR_SC), function (g) {
+        g.translate(RR3_CAR_X0 * RR3_CAR_SC, RR3_CAR_Y0 * RR3_CAR_SC); g.scale(RR3_CAR_SC, RR3_CAR_SC);
+        rr3CarBody(g, col, brake, night);
+    });
+}
+function rr3DrawCarPro(ctx, cx, by, w, o) {
+    const col = o.color || RR3_CAR_COLORS[0], ac = col.a;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(w, w);
+    if (o.alpha != null) ctx.globalAlpha = o.alpha;
+    const ga = o.alpha != null ? o.alpha : 1;
+    ctx.drawImage(rr3CiShadowTex(), -0.78, -0.07, 1.56, 0.39);
+    if (o.brake) { ctx.globalAlpha = ga * (o.night ? 0.55 : 0.3); ctx.drawImage(rr3CiRedGlowTex(), -0.7, -0.02, 1.4, 0.44); ctx.globalAlpha = ga; }
+    if (o.glow) {
+        const g = ctx.createRadialGradient(0, -0.3, 0.1, 0, -0.3, 0.95);
+        g.addColorStop(0, "rgba(74,222,128," + (0.55 * o.glow) + ")"); g.addColorStop(1, "rgba(74,222,128,0)");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -0.3, 0.95, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.translate(0, o.bounce || 0);
+    ctx.transform(1, 0, -(o.tilt || 0) * 0.16, 1, 0, 0);
+    const ph = o.phase || 0;
+    /* إطارات عريضة دوّارة */
+    [-1, 1].forEach(function (s) {
+        const x0 = s < 0 ? -0.565 : 0.385;
+        ctx.fillStyle = "#15171c"; ctx.fillRect(x0, -0.36, 0.18, 0.36);
+        ctx.fillStyle = "#262a32"; ctx.fillRect(x0 + 0.04, -0.36, 0.1, 0.36);
+        ctx.fillStyle = "#3a3f49";
+        for (let i = 0; i < 4; i++) { const yy = -0.36 + ((i * 0.09 + ph) % 0.36); ctx.fillRect(x0 + 0.012, yy, 0.156, 0.02); }
+        ctx.fillStyle = ac; ctx.fillRect(s < 0 ? x0 + 0.002 : x0 + 0.168, -0.3, 0.01, 0.22);
+    });
+    if (o.boost) {
+        [-1, 1].forEach(function (s) {
+            const fl = 0.07 + 0.09 * o.boost * (0.7 + 0.3 * Math.sin(ph * 90));
+            const fg = ctx.createLinearGradient(0, -0.1, 0, -0.1 + fl);
+            fg.addColorStop(0, "rgba(255,230,140,.95)"); fg.addColorStop(0.5, "rgba(255,120,30,.7)"); fg.addColorStop(1, "rgba(255,60,0,0)");
+            ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(s * 0.17 - 0.03, -0.1); ctx.lineTo(s * 0.17 + 0.03, -0.1); ctx.lineTo(s * 0.17, -0.1 + fl); ctx.closePath(); ctx.fill();
+        });
+    }
+    ctx.drawImage(rr3CarBodyTex(col, !!o.brake, !!o.night), -RR3_CAR_X0, -RR3_CAR_Y0, RR3_CAR_W, RR3_CAR_H);
+    ctx.restore();
+}
+
+/* ---------- خطوط السرعة على أطراف الشاشة فقط (لا تغطي الحارات ولا الحروف) ---------- */
+function rr3CiStreaks(ctx, W, H, hy, vpx, speedK, t, tone) {
+    if (speedK <= 0.02) return;
+    ctx.save();
+    ctx.lineCap = "round";
+    const zone = W * 0.17;
+    for (let side = 0; side < 2; side++) {
+        ctx.save();
+        ctx.beginPath(); ctx.rect(side ? W - zone : 0, 0, zone, H); ctx.clip();
+        for (let i = 0; i < 9; i++) {
+            const seed = (i * 0.6180339 + side * 0.37) % 1;
+            const u = (side ? 1 - seed * 0.2 : seed * 0.2) * W;
+            const v = hy + (0.1 + ((i * 0.41 + side * 0.17) % 1) * 0.85) * (H - hy);
+            const dx = u - vpx, dy = v - hy;
+            const p = (t * (0.9 + speedK * 1.4) + i * 0.137 + side * 0.31) % 1;
+            const s0 = 0.18 + p * p * 1.1, s1 = s0 + 0.05 + 0.2 * speedK * p;
+            ctx.strokeStyle = "rgba(" + tone + "," + (0.04 + 0.2 * speedK * p) + ")";
+            ctx.lineWidth = 1 + 2.2 * p * Math.min(1, W / 700);
+            ctx.beginPath(); ctx.moveTo(vpx + dx * s0, hy + dy * s0); ctx.lineTo(vpx + dx * s1, hy + dy * s1); ctx.stroke();
+        }
+        ctx.restore();
+    }
+    ctx.restore();
+}
+
+/* السماء مع النجوم: نسيج مخزّن بحجم الشاشة (تدرّج + نجوم ثابتة) يُرسم بنسخة واحدة بدل تدرّج وسبعين مستطيلًا كل إطار */
+/* رسم نسيج الوهج مقصوصًا على المنطقة المرئية فقط (الأرض ترسم فوق ما تحت الأفق، فلا فائدة من تلوين مساحته بشفافية) */
+function rr3CiGlowClipped(ctx, tex, x, y, size, x0, x1, y1) {
+    const dx0 = Math.max(x, x0), dx1 = Math.min(x + size, x1), dy1 = Math.min(y + size, y1), dy0 = Math.max(y, -1e9);
+    if (dx1 <= dx0 || dy1 <= y) return;
+    const tw = tex.width, th2 = tex.height, k = tw / size;
+    ctx.drawImage(tex, (dx0 - x) * k, 0, (dx1 - dx0) * k, (dy1 - y) * k, dx0, y, dx1 - dx0, dy1 - y);
+}
+/* سحابة واحدة نسيج مخزّن (بدل ثلاثة قطوع ناقصة بشفافية كل إطار) */
+function rr3CiCloudTex(i, cw) {
+    return rr3CiTex("cloud" + i + "|" + cw, cw + 4, Math.ceil(cw * 0.23) + 4, function (g, w, h) {
+        const ox = w / 2, oy = cw * 0.115 + 2;
+        g.fillStyle = "rgba(255,255,255,.78)"; g.beginPath();
+        g.ellipse(ox, oy, cw * 0.5, cw * 0.075, 0, 0, Math.PI * 2);
+        g.ellipse(ox - cw * 0.18, oy - cw * 0.04, cw * 0.26, cw * 0.075, 0, 0, Math.PI * 2);
+        g.ellipse(ox + cw * 0.2, oy - cw * 0.03, cw * 0.28, cw * 0.065, 0, 0, Math.PI * 2);
+        g.fill();
+    });
+}
+function rr3CiSkyTex(th, W, hy) {
+    return rr3CiTex("sky" + th.name + "|" + W + "|" + hy, W, hy + 2, function (g, w, h) {
+        const gr = g.createLinearGradient(0, 0, 0, hy);
+        gr.addColorStop(0, th.sky[0]); gr.addColorStop(0.62, th.sky[1]); gr.addColorStop(1, th.sky[2]);
+        g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        if (th.stars) { g.fillStyle = "rgba(255,255,255,.85)"; const r = rr3Rng(99); for (let i = 0; i < 70; i++) { const sx = r() * w, sy = r() * hy * 0.7; g.fillRect(sx, sy, 1.6, 1.6); } }
+    });
+}
+
+/* ---------- خلفية الأفق: مدرّج بعيد وأبراج إنارة وغابات (أنسجة مخزّنة تُزاح فقط) ---------- */
+function rr3CiHash(n) { let x = Math.imul(n | 0, 2654435761) >>> 0; x ^= x >>> 15; x = Math.imul(x, 2246822519) >>> 0; x ^= x >>> 13; return (x >>> 0) / 4294967296; }
+function rr3CiFarTex(th, W, H, hy, unit, variant) {
+    const sw = Math.round(Math.max(W * 1.5, 700 * unit) * (0.38 + 0.09 * variant)), sh = Math.max(6, Math.round(H * 0.032)), tw = Math.round(H * 0.085);
+    const key = "far" + th.name + variant + "|" + sw + "|" + sh;
+    return rr3CiTex(key, sw + 16, tw + 8, function (g, w, h) {
+        const base = h - 2, x0 = 8;
+        g.fillStyle = rr3Mix(rr3Hex(th.far), [90, 100, 120], 0.45); g.fillRect(x0, base - sh, sw, sh + 2);
+        g.fillStyle = rr3Mix(rr3Hex(th.far), [30, 36, 50], 0.6); g.fillRect(x0 - sw * 0.02, base - sh * 1.18, sw * 1.04, sh * 0.2);
+        const dots = Math.max(8, Math.floor(sw / (5 * unit))), ds = Math.max(1.2, 2 * unit);
+        const pal = ["#e8573f", "#f4c542", "#e9edf3", "#4a90d9"];
+        g.globalAlpha = 0.55;
+        for (let c = 0; c < 4; c++) {
+            g.fillStyle = pal[c];
+            for (let d = 0; d < dots; d++) {
+                const r = rr3CiHash(variant * 977 + d), ci = r < 0.28 ? 0 : (r < 0.5 ? 1 : (r < 0.75 ? 2 : 3));
+                if (ci !== c) continue;
+                g.fillRect(x0 + (d + 0.3) * sw / dots, base - sh * (0.25 + 0.55 * rr3CiHash(variant * 31 + d)), ds, ds);
+            }
+        }
+        g.globalAlpha = 1;
+        for (let e = 0; e < 2; e++) {
+            const tx = x0 + (e ? sw * 1.0 : 0);
+            g.fillStyle = "#59606e"; g.fillRect(tx - Math.max(1, unit), base - tw + 6, Math.max(2, 2 * unit), tw - 4);
+            g.fillStyle = "#e8ecf4"; g.fillRect(tx - 5 * unit, base - tw + 3 * unit, 10 * unit, 5 * unit);
+        }
+    });
+}
+function rr3DrawCiFar(ctx, W, hy, H, off, th, unit, detail, pm) {
+    const P = Math.max(W * 1.5, 700 * unit) * (pm || 1), lit = th.lit || 0;
+    const first = Math.floor(off / P), glow = lit > 0.02 && detail > 0 ? rr3CiGlowTex() : null;
+    for (let k = first - 1; k <= first + Math.ceil(W / P) + 1; k++) {
+        const variant = Math.abs(k * 7 + 3) % 3;
+        const tex = rr3CiFarTex(th, W, H, hy, unit, variant);
+        const x0 = k * P - off + rr3CiHash(k * 7 + 3) * P * 0.25;
+        if (x0 > W + 40 || x0 + tex.width < -40) continue;
+        ctx.drawImage(tex, x0 - 8, hy - tex.height + 2);
+        if (glow) {
+            const gr = H * 0.1;
+            ctx.globalAlpha = 0.85 * lit;
+            for (let e = 0; e < 2; e++) { const tx = x0 + (e ? tex.width - 16 : 0), ty = hy - tex.height + 8; ctx.drawImage(glow, tx - gr, ty - gr, gr * 2, gr * 2); }
+            ctx.globalAlpha = 1;
+        }
+    }
+}
+function rr3CiForestTex(W, amp, color, unit, seed) {
+    const step = Math.max(7, Math.round(11 * unit)), cnt = Math.max(24, Math.round(W * 1.4 / step)), tw = cnt * step, h = Math.ceil(amp * 1.25);
+    return rr3CiTex("forest" + color + seed + "|" + tw + "|" + h, tw, h, function (g, w, hh) {
+        g.fillStyle = color; g.beginPath(); g.moveTo(0, hh);
+        for (let i = 0; i < cnt; i++) {
+            const k = amp * (0.55 + 0.45 * rr3CiHash(i * 3 + seed)), x = i * step;
+            g.lineTo(x, hh - k * 0.55); g.quadraticCurveTo(x + step * 0.5, hh - k * 1.15, x + step, hh - k * 0.55);
+        }
+        g.lineTo(tw, hh); g.closePath(); g.fill();
+    });
+}
+function rr3DrawCiForest(ctx, W, hy, off, amp, color, unit, seed) {
+    const t = rr3CiForestTex(W, amp, color, unit, seed), tw = t.width;
+    let x = -(((off % tw) + tw) % tw);
+    for (; x < W; x += tw) ctx.drawImage(t, Math.round(x), hy + 2 - t.height);
+    ctx.fillStyle = color; ctx.fillRect(0, hy, W, 3);
+}
+
+/* ---------- نسيج مخزّن: مدرّج، لوحة إعلان، مبنى حظائر ---------- */
+function rr3CiStandTex(th, variant) {
+    return rr3CiTex("stand" + th.name + variant, 512, 256, function (g, w, h) {
+        const rows = 7, rh = (h * 0.62) / rows;
+        g.fillStyle = "#454c59"; g.fillRect(0, h * 0.2, w, h * 0.8);
+        const pal = ["#e8573f", "#f4c542", "#f2f4f8", "#3b82c4", "#34a36a", "#ec7fb0"];
+        for (let r = 0; r < rows; r++) {
+            const y = h * 0.28 + r * rh;
+            g.fillStyle = r % 2 ? "#586072" : "#4b5263"; g.fillRect(0, y, w, rh);
+            for (let i = 0; i < 44; i++) {
+                const c = pal[(i * 7 + r * 3 + variant * 2 + ((i * r) % 5)) % pal.length];
+                g.fillStyle = c; g.globalAlpha = 0.9;
+                g.fillRect(6 + i * (w - 12) / 44 + (r % 2) * 3, y + rh * 0.12, (w - 12) / 44 * 0.62, rh * 0.62);
+                g.fillStyle = "#f1c9a5"; g.fillRect(6 + i * (w - 12) / 44 + (r % 2) * 3 + 2, y + 1, 4, 4);
+            }
+            g.globalAlpha = 1;
+        }
+        g.fillStyle = "#232834"; g.fillRect(0, h * 0.9, w, h * 0.1);
+        g.fillStyle = [ "#e63946", "#2a9df4", "#f4a259", "#10b981" ][variant % 4]; g.fillRect(0, h * 0.9, w, h * 0.03);
+        /* السقف المائل */
+        g.fillStyle = "#e9edf3"; g.beginPath(); g.moveTo(0, h * 0.2); g.lineTo(w, h * 0.2); g.lineTo(w * 0.97, h * 0.06); g.lineTo(w * 0.03, h * 0.06); g.closePath(); g.fill();
+        g.fillStyle = "#9aa4b5"; g.fillRect(0, h * 0.2, w, h * 0.025);
+        g.fillStyle = [ "#e63946", "#2a9df4", "#f4a259", "#10b981" ][variant % 4]; g.fillRect(w * 0.03, h * 0.06, w * 0.94, h * 0.018);
+        g.fillStyle = "#6b7383"; for (let i = 0; i <= 8; i++) g.fillRect(i * (w - 6) / 8, h * 0.2, 6, h * 0.1);
+    });
+}
+function rr3CiBillTex(th, variant) {
+    return rr3CiTex("bill" + th.name + variant, 512, 160, function (g, w, h) {
+        const sets = [["#0b5ed7", "#ffd23f", "#ffffff"], ["#d62839", "#ffffff", "#1b1b1e"], ["#0f9d8a", "#f4f1de", "#ff9f1c"], ["#7b2cbf", "#ffd166", "#ffffff"], ["#1f2937", "#38bdf8", "#f8fafc"]];
+        const c = sets[variant % sets.length];
+        g.fillStyle = "#0e1117"; g.fillRect(0, 0, w, h);
+        g.fillStyle = c[0]; g.fillRect(8, 8, w - 16, h - 16);
+        g.fillStyle = c[1]; g.beginPath(); g.moveTo(8, h - 8); g.lineTo(150, 8); g.lineTo(240, 8); g.lineTo(98, h - 8); g.closePath(); g.fill();
+        g.fillStyle = c[2]; g.beginPath(); g.moveTo(130, h - 8); g.lineTo(272, 8); g.lineTo(300, 8); g.lineTo(158, h - 8); g.closePath(); g.fill();
+        g.fillStyle = c[2]; g.beginPath(); g.arc(w * 0.72, h * 0.5, h * 0.27, 0, Math.PI * 2); g.fill();
+        g.fillStyle = c[0]; g.beginPath(); g.arc(w * 0.72, h * 0.5, h * 0.18, 0, Math.PI * 2); g.fill();
+        g.fillStyle = c[1]; g.fillRect(w * 0.72 - h * 0.05, h * 0.3, h * 0.1, h * 0.4);
+        g.fillStyle = "rgba(255,255,255,.55)"; for (let i = 0; i < 3; i++) g.fillRect(w * 0.88 + i * 12, h * 0.25, 7, h * 0.5);
+        g.fillStyle = "rgba(255,255,255,.12)"; g.fillRect(8, 8, w - 16, h * 0.28);
+    });
+}
+/* لوحة الإعلان مع قائمتيها نسيج واحد (لغير الليل؛ في الليل يبقى مسار الرسم الأصلي لأن فيه وهجًا) */
+function rr3CiBillPostTex(th, variant) {
+    return rr3CiTex("billp" + th.name + variant, 512, 272, function (g, w, h) {
+        g.fillStyle = "#4b5160"; g.fillRect(30, 138, 16, 134); g.fillRect(466, 138, 16, 134);
+        g.drawImage(rr3CiBillTex(th, variant), 0, 0, 512, 160);
+    });
+}
+function rr3CiPitTex(th) {
+    return rr3CiTex("pit" + th.name, 640, 160, function (g, w, h) {
+        g.fillStyle = "#c9ced8"; g.fillRect(0, h * 0.22, w, h * 0.78);
+        g.fillStyle = "#3b4150"; g.fillRect(0, h * 0.08, w, h * 0.16);
+        g.fillStyle = "#e63946"; g.fillRect(0, h * 0.24, w, h * 0.03);
+        for (let i = 0; i < 8; i++) {
+            const x = 14 + i * (w - 28) / 8;
+            g.fillStyle = "#1b2030"; g.fillRect(x, h * 0.4, (w - 28) / 8 - 12, h * 0.5);
+            g.fillStyle = ["#f4c542", "#38bdf8", "#34d399", "#f472b6"][i % 4]; g.fillRect(x, h * 0.31, (w - 28) / 8 - 12, h * 0.05);
+            g.fillStyle = "rgba(255,255,255,.12)"; g.fillRect(x, h * 0.4, (w - 28) / 8 - 12, h * 0.1);
+        }
+        g.fillStyle = "#8b93a3"; g.fillRect(0, h * 0.9, w, h * 0.1);
+    });
+}
+
+/* ---------- عناصر جانبية (الأبعاد بوحدات العالم) ---------- */
+function rr3CiPineTex(th) {
+    return rr3CiTex("pine" + th.name, 168, 400, function (g, w, h) {
+        g.translate(w / 2, h); g.scale(w / 880, h / 2140);
+        g.fillStyle = "#5b3a24"; g.fillRect(-45, -420, 90, 420);
+        for (let i = 0; i < 3; i++) {
+            g.fillStyle = i % 2 ? th.hill : th.hill2;
+            g.beginPath(); g.moveTo(-420 + i * 70, -380 - i * 520); g.lineTo(420 - i * 70, -380 - i * 520); g.lineTo(0, -1100 - i * 520); g.closePath(); g.fill();
+        }
+    });
+}
+function rr3CiFlagTex() {
+    return rr3CiTex("flag", 96, 300, function (g, w, h) {
+        g.scale(w / 620, h / 2600); g.translate(40, 2600);
+        g.fillStyle = "#cbd5e1"; g.fillRect(-18, -2600, 36, 2600);
+        for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
+            g.fillStyle = (i + j) % 2 ? "#0b0d12" : "#f8fafc";
+            g.fillRect(18 + i * 90, -2590 + j * 85 + Math.sin(i * 0.9) * 18, 91, 86);
+        }
+    });
+}
+function rr3CiTireTex() {
+    return rr3CiTex("tire", 160, 90, function (g, w, h) {
+        g.scale(w / 900, h / 410); g.translate(450, 410);
+        for (let r = 0; r < 2; r++) for (let c = 0; c < 3 - r; c++) {
+            const x = -300 + c * 300 + r * 150, y = -r * 190;
+            g.fillStyle = "#0d0f13"; g.beginPath(); if (g.roundRect) g.roundRect(x - 140, y - 210, 280, 210, 60); else g.rect(x - 140, y - 210, 280, 210); g.fill();
+            g.fillStyle = (r + c) % 2 ? "#e63946" : "#f1f5f9"; g.fillRect(x - 135, y - 135, 270, 40);
+            g.fillStyle = "#2a2e37"; g.fillRect(x - 100, y - 195, 200, 26);
+        }
+    });
+}
+/* عمود الإنارة (العمود + الغطاء + المصابيح) نسيج واحد؛ الوهج والحزمة الضوئية تُرسم ديناميكيًا فقط عند الإضاءة */
+function rr3CiFloodTex(th, v) {
+    const lit = th.lit || 0;
+    return rr3CiTex("flood" + (lit > 0.25 ? "L" : "D") + (v < 0 ? "a" : "b"), 112, 480, function (g, w, h) {
+        g.scale(w / 900, h / 3830); g.translate(450, 3830);
+        g.fillStyle = "#6b7280"; g.beginPath(); g.moveTo(-34, 0); g.lineTo(34, 0); g.lineTo(18, -3500); g.lineTo(-18, -3500); g.closePath(); g.fill();
+        const hx = -v * 120;
+        g.fillStyle = "#2b303b"; g.fillRect(hx - 330, -3830, 660, 380);
+        g.fillStyle = lit > 0.25 ? "#fffbe6" : "#d7dce6";
+        for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) g.fillRect(hx - 255 + c * 170 - 60, -3770 + r * 170 - 55, 120, 110);
+    });
+}
+
+/* k = بكسل لكل وحدة عالم، sw = عرض اللوحة بالبكسل؛ الوهج يخفت كلما اقترب العنصر فلا يملأ الشاشة بشفافية مكلفة */
+function rr3DrawCiSprite(ctx, type, v, th, k, sw) {
+    const lit = th.lit || 0;
+    switch (type) {
+    case "ciflood": {
+        ctx.fillStyle = "#6b7280"; ctx.beginPath(); ctx.moveTo(-34, 0); ctx.lineTo(34, 0); ctx.lineTo(18, -3500); ctx.lineTo(-18, -3500); ctx.closePath(); ctx.fill();
+        const hx = -v * 120;
+        ctx.fillStyle = "#2b303b"; ctx.fillRect(hx - 330, -3830, 660, 380);
+        ctx.fillStyle = lit > 0.25 ? "#fffbe6" : "#d7dce6";
+        for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) ctx.fillRect(hx - 255 + c * 170 - 60, -3770 + r * 170 - 55, 120, 110);
+        if (lit > 0.05) {
+            const rad = 1500, fade = Math.min(1, (sw * 0.2) / Math.max(1, rad * k));
+            if (fade > 0.05) { ctx.globalAlpha = 0.8 * lit * fade; ctx.drawImage(rr3CiGlowTex(), hx - rad, -3640 - rad, rad * 2, rad * 2); ctx.globalAlpha = 1; }
+            if (lit > 0.7) {
+                ctx.globalAlpha = 0.16 * lit * Math.min(1, fade * 1.5);
+                ctx.fillStyle = "#fff4cf"; ctx.beginPath(); ctx.moveTo(hx - 300, -3500); ctx.lineTo(hx + 300, -3500); ctx.lineTo(hx - v * 2300 + 500, 0); ctx.lineTo(hx - v * 2300 - 500, 0); ctx.closePath(); ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        break;
+    }
+    case "cistand": {
+        ctx.drawImage(rr3CiStandTex(th, Math.floor(Math.abs(v * 7)) % 4), -2100, -2000, 4200, 2100);
+        break;
+    }
+    case "cibill": {
+        ctx.fillStyle = "#4b5160"; ctx.fillRect(-880, -520, 60, 520); ctx.fillRect(820, -520, 60, 520);
+        if (lit > 0.7) { const fade = Math.min(1, (sw * 0.18) / Math.max(1, 1500 * k)); if (fade > 0.05) { ctx.globalAlpha = 0.3 * lit * fade; ctx.drawImage(rr3CiGlowTex(), -1500, -840 - 1500, 3000, 3000); ctx.globalAlpha = 1; } }
+        ctx.drawImage(rr3CiBillTex(th, Math.floor(Math.abs(v * 5)) % 5), -1000, -1060, 2000, 625);
+        break;
+    }
+    case "citire": ctx.drawImage(rr3CiTireTex(), -450, -410, 900, 410); break;
+    case "ciflag": ctx.drawImage(rr3CiFlagTex(), -40, -2600, 620, 2600); break;
+    case "cipit": ctx.drawImage(rr3CiPitTex(th), -2800, -1000, 5600, 1000); break;
+    case "cipine": ctx.drawImage(rr3CiPineTex(th), -440, -2140, 880, 2140); break;
+    default: break;
+    }
+}
+
 function rr3CreateEngine(cfg) {
     const SEG = 200, ROADW = 1300, LANES = 3, CAMH = 1500, PLAYERZ = 1100, WAITD = 560, CARW = 620;
     const CAMD = 1 / Math.tan((96 / 2) * Math.PI / 180);
@@ -9326,14 +9762,26 @@ function rr3CreateEngine(cfg) {
     addRoad(10, 20, 10, 0, -lastY() / SEG);
     const N = segs.length;
     const rng = rr3Rng(7 + (cfg.theme || 0) * 131);
-    const HJ = th.env === "hijaz", CO = th.env === "corniche", SH = th.env === "shops", DS = th.env === "desert";
-    const HEAVY = HJ || CO || SH || DS;
+    const HJ = th.env === "hijaz", CO = th.env === "corniche", SH = th.env === "shops", DS = th.env === "desert", CI = th.env === "circuit";
+    const HEAVY = HJ || CO || SH || DS || CI;
     /* بيئات الواجهات (جدة التاريخية والتجاري والكورنيش): دورة البيت، الارتفاع، البعد عن الطريق، عدد الأنواع، ودوال الاختيار والرسم */
     const WE = HJ ? { per: RR3_HJ_PERIOD, wh: RR3_HJ_WALL_H, off: 1.72, nv: RR3_HJ_VARIANTS, vf: rr3HjVariant, fac: rr3HjFacade, th: 720, pal: RR3_HJ_PAL.map(function (p) { return p.wall; }) }
         : (SH ? { per: RR3_SH_PERIOD, wh: RR3_SH_WALL_H, off: RR3_SH_OFF, nv: RR3_SH_VARIANTS, vf: rr3ShVariant, fac: rr3ShFacade, th: 720, pal: RR3_SH_PAL.map(function (p) { return p.wall; }) }
         : (CO ? { per: RR3_CO_PERIOD, wh: RR3_CO_WALL_H, off: RR3_CO_OFF, nv: RR3_CO_VARIANTS, vf: rr3CoVariant, fac: rr3CoFacade, th: RR3_CO_TEXH, pal: ["#6aa6cc", "#cdb58a", "#d9e2e8", "#4fa6a4", "#8aa2b8", "#d8c4a2"] } : null));
     for (let n = 6; n < N; n++) {
         const sg = segs[n];
+        if (CI) {
+            if (n % 11 === 3) sg.sprites.push({ type: "ciflood", off: -2.5, v: -1, sc: 1 });
+            if (n % 11 === 8) sg.sprites.push({ type: "ciflood", off: 2.5, v: 1, sc: 1 });
+            if (n % 9 === 5) { const sd = (n / 9 | 0) % 2 ? 1 : -1; sg.sprites.push({ type: "cibill", off: sd * 1.98, v: sd * (1 + (n % 5)), sc: 0.62, opt: ((n / 9 | 0) % 4) >= 2 }); }
+            if (n % 13 === 6) { const sd = (n / 13 | 0) % 2 ? 1 : -1; sg.sprites.push({ type: "citire", off: sd * 1.5, v: sd, sc: 0.8, opt: true }); }
+            if (n % 24 === 10) sg.sprites.push({ type: "ciflag", off: 1.62, v: 1, sc: 0.9 });
+            if (n % 24 === 22) sg.sprites.push({ type: "ciflag", off: -1.62, v: -1, sc: 0.9 });
+            if (n % 38 === 14) { const sd = (n / 38 | 0) % 2 ? 1 : -1; sg.sprites.push({ type: "cistand", off: sd * 4.1, v: sd * (1 + n % 3), sc: 1.05, bg: true }); }
+            if (n % 70 === 30) sg.sprites.push({ type: "cipit", off: 4.4, v: 1, sc: 1, bg: true });
+            if (n % 4 === 1) { const sd = (n % 8 < 4) ? -1 : 1; sg.sprites.push({ type: "cipine", off: sd * (3.3 + rng() * 3.4), v: sd, sc: 0.7 + rng() * 0.7, bg: true, opt: (n & 4) === 4 }); }
+            continue;
+        }
         if (HJ) {
             if (n % 14 === 5) sg.sprites.push({ type: "fanous", off: -1.3, v: -1, sc: 1 });
             if (n % 14 === 12) sg.sprites.push({ type: "fanous", off: 1.3, v: 1, sc: 1 });
@@ -9781,14 +10229,15 @@ function rr3CreateEngine(cfg) {
 
     /* ---------- الرسم ---------- */
     /* جودة تكيفية للبيئات الثقيلة (جدة التاريخية): إن بقي زمن الإطار طويلًا تُخفَّض دقة اللوحة تدريجيًا حتى تسلس الحركة */
-    let perfK = 1, perfAcc = 0, perfN = 0, perfSince = 0;
+    let perfK = 1, perfAcc = 0, perfN = 0, perfSince = 0, cdetail = 1, BIG = false, scKey = "", scLast = 0;   /* BIG: لوحة كبيرة (تابلت/سبورة) — تبسيط ثابت للأفق والعناصر الخلفية */   /* cdetail: مستوى تفاصيل الحلبة؛ يخفّ قبل خفض الدقة */
     function perfWatch(rawMs) {
         if (!HEAVY || !S.started || S.paused || rawMs > 250) return;
         perfSince += rawMs; perfAcc += rawMs; perfN++;
         if (perfSince < 1000) return;
         const avg = perfAcc / Math.max(1, perfN);
         perfSince = 0; perfAcc = 0; perfN = 0;
-        if (avg > 34 && perfK > 0.5) { perfK = Math.max(0.5, perfK - 0.15); perfLog.push(avg | 0); fitDirty = true; }
+        if (avg > 27 && CI && cdetail === 1) { cdetail = 0; perfLog.push(-(avg | 0)); fitDirty = true; }
+        else if (avg > (CI ? 27 : 34) && perfK > (CI ? 0.65 : 0.5)) { perfK = Math.max(CI ? 0.65 : 0.5, perfK - 0.15); perfLog.push(avg | 0); fitDirty = true; }
     }
     const perfLog = [];
     let fitDirty = true;
@@ -9797,17 +10246,24 @@ function rr3CreateEngine(cfg) {
         fitDirty = false;
         const r = root.getBoundingClientRect();
         const cw = Math.max(200, r.width), ch = Math.max(200, r.height);
+        BIG = CI && cw * ch >= 6.5e5;
         let sc = Math.min(window.devicePixelRatio || 1, 1.5) * perfK;
-        while (cw * ch * sc * sc > 1.7e6 && sc > 0.5) sc -= 0.1;
+        const capPx = CI ? 1.3e6 : 1.7e6;   /* الحلبة على اللوحات الكبيرة (سبورة ذكية): سقف أقل للبكسلات */
+        while (cw * ch * sc * sc > capPx && sc > 0.5) sc -= 0.1;
+        /* الحلبة: أثناء التكيّف لا ترتفع الدقة أبدًا (شبكة خطوات السقف 0.1 وخطوة التكيّف 0.15 كانتا تسببان رفعًا لحظيًا قبل الخفض) */
+        if (CI && perfK < 1 && scKey === cw + "x" + ch && sc > scLast) sc = scLast;
+        scKey = cw + "x" + ch; scLast = sc;
         const w = Math.round(cw * sc), h = Math.round(ch * sc);
         if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-        DRAW = cw < 600 ? 80 : 100;
+        DRAW = (cw < 600 ? 80 : 100);
+        if (CI && !cdetail) DRAW = Math.max(72, Math.round(DRAW * 0.8));
     }
 
     /* ---------- بيئة جدة التاريخية: واجهات منظورية + أفق ---------- */
     const hjSky = HJ ? [rr3HjSkyline(31, 80, 1800), rr3HjSkyline(77, 80, 2300)] : null;
     const saSky = SH ? [rr3ShSkyline(41, 90, 1900), rr3ShSkyline(88, 90, 2400)] : (CO ? [rr3CoSkyline(51, 60, 2200), rr3CoSkyline(99, 60, 2800)] : null);
     const dsRid = DS ? [rr3Ridge(3, 512, 0.62, true), rr3Ridge(17, 512, 0.7, false), rr3Ridge(29, 512, 0.5, false)] : null;
+    const ciRid = CI ? [rr3Ridge(5, 512, 0.6, false), rr3Ridge(23, 512, 0.55, false)] : null;
     let hjTex = null, hjKey = 0;
     const hjAvg = WE ? WE.pal.map(function (p) { return rr3Mix(rr3Hex(p), [150, 105, 70], 0.18).match(/\d+/g).map(Number); }) : [];
     function hjEnsure(H) {
@@ -9873,8 +10329,72 @@ function rr3CreateEngine(cfg) {
         const col = rr3Mix(c, fogRGB, fog);
         poly(col, f.x1 + sgn * f.w1 * a, f.y1, f.x1 + sgn * f.w1 * b, f.y1, f.x2 + sgn * f.w2 * b, ye, f.x2 + sgn * f.w2 * a, ye);
     }
+    function vq(f, sd, off, h0, h1, col) {
+        const x1 = f.x1 + sd * f.w1 * off, x2 = f.x2 + sd * f.w2 * off, k1 = f.s1 * UU, k2 = f.s2 * UU;
+        poly(col, x1, f.y1 - h0 * k1, x1, f.y1 - h1 * k1, x2, f.y2 - h1 * k2, x2, f.y2 - h0 * k2);
+    }
+    const cbMemo = {};
+    /* مسار سريع لعناصر الحلبة الجانبية: نسيج جاهز بـ drawImage مباشر دون save/translate/scale، وتجاهل ما هو أصغر من بكسلات قليلة أو خارج الشاشة */
+    const CIT = {};
+    function ciDraw(type, sx, by, k, v) {
+        const W = cv.width;
+        let t, ox, oy, w, h;
+        switch (type) {
+        case "cipine": t = CIT.pine || (CIT.pine = rr3CiPineTex(th)); ox = -440; oy = -2140; w = 880; h = 2140; break;
+        case "citire": t = CIT.tire || (CIT.tire = rr3CiTireTex()); ox = -450; oy = -410; w = 900; h = 410; break;
+        case "ciflag": t = CIT.flag || (CIT.flag = rr3CiFlagTex()); ox = -40; oy = -2600; w = 620; h = 2600; break;
+        case "cipit": t = CIT.pit || (CIT.pit = rr3CiPitTex(th)); ox = -2800; oy = -1000; w = 5600; h = 1000; break;
+        case "cistand": { const q = Math.floor(Math.abs(v * 7)) % 4; t = CIT["st" + q] || (CIT["st" + q] = rr3CiStandTex(th, q)); ox = -2100; oy = -2000; w = 4200; h = 2100; break; }
+        case "cibill": {
+            if ((th.lit || 0) > 0.7) { rr3DrawSprite(ctx, type, sx, by, k, v, th); return; }
+            const q = Math.floor(Math.abs(v * 5)) % 5; t = CIT["bl" + q] || (CIT["bl" + q] = rr3CiBillPostTex(th, q)); ox = -1000; oy = -1060; w = 2000; h = 1060; break;
+        }
+        case "ciflood": {
+            const hh = 3830 * k;
+            if (hh >= 240) { rr3DrawSprite(ctx, type, sx, by, k, v, th); return; }
+            if (sx < -hh || sx > W + hh) return;
+            const lit = th.lit || 0, side = v < 0 ? "a" : "b", hx = -v * 120;
+            ctx.drawImage(CIT["fl" + side + lit] || (CIT["fl" + side + lit] = rr3CiFloodTex(th, v)), sx - 450 * k, by - 3830 * k, 900 * k, hh);
+            if (lit > 0.05) {
+                const rad = 1500, fade = Math.min(1, (W * 0.2) / Math.max(1, rad * k));
+                const ga = ctx.globalAlpha;
+                if (fade > 0.05) { ctx.globalAlpha = ga * 0.8 * lit * fade; const R = rad * k; ctx.drawImage(rr3CiGlowTex(), sx + hx * k - R, by - 3640 * k - R, R * 2, R * 2); }
+                if (lit > 0.7) {
+                    ctx.globalAlpha = ga * 0.16 * lit * Math.min(1, fade * 1.5);
+                    ctx.fillStyle = "#fff4cf"; ctx.beginPath(); ctx.moveTo(sx + (hx - 300) * k, by - 3500 * k); ctx.lineTo(sx + (hx + 300) * k, by - 3500 * k); ctx.lineTo(sx + (hx - v * 2300 + 500) * k, by); ctx.lineTo(sx + (hx - v * 2300 - 500) * k, by); ctx.closePath(); ctx.fill();
+                }
+                ctx.globalAlpha = ga;
+            }
+            return;
+        }
+        default: rr3DrawSprite(ctx, type, sx, by, k, v, th); return;
+        }
+        const dw = w * k;
+        if (dw < 3.5) return;
+        const dx = sx + ox * k;
+        if (dx > W || dx + dw < 0) return;
+        ctx.drawImage(t, dx, by + oy * k, dw, h * k);
+    }
+    function ciBarrier(f, fog) {
+        const a = f.abs, n0 = f.abs - Math.floor(S.pos / SEG);
+        const kA = "a" + (a % 2) + "_" + n0, kT = "t" + (((a >> 2) & 1)) + "_" + n0, kF = "f" + n0;
+        const cA = cbMemo[kA] || (cbMemo[kA] = rr3Mix(a % 2 ? CIX.wallA : CIX.wallB, fogRGB, fog));
+        const cT = cbMemo[kT] || (cbMemo[kT] = rr3Mix(((a >> 2) & 1) ? CIX.red : CIX.white, fogRGB, fog));
+        const ga = ctx.globalAlpha, fence = cdetail && n0 < 55;
+        const cF = fence ? (cbMemo[kF] || (cbMemo[kF] = rr3Mix(CIX.fence, fogRGB, fog * 0.9))) : null;
+        for (let sd = -1; sd <= 1; sd += 2) {
+            if (fence) { ctx.globalAlpha = ga * 0.42; vq(f, sd, 1.74, 330, 1000, cF); ctx.globalAlpha = ga; vq(f, sd, 1.74, 950, 1000, cA); }
+            if (n0 > 48) { vq(f, sd, 1.58, 0, 345, (a >> 2) & 1 ? cT : cA); continue; }
+            vq(f, sd, 1.58, 0, 250, cA);
+            vq(f, sd, 1.58, 250, 345, cT);
+        }
+    }
     function groundExtra(f, ye, fog, abs, n) {
         const alt = abs % 2 === 0;
+        if (CI) {
+            for (let sd = -1; sd <= 1; sd += 2) { band(alt ? CIX.runA : CIX.runB, f, ye, 1.17, 1.58, sd, fog); if (n < 40 && !BIG) band(CIX.shadow, f, ye, 1.58, 1.8, sd, fog); }
+            return;
+        }
         if (CO) {
             band(alt ? GX.tileA : GX.tileB, f, ye, 1.17, 1.62, -1, fog);
             band(GX.wall, f, ye, 1.62, 1.72, -1, fog);
@@ -9899,20 +10419,32 @@ function rr3CreateEngine(cfg) {
     }
 
     function drawBackground(W, H, hy) {
-        let g = ctx.createLinearGradient(0, 0, 0, hy);
-        g.addColorStop(0, th.sky[0]); g.addColorStop(0.62, th.sky[1]); g.addColorStop(1, th.sky[2]);
-        ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy + 2);
-        if (th.stars) {
-            ctx.fillStyle = "rgba(255,255,255,.85)";
-            const r = rr3Rng(99);
-            for (let i = 0; i < 70; i++) { const sx = r() * W, sy = r() * hy * 0.7; ctx.fillRect(sx, sy, 1.6, 1.6); }
+        if (CI) ctx.drawImage(rr3CiSkyTex(th, W, hy), 0, 0);
+        else {
+            let g = ctx.createLinearGradient(0, 0, 0, hy);
+            g.addColorStop(0, th.sky[0]); g.addColorStop(0.62, th.sky[1]); g.addColorStop(1, th.sky[2]);
+            ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy + 2);
+            if (th.stars) {
+                ctx.fillStyle = "rgba(255,255,255,.85)";
+                const r = rr3Rng(99);
+                for (let i = 0; i < 70; i++) { const sx = r() * W, sy = r() * hy * 0.7; ctx.fillRect(sx, sy, 1.6, 1.6); }
+            }
         }
         const sun = th.sun, sx = W * sun.x - S.bg * W * 0.06, sy = hy * sun.y * 1.6;
-        const sg = ctx.createRadialGradient(sx, sy, 2, sx, sy, W * sun.r * 4);
-        sg.addColorStop(0, "rgba(255,250,210,.9)"); sg.addColorStop(1, "rgba(255,250,210,0)");
-        ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, W * sun.r * 4, 0, Math.PI * 2); ctx.fill();
+        if (CI) { const R = W * sun.r * (BIG ? 2.8 : 3.6); ctx.globalAlpha = 0.9; rr3CiGlowClipped(ctx, rr3CiGlowTex(), sx - R, sy - R, R * 2, 0, W, hy + 2); ctx.globalAlpha = 1; }
+        else {
+            const sg = ctx.createRadialGradient(sx, sy, 2, sx, sy, W * sun.r * 4);
+            sg.addColorStop(0, "rgba(255,250,210,.9)"); sg.addColorStop(1, "rgba(255,250,210,0)");
+            ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, W * sun.r * 4, 0, Math.PI * 2); ctx.fill();
+        }
         ctx.fillStyle = sun.c; ctx.beginPath(); ctx.arc(sx, sy, W * sun.r, 0, Math.PI * 2); ctx.fill();
-        if (th.clouds) {
+        if (th.clouds && CI) {
+            for (let i = 0; i < 4; i++) {
+                const cw = W * (0.22 + 0.05 * i), cx = ((i * 0.31 * W + S.t * 7 * (i + 1) + S.bg * W * 0.12) % (W + cw * 2)) - cw, cy = hy * (0.18 + 0.12 * i);
+                const t = rr3CiCloudTex(i, Math.round(cw));
+                ctx.drawImage(t, cx - t.width * 0.5, cy - cw * 0.115 - 2);
+            }
+        } else if (th.clouds) {
             ctx.fillStyle = "rgba(255,255,255,.78)";
             for (let i = 0; i < 4; i++) {
                 const cw = W * (0.22 + 0.05 * i), cx = ((i * 0.31 * W + S.t * 7 * (i + 1) + S.bg * W * 0.12) % (W + cw * 2)) - cw, cy = hy * (0.18 + 0.12 * i);
@@ -9956,6 +10488,15 @@ function rr3CreateEngine(cfg) {
             rr3DrawRidge(ctx, W, hy, dsRid[2], S.bg * W * 0.9 + 300, H * 0.07, th.hill2, "rgba(0,0,0,.15)");
             const hz = ctx.createLinearGradient(0, hy - H * 0.07, 0, hy); hz.addColorStop(0, "rgba(" + fogRGB.join(",") + ",0)"); hz.addColorStop(1, "rgba(" + fogRGB.join(",") + ",.55)");
             ctx.fillStyle = hz; ctx.fillRect(0, hy - H * 0.07, W, H * 0.07 + 1);
+        } else if (CI) {
+            const unit = Math.max(0.55, W / 1100);
+            rr3DrawRidge(ctx, W, hy, ciRid[0], S.bg * W * 0.12, H * 0.2, th.far, null);
+            rr3DrawCiFar(ctx, W, hy, H, S.bg * W * 0.35, th, unit, cdetail, BIG ? 1.6 : 1);
+            rr3DrawRidge(ctx, W, hy, ciRid[1], S.bg * W * 0.3 + 70, H * 0.11, th.mount, null);
+            rr3DrawCiForest(ctx, W, hy, S.bg * W * 0.7, H * 0.055, th.hill2, unit, 11);
+            if (cdetail && !BIG) rr3DrawCiForest(ctx, W, hy, S.bg * W * 1.1, H * 0.035, th.hill, unit, 29);
+            const hz = ctx.createLinearGradient(0, hy - H * 0.09, 0, hy); hz.addColorStop(0, "rgba(" + fogRGB.join(",") + ",0)"); hz.addColorStop(1, "rgba(" + fogRGB.join(",") + ",.5)");
+            ctx.fillStyle = hz; ctx.fillRect(0, hy - H * 0.09, W, H * 0.09 + 1);
         } else if (HJ) {
             const unit = Math.max(0.55, W / 1100);
             rr3DrawHjSkyline(ctx, W, H, hy, hjSky[0], S.bg * W * 0.35 / unit, th.far, "rgba(150,120,90,.35)", unit * 0.8);
@@ -9979,7 +10520,7 @@ function rr3CreateEngine(cfg) {
             layer(th.hill2, H * 0.04, S.bg * W * 1.4, 0.0085, 0.021, 0);
             layer(th.hill, H * 0.028, S.bg * W * 1.9, 0.011, 0.027, 0);
         }
-        ctx.fillStyle = th.grass[0]; ctx.fillRect(0, hy, W, H - hy);
+        ctx.fillStyle = th.grass[0]; ctx.fillRect(0, hy, W, CI ? Math.ceil(H * 0.03) : H - hy);   /* الحلبة: المقاطع تغطي ما تحت الأفق بالكامل فلا حاجة لملء نصف الشاشة مرتين */
     }
 
     function poly(c, x1, y1, x2, y2, x3, y3, x4, y4) {
@@ -9990,6 +10531,16 @@ function rr3CreateEngine(cfg) {
         roadD: rr3Hex(th.road[0]), roadL: rr3Hex(th.road[1]), gD: rr3Hex(th.grass[0]), gL: rr3Hex(th.grass[1]),
         rD: rr3Hex(th.rumble[0]), rL: rr3Hex(th.rumble[1]), white: [250, 250, 250]
     };
+    const ma = function (a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; };
+    const CIX = CI ? (function () {
+        const night = (th.lit || 0) > 0.6, r0 = rr3Hex(th.road[0]), r1 = rr3Hex(th.road[1]);
+        return {
+            runA: ma(r0, [132, 136, 144], night ? 0.18 : 0.42), runB: ma(r1, [132, 136, 144], night ? 0.18 : 0.42),
+            shadow: ma(rr3Hex(th.grass[0]), [0, 0, 0], 0.35),
+            wallA: night ? [150, 156, 168] : [226, 229, 234], wallB: night ? [128, 134, 146] : [206, 210, 217],
+            red: [214, 40, 52], white: [244, 244, 244], fence: night ? [20, 26, 38] : [42, 52, 66], trk: night ? "rgba(0,0,0,.14)" : "rgba(0,0,0,.09)"
+        };
+    })() : null;
     const info = [];
 
     function roundRectPath(x, y, w, h, r) {
@@ -10097,15 +10648,47 @@ function rr3CreateEngine(cfg) {
         }
     }
 
+    /* جسر البوابة بطابع الحلبة: عمودان شبكيان وعارضة معدنية بأضواء وأشرطة تحذير؛ لوحات الحروف نفسها لم تتغير */
+    function ciGantryFrame(bx, by, postX, k) {
+        const top = by - 2900 * k, colW = 100 * k, night = (th.lit || 0) > 0.4;
+        for (let sd = -1; sd <= 1; sd += 2) {
+            const x0 = bx + sd * postX - colW / 2;
+            const g = ctx.createLinearGradient(x0, 0, x0 + colW, 0);
+            g.addColorStop(0, "#7d8798"); g.addColorStop(0.45, "#e3e8f0"); g.addColorStop(1, "#6b7486");
+            ctx.fillStyle = g; ctx.fillRect(x0, top, colW, 2900 * k);
+            ctx.strokeStyle = "rgba(30,36,50,.55)"; ctx.lineWidth = Math.max(1, 14 * k);
+            ctx.beginPath();
+            for (let y = 0; y < 2900; y += 360) { ctx.moveTo(x0, by - y * k); ctx.lineTo(x0 + colW, by - (y + 360) * k); ctx.moveTo(x0 + colW, by - y * k); ctx.lineTo(x0, by - (y + 360) * k); }
+            ctx.stroke();
+            for (let i = 0; i < 4; i++) { ctx.fillStyle = i % 2 ? "#111827" : "#facc15"; ctx.fillRect(x0 - 10 * k, by - (i + 1) * 90 * k, colW + 20 * k, 90 * k); }
+        }
+        const bx0 = bx - postX - colW / 2, bw = 2 * postX + colW, bh = 300 * k;
+        let g = ctx.createLinearGradient(0, top, 0, top + bh);
+        g.addColorStop(0, "#e9eef6"); g.addColorStop(0.5, "#9aa5b8"); g.addColorStop(1, "#5d6678");
+        ctx.fillStyle = g; ctx.fillRect(bx0, top, bw, bh);
+        ctx.strokeStyle = "rgba(25,30,45,.6)"; ctx.lineWidth = Math.max(1, 12 * k);
+        ctx.beginPath();
+        for (let i = 0; i < 18; i++) { const x = bx0 + bw * i / 18, x2 = bx0 + bw * (i + 1) / 18; ctx.moveTo(x, top + bh); ctx.lineTo((x + x2) / 2, top); ctx.lineTo(x2, top + bh); }
+        ctx.stroke();
+        const lamps = 12;
+        for (let i = 0; i < lamps; i++) {
+            const lx = bx0 + bw * (i + 0.5) / lamps, ly = top + bh + 34 * k;
+            ctx.fillStyle = night ? "#fffbe6" : "#f1f5f9"; ctx.fillRect(lx - 40 * k, ly - 24 * k, 80 * k, 48 * k);
+            if (night) { ctx.globalAlpha = 0.5; ctx.drawImage(rr3CiGlowTex(), lx - 260 * k, ly - 260 * k, 520 * k, 520 * k); ctx.globalAlpha = 1; }
+        }
+    }
     function drawGantry(f, gate) {
         if (!f || !f.ok) return;
         const r = rounds[gate.r], s = f.s1, k = s * UU;
         const bx = f.x1, by = f.y1;
         const postX = 1.18 * f.w1;
-        ctx.fillStyle = "#cbd5e1";
-        ctx.fillRect(bx - postX - 45 * k, by - 2900 * k, 90 * k, 2900 * k);
-        ctx.fillRect(bx + postX - 45 * k, by - 2900 * k, 90 * k, 2900 * k);
-        ctx.fillStyle = "#94a3b8"; ctx.fillRect(bx - postX - 45 * k, by - 2900 * k, 2 * postX + 90 * k, 260 * k);
+        if (CI) ciGantryFrame(bx, by, postX, k);
+        else {
+            ctx.fillStyle = "#cbd5e1";
+            ctx.fillRect(bx - postX - 45 * k, by - 2900 * k, 90 * k, 2900 * k);
+            ctx.fillRect(bx + postX - 45 * k, by - 2900 * k, 90 * k, 2900 * k);
+            ctx.fillStyle = "#94a3b8"; ctx.fillRect(bx - postX - 45 * k, by - 2900 * k, 2 * postX + 90 * k, 260 * k);
+        }
         for (let j = 0; j < 3; j++) {
             const cx = bx + LANE_X[j] * f.w1, pw = 0.6 * f.w1, ph = 800 * k, top = by - 2700 * k;
             const dim = r.dim[j];
@@ -10187,7 +10770,7 @@ function rr3CreateEngine(cfg) {
             const rum = rr3Mix(dark ? rgbCache.rD : rgbCache.rL, fogRGB, fog);
             const ye = f.y2 - 1;
             ctx.fillStyle = grass; ctx.fillRect(0, ye, W, f.y1 - ye);
-            if (CO || SH || DS) groundExtra(f, ye, fog, abs, n);
+            if (CO || SH || DS || CI) groundExtra(f, ye, fog, abs, n);
             const r1 = f.w1 / Math.max(6, 2 * LANES), r2 = f.w2 / Math.max(6, 2 * LANES);
             poly(rum, f.x1 - f.w1 - r1, f.y1, f.x1 - f.w1, f.y1, f.x2 - f.w2, ye, f.x2 - f.w2 - r2, ye);
             poly(rum, f.x1 + f.w1 + r1, f.y1, f.x1 + f.w1, f.y1, f.x2 + f.w2, ye, f.x2 + f.w2 + r2, ye);
@@ -10234,7 +10817,7 @@ function rr3CreateEngine(cfg) {
             const ph = (S.wheel * 6) % 0.3;
             const bounce = S.speed > 50 ? Math.sin(S.t * 22) * 0.004 : 0;
             const tilt = S.tilt + (S.wobble ? Math.sin(S.t * 30) * S.wobble * 0.5 : 0);
-            rr3DrawCar(ctx, cx, cy, wpx, { color: RR3_CAR_COLORS[0], tilt: reduced ? tilt * 0.4 : tilt, bounce: bounce, phase: ph, brake: S.speed < 600 && S.started, glow: S.glow });
+            rr3DrawCar(ctx, cx, cy, wpx, { color: RR3_CAR_COLORS[0], tilt: reduced ? tilt * 0.4 : tilt, bounce: bounce, phase: ph, brake: S.speed < 600 && S.started, glow: S.glow, night: (th.lit || 0) > 0.4, boost: S.started ? Math.min(1, S.speed / 5200) : 0 });
         };
         for (let n = DRAW - 1; n >= 0; n--) {
             const f = info[n];
@@ -10243,6 +10826,7 @@ function rr3CreateEngine(cfg) {
             if (!f.ok) {
                 /* واجهات الجانبين ترتفع فوق قاع الشاشة: تُرسم حتى لو كان سطح الطريق نفسه تحت حافة الشاشة */
                 if (WE && f.z1 > CAMD && f.y2 >= H) { hjEnsure(H); hjWalls(f, n, 1 - Math.exp(-Math.pow(n / DRAW, 2) * 3.0)); }
+                else if (CI && f.z1 > CAMD && f.y2 >= H) { ctx.globalAlpha = 1; ciBarrier(f, 1 - Math.exp(-Math.pow(n / DRAW, 2) * 3.0)); }
                 continue;
             }
             const sg = f.sg;
@@ -10256,12 +10840,19 @@ function rr3CreateEngine(cfg) {
                     if (sp.bg) rr3DrawSprite(ctx, sp.type, f.x1 + f.s1 * sp.off * ROADW * U, f.y1, f.s1 * U * sp.sc, sp.v, th);
                 }
                 ctx.globalAlpha = 1; hjEnsure(H); hjWalls(f, n, fog); ctx.globalAlpha = Math.max(0.15, 1 - fog * 0.85);
+            } else if (CI) {
+                for (let i = 0; i < sg.sprites.length; i++) {
+                    const sp = sg.sprites[i];
+                    if (sp.bg && !(sp.opt && (cdetail === 0 || BIG))) ciDraw(sp.type, f.x1 + f.s1 * sp.off * ROADW * U, f.y1, f.s1 * U * sp.sc, sp.v);
+                }
+                ctx.globalAlpha = 1; ciBarrier(f, fog); ctx.globalAlpha = Math.max(0.15, 1 - fog * 0.85);
             }
             for (let i = 0; i < sg.sprites.length; i++) {
                 const sp = sg.sprites[i];
-                if (WE && sp.bg) continue;
+                if ((WE || CI) && sp.bg) continue;
+                if (sp.opt && (cdetail === 0 || (CI && BIG))) continue;
                 const sx = f.x1 + f.s1 * sp.off * ROADW * U;
-                rr3DrawSprite(ctx, sp.type, sx, f.y1, f.s1 * U * sp.sc, sp.v, th);
+                if (CI) ciDraw(sp.type, sx, f.y1, f.s1 * U * sp.sc, sp.v); else rr3DrawSprite(ctx, sp.type, sx, f.y1, f.s1 * U * sp.sc, sp.v, th);
             }
             ctx.globalAlpha = 1;
             if (S.gate && S.gate.kind === "road" && f.abs >= S.gate.a0 && f.abs < S.gate.a0 + ROADK) { ctx.globalAlpha = Math.max(0.25, 1 - fog * 0.55); drawRoadLetters(f, S.gate); ctx.globalAlpha = 1; }
@@ -10288,6 +10879,7 @@ function rr3CreateEngine(cfg) {
             ctx.globalAlpha = 1;
         }
         /* جسيمات الاحتفال */
+        if (CI && cdetail && !reduced && S.started && !S.crash) rr3CiStreaks(ctx, W, H, hy, W / 2, Math.min(1, Math.max(0, (S.speed - 1400) / 3800)), S.t, (th.lit || 0) > 0.6 ? "210,228,255" : "255,255,255");
         S.particles.forEach(function (p) {
             ctx.globalAlpha = Math.max(0, 1 - p.t / p.life);
             ctx.fillStyle = p.c;
@@ -10661,11 +11253,11 @@ function rr3Distractors(letter, tier, seed, n, sd, ri) {
 
 /* ---------- مستويات الحرف: كلها مفتوحة بلا أقفال؛ كل مستوى يختلف في المضمار والبيئة وشكل التحدي وتوزيع الحروف ---------- */
 const RR3_LEVELS = [
-    { id: "see1", icon: "🔎", title: "تعرّف على الحرف", desc: "اختر الحرف المطلوب من حروف مختلفة تمامًا في الشكل", layout: "road", track: "souq", theme: 4, place: "🕌 جدة التاريخية", tier: 0, rounds: 3, targets: 1, legacy: true },
-    { id: "drive", icon: "🏎️", title: "التقط الحرف وأنت تقود", desc: "صفوف متتالية بلا توقف: التقط الحرف المطلوب أثناء السير", layout: "road", track: "rolling", theme: 5, place: "🌊 كورنيش جدة", tier: "F", rounds: 5, targets: 1, flow: "drive", mode: "free" },
-    { id: "gates", icon: "🚦", title: "بوابات الحروف", desc: "ارفع نظرك إلى اللافتات ومرّ من تحت الحرف المطلوب", layout: "gate", track: "city", theme: 6, place: "🏪 الشارع التجاري", tier: "F", rounds: 4, targets: 1 },
-    { id: "twins", icon: "🎯", title: "طابق الحرف: مرة أو مرتين", desc: "قد يظهر الحرف المطلوب في حارتين، والحرف المختلف لا يمنح نجمة", layout: "road", track: "winding", theme: 7, place: "🏜️ الطريق الصحراوي", tier: "F", rounds: 4, targets: 2 },
-    { id: "similar", icon: "🧩", title: "ميّز المتشابهات", desc: "مستوى متقدم بحروف قريبة الشكل (يختاره المعلم)", layout: "mixed", track: "alpine", theme: 8, place: "🌄 الطريق الصحراوي عند الغروب", tier: 2, rounds: 4, targets: 1 }
+    { id: "see1", icon: "🔎", title: "تعرّف على الحرف", desc: "اختر الحرف المطلوب من حروف مختلفة تمامًا في الشكل", layout: "road", track: "souq", theme: 9, place: "☀️ حلبة النهار", tier: 0, rounds: 3, targets: 1, legacy: true },
+    { id: "drive", icon: "🏎️", title: "التقط الحرف وأنت تقود", desc: "صفوف متتالية بلا توقف: التقط الحرف المطلوب أثناء السير", layout: "road", track: "rolling", theme: 10, place: "🌇 حلبة العصر الذهبي", tier: "F", rounds: 5, targets: 1, flow: "drive", mode: "free" },
+    { id: "gates", icon: "🚦", title: "بوابات الحروف", desc: "ارفع نظرك إلى اللافتات ومرّ من تحت الحرف المطلوب", layout: "gate", track: "city", theme: 11, place: "🌙 حلبة الليل المضاءة", tier: "F", rounds: 4, targets: 1 },
+    { id: "twins", icon: "🎯", title: "طابق الحرف: مرة أو مرتين", desc: "قد يظهر الحرف المطلوب في حارتين، والحرف المختلف لا يمنح نجمة", layout: "road", track: "winding", theme: 12, place: "🌤️ حلبة الصباح", tier: "F", rounds: 4, targets: 2 },
+    { id: "similar", icon: "🧩", title: "ميّز المتشابهات", desc: "مستوى متقدم بحروف قريبة الشكل (يختاره المعلم)", layout: "mixed", track: "alpine", theme: 13, place: "🌅 حلبة الغروب", tier: 2, rounds: 4, targets: 1 }
 ];
 function rr3Level(id) { for (let i = 0; i < RR3_LEVELS.length; i++) if (RR3_LEVELS[i].id === id) return RR3_LEVELS[i]; return RR3_LEVELS[0]; }
 
