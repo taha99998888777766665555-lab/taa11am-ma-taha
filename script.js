@@ -8430,7 +8430,17 @@ const RR3_THEMES = [
     { name: "مدينة", sky: ["#0a1128", "#1b2a52", "#3c4f86"], sun: { x: 0.72, y: 0.26, r: 0.045, c: "#f1f5ff" }, mount: "#1d2a4d", far: "#16213f", hill: "#16335a", hill2: "#12294a",
       grass: ["#14483f", "#113f37"], road: ["#2c3039", "#343944"], rumble: ["#38bdf8", "#e0f2fe"], fog: [48, 66, 112], sprites: ["building", "lamp", "building", "lamp", "sign"], stars: true, city: true, clouds: false },
     { name: "صحراء", sky: ["#3f9cf5", "#9ad4fb", "#fdf3d0"], sun: { x: 0.28, y: 0.3, r: 0.075, c: "#fffbe0" }, mount: "#d9a85f", far: "#c99853", hill: "#e2b567", hill2: "#d6a85a",
-      grass: ["#e8c26a", "#dfb85f"], road: ["#585b61", "#62666d"], rumble: ["#e76f51", "#fff7e6"], fog: [248, 228, 190], sprites: ["cactus", "rock", "cactus", "bush", "sign"], stars: false, city: false, clouds: true }
+      grass: ["#e8c26a", "#dfb85f"], road: ["#585b61", "#62666d"], rumble: ["#e76f51", "#fff7e6"], fog: [248, 228, 190], sprites: ["cactus", "rock", "cactus", "bush", "sign"], stars: false, city: false, clouds: true },
+    { name: "جدة التاريخية", env: "hijaz", sky: ["#4f9fe0", "#a6d3ef", "#fbe7c4"], sun: { x: 0.7, y: 0.3, r: 0.055, c: "#fff3c4" }, mount: "#c4a98a", far: "#dac3a4", hill: "#d8c7a3", hill2: "#cdbb94",
+      grass: ["#d9c9a6", "#d1c09a"], road: ["#4b494c", "#575458"], rumble: ["#b9a688", "#eee3cb"], fog: [248, 228, 192], sprites: [], stars: false, city: false, clouds: true },
+    { name: "كورنيش جدة", env: "corniche", sky: ["#2f93e6", "#86cdf0", "#e6f6fb"], sun: { x: 0.72, y: 0.3, r: 0.06, c: "#fffbe2" }, mount: "#8eaec3", far: "#b3cad8", hill: "#6fae5a", hill2: "#5f9d4d",
+      grass: ["#6fae5a", "#67a553"], road: ["#44474e", "#4f535b"], rumble: ["#d4534a", "#f4efe6"], fog: [214, 238, 248], sprites: [], stars: false, city: false, clouds: true },
+    { name: "شارع تجاري", env: "shops", sky: ["#2a2d6b", "#cf6489", "#ffb676"], sun: { x: 0.3, y: 0.5, r: 0.085, c: "#ffd9a0" }, mount: "#4a3868", far: "#7a5683", hill: "#cdbfa8", hill2: "#c4b59c",
+      grass: ["#cdbfa8", "#c1b299"], road: ["#3e3d46", "#494852"], rumble: ["#efe6d3", "#c9b99e"], fog: [226, 160, 146], sprites: [], stars: false, city: false, clouds: false },
+    { name: "طريق صحراوي", env: "desert", sky: ["#2f87e0", "#8fc9f2", "#fcebcb"], sun: { x: 0.26, y: 0.3, r: 0.07, c: "#fff6cf" }, mount: "#b4694c", far: "#cba2a0", hill: "#e6bd78", hill2: "#7d4a37",
+      grass: ["#e3b873", "#dbae68"], road: ["#5b5a5e", "#66656a"], rumble: ["#c8643f", "#f7ead0"], fog: [246, 224, 190], sprites: [], stars: false, city: false, clouds: true },
+    { name: "طريق صحراوي (غروب)", env: "desert", sky: ["#3a2a72", "#d9684f", "#ffbf72"], sun: { x: 0.3, y: 0.46, r: 0.1, c: "#ffe2a0" }, mount: "#8c4a52", far: "#b0708a", hill: "#d89b62", hill2: "#4a2c3c",
+      grass: ["#d29a62", "#c88f58"], road: ["#4a4650", "#55525c"], rumble: ["#e0713f", "#fbe3c0"], fog: [240, 170, 140], sprites: [], stars: false, city: false, clouds: true }
 ];
 
 const RR3_CAR_COLORS = [
@@ -8609,6 +8619,8 @@ function rr3DrawSprite(ctx, type, cx, by, k, v, th) {
         ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.beginPath(); ctx.moveTo(-240, -300); ctx.lineTo(-30, -420); ctx.lineTo(0, -200); ctx.closePath(); ctx.fill();
         break;
     }
+    case "fanous": case "jar": case "datepalm": case "minaret": rr3DrawHjSprite(ctx, type, v); break;
+    case "cpalm": case "clamp": case "rail": case "bench": case "slamp": case "ptree": case "parasol": case "bollard": case "dboulder": case "acacia": case "shrub": case "camel": case "dsign": case "reststop": rr3DrawSaSprite(ctx, type, v); break;
     case "sign": {
         ctx.fillStyle = "#9aa3ad"; ctx.fillRect(-200, -900, 50, 900); ctx.fillRect(150, -900, 50, 900);
         const cols = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0"];
@@ -8622,6 +8634,653 @@ function rr3DrawSprite(ctx, type, cx, by, k, v, th) {
 }
 
 function rr3Rgb(c) { const h = function (v) { const x = Math.max(0, Math.min(255, Math.round(v))).toString(16); return x.length < 2 ? "0" + x : x; }; return "#" + h(c[0]) + h(c[1]) + h(c[2]); }
+
+/* =========================================================
+   🕌 بيئة «جدة التاريخية» (البلد) — رسم إجرائي بالكامل على canvas بلا أي صور خارجية.
+   واجهات حجازية من حجر المنقبي الأبيض/الرملي بالرواشين الخشبية والمشربيات، وأفق بمآذن وقباب.
+   تُبنى الواجهات مرة واحدة في ذاكرة مؤقتة (canvas خارج الشاشة) ثم تُسقَط على جانبي الطريق شرائح منظورية.
+========================================================= */
+const RR3_HJ_PAL = [
+    { wall: "#efe0c4", wood: "#5b3a22", acc: "#2f6f62", trim: "#fbf4e4" },
+    { wall: "#f5ead7", wood: "#7a4a2a", acc: "#2b5d7a", trim: "#fffaf0" },
+    { wall: "#e8d2ab", wood: "#2f5d4a", acc: "#8b3a2b", trim: "#f8eed8" },
+    { wall: "#f1ddc9", wood: "#6b4430", acc: "#b3873f", trim: "#fff4e6" },
+    { wall: "#fbf3e4", wood: "#3d6b78", acc: "#7a4a2a", trim: "#ffffff" },
+    { wall: "#dfc79f", wood: "#5a3b26", acc: "#3d6b5a", trim: "#f5ead2" }
+];
+const RR3_HJ_PERIOD = 6;            /* عرض كل بيت = ٦ مقاطع طريق */
+const RR3_HJ_WALL_H = 3300;         /* ارتفاع اللوحة بوحدات العالم */
+const RR3_HJ_VARIANTS = 8;
+
+/* أي بيت يقع على جانب ما: رقم النوع أو -1 لفسحة (ساحة بنخيل) */
+function rr3HjVariant(side, bi) {
+    const h = ((bi * 2654435761 + (side > 0 ? 97 : 13) * 40503) >>> 0) % 100;
+    if (bi < 1) return (bi + (side > 0 ? 2 : 0) + 3) % 6;
+    if (h < 7) return -1;
+    return (h * 7 + bi * 3 + (side > 0 ? 1 : 0)) % RR3_HJ_VARIANTS;
+}
+
+function rr3HjRoshan(g, x, y, w, h, P) {
+    /* ظل خفيف أسفل البروز */
+    g.fillStyle = "rgba(40,20,5,.28)"; g.fillRect(x + 3, y + h, w - 2, 7);
+    /* السقيفة */
+    g.fillStyle = P.wood; g.beginPath(); g.moveTo(x - 7, y); g.lineTo(x + w + 7, y); g.lineTo(x + w + 2, y - 12); g.lineTo(x - 2, y - 12); g.closePath(); g.fill();
+    g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(x - 5, y - 2, w + 10, 2);
+    /* البدن الخشبي */
+    const gr = g.createLinearGradient(x, y, x + w, y);
+    gr.addColorStop(0, "rgba(255,255,255,.12)"); gr.addColorStop(0.5, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,.2)");
+    g.fillStyle = P.wood; g.fillRect(x, y, w, h);
+    g.fillStyle = gr; g.fillRect(x, y, w, h);
+    /* الدرفات والمشربية */
+    const cols = Math.max(2, Math.round(w / 28));
+    const cw = w / cols;
+    g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+    for (let c = 0; c < cols; c++) {
+        const px = x + c * cw + 3, pw = cw - 6, py = y + 6, ph = h - 12;
+        g.fillStyle = "rgba(20,10,0,.35)"; g.fillRect(px, py, pw, ph);
+        g.strokeStyle = "rgba(250,236,205,.55)"; g.lineWidth = 1;
+        g.beginPath();
+        for (let t = -ph; t < pw + ph; t += 5) { g.moveTo(px + t, py); g.lineTo(px + t + ph, py + ph); g.moveTo(px + t + ph, py); g.lineTo(px + t, py + ph); }
+        g.stroke();
+        g.strokeStyle = P.trim; g.lineWidth = 2; g.strokeRect(px, py, pw, ph);
+    }
+    g.restore();
+    g.strokeStyle = P.trim; g.lineWidth = 2; g.strokeRect(x, y, w, h);
+    /* كوابيل أسفل الروشان */
+    g.fillStyle = P.wood;
+    for (let i = 0; i < 3; i++) { const cx = x + 8 + i * (w - 22) / 2; g.beginPath(); g.moveTo(cx, y + h); g.lineTo(cx + 12, y + h); g.lineTo(cx + 6, y + h + 12); g.closePath(); g.fill(); }
+}
+
+function rr3HjWindow(g, x, y, w, h, P) {
+    /* نافذة مقوّسة بدرفتين من الشيش */
+    g.fillStyle = "#2a2018";
+    g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y + w / 2); g.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); g.lineTo(x + w, y + h); g.closePath(); g.fill();
+    g.fillStyle = P.acc;
+    g.fillRect(x + 1, y + w / 2, w / 2 - 1, h - w / 2); g.fillRect(x + w / 2 + 1, y + w / 2, w / 2 - 2, h - w / 2);
+    g.strokeStyle = "rgba(0,0,0,.28)"; g.lineWidth = 1;
+    g.beginPath(); for (let t = y + w / 2 + 4; t < y + h - 2; t += 5) { g.moveTo(x + 1, t); g.lineTo(x + w - 1, t); } g.stroke();
+    g.strokeStyle = P.trim; g.lineWidth = 2.5;
+    g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y + w / 2); g.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); g.lineTo(x + w, y + h); g.stroke();
+}
+
+/* لوحة واجهة بيت حجازي بحجم TW×TH بكسل (إحداثيات الرسم الداخلية ٢٤٠×٧٢٠) */
+function rr3HjFacade(v, TW, TH) {
+    const c = document.createElement("canvas"); c.width = TW; c.height = TH;
+    const g = c.getContext("2d");
+    g.scale(TW / 240, TH / 720);
+    const W = 240, H = 720, P = RR3_HJ_PAL[v % RR3_HJ_PAL.length];
+    const rnd = rr3Rng(4001 + v * 131);
+    const floors = 3 + (v % 3), fh = 128, gh = 150;
+    const top = H - gh - floors * fh;
+    /* جسم الجدار بتدرّج إضاءة */
+    const wl = rr3Hex(P.wall);
+    const gb = g.createLinearGradient(0, top, 0, H);
+    gb.addColorStop(0, rr3Mix(wl, [255, 255, 255], 0.28)); gb.addColorStop(0.55, P.wall); gb.addColorStop(1, rr3Mix(wl, [120, 80, 40], 0.3));
+    g.fillStyle = gb; g.fillRect(0, top, W, H - top);
+    /* ملمس الحجر: مداميك وبقع */
+    g.fillStyle = "rgba(110,80,40,.07)";
+    for (let y = top + 10; y < H; y += 16) g.fillRect(0, y, W, 1.4);
+    for (let i = 0; i < 90; i++) {
+        g.fillStyle = rnd() < 0.5 ? "rgba(120,90,50,.07)" : "rgba(255,255,255,.08)";
+        g.fillRect(rnd() * W, top + rnd() * (H - top), 8 + rnd() * 26, 3 + rnd() * 3);
+    }
+    /* حافة السطح ومسننات الشرفة */
+    g.fillStyle = P.trim; g.fillRect(0, top - 12, W, 12);
+    g.fillStyle = "rgba(90,60,30,.25)"; g.fillRect(0, top - 1, W, 3);
+    for (let x = 4; x < W - 8; x += 18) { g.fillStyle = P.trim; g.fillRect(x, top - 22, 11, 11); g.fillStyle = "rgba(90,60,30,.18)"; g.fillRect(x + 8, top - 22, 3, 11); }
+    /* عنصر على السطح: خزان/غرفة/قبة صغيرة */
+    if (v % 3 === 0) { g.fillStyle = P.wall; g.fillRect(150, top - 62, 56, 40); g.fillStyle = P.trim; g.fillRect(146, top - 66, 64, 6); rr3HjWindow(g, 166, top - 54, 24, 32, P); }
+    else if (v % 3 === 1) { g.fillStyle = P.trim; g.beginPath(); g.arc(70, top - 22, 26, Math.PI, 0); g.fill(); g.fillStyle = P.acc; g.fillRect(66, top - 58, 8, 12); }
+    /* الأدوار */
+    for (let f = 0; f < floors; f++) {
+        const yT = top + f * fh, yB = yT + fh;
+        /* كورنيش بين الأدوار */
+        g.fillStyle = "rgba(90,60,30,.22)"; g.fillRect(0, yB - 4, W, 4);
+        g.fillStyle = "rgba(255,255,255,.35)"; g.fillRect(0, yB - 8, W, 4);
+        const pat = (v + f) % 3;
+        if (pat === 0) { rr3HjRoshan(g, 62, yT + 26, 116, fh - 46, P); rr3HjWindow(g, 14, yT + 30, 32, 70, P); rr3HjWindow(g, 194, yT + 30, 32, 70, P); }
+        else if (pat === 1) { rr3HjRoshan(g, 12, yT + 28, 84, fh - 48, P); rr3HjRoshan(g, 144, yT + 28, 84, fh - 48, P); rr3HjWindow(g, 108, yT + 38, 24, 62, P); }
+        else { rr3HjWindow(g, 24, yT + 26, 40, 82, P); rr3HjWindow(g, 100, yT + 26, 40, 82, P); rr3HjWindow(g, 176, yT + 26, 40, 82, P); }
+    }
+    /* الدور الأرضي */
+    const gy = H - gh;
+    g.fillStyle = "rgba(90,60,30,.22)"; g.fillRect(0, gy - 4, W, 4);
+    g.fillStyle = "rgba(255,255,255,.35)"; g.fillRect(0, gy - 8, W, 4);
+    const dx = 24 + ((v * 53) % 100);
+    /* الباب الخشبي المقوّس بمسامير نحاسية */
+    const dw = 58, dh = 112, dyT = H - dh - 14;
+    g.fillStyle = P.trim; g.beginPath(); g.moveTo(dx - 7, H - 14); g.lineTo(dx - 7, dyT + dw / 2); g.arc(dx + dw / 2, dyT + dw / 2, dw / 2 + 7, Math.PI, 0); g.lineTo(dx + dw + 7, H - 14); g.closePath(); g.fill();
+    g.fillStyle = P.wood; g.beginPath(); g.moveTo(dx, H - 14); g.lineTo(dx, dyT + dw / 2); g.arc(dx + dw / 2, dyT + dw / 2, dw / 2, Math.PI, 0); g.lineTo(dx + dw, H - 14); g.closePath(); g.fill();
+    g.strokeStyle = "rgba(0,0,0,.35)"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(dx + dw / 2, dyT); g.lineTo(dx + dw / 2, H - 14); g.stroke();
+    g.fillStyle = "#c9972b";
+    for (let yy = dyT + dw / 2 + 4; yy < H - 20; yy += 12) for (let xx = dx + 8; xx < dx + dw - 4; xx += 14) { g.beginPath(); g.arc(xx, yy, 2, 0, Math.PI * 2); g.fill(); }
+    g.beginPath(); g.arc(dx + dw / 2 - 7, H - 66, 3.4, 0, Math.PI * 2); g.arc(dx + dw / 2 + 7, H - 66, 3.4, 0, Math.PI * 2); g.fill();
+    /* نافذة مشربية أرضية + (محل قهوة أحيانًا) */
+    const wx = dx > 120 ? 22 : 170;
+    if (v % 2 === 0) {
+        rr3HjWindow(g, wx, H - 112, 34, 70, P);
+        g.strokeStyle = "rgba(20,10,0,.65)"; g.lineWidth = 2; g.beginPath(); for (let t = wx + 6; t < wx + 32; t += 7) { g.moveTo(t, H - 100); g.lineTo(t, H - 46); } g.stroke();
+    } else {
+        /* واجهة محل بمظلة مخططة وأيقونة فنجان (بلا أي كتابة حتى لا تُربك تعلّم الحروف) */
+        g.fillStyle = "#1f160e"; g.fillRect(wx - 6, H - 108, 52, 70);
+        g.fillStyle = "rgba(255,214,120,.55)"; g.fillRect(wx, H - 100, 40, 54);
+        for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? "#fbf4e4" : P.acc; g.fillRect(wx - 10 + i * 10, H - 118, 10, 16); }
+        g.fillStyle = "#fbf4e4"; g.fillRect(wx + 12, H - 78, 16, 12); g.fillRect(wx + 28, H - 75, 4, 6);
+        g.fillStyle = "rgba(255,255,255,.7)"; g.fillRect(wx + 15, H - 86, 2, 6); g.fillRect(wx + 21, H - 88, 2, 8);
+    }
+    /* قاعدة حجرية وظل الشارع */
+    g.fillStyle = "rgba(70,50,30,.38)"; g.fillRect(0, H - 14, W, 14);
+    const sh = g.createLinearGradient(0, H * 0.55, 0, H);
+    sh.addColorStop(0, "rgba(40,20,0,0)"); sh.addColorStop(1, "rgba(40,20,0,.26)");
+    g.fillStyle = sh; g.fillRect(0, H * 0.55, W, H * 0.45);
+    /* ظل جانبي بسيط لإيحاء العمق بين البيوت */
+    const sd = g.createLinearGradient(0, 0, W, 0);
+    sd.addColorStop(0, "rgba(40,20,0,.16)"); sd.addColorStop(0.07, "rgba(40,20,0,0)"); sd.addColorStop(0.93, "rgba(40,20,0,0)"); sd.addColorStop(1, "rgba(40,20,0,.2)");
+    g.fillStyle = sd; g.fillRect(0, top - 22, W, H - top + 22);
+    return c;
+}
+
+/* أفق جدة التاريخية: كتل بيوت ومآذن وقباب بطبقتين متباعدتين (تأثير منظور بالإزاحة) */
+function rr3HjSkyline(seed, n, spanW) {
+    const r = rr3Rng(seed), out = []; let x = 0;
+    while (x < spanW && out.length < n) {
+        const t = r(), w = 70 + r() * 90;
+        if (t < 0.12) out.push({ k: "minaret", x: x, w: 26, h: 0.62 + r() * 0.3 });
+        else if (t < 0.24) out.push({ k: "dome", x: x, w: w, h: 0.28 + r() * 0.18 });
+        else out.push({ k: "block", x: x, w: w, h: 0.22 + r() * 0.34, roof: r() < 0.5 });
+        x += (out[out.length - 1].w) + 4 + r() * 10;
+    }
+    out.span = x;
+    return out;
+}
+
+function rr3DrawHjSkyline(ctx, W, H, hy, list, scrollPx, color, accent, unit) {
+    const span = list.span;
+    const off = ((scrollPx % span) + span) % span;
+    for (let rep = -1; rep < Math.ceil(W / span) + 1; rep++) {
+        for (let i = 0; i < list.length; i++) {
+            const b = list[i], bx = b.x + rep * span - off, bw = b.w * unit;
+            const sx = bx * unit;
+            if (sx > W + 40 || sx + bw < -40) continue;
+            const bh = H * b.h * 0.34;
+            ctx.fillStyle = color;
+            if (b.k === "block") {
+                ctx.fillRect(sx, hy - bh, bw, bh + 2);
+                if (b.roof) ctx.fillRect(sx + bw * 0.18, hy - bh - bh * 0.18, bw * 0.4, bh * 0.2);
+                ctx.fillStyle = accent; ctx.fillRect(sx + bw * 0.14, hy - bh * 0.72, bw * 0.16, bh * 0.2); ctx.fillRect(sx + bw * 0.58, hy - bh * 0.72, bw * 0.16, bh * 0.2);
+            } else if (b.k === "dome") {
+                ctx.fillRect(sx, hy - bh * 0.62, bw, bh * 0.62 + 2);
+                ctx.beginPath(); ctx.ellipse(sx + bw / 2, hy - bh * 0.62, bw * 0.34, bh * 0.38, 0, Math.PI, 0); ctx.fill();
+                ctx.fillRect(sx + bw / 2 - 1.5, hy - bh * 1.2, 3, bh * 0.2);
+            } else {
+                const mw = Math.max(8, b.w * unit);
+                ctx.fillRect(sx, hy - bh, mw, bh + 2);
+                ctx.fillRect(sx - mw * 0.25, hy - bh * 0.78, mw * 1.5, bh * 0.07);
+                ctx.beginPath(); ctx.moveTo(sx + mw * 0.1, hy - bh); ctx.lineTo(sx + mw / 2, hy - bh - bh * 0.28); ctx.lineTo(sx + mw * 0.9, hy - bh); ctx.closePath(); ctx.fill();
+                ctx.fillRect(sx + mw / 2 - 1, hy - bh - bh * 0.4, 2, bh * 0.14);
+                ctx.fillStyle = accent; ctx.fillRect(sx + mw * 0.36, hy - bh * 0.92, mw * 0.28, bh * 0.11);
+            }
+        }
+    }
+}
+
+/* عناصر جانبية خاصة بالبيئة (وحدات العالم كبقية العناصر) */
+function rr3DrawHjSprite(ctx, type, v) {
+    switch (type) {
+    case "fanous": {
+        ctx.fillStyle = "#2b2a2e"; ctx.fillRect(-30, -1500, 60, 1500);
+        ctx.fillRect(-62, -90, 124, 90);
+        const lx = v > 0 ? -300 : 300;
+        ctx.strokeStyle = "#2b2a2e"; ctx.lineWidth = 46; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(0, -1470); ctx.quadraticCurveTo(lx * 0.4, -1700, lx, -1530); ctx.stroke();
+        ctx.lineWidth = 16; ctx.beginPath(); ctx.moveTo(lx, -1530); ctx.lineTo(lx, -1450); ctx.stroke();
+        const gl = ctx.createRadialGradient(lx, -1330, 20, lx, -1330, 360);
+        gl.addColorStop(0, "rgba(255,200,90,.7)"); gl.addColorStop(1, "rgba(255,200,90,0)");
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(lx, -1330, 360, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#2b2a2e"; ctx.beginPath(); ctx.moveTo(lx - 95, -1440); ctx.lineTo(lx + 95, -1440); ctx.lineTo(lx + 40, -1500); ctx.lineTo(lx - 40, -1500); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#ffcf6b"; ctx.beginPath(); ctx.moveTo(lx - 80, -1440); ctx.lineTo(lx + 80, -1440); ctx.lineTo(lx + 55, -1190); ctx.lineTo(lx - 55, -1190); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = "#2b2a2e"; ctx.lineWidth = 12;
+        ctx.beginPath(); ctx.moveTo(lx, -1440); ctx.lineTo(lx, -1190); ctx.moveTo(lx - 68, -1320); ctx.lineTo(lx + 68, -1320); ctx.stroke();
+        ctx.fillStyle = "#2b2a2e"; ctx.fillRect(lx - 65, -1200, 130, 34);
+        break;
+    }
+    case "jar": {
+        ctx.fillStyle = "#b8622f";
+        ctx.beginPath(); ctx.moveTo(-120, -380); ctx.quadraticCurveTo(-210, -200, -110, 0); ctx.lineTo(110, 0); ctx.quadraticCurveTo(210, -200, 120, -380); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#d98a50"; ctx.fillRect(-135, -415, 270, 50);
+        ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.fillRect(40, -380, 70, 380);
+        ctx.fillStyle = "#2f8f4a";
+        ctx.beginPath(); ctx.ellipse(0, -520, 230, 150, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#47ad60"; ctx.beginPath(); ctx.ellipse(-70, -560, 140, 100, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#f4a3b5"; ctx.beginPath(); ctx.arc(80, -600, 38, 0, Math.PI * 2); ctx.arc(-120, -520, 32, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "datepalm": {
+        const lean = 55 * v;
+        ctx.strokeStyle = "#7a5636"; ctx.lineCap = "round";
+        ctx.lineWidth = 120; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(lean, -900, lean * 0.4, -1900); ctx.stroke();
+        ctx.lineWidth = 8; ctx.strokeStyle = "rgba(60,36,16,.55)";
+        for (let y = -120; y > -1850; y -= 110) { ctx.beginPath(); ctx.moveTo(-50 + lean * (-y / 1900) * 0.6, y); ctx.lineTo(50 + lean * (-y / 1900) * 0.6, y - 26); ctx.stroke(); }
+        const cx = lean * 0.4, cy = -1900;
+        for (let i = 0; i < 9; i++) {
+            const a = (-160 + i * 40) * Math.PI / 180, L = 640 + (i % 3) * 90;
+            const ex = cx + Math.cos(a) * L, ey = cy + Math.sin(a) * L * 0.55 + (Math.abs(Math.cos(a)) * 260);
+            const mx = cx + Math.cos(a) * L * 0.55, my = cy + Math.sin(a) * L * 0.55 - 150;
+            ctx.fillStyle = i % 2 ? "#2f8f3f" : "#3aa24c";
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.quadraticCurveTo(mx, my - 70, ex, ey); ctx.quadraticCurveTo(mx, my + 70, cx, cy + 20); ctx.fill();
+        }
+        ctx.fillStyle = "#b8742b";
+        ctx.beginPath(); ctx.arc(cx - 70, cy + 70, 52, 0, Math.PI * 2); ctx.arc(cx + 55, cy + 85, 48, 0, Math.PI * 2); ctx.arc(cx - 10, cy + 120, 44, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "minaret": {
+        const bw = 330, h = 4300;
+        const gr = ctx.createLinearGradient(-bw / 2, 0, bw / 2, 0);
+        gr.addColorStop(0, "#efe2c8"); gr.addColorStop(0.6, "#f7eddb"); gr.addColorStop(1, "#d9c6a4");
+        ctx.fillStyle = gr; ctx.fillRect(-bw / 2, -h * 0.72, bw, h * 0.72);
+        ctx.fillStyle = "#d9c6a4"; ctx.fillRect(-bw * 0.62, -h * 0.72, bw * 1.24, 90);
+        ctx.fillStyle = gr; ctx.fillRect(-bw * 0.36, -h * 0.9, bw * 0.72, h * 0.18);
+        ctx.fillStyle = "#d9c6a4"; ctx.fillRect(-bw * 0.5, -h * 0.9, bw, 70);
+        ctx.fillStyle = "#2f7a5c"; ctx.beginPath(); ctx.moveTo(-bw * 0.4, -h * 0.9); ctx.quadraticCurveTo(0, -h * 1.06, bw * 0.4, -h * 0.9); ctx.closePath(); ctx.fill();
+        ctx.fillRect(-7, -h * 1.1, 14, h * 0.16);
+        ctx.fillStyle = "#3b2f22";
+        for (let y = h * 0.18; y < h * 0.7; y += h * 0.13) { ctx.beginPath(); ctx.moveTo(-34, -y); ctx.lineTo(-34, -y - 110); ctx.arc(0, -y - 110, 34, Math.PI, 0); ctx.lineTo(34, -y); ctx.closePath(); ctx.fill(); }
+        break;
+    }
+    }
+}
+
+/* =========================================================
+   🇸🇦 بيئات سعودية إضافية — رسم إجرائي بالكامل على canvas (بلا صور ولا خطوط خارجية ولا أي كتابة داخل المشهد):
+   كورنيش جدة (بحر ونخيل وممشى ومبانٍ حديثة) · شارع تجاري (مطاعم ومقاهٍ ومحلات برموز بلا كتابة) · الطريق الصحراوي (جبال وكثبان ومحطة استراحة).
+   تُرسم الواجهات مرة واحدة في canvas خارج الشاشة ثم تُسقَط شرائح منظورية، كما في جدة التاريخية.
+========================================================= */
+
+/* ---------- الشارع التجاري ---------- */
+const RR3_SH_PAL = [
+    { wall: "#f2e6d3", cl: "#c9a46a", acc: "#1f7a6d", aw: "#1f7a6d", glow: "#ffd98a" },
+    { wall: "#e9dccb", cl: "#b98e5e", acc: "#a3412f", aw: "#a3412f", glow: "#ffcf70" },
+    { wall: "#f6efe3", cl: "#8f9aa3", acc: "#2b5d7a", aw: "#2b5d7a", glow: "#ffe3a3" },
+    { wall: "#dfd2bd", cl: "#a67c4e", acc: "#7a8b2e", aw: "#7a8b2e", glow: "#ffd48a" },
+    { wall: "#efe3e0", cl: "#b4786a", acc: "#6b3f7a", aw: "#6b3f7a", glow: "#ffd5a0" },
+    { wall: "#e4e9e6", cl: "#7f958c", acc: "#c9822b", aw: "#c9822b", glow: "#ffe0a0" }
+];
+const RR3_SH_PERIOD = 6, RR3_SH_WALL_H = 3300, RR3_SH_VARIANTS = 8, RR3_SH_OFF = 1.9;
+
+function rr3ShVariant(side, bi) {
+    const h = ((bi * 2246822519 + (side > 0 ? 131 : 29) * 3266489917) >>> 0) % 100;
+    if (bi < 1) return (bi + (side > 0 ? 3 : 0) + 1) % 6;
+    if (h < 6) return -1;
+    return (h * 5 + bi * 7 + (side > 0 ? 3 : 0)) % RR3_SH_VARIANTS;
+}
+
+/* رموز المحلات: صور مبسّطة بلا حروف (٠ قهوة ١ مطعم ٢ تسوّق ٣ مثلجات ٤ مخبز) */
+function rr3ShIcon(g, k, cx, cy, s) {
+    g.save(); g.translate(cx, cy); g.scale(s, s);
+    g.fillStyle = "#fff"; g.strokeStyle = "#fff"; g.lineCap = "round"; g.lineWidth = 3;
+    if (k === 0) { g.fillRect(-9, -6, 16, 14); g.beginPath(); g.arc(9, 0, 5, -1.3, 1.3); g.stroke(); g.fillRect(-12, 9, 22, 3); g.beginPath(); g.moveTo(-3, -9); g.quadraticCurveTo(0, -14, -3, -18); g.moveTo(3, -9); g.quadraticCurveTo(6, -14, 3, -18); g.stroke(); }
+    else if (k === 1) { g.beginPath(); g.arc(0, 0, 11, 0, Math.PI * 2); g.lineWidth = 2.5; g.stroke(); g.beginPath(); g.arc(0, 0, 6, 0, Math.PI * 2); g.stroke(); g.lineWidth = 3; g.beginPath(); g.moveTo(-18, -10); g.lineTo(-18, 10); g.moveTo(18, -10); g.lineTo(18, 10); g.stroke(); }
+    else if (k === 2) { g.fillRect(-11, -4, 22, 16); g.lineWidth = 3; g.beginPath(); g.arc(0, -4, 6, Math.PI, 0); g.stroke(); }
+    else if (k === 3) { g.beginPath(); g.moveTo(-8, 0); g.lineTo(8, 0); g.lineTo(0, 16); g.closePath(); g.fill(); g.beginPath(); g.arc(-4, -3, 6, 0, Math.PI * 2); g.arc(4, -3, 6, 0, Math.PI * 2); g.arc(0, -9, 6, 0, Math.PI * 2); g.fill(); }
+    else { g.beginPath(); g.ellipse(0, 2, 15, 8, 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = "rgba(0,0,0,.35)"; g.lineWidth = 2; g.beginPath(); g.moveTo(-6, -3); g.lineTo(-3, 6); g.moveTo(1, -4); g.lineTo(4, 7); g.moveTo(8, -2); g.lineTo(10, 5); g.stroke(); }
+    g.restore();
+}
+
+function rr3ShShop(g, x, w, H, gh, P, v, icon, alt) {
+    const top = H - gh, ac = alt ? P.acc : P.aw;
+    /* إطار المحل */
+    g.fillStyle = "rgba(60,40,20,.25)"; g.fillRect(x - 2, top + 30, w + 4, gh - 44);
+    /* زجاج مضيء مع داخل المحل (رفوف/طاولات) */
+    const gl = g.createLinearGradient(0, top + 70, 0, H - 14);
+    gl.addColorStop(0, P.glow); gl.addColorStop(1, "#fff1c9");
+    g.fillStyle = gl; g.fillRect(x + 4, top + 66, w - 8, gh - 82);
+    g.fillStyle = "rgba(70,45,25,.55)";
+    if (icon === 0 || icon === 1) { for (let i = 0; i < 3; i++) { const tx = x + 14 + i * (w - 28) / 3; g.fillRect(tx, H - 70, 16, 3); g.fillRect(tx + 7, H - 67, 2, 40); g.fillRect(tx + 2, H - 28, 12, 3); g.beginPath(); g.arc(tx + 8, H - 84, 7, 0, Math.PI * 2); g.fill(); } }
+    else { for (let i = 0; i < 3; i++) g.fillRect(x + 8, top + 80 + i * 26, w - 16, 3); for (let i = 0; i < 9; i++) { g.fillStyle = ["#d9534f", "#2f7a6d", "#e9b44c", "#5b6ca8"][i % 4]; g.fillRect(x + 12 + (i * 17) % (w - 30), top + 66 + ((i * 3) % 3) * 26 + 3, 11, 20); } }
+    /* قواطع الزجاج */
+    g.strokeStyle = "rgba(40,30,20,.6)"; g.lineWidth = 2; g.strokeRect(x + 4, top + 66, w - 8, gh - 82);
+    g.beginPath(); g.moveTo(x + w / 2, top + 66); g.lineTo(x + w / 2, H - 16); g.stroke();
+    /* مظلة مخططة */
+    const n = Math.max(4, Math.round(w / 14));
+    for (let i = 0; i < n; i++) { g.fillStyle = i % 2 ? "#fbf4e4" : ac; g.beginPath(); const x0 = x + i * w / n, x1 = x + (i + 1) * w / n; g.moveTo(x0, top + 44); g.lineTo(x1, top + 44); g.lineTo(x1 + 1, top + 70); g.lineTo(x0 - 1, top + 70); g.fill(); }
+    g.fillStyle = "rgba(0,0,0,.2)"; g.fillRect(x, top + 70, w, 5);
+    /* لوحة المحل: رمز بلا كتابة */
+    g.fillStyle = ac; g.beginPath(); if (g.roundRect) g.roundRect(x + 6, top + 6, w - 12, 34, 7); else g.rect(x + 6, top + 6, w - 12, 34); g.fill();
+    g.strokeStyle = "rgba(255,255,255,.55)"; g.lineWidth = 2; g.strokeRect(x + 10, top + 10, w - 20, 26);
+    rr3ShIcon(g, icon, x + w / 2, top + 22, 0.9);
+}
+
+function rr3ShFacade(v, TW, TH) {
+    const c = document.createElement("canvas"); c.width = TW; c.height = TH;
+    const g = c.getContext("2d");
+    g.scale(TW / 240, TH / 720);
+    const W = 240, H = 720, P = RR3_SH_PAL[v % RR3_SH_PAL.length], rnd = rr3Rng(9100 + v * 71);
+    const floors = 3 + (v % 2), fh = 118, gh = 180, top = H - gh - floors * fh;
+    const wl = rr3Hex(P.wall);
+    const gb = g.createLinearGradient(0, top, 0, H);
+    gb.addColorStop(0, rr3Mix(wl, [255, 255, 255], 0.2)); gb.addColorStop(0.6, P.wall); gb.addColorStop(1, rr3Mix(wl, [110, 80, 50], 0.28));
+    g.fillStyle = gb; g.fillRect(0, top, W, H - top);
+    /* تكسية حجرية بخطوط أفقية */
+    g.fillStyle = "rgba(90,65,40,.08)"; for (let y = top + 12; y < H - gh; y += 14) g.fillRect(0, y, W, 1.3);
+    for (let i = 0; i < 40; i++) { g.fillStyle = rnd() < 0.5 ? "rgba(120,90,50,.06)" : "rgba(255,255,255,.07)"; g.fillRect(rnd() * W, top + rnd() * (H - top - gh), 10 + rnd() * 24, 3); }
+    /* السطح: سور بنقش هندسي */
+    g.fillStyle = P.cl; g.fillRect(0, top - 16, W, 16);
+    g.fillStyle = "rgba(255,255,255,.4)"; g.fillRect(0, top - 16, W, 3);
+    g.fillStyle = "rgba(60,40,20,.35)";
+    for (let x = 6; x < W - 6; x += 16) { g.beginPath(); g.moveTo(x, top - 3); g.lineTo(x + 5, top - 13); g.lineTo(x + 10, top - 3); g.closePath(); g.fill(); }
+    if (v % 3 === 0) { g.fillStyle = P.wall; g.fillRect(150, top - 56, 56, 40); g.fillStyle = P.cl; g.fillRect(146, top - 60, 64, 6); }
+    else if (v % 3 === 1) { g.fillStyle = "#9aa3ad"; g.beginPath(); g.ellipse(70, top - 36, 24, 20, 0, 0, Math.PI * 2); g.fill(); g.fillRect(60, top - 18, 4, 14); g.fillRect(78, top - 18, 4, 14); }
+    /* الأدوار العليا: نوافذ عريضة وشرفات ومشربية هندسية */
+    for (let f = 0; f < floors; f++) {
+        const yT = top + f * fh;
+        g.fillStyle = "rgba(255,255,255,.4)"; g.fillRect(0, yT + fh - 6, W, 3);
+        g.fillStyle = "rgba(80,55,30,.2)"; g.fillRect(0, yT + fh - 3, W, 3);
+        const pat = (v + f) % 3;
+        const nW = pat === 0 ? 3 : (pat === 1 ? 2 : 4), ww = pat === 0 ? 46 : (pat === 1 ? 78 : 30), gap = (W - nW * ww) / (nW + 1);
+        for (let i = 0; i < nW; i++) {
+            const x = gap + i * (ww + gap), y = yT + 22, h = fh - 46;
+            g.fillStyle = P.cl; g.fillRect(x - 4, y - 4, ww + 8, h + 8);
+            const wg = g.createLinearGradient(x, y, x + ww, y + h); wg.addColorStop(0, "#3b5d78"); wg.addColorStop(1, "#16283a");
+            g.fillStyle = wg; g.fillRect(x, y, ww, h);
+            g.fillStyle = "rgba(255,255,255,.22)"; g.beginPath(); g.moveTo(x, y + h * 0.5); g.lineTo(x + ww * 0.55, y); g.lineTo(x + ww * 0.8, y); g.lineTo(x, y + h * 0.8); g.fill();
+            g.strokeStyle = P.cl; g.lineWidth = 2; g.beginPath(); g.moveTo(x + ww / 2, y); g.lineTo(x + ww / 2, y + h); g.stroke();
+            if ((i + f + v) % 2 === 0) { g.fillStyle = "rgba(20,12,5,.55)"; g.fillRect(x - 6, y + h - 14, ww + 12, 14); g.strokeStyle = "rgba(255,255,255,.5)"; g.lineWidth = 1.2; g.beginPath(); for (let t = x - 4; t < x + ww + 6; t += 6) { g.moveTo(t, y + h - 13); g.lineTo(t + 3, y + h - 1); g.moveTo(t + 3, y + h - 13); g.lineTo(t, y + h - 1); } g.stroke(); }
+        }
+    }
+    /* الدور الأرضي: محلان برموز مختلفة */
+    const gy = H - gh;
+    g.fillStyle = P.cl; g.fillRect(0, gy - 6, W, 6);
+    const i1 = v % 5, i2 = (v + 2) % 5;
+    rr3ShShop(g, 6, 138, H, gh, P, v, i1, false);
+    rr3ShShop(g, 152, 82, H, gh, P, v, i2, true);
+    g.fillStyle = P.cl; g.fillRect(144, gy + 20, 6, gh - 30);
+    /* رصيف وظل */
+    g.fillStyle = "rgba(70,50,30,.4)"; g.fillRect(0, H - 14, W, 14);
+    const sh = g.createLinearGradient(0, H * 0.6, 0, H); sh.addColorStop(0, "rgba(30,15,0,0)"); sh.addColorStop(1, "rgba(30,15,0,.22)");
+    g.fillStyle = sh; g.fillRect(0, H * 0.6, W, H * 0.4);
+    const sd = g.createLinearGradient(0, 0, W, 0); sd.addColorStop(0, "rgba(30,15,0,.16)"); sd.addColorStop(0.07, "rgba(30,15,0,0)"); sd.addColorStop(0.93, "rgba(30,15,0,0)"); sd.addColorStop(1, "rgba(30,15,0,.2)");
+    g.fillStyle = sd; g.fillRect(0, top - 16, W, H - top + 16);
+    return c;
+}
+
+/* أفق الشارع التجاري عند الغروب: عمائر متوسطة بنوافذ مضيئة ومئذنة */
+function rr3ShSkyline(seed, n, spanW) {
+    const r = rr3Rng(seed), out = []; let x = 0;
+    while (x < spanW && out.length < n) {
+        const t = r(), w = 50 + r() * 70;
+        if (t < 0.1) out.push({ k: "minaret", x: x, w: 22, h: 0.7 + r() * 0.25 });
+        else if (t < 0.2) out.push({ k: "tower", x: x, w: 40 + r() * 20, h: 0.55 + r() * 0.35 });
+        else out.push({ k: "block", x: x, w: w, h: 0.22 + r() * 0.3, roof: r() < 0.4 });
+        x += out[out.length - 1].w + 3 + r() * 8;
+    }
+    out.span = x; return out;
+}
+function rr3DrawShSkyline(ctx, W, H, hy, list, scrollPx, color, lit, unit) {
+    const span = list.span, off = ((scrollPx % span) + span) % span;
+    for (let rep = -1; rep < Math.ceil(W / (span * unit)) + 1; rep++) {
+        for (let i = 0; i < list.length; i++) {
+            const b = list[i], sx = (b.x + rep * span - off) * unit, bw = b.w * unit;
+            if (sx > W + 30 || sx + bw < -30) continue;
+            const bh = H * b.h * 0.3;
+            ctx.fillStyle = color;
+            if (b.k === "minaret") {
+                ctx.fillRect(sx, hy - bh, bw, bh + 2); ctx.fillRect(sx - bw * 0.3, hy - bh * 0.8, bw * 1.6, bh * 0.07);
+                ctx.beginPath(); ctx.moveTo(sx + bw * 0.1, hy - bh); ctx.lineTo(sx + bw / 2, hy - bh * 1.25); ctx.lineTo(sx + bw * 0.9, hy - bh); ctx.fill();
+                ctx.fillStyle = lit; ctx.fillRect(sx + bw * 0.35, hy - bh * 0.92, bw * 0.3, bh * 0.1);
+            } else {
+                ctx.fillRect(sx, hy - bh, bw, bh + 2);
+                if (b.k === "tower") { ctx.fillRect(sx + bw * 0.4, hy - bh * 1.12, bw * 0.2, bh * 0.12); }
+                if (b.roof) ctx.fillRect(sx + bw * 0.15, hy - bh - bh * 0.12, bw * 0.4, bh * 0.13);
+                ctx.fillStyle = lit;
+                const step = Math.max(6, bw / 5);
+                for (let wy = hy - bh + bh * 0.12; wy < hy - 6; wy += Math.max(7, bh / 6)) for (let wx = sx + step * 0.3; wx < sx + bw - 4; wx += step) if (((i * 13 + (wx - sx) * 0.7 + wy * 0.3) | 0) % 3) ctx.fillRect(wx, wy, 2.6 * unit + 1, 3.2 * unit + 1);
+            }
+        }
+    }
+}
+
+/* ---------- كورنيش جدة: أبراج حديثة على جهة اليابسة ---------- */
+const RR3_CO_PERIOD = 8, RR3_CO_WALL_H = 5600, RR3_CO_VARIANTS = 6, RR3_CO_OFF = 2.7, RR3_CO_TEXH = 840;
+function rr3CoVariant(side, bi) {
+    if (side < 0) return -1;
+    const h = ((bi * 2654435761 + 7) >>> 0) % 100;
+    if (bi < 1) return 0;
+    if (h < 22) return -1;
+    return (h * 3 + bi) % RR3_CO_VARIANTS;
+}
+function rr3CoFacade(v, TW, TH) {
+    const c = document.createElement("canvas"); c.width = TW; c.height = TH;
+    const g = c.getContext("2d");
+    g.scale(TW / 240, TH / RR3_CO_TEXH);
+    const W = 240, H = RR3_CO_TEXH;
+    const rnd = rr3Rng(5200 + v * 97);
+    const tall = [1, 0.92, 0.78, 0.96, 0.7, 0.5][v];
+    const top = H * (1 - tall), base = H - 40;
+    const glassPal = [["#7fc4ee", "#2a6a9c"], ["#e8d9b8", "#b49568"], ["#ffffff", "#c3d3dc"], ["#6fd0c6", "#1f6b72"], ["#b9c9d6", "#4d6b86"], ["#f3e6cf", "#c9a46a"]][v];
+    const gg = g.createLinearGradient(0, top, W, H);
+    gg.addColorStop(0, glassPal[0]); gg.addColorStop(1, glassPal[1]);
+    g.fillStyle = gg; g.fillRect(10, top, W - 20, base - top);
+    /* انعكاس السماء قطريًا */
+    g.fillStyle = "rgba(255,255,255,.2)"; g.beginPath(); g.moveTo(10, top + (base - top) * 0.3); g.lineTo(W - 10, top); g.lineTo(W - 10, top + (base - top) * 0.28); g.lineTo(10, top + (base - top) * 0.62); g.fill();
+    g.fillStyle = "rgba(255,255,255,.12)"; g.beginPath(); g.moveTo(10, top + (base - top) * 0.7); g.lineTo(W - 10, top + (base - top) * 0.35); g.lineTo(W - 10, top + (base - top) * 0.45); g.lineTo(10, top + (base - top) * 0.85); g.fill();
+    /* شبكة الأدوار */
+    const fl = v === 2 || v === 5 ? 20 : 15;
+    g.strokeStyle = v === 1 || v === 5 ? "rgba(90,65,35,.45)" : "rgba(10,40,70,.35)"; g.lineWidth = 1.3;
+    g.beginPath(); for (let y = top + fl; y < base; y += fl) { g.moveTo(10, y); g.lineTo(W - 10, y); } g.stroke();
+    g.lineWidth = 1.1; g.beginPath(); for (let x = 10 + 20; x < W - 10; x += 20) { g.moveTo(x, top); g.lineTo(x, base); } g.stroke();
+    /* نوافذ مضيئة متفرقة */
+    for (let i = 0; i < 40; i++) { g.fillStyle = "rgba(255,236,170,.55)"; g.fillRect(12 + Math.floor(rnd() * 10) * 20, top + fl * (1 + Math.floor(rnd() * Math.max(1, (base - top) / fl - 2))) + 2, 16, fl - 4); }
+    if (v === 2 || v === 5) { /* شرفات بارزة */
+        g.fillStyle = "rgba(255,255,255,.7)"; for (let y = top + fl * 2; y < base - fl; y += fl * 3) g.fillRect(6, y, W - 12, 4);
+    }
+    if (v === 1 || v === 3) { /* زعانف رأسية */
+        g.fillStyle = "rgba(255,255,255,.35)"; for (let x = 30; x < W - 20; x += 40) g.fillRect(x, top, 6, base - top);
+    }
+    /* التاج والهوائي */
+    g.fillStyle = "rgba(255,255,255,.55)"; g.fillRect(10, top - 5, W - 20, 5);
+    if (v <= 3) { g.fillStyle = "#cfd8de"; g.fillRect(W / 2 - 4, top - 44, 8, 40); g.fillStyle = "#e4413a"; g.beginPath(); g.arc(W / 2, top - 46, 4, 0, Math.PI * 2); g.fill(); }
+    /* قاعدة (بودیوم) بأعمدة */
+    g.fillStyle = "#e9e3d6"; g.fillRect(0, base - 6, W, 46);
+    g.fillStyle = "rgba(60,50,40,.55)"; for (let x = 10; x < W - 10; x += 24) g.fillRect(x, base, 10, 36);
+    g.fillStyle = "rgba(255,226,150,.5)"; g.fillRect(0, base + 8, W, 8);
+    g.fillStyle = "rgba(60,40,20,.35)"; g.fillRect(0, H - 6, W, 6);
+    return c;
+}
+
+/* أفق الكورنيش: أبراج حديثة بعيدة */
+function rr3CoSkyline(seed, n, spanW) {
+    const r = rr3Rng(seed), out = []; let x = 0;
+    while (x < spanW && out.length < n) {
+        const t = r();
+        if (t < 0.55) { x += 60 + r() * 140; continue; }   /* فراغات: امتداد البحر */
+        const w = 24 + r() * 30;
+        out.push({ k: t < 0.75 ? "slab" : (t < 0.9 ? "spire" : "block"), x: x, w: w, h: 0.25 + r() * 0.5 });
+        x += w + 4 + r() * 10;
+    }
+    out.span = Math.max(x, spanW * 0.9); return out;
+}
+function rr3DrawCoSkyline(ctx, W, H, hy, list, scrollPx, color, unit) {
+    const span = list.span, off = ((scrollPx % span) + span) % span;
+    ctx.fillStyle = color;
+    for (let rep = -1; rep < Math.ceil(W / (span * unit)) + 1; rep++) {
+        for (let i = 0; i < list.length; i++) {
+            const b = list[i], sx = (b.x + rep * span - off) * unit, bw = b.w * unit;
+            if (sx > W + 30 || sx + bw < -30) continue;
+            const bh = H * b.h * 0.26;
+            ctx.fillRect(sx, hy - bh, bw, bh + 1);
+            if (b.k === "spire") { ctx.beginPath(); ctx.moveTo(sx + bw * 0.3, hy - bh); ctx.lineTo(sx + bw * 0.5, hy - bh * 1.35); ctx.lineTo(sx + bw * 0.7, hy - bh); ctx.fill(); }
+            else if (b.k === "slab") ctx.fillRect(sx + bw * 0.2, hy - bh * 1.08, bw * 0.6, bh * 0.1);
+        }
+    }
+}
+
+/* ---------- الطريق الصحراوي: خطوط جبال مسننة ---------- */
+function rr3Ridge(seed, len, rough, mesa) {
+    const r = rr3Rng(seed), a = new Float32Array(len);
+    let amp = 1;
+    for (let o = 0; o < 5; o++) {
+        const cells = 3 << o, lat = [];
+        for (let i = 0; i < cells; i++) lat.push(r());
+        for (let i = 0; i < len; i++) {
+            const t = i / len * cells, fl = Math.floor(t), f = t - fl, s = f * f * (3 - 2 * f);
+            const n = lat[fl % cells] * (1 - s) + lat[(fl + 1) % cells] * s;
+            a[i] += (o < 1 ? n : 1 - Math.abs(2 * n - 1)) * amp;
+        }
+        amp *= rough;
+    }
+    let mn = 1e9, mx = -1e9;
+    for (let i = 0; i < len; i++) { if (a[i] < mn) mn = a[i]; if (a[i] > mx) mx = a[i]; }
+    for (let i = 0; i < len; i++) { let v = (a[i] - mn) / (mx - mn || 1); if (mesa && v > 0.6) v = 0.6 + (v - 0.6) * 0.15; a[i] = v; }
+    return a;
+}
+function rr3DrawRidge(ctx, W, hy, arr, scrollPx, amp, color, strata) {
+    const n = arr.length, stepPx = Math.max(6, W / 70);
+    ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(0, hy + 2);
+    const ys = [];
+    for (let x = 0; x <= W + stepPx; x += stepPx) {
+        const t = ((x + scrollPx) / 5) | 0, i = ((t % n) + n) % n;
+        const y = hy - arr[i] * amp; ys.push(y); ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W + stepPx, hy + 2); ctx.closePath(); ctx.fill();
+    if (strata) {
+        ctx.strokeStyle = strata; ctx.lineWidth = Math.max(1, amp * 0.02);
+        for (let k = 1; k <= 2; k++) { ctx.beginPath(); for (let j = 0; j < ys.length; j++) { const y = ys[j] + (hy - ys[j]) * 0.3 * k; if (j) ctx.lineTo(j * stepPx, y); else ctx.moveTo(0, y); } ctx.stroke(); }
+    }
+}
+
+/* ---------- عناصر جانبية للبيئات الجديدة ---------- */
+function rr3DrawSaSprite(ctx, type, v) {
+    switch (type) {
+    case "cpalm": {   /* نخلة الكورنيش: جذع نحيل وتاج مروحي */
+        const lean = 70 * v;
+        ctx.strokeStyle = "#8a6a45"; ctx.lineCap = "round"; ctx.lineWidth = 80;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(lean, -1100, lean * 0.5, -2100); ctx.stroke();
+        ctx.strokeStyle = "rgba(60,40,20,.4)"; ctx.lineWidth = 7;
+        for (let y = -150; y > -2000; y -= 130) { ctx.beginPath(); ctx.moveTo(-40 + lean * (-y / 2100) * 0.6, y); ctx.lineTo(40 + lean * (-y / 2100) * 0.6, y - 22); ctx.stroke(); }
+        const cx = lean * 0.5, cy = -2100;
+        for (let i = 0; i < 8; i++) {
+            const a = (-170 + i * 34) * Math.PI / 180, L = 560 + (i % 2) * 110;
+            const ex = cx + Math.cos(a) * L, ey = cy + Math.sin(a) * L * 0.45 + Math.abs(Math.cos(a)) * 330;
+            const mx = cx + Math.cos(a) * L * 0.5, my = cy + Math.sin(a) * L * 0.5 - 170;
+            ctx.fillStyle = i % 2 ? "#3a9d4a" : "#2d8a3e";
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.quadraticCurveTo(mx, my - 60, ex, ey); ctx.quadraticCurveTo(mx, my + 50, cx, cy + 25); ctx.fill();
+        }
+        ctx.fillStyle = "#7a5a2e"; ctx.beginPath(); ctx.arc(cx, cy + 40, 60, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "clamp": {   /* عمود إنارة حديث بذراع مقوّسة */
+        ctx.fillStyle = "#cfd5da"; ctx.fillRect(-26, -1700, 52, 1700); ctx.fillStyle = "#9aa3ad"; ctx.fillRect(-60, -70, 120, 70);
+        const lx = v > 0 ? -330 : 330;
+        ctx.strokeStyle = "#cfd5da"; ctx.lineWidth = 40; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(0, -1680); ctx.quadraticCurveTo(lx * 0.3, -1900, lx, -1740); ctx.stroke();
+        const gl = ctx.createRadialGradient(lx, -1700, 20, lx, -1700, 380);
+        gl.addColorStop(0, "rgba(255,246,210,.85)"); gl.addColorStop(1, "rgba(255,246,210,0)");
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(lx, -1700, 380, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#fffbe8"; ctx.fillRect(lx - 100, -1735, 200, 36);
+        break;
+    }
+    case "rail": {    /* سياج حديدي أبيض على حافة البحر */
+        ctx.fillStyle = "#f4f1ea";
+        for (let i = -1; i <= 1; i += 1) ctx.fillRect(i * 150 - 18, -420, 36, 420);
+        ctx.fillRect(-250, -440, 500, 36); ctx.fillRect(-250, -250, 500, 20);
+        ctx.fillStyle = "rgba(0,0,0,.14)"; ctx.fillRect(-250, -404, 500, 14);
+        break;
+    }
+    case "bench": {
+        ctx.fillStyle = "#6b4a2e"; ctx.fillRect(-260, -330, 520, 60); ctx.fillRect(-260, -190, 520, 50); ctx.fillRect(-240, -140, 36, 140); ctx.fillRect(204, -140, 36, 140);
+        ctx.fillStyle = "#3b2c1f"; ctx.fillRect(-260, -270, 520, 20);
+        break;
+    }
+    case "slamp": {   /* عمود إنارة دافئة للشارع التجاري */
+        ctx.fillStyle = "#33302f"; ctx.fillRect(-28, -1550, 56, 1550); ctx.fillRect(-70, -80, 140, 80);
+        const lx = v > 0 ? -250 : 250;
+        ctx.fillRect(Math.min(0, lx), -1560, Math.abs(lx), 44);
+        const gl = ctx.createRadialGradient(lx, -1470, 20, lx, -1470, 430);
+        gl.addColorStop(0, "rgba(255,214,130,.9)"); gl.addColorStop(1, "rgba(255,190,90,0)");
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(lx, -1470, 430, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#fff0b8"; ctx.beginPath(); ctx.ellipse(lx, -1500, 110, 50, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "ptree": {   /* شجرة زيتون في حوض مربع */
+        ctx.fillStyle = "#b9a483"; ctx.fillRect(-220, -240, 440, 240); ctx.fillStyle = "#8c7a5d"; ctx.fillRect(-220, -250, 440, 30);
+        ctx.fillStyle = "#6b4a2e"; ctx.fillRect(-26, -900, 52, 660);
+        ctx.fillStyle = "#4f8f4a"; ctx.beginPath(); ctx.ellipse(0, -1000, 300, 260, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#6aa95e"; ctx.beginPath(); ctx.ellipse(-90, -1060, 190, 150, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "parasol": { /* مظلة مقهى وطاولة */
+        ctx.fillStyle = "#e9e1d0"; ctx.fillRect(-14, -700, 28, 700);
+        ctx.fillStyle = "#4a3b2e"; ctx.fillRect(-190, -330, 380, 36); ctx.fillRect(-14, -330, 28, 330);
+        const col = v > 0 ? "#c4573b" : "#2f7a6d";
+        ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-330, -690); ctx.quadraticCurveTo(0, -980, 330, -690); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.moveTo(-110, -760); ctx.quadraticCurveTo(0, -940, 110, -760); ctx.lineTo(60, -730); ctx.quadraticCurveTo(0, -850, -60, -730); ctx.fill();
+        break;
+    }
+    case "bollard": {
+        ctx.fillStyle = "#5e5a57"; ctx.fillRect(-48, -330, 96, 330); ctx.fillStyle = "#ffcf5a"; ctx.fillRect(-48, -250, 96, 36);
+        break;
+    }
+    case "dboulder": {
+        ctx.fillStyle = "#8f5f45";
+        ctx.beginPath(); ctx.moveTo(-420, 0); ctx.lineTo(-360, -330); ctx.lineTo(-120, -520); ctx.lineTo(180, -430); ctx.lineTo(400, -200); ctx.lineTo(440, 0); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.beginPath(); ctx.moveTo(-360, -330); ctx.lineTo(-120, -520); ctx.lineTo(-40, -250); ctx.lineTo(-300, -170); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.beginPath(); ctx.moveTo(180, -430); ctx.lineTo(400, -200); ctx.lineTo(440, 0); ctx.lineTo(160, 0); ctx.closePath(); ctx.fill();
+        break;
+    }
+    case "acacia": {  /* سمرة: تاج مسطّح */
+        ctx.strokeStyle = "#5c4330"; ctx.lineCap = "round"; ctx.lineWidth = 80;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-60 * v, -500, 50 * v, -900); ctx.stroke();
+        ctx.lineWidth = 36; ctx.beginPath(); ctx.moveTo(30 * v, -700); ctx.lineTo(-330, -980); ctx.moveTo(30 * v, -760); ctx.lineTo(380, -1000); ctx.stroke();
+        ctx.fillStyle = "#6f8a3c";
+        ctx.beginPath(); ctx.ellipse(-30, -1060, 520, 130, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#86a04a"; ctx.beginPath(); ctx.ellipse(-90, -1110, 330, 90, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "shrub": {
+        ctx.fillStyle = "#8a8a52"; ctx.beginPath(); ctx.ellipse(0, -120, 300, 130, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#a3a263"; ctx.beginPath(); ctx.ellipse(-80, -170, 190, 100, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
+    case "camel": {   /* جمل (رسم أصلي مبسّط) */
+        const d = v > 0 ? -1 : 1;
+        ctx.fillStyle = "#b98a56";
+        ctx.beginPath(); ctx.ellipse(0, -620, 330, 150, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-40 * d, -790, 130, 110, 0, 0, Math.PI * 2); ctx.fill();   /* السنام */
+        ctx.lineWidth = 70; ctx.strokeStyle = "#b98a56"; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(250 * d, -650); ctx.quadraticCurveTo(360 * d, -900, 330 * d, -1020); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(380 * d, -1040, 100, 55, d * -0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 50; ctx.strokeStyle = "#9d7343";
+        [-230, -110, 110, 230].forEach(function (x) { ctx.beginPath(); ctx.moveTo(x, -520); ctx.lineTo(x + 10, 0); ctx.stroke(); });
+        break;
+    }
+    case "dsign": {   /* لافتة تحذير مثلثة بشكل جمل (بلا كتابة) */
+        ctx.fillStyle = "#9aa3ad"; ctx.fillRect(-20, -900, 40, 900);
+        ctx.fillStyle = "#d7263d"; ctx.beginPath(); ctx.moveTo(0, -1750); ctx.lineTo(360, -1080); ctx.lineTo(-360, -1080); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(0, -1660); ctx.lineTo(290, -1120); ctx.lineTo(-290, -1120); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#222"; ctx.beginPath(); ctx.ellipse(0, -1290, 120, 52, 0, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.ellipse(-30, -1360, 40, 40, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 22; ctx.strokeStyle = "#222"; ctx.beginPath(); ctx.moveTo(80, -1310); ctx.quadraticCurveTo(130, -1420, 110, -1480); ctx.moveTo(-70, -1260); ctx.lineTo(-70, -1160); ctx.moveTo(60, -1260); ctx.lineTo(60, -1160); ctx.stroke();
+        break;
+    }
+    case "reststop": { /* محطة استراحة: مظلة مضخات ومبنى صغير ومسجد بقبة (بلا شعارات) */
+        ctx.fillStyle = "#d9cdb4"; ctx.fillRect(-900, -520, 760, 520);
+        ctx.fillStyle = "#c4b595"; ctx.fillRect(-940, -560, 840, 50);
+        ctx.fillStyle = "#2f7a6d"; ctx.fillRect(-900, -520, 760, 60);
+        ctx.fillStyle = "#ffe2a0"; ctx.fillRect(-840, -400, 300, 260); ctx.fillRect(-480, -400, 280, 260);
+        ctx.fillStyle = "rgba(60,40,20,.5)"; ctx.fillRect(-690, -400, 14, 260); ctx.fillRect(-340, -400, 14, 260);
+        /* مظلة المضخات */
+        ctx.fillStyle = "#e8e4dc"; ctx.fillRect(0, -950, 1000, 70); ctx.fillStyle = "#2f7a6d"; ctx.fillRect(0, -880, 1000, 30);
+        ctx.fillStyle = "#b8b2a6"; ctx.fillRect(80, -880, 40, 880); ctx.fillRect(880, -880, 40, 880);
+        ctx.fillStyle = "#d94f3d"; ctx.fillRect(330, -420, 90, 420); ctx.fillRect(570, -420, 90, 420);
+        ctx.fillStyle = "#222"; ctx.fillRect(345, -360, 60, 80); ctx.fillRect(585, -360, 60, 80);
+        /* مصلّى بقبة */
+        ctx.fillStyle = "#efe6d2"; ctx.fillRect(1080, -430, 420, 430);
+        ctx.fillStyle = "#2f7a6d"; ctx.beginPath(); ctx.ellipse(1290, -430, 190, 170, 0, Math.PI, 0); ctx.fill();
+        ctx.fillRect(1284, -640, 12, 90);
+        ctx.fillStyle = "#3b2f22"; ctx.beginPath(); ctx.moveTo(1230, 0); ctx.lineTo(1230, -190); ctx.arc(1290, -190, 60, Math.PI, 0); ctx.lineTo(1350, 0); ctx.fill();
+        break;
+    }
+    }
+}
 
 function rr3CreateEngine(cfg) {
     const SEG = 200, ROADW = 1300, LANES = 3, CAMH = 1500, PLAYERZ = 1100, WAITD = 560, CARW = 620;
@@ -8660,14 +9319,67 @@ function rr3CreateEngine(cfg) {
         rolling: [[25, 20, 25, 0, 0], [15, 15, 15, 0, 7], [15, 25, 15, -0.6, -7], [25, 40, 25, 0, 0], [15, 20, 15, 0.9, 6], [15, 25, 15, -0.9, -6], [25, 40, 25, 0, 0], [10, 20, 10, 0, 0]],
         city: [[25, 20, 25, 0, 0], [20, 30, 20, 1.6, 0], [25, 30, 25, 0, 0], [20, 30, 20, -1.6, 0], [25, 40, 25, 0, 0], [20, 30, 20, 1.2, 0], [20, 30, 20, -1.2, 0], [10, 30, 10, 0, 0]],
         winding: [[25, 20, 25, 0, 0], [20, 30, 20, 2.1, 0], [15, 15, 15, 0, 7], [15, 25, 15, -2.3, -7], [20, 30, 20, -1.7, 0], [20, 25, 20, 2.5, 0], [25, 30, 25, 0, 0], [15, 20, 15, 1.4, 6], [15, 20, 15, -1.6, -6]],
+        souq: [[25, 20, 25, 0, 0], [20, 30, 20, 0.9, 0], [25, 30, 25, 0, 0], [20, 30, 20, -1.0, 0], [25, 40, 25, 0, 0], [20, 30, 20, 0.7, 0], [20, 30, 20, -0.8, 0], [10, 30, 10, 0, 0]],
         alpine: [[25, 20, 25, 0, 0], [15, 15, 15, 1.4, 9], [15, 25, 15, -1.8, -9], [20, 25, 20, 2.0, 0], [15, 15, 15, -1.2, 8], [15, 15, 15, 0, -8], [25, 30, 25, 0, 0]]
     };
     (TRACKS[cfg.track] || TRACKS.winding).forEach(function (t) { addRoad(t[0], t[1], t[2], t[3], t[4]); });
     addRoad(10, 20, 10, 0, -lastY() / SEG);
     const N = segs.length;
     const rng = rr3Rng(7 + (cfg.theme || 0) * 131);
+    const HJ = th.env === "hijaz", CO = th.env === "corniche", SH = th.env === "shops", DS = th.env === "desert";
+    const HEAVY = HJ || CO || SH || DS;
+    /* بيئات الواجهات (جدة التاريخية والتجاري والكورنيش): دورة البيت، الارتفاع، البعد عن الطريق، عدد الأنواع، ودوال الاختيار والرسم */
+    const WE = HJ ? { per: RR3_HJ_PERIOD, wh: RR3_HJ_WALL_H, off: 1.72, nv: RR3_HJ_VARIANTS, vf: rr3HjVariant, fac: rr3HjFacade, th: 720, pal: RR3_HJ_PAL.map(function (p) { return p.wall; }) }
+        : (SH ? { per: RR3_SH_PERIOD, wh: RR3_SH_WALL_H, off: RR3_SH_OFF, nv: RR3_SH_VARIANTS, vf: rr3ShVariant, fac: rr3ShFacade, th: 720, pal: RR3_SH_PAL.map(function (p) { return p.wall; }) }
+        : (CO ? { per: RR3_CO_PERIOD, wh: RR3_CO_WALL_H, off: RR3_CO_OFF, nv: RR3_CO_VARIANTS, vf: rr3CoVariant, fac: rr3CoFacade, th: RR3_CO_TEXH, pal: ["#6aa6cc", "#cdb58a", "#d9e2e8", "#4fa6a4", "#8aa2b8", "#d8c4a2"] } : null));
     for (let n = 6; n < N; n++) {
         const sg = segs[n];
+        if (HJ) {
+            if (n % 14 === 5) sg.sprites.push({ type: "fanous", off: -1.3, v: -1, sc: 1 });
+            if (n % 14 === 12) sg.sprites.push({ type: "fanous", off: 1.3, v: 1, sc: 1 });
+            if (n % 9 === 2) { const sd = (n / 9 | 0) % 2 ? 1 : -1; sg.sprites.push({ type: "jar", off: sd * 1.27, v: sd, sc: 0.9 + rng() * 0.3 }); }
+            if (n % 18 === 8) { const sd = (n / 18 | 0) % 2 ? -1 : 1; sg.sprites.push({ type: "datepalm", off: sd * 1.36, v: sd, sc: 0.95 + rng() * 0.2 }); }
+            if (n % RR3_HJ_PERIOD === 2) {
+                const bi = Math.floor(n / RR3_HJ_PERIOD);
+                [-1, 1].forEach(function (sd) {
+                    if (rr3HjVariant(sd, bi) < 0) {
+                        sg.sprites.push({ type: "datepalm", off: sd * 1.85, v: sd, sc: 1.15 });
+                        if (bi % 2 === 0) sg.sprites.push({ type: "minaret", off: sd * 2.6, v: sd, sc: 1, bg: true });
+                    }
+                });
+            }
+            continue;
+        }
+        if (SH) {
+            if (n % 12 === 4) sg.sprites.push({ type: "slamp", off: -1.32, v: -1, sc: 1 });
+            if (n % 12 === 10) sg.sprites.push({ type: "slamp", off: 1.32, v: 1, sc: 1 });
+            if (n % 16 === 7) sg.sprites.push({ type: "ptree", off: 1.62, v: 1, sc: 0.9 });
+            if (n % 16 === 15) sg.sprites.push({ type: "ptree", off: -1.62, v: -1, sc: 0.9 });
+            if (n % 20 === 9) sg.sprites.push({ type: "parasol", off: 1.66, v: 1, sc: 0.9 });
+            if (n % 20 === 19) sg.sprites.push({ type: "parasol", off: -1.66, v: -1, sc: 0.9 });
+            if (n % 6 === 1) { sg.sprites.push({ type: "bollard", off: -1.24, v: -1, sc: 0.8 }); sg.sprites.push({ type: "bollard", off: 1.24, v: 1, sc: 0.8 }); }
+            continue;
+        }
+        if (CO) {
+            if (n % 14 === 5) sg.sprites.push({ type: "clamp", off: -1.42, v: -1, sc: 1 });
+            if (n % 14 === 12) sg.sprites.push({ type: "clamp", off: 1.38, v: 1, sc: 1 });
+            if (n % 2 === 0) sg.sprites.push({ type: "rail", off: -1.66, v: -1, sc: 0.7 });
+            if (n % 10 === 3) sg.sprites.push({ type: "cpalm", off: 2.05, v: 1, sc: 1 });
+            if (n % 20 === 13) sg.sprites.push({ type: "cpalm", off: -1.4, v: -1, sc: 0.9 });
+            if (n % 30 === 20) { sg.sprites.push({ type: "bench", off: 1.78, v: 1, sc: 0.8 }); }
+            if (n % RR3_CO_PERIOD === 2 && rr3CoVariant(1, Math.floor(n / RR3_CO_PERIOD)) < 0) sg.sprites.push({ type: "cpalm", off: 3.3, v: 1, sc: 1.25 });
+            continue;
+        }
+        if (DS) {
+            const sd = (n % 2) ? 1 : -1;
+            if (n % 5 === 1) sg.sprites.push({ type: "dboulder", off: sd * (1.8 + rng() * 3), v: sd, sc: 0.6 + rng() * 0.8 });
+            if (n % 11 === 4) sg.sprites.push({ type: "acacia", off: -sd * (1.9 + rng() * 2.6), v: -sd, sc: 0.8 + rng() * 0.5 });
+            if (n % 3 === 2) sg.sprites.push({ type: "shrub", off: sd * (1.35 + rng() * 3), v: sd, sc: 0.5 + rng() * 0.6 });
+            if (n % 47 === 20) sg.sprites.push({ type: "camel", off: sd * (3 + rng() * 2.5), v: sd, sc: 0.8 });
+            if (n % 64 === 30) sg.sprites.push({ type: "dsign", off: 1.5, v: 1, sc: 0.9 });
+            if (n % 160 === 80) sg.sprites.push({ type: "reststop", off: 3.9, v: 1, sc: 1 });
+            continue;
+        }
         if (n % 4 === 0) {
             const side = (n / 4 | 0) % 2 ? 1 : -1;
             const type = th.sprites[Math.floor(rng() * th.sprites.length)];
@@ -8754,10 +9466,10 @@ function rr3CreateEngine(cfg) {
         return id;
     }
     function fail(e) { try { if (hooks.error) hooks.error(e); } catch (e2) { /* لا شيء */ } }
-    function say(text, done, maxMs) {
+    function say(text, done, maxMs, mode) {
         let fired = false;
         const fin = function () { if (fired || destroyed) return; fired = true; if (done) done(); };
-        try { if (hooks.say) hooks.say(text, fin); else fin(); } catch (e) { fin(); }
+        try { if (hooks.say) hooks.say(text, fin, mode); else fin(); } catch (e) { fin(); }
         if (done) later(fin, maxMs || 4200);
     }
     function msg(text) { el.msg.textContent = text || ""; }
@@ -8847,7 +9559,10 @@ function rr3CreateEngine(cfg) {
             const adv = function () { if (advanced || destroyed) return; advanced = true; afterCorrect(); };
             S.phraseBusy = true;
             later(adv, reduced ? 700 : 1100);
-            say(phrase, function () { S.phraseBusy = false; adv(); if (S.wantPrompt) { S.wantPrompt = false; later(sayPrompt, 300); } }, 4000);
+            /* عند الإجابة الصحيحة فقط، ومرة واحدة لكل بوابة: صوت الحرف التعليمي المسجَّل محليًا ثم التشجيع، بلا قطع ولا انتظار في الحركة */
+            if (g.sounded) { S.phraseBusy = false; return; }
+            g.sounded = true;
+            say([cfg.promptText, phrase], function () { S.phraseBusy = false; adv(); if (S.wantPrompt) { S.wantPrompt = false; later(sayPrompt, 300); } }, 7000);
         } else if (g.kind === "road") {
             crashInto(g, r, lane);
         } else {
@@ -8861,7 +9576,6 @@ function rr3CreateEngine(cfg) {
                 S.busy = false;
                 S.spawnRound = g.r;
                 S.spawnAt = S.pos + 10 * SEG;
-                sayPrompt();
             }, 3000);
         }
     }
@@ -8892,7 +9606,6 @@ function rr3CreateEngine(cfg) {
             g.resolved = false; g.lane = -1; g.flash = 0;
             S.chosen = false; S.steered = false; S.settle = 0; S.waitMsg = false; S.busy = false;
             syncGo();
-            sayPrompt();
         }, 3000);
     }
     function dust(n, sparks) {
@@ -8946,7 +9659,7 @@ function rr3CreateEngine(cfg) {
         if (cfgRes.map) { bm.style.display = ""; bm.textContent = cfgRes.map; bm.onclick = function () { try { cfgRes.onMap && cfgRes.onMap(); } catch (e) { fail(e); } }; } else bm.style.display = "none";
         h.classList.add("on");
         try { bn.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ }
-        if (cfgRes.phrase) say(cfgRes.phrase, null);
+        if (cfgRes.phrase) say(cfgRes.phrase, null, null, "queue");
     }
 
     /* ---------- المنافسون ---------- */
@@ -9067,14 +9780,122 @@ function rr3CreateEngine(cfg) {
     }
 
     /* ---------- الرسم ---------- */
+    /* جودة تكيفية للبيئات الثقيلة (جدة التاريخية): إن بقي زمن الإطار طويلًا تُخفَّض دقة اللوحة تدريجيًا حتى تسلس الحركة */
+    let perfK = 1, perfAcc = 0, perfN = 0, perfSince = 0;
+    function perfWatch(rawMs) {
+        if (!HEAVY || !S.started || S.paused || rawMs > 250) return;
+        perfSince += rawMs; perfAcc += rawMs; perfN++;
+        if (perfSince < 1000) return;
+        const avg = perfAcc / Math.max(1, perfN);
+        perfSince = 0; perfAcc = 0; perfN = 0;
+        if (avg > 34 && perfK > 0.5) { perfK = Math.max(0.5, perfK - 0.15); perfLog.push(avg | 0); fitDirty = true; }
+    }
+    const perfLog = [];
+    let fitDirty = true;
+    function markFit() { fitDirty = true; }
     function fit() {
+        fitDirty = false;
         const r = root.getBoundingClientRect();
         const cw = Math.max(200, r.width), ch = Math.max(200, r.height);
-        let sc = Math.min(window.devicePixelRatio || 1, 1.5);
-        while (cw * ch * sc * sc > 1.7e6 && sc > 0.6) sc -= 0.1;
+        let sc = Math.min(window.devicePixelRatio || 1, 1.5) * perfK;
+        while (cw * ch * sc * sc > 1.7e6 && sc > 0.5) sc -= 0.1;
         const w = Math.round(cw * sc), h = Math.round(ch * sc);
         if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
         DRAW = cw < 600 ? 80 : 100;
+    }
+
+    /* ---------- بيئة جدة التاريخية: واجهات منظورية + أفق ---------- */
+    const hjSky = HJ ? [rr3HjSkyline(31, 80, 1800), rr3HjSkyline(77, 80, 2300)] : null;
+    const saSky = SH ? [rr3ShSkyline(41, 90, 1900), rr3ShSkyline(88, 90, 2400)] : (CO ? [rr3CoSkyline(51, 60, 2200), rr3CoSkyline(99, 60, 2800)] : null);
+    const dsRid = DS ? [rr3Ridge(3, 512, 0.62, true), rr3Ridge(17, 512, 0.7, false), rr3Ridge(29, 512, 0.5, false)] : null;
+    let hjTex = null, hjKey = 0;
+    const hjAvg = WE ? WE.pal.map(function (p) { return rr3Mix(rr3Hex(p), [150, 105, 70], 0.18).match(/\d+/g).map(Number); }) : [];
+    function hjEnsure(H) {
+        const sc = H > 1000 ? 1.25 : 1;
+        if (hjKey === sc) return;
+        hjKey = sc; hjTex = [];
+        for (let v = 0; v < WE.nv; v++) hjTex.push(WE.fac(v, Math.round(240 * sc), Math.round(WE.th * sc)));
+    }
+    let smState = true;
+    function hjWalls(f, n, fog) {
+        const P = WE.per, bi = Math.floor(f.abs / P);
+        const nSub = n < 4 ? 3 : (n < 11 ? 2 : 1), flat = n >= 28;
+        for (let side = -1; side <= 1; side += 2) {
+            const v = WE.vf(side, bi);
+            if (v < 0) continue;
+            const tex = hjTex[v], TWt = tex.width, THt = tex.height, ppS = TWt / P, off = f.abs % P;
+            for (let q = nSub - 1; q >= 0; q--) {
+                const t0 = q / nSub, t1 = (q + 1) / nSub;
+                const p0 = projAt(f, t0), p1 = projAt(f, t1);
+                const Le = side < 0 ? p0 : p1, Re = side < 0 ? p1 : p0;
+                const XL = Le.xc + side * WE.off * Le.w, XR = Re.xc + side * WE.off * Re.w;
+                if (XR - XL < 0.15) continue;
+                const hL = WE.wh * Le.w / ROADW, hR = WE.wh * Re.w / ROADW;
+                if (flat) {
+                    /* بعيدًا جدًا: كتلة بلون متوسط الواجهة ممزوجة بالضباب بدل الملمس (أرخص بكثير ولا يُرى الفرق) */
+                    ctx.fillStyle = rr3Mix(hjAvg[v % hjAvg.length], fogRGB, Math.min(0.95, fog * 0.95));
+                    ctx.beginPath(); ctx.moveTo(XL, Le.y); ctx.lineTo(XR + 0.6, Re.y); ctx.lineTo(XR + 0.6, Re.y - hR * 0.9); ctx.lineTo(XL, Le.y - hL * 0.9); ctx.closePath(); ctx.fill();
+                    continue;
+                }
+                const sx0 = side < 0 ? (off + t0) * ppS : (P - (off + t1)) * ppS, sw0 = (t1 - t0) * ppS;
+                const ka = (XR - XL) / sw0, kb = (Re.y - Le.y) / sw0, kd = ((hL + hR) / 2) / THt;
+                const srcL = Math.max(0, side > 0 ? sx0 - 0.9 : sx0), srcR = Math.min(TWt, side < 0 ? sx0 + sw0 + 0.9 : sx0 + sw0);
+                if (srcR - srcL <= 0) continue;
+                /* لا نرسم من اللوحة إلا الصفوف الظاهرة فوق حافة الشاشة العليا */
+                const base = Math.min(Le.y, Re.y);
+                const srcT = Math.max(0, Math.min(THt - 2, THt - (base + 4) / kd));
+                ctx.globalAlpha = Math.max(0.1, 1 - Math.min(0.9, fog * 0.95));
+                ctx.setTransform(ka, kb, 0, kd, XL - ka * sx0, Le.y - kb * sx0 - THt * kd);
+                const smo = kd < 0.7 || kd > 1.6;   /* قرب المقياس ١:١ لا يحتاج تنعيمًا (أرخص بنحو الربع بلا فرق مرئي)؛ التصغير الكبير يبقى منعَّمًا لئلا يتلألأ */
+                if (smo !== smState) { ctx.imageSmoothingEnabled = smo; smState = smo; }
+                ctx.drawImage(tex, srcL, srcT, srcR - srcL, THt - srcT, srcL, srcT, srcR - srcL, THt - srcT);
+            }
+        }
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        if (!smState) { ctx.imageSmoothingEnabled = true; smState = true; }
+    }
+    function hjBirds(W, hy) {
+        ctx.strokeStyle = "rgba(70,60,60,.7)"; ctx.lineWidth = Math.max(1.4, W / 520); ctx.lineCap = "round";
+        for (let i = 0; i < 4; i++) {
+            const bx = ((i * 0.27 * W + S.t * (reduced ? 0 : 18 + i * 5) + 40 * i) % (W + 80)) - 40, by = hy * (0.2 + 0.1 * i) + Math.sin(S.t * 0.8 + i) * 6;
+            const fl = reduced ? 0.6 : Math.sin(S.t * 7 + i * 2) * 0.7, w = W * 0.012;
+            ctx.beginPath(); ctx.moveTo(bx - w, by - fl * w * 0.5); ctx.quadraticCurveTo(bx - w * 0.4, by - w * 0.6 - fl * w, bx, by); ctx.quadraticCurveTo(bx + w * 0.4, by - w * 0.6 - fl * w, bx + w, by - fl * w * 0.5); ctx.stroke();
+        }
+    }
+
+    /* أرضية البيئات الجديدة: بحر وممشى (الكورنيش) · أرصفة (التجاري) · كتف رملي (الصحراء) */
+    const GX = {
+        seaA: [26, 150, 192], seaB: [36, 166, 208], tileA: [226, 218, 200], tileB: [213, 204, 185], jog: [196, 98, 80], wall: [250, 248, 240],
+        pavA: [205, 191, 165], pavB: [192, 178, 152], curb: [238, 230, 212], gravA: [190, 165, 125], gravB: [178, 152, 112]
+    };
+    function band(c, f, ye, a, b, sgn, fog) {
+        const col = rr3Mix(c, fogRGB, fog);
+        poly(col, f.x1 + sgn * f.w1 * a, f.y1, f.x1 + sgn * f.w1 * b, f.y1, f.x2 + sgn * f.w2 * b, ye, f.x2 + sgn * f.w2 * a, ye);
+    }
+    function groundExtra(f, ye, fog, abs, n) {
+        const alt = abs % 2 === 0;
+        if (CO) {
+            band(alt ? GX.tileA : GX.tileB, f, ye, 1.17, 1.62, -1, fog);
+            band(GX.wall, f, ye, 1.62, 1.72, -1, fog);
+            const wc = rr3Mix(abs % 6 < 3 ? GX.seaA : GX.seaB, fogRGB, fog * 0.8);
+            poly(wc, 0, f.y1, f.x1 - f.w1 * 1.72, f.y1, f.x2 - f.w2 * 1.72, ye, 0, ye);
+            if (n < 50) {
+                const h = (f.y1 - ye);
+                ctx.fillStyle = "rgba(255,255,255," + (0.38 * (1 - fog)).toFixed(2) + ")";
+                for (let i = 0; i < 3; i++) {
+                    const u = (((abs * 2654435761 + i * 97) >>> 0) % 1000) / 1000, xr = (f.x1 - f.w1 * 1.78) * u;
+                    ctx.fillRect(xr, ye + h * 0.3, Math.max(2, f.w1 * 0.22 * (0.5 + u)), Math.max(1, h * 0.22));
+                }
+            }
+            band(GX.jog, f, ye, 1.17, 1.45, 1, fog);
+            band(alt ? GX.tileA : GX.tileB, f, ye, 1.45, 2.4, 1, fog);
+        } else if (SH) {
+            for (let sd = -1; sd <= 1; sd += 2) { band(GX.curb, f, ye, 1.17, 1.26, sd, fog); band(alt ? GX.pavA : GX.pavB, f, ye, 1.26, 2.0, sd, fog); }
+        } else {
+            band(alt ? GX.gravA : GX.gravB, f, ye, 1.17, 1.55, -1, fog);
+            band(alt ? GX.gravA : GX.gravB, f, ye, 1.17, 1.55, 1, fog);
+        }
     }
 
     function drawBackground(W, H, hy) {
@@ -9107,9 +9928,44 @@ function rr3CreateEngine(cfg) {
             }
             ctx.lineTo(W, hy + 2); ctx.closePath(); ctx.fill();
         };
+        if (CO) {
+            const unit = Math.max(0.55, W / 1100);
+            /* البحر حتى الأفق: شريط متدرّج يلتقي بالسماء */
+            const sh = Math.max(10, H * 0.05), sg2 = ctx.createLinearGradient(0, hy - sh, 0, hy + 1);
+            sg2.addColorStop(0, "rgba(190,230,245,.0)"); sg2.addColorStop(0.35, "#9ad9ec"); sg2.addColorStop(1, "#2aa3c9");
+            rr3DrawCoSkyline(ctx, W, H, hy - sh * 0.1, saSky[0], S.bg * W * 0.3 / unit, "#b4c9d6", unit * 0.8);
+            ctx.fillStyle = sg2; ctx.fillRect(0, hy - sh, W, sh + 1);
+            rr3DrawCoSkyline(ctx, W, H, hy, saSky[1], S.bg * W * 0.6 / unit, "#8ba6ba", unit);
+            /* نافورة بعيدة ومراكب شراعية */
+            const fx = ((W * 0.28 - S.bg * W * 0.45) % (W * 2.4) + W * 2.4) % (W * 2.4) - W * 0.2;
+            if (fx > -30 && fx < W + 30) { const fh = H * 0.2, fg = ctx.createLinearGradient(0, hy - fh, 0, hy); fg.addColorStop(0, "rgba(255,255,255,0)"); fg.addColorStop(0.3, "rgba(255,255,255,.85)"); fg.addColorStop(1, "rgba(255,255,255,.55)"); ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(fx - 1.5, hy); ctx.quadraticCurveTo(fx - W * 0.012, hy - fh * 0.4, fx, hy - fh); ctx.quadraticCurveTo(fx + W * 0.012, hy - fh * 0.4, fx + 1.5, hy); ctx.fill(); }
+            for (let i = 0; i < 3; i++) {
+                const bx = ((i * 0.37 * W + S.t * (reduced ? 0 : 3 + i) - S.bg * W * 0.5) % (W + 100) + W + 100) % (W + 100) - 50, bs = Math.max(5, W * 0.016);
+                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(bx, hy - bs * 2.4); ctx.lineTo(bx + bs, hy - bs * 0.3); ctx.lineTo(bx, hy - bs * 0.3); ctx.fill();
+                ctx.fillStyle = "#f4a259"; ctx.beginPath(); ctx.moveTo(bx - bs, hy - bs * 0.1); ctx.lineTo(bx + bs * 1.3, hy - bs * 0.1); ctx.lineTo(bx + bs * 0.8, hy + bs * 0.4); ctx.lineTo(bx - bs * 0.6, hy + bs * 0.4); ctx.fill();
+            }
+            hjBirds(W, hy);
+        } else if (SH) {
+            const unit = Math.max(0.55, W / 1100);
+            rr3DrawShSkyline(ctx, W, H, hy, saSky[0], S.bg * W * 0.3 / unit, th.far, "rgba(255,206,140,.5)", unit * 0.8);
+            rr3DrawShSkyline(ctx, W, H, hy, saSky[1], S.bg * W * 0.6 / unit, th.mount, "rgba(255,214,130,.9)", unit);
+        } else if (DS) {
+            rr3DrawRidge(ctx, W, hy, dsRid[0], S.bg * W * 0.2, H * 0.23, th.far, null);
+            rr3DrawRidge(ctx, W, hy, dsRid[1], S.bg * W * 0.45 + 90, H * 0.17, th.mount, "rgba(60,25,15,.2)");
+            layer(th.hill, H * 0.03, S.bg * W * 1.2, 0.0075, 0.019, 0);
+            rr3DrawRidge(ctx, W, hy, dsRid[2], S.bg * W * 0.9 + 300, H * 0.07, th.hill2, "rgba(0,0,0,.15)");
+            const hz = ctx.createLinearGradient(0, hy - H * 0.07, 0, hy); hz.addColorStop(0, "rgba(" + fogRGB.join(",") + ",0)"); hz.addColorStop(1, "rgba(" + fogRGB.join(",") + ",.55)");
+            ctx.fillStyle = hz; ctx.fillRect(0, hy - H * 0.07, W, H * 0.07 + 1);
+        } else if (HJ) {
+            const unit = Math.max(0.55, W / 1100);
+            rr3DrawHjSkyline(ctx, W, H, hy, hjSky[0], S.bg * W * 0.35 / unit, th.far, "rgba(150,120,90,.35)", unit * 0.8);
+            rr3DrawHjSkyline(ctx, W, H, hy, hjSky[1], S.bg * W * 0.7 / unit, th.mount, "rgba(110,85,60,.4)", unit);
+            hjBirds(W, hy);
+        } else {
         layer(th.far, H * 0.07, S.bg * W * 0.5, 0.0045, 0.011, 0);
         layer(th.mount, H * 0.055, S.bg * W * 0.9, 0.0062, 0.017, 0);
-        if (th.city) {
+        }
+        if (HEAVY) { /* لا طبقات تلال */ } else if (th.city) {
             const off = S.bg * W * 1.4, bw = Math.max(26, W * 0.07);
             const first = Math.floor(off / bw);
             for (let b = first - 1; b < first + Math.ceil(W / bw) + 2; b++) {
@@ -9177,7 +10033,7 @@ function rr3CreateEngine(cfg) {
         dim: ["#4b5563", "#94a3b8", "#cbd5e1"], good: ["#16a34a", "#dcfce7", "#ffffff"], bad: ["#6b7280", "#fca5a5", "#ffffff"]
     };
     /* لوح الحرف المرسوم على الأسفلت: يُرسم مرة في نسيج ثم يُسقَط على مقاطع الطريق بمنظور صحيح */
-    const SLAB = ["#1458a0", "#7a2a8f", "#0f6b6b", "#8a4a12"][(cfg.theme || 0) % 4];
+    const SLAB = ["#1458a0", "#7a2a8f", "#0f6b6b", "#8a4a12", "#12508f", "#0b6a8f", "#8a2f4a", "#7a3b12", "#4a2a7a"][(cfg.theme || 0) % 9];
     function letterTex(ch, st) {
         const key = ch + "|" + st;
         if (texCache[key]) return texCache[key];
@@ -9331,6 +10187,7 @@ function rr3CreateEngine(cfg) {
             const rum = rr3Mix(dark ? rgbCache.rD : rgbCache.rL, fogRGB, fog);
             const ye = f.y2 - 1;
             ctx.fillStyle = grass; ctx.fillRect(0, ye, W, f.y1 - ye);
+            if (CO || SH || DS) groundExtra(f, ye, fog, abs, n);
             const r1 = f.w1 / Math.max(6, 2 * LANES), r2 = f.w2 / Math.max(6, 2 * LANES);
             poly(rum, f.x1 - f.w1 - r1, f.y1, f.x1 - f.w1, f.y1, f.x2 - f.w2, ye, f.x2 - f.w2 - r2, ye);
             poly(rum, f.x1 + f.w1 + r1, f.y1, f.x1 + f.w1, f.y1, f.x2 + f.w2, ye, f.x2 + f.w2 + r2, ye);
@@ -9384,6 +10241,8 @@ function rr3CreateEngine(cfg) {
             if (!f) continue;
             if (!carDone && f.abs * SEG - S.pos < PLAYERZ - SEG * 0.0 && f.abs <= pAbs) drawPlayer();
             if (!f.ok) {
+                /* واجهات الجانبين ترتفع فوق قاع الشاشة: تُرسم حتى لو كان سطح الطريق نفسه تحت حافة الشاشة */
+                if (WE && f.z1 > CAMD && f.y2 >= H) { hjEnsure(H); hjWalls(f, n, 1 - Math.exp(-Math.pow(n / DRAW, 2) * 3.0)); }
                 continue;
             }
             const sg = f.sg;
@@ -9391,8 +10250,16 @@ function rr3CreateEngine(cfg) {
             const clipped = f.clip < f.y1;
             if (clipped) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, f.clip); ctx.clip(); }
             ctx.globalAlpha = Math.max(0.15, 1 - fog * 0.85);
+            if (WE) {
+                for (let i = 0; i < sg.sprites.length; i++) {
+                    const sp = sg.sprites[i];
+                    if (sp.bg) rr3DrawSprite(ctx, sp.type, f.x1 + f.s1 * sp.off * ROADW * U, f.y1, f.s1 * U * sp.sc, sp.v, th);
+                }
+                ctx.globalAlpha = 1; hjEnsure(H); hjWalls(f, n, fog); ctx.globalAlpha = Math.max(0.15, 1 - fog * 0.85);
+            }
             for (let i = 0; i < sg.sprites.length; i++) {
                 const sp = sg.sprites[i];
+                if (WE && sp.bg) continue;
                 const sx = f.x1 + f.s1 * sp.off * ROADW * U;
                 rr3DrawSprite(ctx, sp.type, sx, f.y1, f.s1 * U * sp.sc, sp.v, th);
             }
@@ -9435,11 +10302,12 @@ function rr3CreateEngine(cfg) {
         raf = requestAnimationFrame(frame);
         if (hooks.alive && !hooks.alive()) { destroy(); return; }
         if (!last) last = ts;
+        perfWatch(ts - last);
         let dt = Math.min(0.05, Math.max(0, (ts - last) / 1000));
         last = ts;
         try {
             if (document.hidden) return;
-            fit();
+            if (fitDirty) fit();
             update(dt);
             render();
         } catch (e) { fail(e); }
@@ -9510,7 +10378,10 @@ function rr3CreateEngine(cfg) {
     cv.addEventListener("pointercancel", function () { S.dragging = false; });
     root.addEventListener("click", onClick);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("resize", fit);
+    window.addEventListener("resize", markFit);
+    window.addEventListener("orientationchange", markFit);
+    let fitRO = null;
+    try { if (typeof ResizeObserver !== "undefined") { fitRO = new ResizeObserver(markFit); fitRO.observe(root); } } catch (e) { fitRO = null; }
 
     /* ---------- إعدادات المعلم: شدة التصادم (رمز المعلم إن وُجد، وإلا سؤال حسابي بسيط) ---------- */
     let tq = null;
@@ -9566,7 +10437,7 @@ function rr3CreateEngine(cfg) {
         let h = '<div class="rr3-lvp"><h4>🎚️ اختر مستوى الحرف ' + cfg.letter + '</h4><p class="rr3-lvn">كل المستويات مفتوحة. اختر ما يناسب الطالب.</p><div class="rr3-lvg">';
         L.forEach(function (l) {
             h += '<button type="button" class="rr3-lvc' + (l.id === cfg.levelId ? " cur" : "") + '" data-a="lvpick" data-id="' + l.id + '">' +
-                '<span class="rr3-lvi" aria-hidden="true">' + l.icon + '</span><span class="rr3-lvt"><b>' + l.title + '</b><small>' + l.desc + '</small></span>' +
+                '<span class="rr3-lvi" aria-hidden="true">' + l.icon + '</span><span class="rr3-lvt"><b>' + l.title + '</b>' + (l.place ? '<small class="rr3-pl">' + l.place + '</small>' : '') + '<small>' + l.desc + '</small></span>' +
                 '<span class="rr3-lvs" aria-label="نجومك">' + (l.done ? "⭐".repeat(Math.max(1, Math.min(3, l.stars || 1))) : "") + '</span></button>';
         });
         h += '</div>' + (cfg.levelId && S.started ? '<div class="rr3-trow"><button type="button" class="rr3-s" data-a="lvclose">متابعة اللعب</button></div>' : "") + '</div>';
@@ -9584,10 +10455,10 @@ function rr3CreateEngine(cfg) {
         fit();
         updateHud();
         if (cfg.showPicker) { spawnGate(0); S.busy = false; openLevels(); raf = requestAnimationFrame(frame); return; }
-        msg("🏁 استعد للانطلاق");
+        msg(cfg.placeName ? cfg.placeName : "🏁 استعد للانطلاق");
         spawnGate(0);
         S.busy = false;
-        later(function () { S.started = true; msg("اختر الحرف الصحيح"); sayPrompt(); }, 900);
+        later(function () { S.started = true; msg("اختر الحرف الصحيح"); sayPrompt(); }, cfg.placeName ? 1700 : 900);
         later(function () { if (el.msg.textContent === "اختر الحرف الصحيح") msg(""); }, 5200);
         raf = requestAnimationFrame(frame);
     }
@@ -9597,7 +10468,9 @@ function rr3CreateEngine(cfg) {
         cancelAnimationFrame(raf);
         timers.forEach(clearTimeout); timers.length = 0;
         document.removeEventListener("keydown", onKey);
-        window.removeEventListener("resize", fit);
+        window.removeEventListener("resize", markFit);
+        window.removeEventListener("orientationchange", markFit);
+        try { if (fitRO) fitRO.disconnect(); } catch (e) { /* لا شيء */ }
         try { root.innerHTML = ""; } catch (e) { /* لا شيء */ }
     }
     return { start: start, destroy: destroy, state: S, cfg: cfg };
@@ -9680,6 +10553,7 @@ const RR3_CSS = `
 .rr3-lvc:focus-visible{outline:4px solid #fde047;outline-offset:2px}
 .rr3-lvi{font-size:32px}.rr3-lvt{flex:1;display:flex;flex-direction:column;gap:2px}.rr3-lvt b{font-size:18px}.rr3-lvt small{font-size:13px;color:#cbd5e1}
 .rr3-lvs{font-size:16px;white-space:nowrap}
+.rr3-lvt small.rr3-pl{color:#fde68a;font-weight:800;font-size:14px}
 @media (orientation:landscape) and (max-height:520px){.rr3-lvg{display:grid;grid-template-columns:1fr 1fr}.rr3-lv{top:calc(max(8px,env(safe-area-inset-top)) + 58px)}.rr3-lvc{min-height:56px}}
 @media (orientation:landscape) and (min-width:700px){.rr3-target{left:auto;right:24px;transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 84px)}.rr3-dots{display:none}}
 `;
@@ -9787,11 +10661,11 @@ function rr3Distractors(letter, tier, seed, n, sd, ri) {
 
 /* ---------- مستويات الحرف: كلها مفتوحة بلا أقفال؛ كل مستوى يختلف في المضمار والبيئة وشكل التحدي وتوزيع الحروف ---------- */
 const RR3_LEVELS = [
-    { id: "see1", icon: "🔎", title: "تعرّف على الحرف", desc: "اختر الحرف المطلوب من حروف مختلفة تمامًا في الشكل", layout: "road", track: "calm", theme: 0, tier: 0, rounds: 3, targets: 1, legacy: true },
-    { id: "drive", icon: "🏎️", title: "التقط الحرف وأنت تقود", desc: "صفوف متتالية بلا توقف: التقط الحرف المطلوب أثناء السير", layout: "road", track: "rolling", theme: 1, tier: "F", rounds: 5, targets: 1, flow: "drive", mode: "free" },
-    { id: "gates", icon: "🚦", title: "بوابات الحروف", desc: "ارفع نظرك إلى اللافتات ومرّ من تحت الحرف المطلوب", layout: "gate", track: "city", theme: 2, tier: "F", rounds: 4, targets: 1 },
-    { id: "twins", icon: "🎯", title: "طابق الحرف: مرة أو مرتين", desc: "قد يظهر الحرف المطلوب في حارتين، والحرف المختلف لا يمنح نجمة", layout: "road", track: "winding", theme: 3, tier: "F", rounds: 4, targets: 2 },
-    { id: "similar", icon: "🧩", title: "ميّز المتشابهات", desc: "مستوى متقدم بحروف قريبة الشكل (يختاره المعلم)", layout: "mixed", track: "alpine", theme: 0, tier: 2, rounds: 4, targets: 1 }
+    { id: "see1", icon: "🔎", title: "تعرّف على الحرف", desc: "اختر الحرف المطلوب من حروف مختلفة تمامًا في الشكل", layout: "road", track: "souq", theme: 4, place: "🕌 جدة التاريخية", tier: 0, rounds: 3, targets: 1, legacy: true },
+    { id: "drive", icon: "🏎️", title: "التقط الحرف وأنت تقود", desc: "صفوف متتالية بلا توقف: التقط الحرف المطلوب أثناء السير", layout: "road", track: "rolling", theme: 5, place: "🌊 كورنيش جدة", tier: "F", rounds: 5, targets: 1, flow: "drive", mode: "free" },
+    { id: "gates", icon: "🚦", title: "بوابات الحروف", desc: "ارفع نظرك إلى اللافتات ومرّ من تحت الحرف المطلوب", layout: "gate", track: "city", theme: 6, place: "🏪 الشارع التجاري", tier: "F", rounds: 4, targets: 1 },
+    { id: "twins", icon: "🎯", title: "طابق الحرف: مرة أو مرتين", desc: "قد يظهر الحرف المطلوب في حارتين، والحرف المختلف لا يمنح نجمة", layout: "road", track: "winding", theme: 7, place: "🏜️ الطريق الصحراوي", tier: "F", rounds: 4, targets: 2 },
+    { id: "similar", icon: "🧩", title: "ميّز المتشابهات", desc: "مستوى متقدم بحروف قريبة الشكل (يختاره المعلم)", layout: "mixed", track: "alpine", theme: 8, place: "🌄 الطريق الصحراوي عند الغروب", tier: 2, rounds: 4, targets: 1 }
 ];
 function rr3Level(id) { for (let i = 0; i < RR3_LEVELS.length; i++) if (RR3_LEVELS[i].id === id) return RR3_LEVELS[i]; return RR3_LEVELS[0]; }
 
@@ -9854,7 +10728,7 @@ function rr3LvInfo(letter, stage) {
     const p = raceLoadProgress(), en = raceLetterEntry(p, letter), legacy = en.stages[stage.id];
     return RR3_LEVELS.map(function (lv) {
         const rec = lv.legacy ? (function () { const r = rr3LvRec(letter, lv.id); const lg = legacy || {}; return { done: !!(r.done || lg.done), stars: Math.max(r.stars || 0, lg.stars || 0) }; })() : rr3LvRec(letter, lv.id);
-        return { id: lv.id, icon: lv.icon, title: lv.title, desc: lv.desc, done: !!rec.done, stars: rec.stars || 0 };
+        return { id: lv.id, icon: lv.icon, title: lv.title, desc: lv.desc, place: lv.place || "", done: !!rec.done, stars: rec.stars || 0 };
     });
 }
 
@@ -9892,9 +10766,9 @@ function rr3Launch(letter, stageIdx, stages, stage, levelId, showPicker) {
         let reduced = false;
         try { reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { /* لا شيء */ }
         const hooks = {
-            say: function (text, done) {
+            say: function (text, done, mode) {
                 if (typeof EduAudio === "undefined") { done(); return; }
-                EduAudio.play(text, { mode: "interrupt", done: done });
+                EduAudio.play(text, { mode: mode === "queue" ? "queue" : "interrupt", done: done });
             },
             award: function (i) {
                 const key = "r3:" + runId + ":" + i;
@@ -9948,7 +10822,7 @@ function rr3Launch(letter, stageIdx, stages, stage, levelId, showPicker) {
             }
         };
         const eng = rr3CreateEngine({
-            root: root, letter: letter, stageIcon: lv.icon, stageTitle: lv.title,
+            root: root, letter: letter, stageIcon: lv.icon, stageTitle: lv.title, placeName: lv.place || "",
             rounds: built.map(function (r) { return { correctShape: r.correctShape, options: r.options.slice(), correctIndex: r.correctIndex }; }),
             theme: lv.theme, track: lv.track, flow: lv.flow || "", mode: mode, reduced: reduced,
             promptText: letterWithFatha(letter), phrases: RACE_SUCCESS_PHRASES, hooks: hooks,
