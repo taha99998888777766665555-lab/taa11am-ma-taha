@@ -30,15 +30,693 @@
     href="style.css"
 >
 
+<style id="hm-home-styles">
+/* =========================================================
+   ✨ الهوية الجديدة — الرأس والصفحة الرئيسية فقط
+   ---------------------------------------------------------
+   - كل القواعد هنا محصورة في: header.hm-header و #home و body
+     (الخلفية فقط). لا تمسّ محتوى الأقسام الداخلية.
+   - للتراجع الكامل: احذف هذه الكتلة وأعد كتلة الرأس/الرئيسية
+     في index.html.
+   - لا حركة مستمرة؛ استجابة الضغط ١٥٠ms فقط، وتُلغى في
+     الوضع الهادئ وعند تفضيل تقليل الحركة.
+========================================================= */
+
+body {
+    --hm-bg: #f6f2ea;
+    --hm-surface: #ffffff;
+    --hm-ink: #18214d;
+    --hm-ink-2: #4b5375;
+    --hm-line: #e4dccd;
+    --hm-shadow: 0 1px 0 rgba(24, 33, 77, 0.05), 0 12px 26px -16px rgba(24, 33, 77, 0.38);
+    --hm-font: system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", "Geeza Pro", Tahoma, Arial, sans-serif;
+
+    /* قيم افتراضية (تُعاد تعريفها لكل مجموعة) */
+    --hm-accent: #3f4a6e;
+    --hm-soft: #dde1ec;
+    --hm-tint: #f1f3f8;
+
+    min-height: 100vh;
+    background:
+        radial-gradient(900px 520px at 100% 0%, #fff6e4 0%, rgba(255, 246, 228, 0) 70%),
+        var(--hm-bg);
+}
+
+html {
+    background: #f6f2ea;
+}
+
+/* ---------- رأس التطبيق ---------- */
+
+header.hm-header {
+    position: relative;
+    padding: 12px 16px 18px;
+    color: #ffffff;
+    text-align: start;
+    font-family: var(--hm-font);
+    background: linear-gradient(160deg, #1b2559 0%, #263683 100%);
+    border-radius: 0 0 28px 28px;
+    box-shadow: 0 14px 30px -20px rgba(24, 33, 77, 0.7);
+}
+
+/* شريط الهوية: ألوان المجموعات الأربع أسفل الرأس */
+header.hm-header::after {
+    content: "";
+    position: absolute;
+    inset-inline: 28px;
+    bottom: 0;
+    height: 5px;
+    border-radius: 5px 5px 0 0;
+    background: linear-gradient(to left, #e8642f 0 25%, #2f74e6 25% 50%, #14966c 50% 75%, #7b52e6 75% 100%);
+}
+
+.hm-header__inner {
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+}
+
+.hm-brand {
+    text-align: center;
+    min-width: 0;
+}
+
+.hm-header h1 {
+    margin: 0;
+    font-size: clamp(22px, 2.3vw, 30px);
+    font-weight: 800;
+    line-height: 1.25;
+    color: #ffffff;
+}
+
+.hm-header p {
+    margin: 2px 0 0;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.hm-header .profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 50px;
+    margin: 0;
+    padding: 5px 6px 5px 16px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+}
+
+.hm-header .profile-chip:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: none;
+}
+
+.hm-header #headerAvatarDisplay {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    font-size: 23px;
+    line-height: 1;
+    background: #ffffff;
+    border-radius: 50%;
+}
+
+.hm-header .stats {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin: 0;
+}
+
+.hm-header .stats .hm-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 46px;
+    padding: 5px 14px 5px 6px;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.hm-header .stats .hm-stat__label {
+    padding: 0 !important;
+    background: none !important;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.hm-stat__icon {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    border-radius: 50%;
+}
+
+.hm-stat--stars .hm-stat__icon {
+    color: #6b4300;
+    background: #ffcb4f;
+}
+
+.hm-stat--level .hm-stat__icon {
+    color: #0b4d3a;
+    background: #82e6c7;
+}
+
+.hm-header .stats b {
+    font-size: 19px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+/* ---------- الصفحة الرئيسية ---------- */
+
+#home {
+    font-family: var(--hm-font);
+}
+
+.hm-title {
+    margin: 26px 4px 18px;
+    font-size: clamp(22px, 2.4vw, 32px);
+    font-weight: 800;
+    color: var(--hm-ink);
+}
+
+#home .menu.hm-groups {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 26px;
+    margin-top: 0;
+}
+
+.hm-group--lang {
+    --hm-accent: #c2410c;
+    --hm-soft: #ffd5c2;
+    --hm-tint: #fff0e8;
+}
+
+.hm-group--math {
+    --hm-accent: #1d5bd6;
+    --hm-soft: #cadcff;
+    --hm-tint: #ebf2ff;
+}
+
+.hm-group--deen {
+    --hm-accent: #0d7656;
+    --hm-soft: #bce9d6;
+    --hm-tint: #e5f6ee;
+}
+
+.hm-group--play {
+    --hm-accent: #6a3dd6;
+    --hm-soft: #dacdff;
+    --hm-tint: #f1ecff;
+}
+
+.hm-group--tools {
+    --hm-accent: #3f4a6e;
+    --hm-soft: #dde1ec;
+    --hm-tint: #eef0f6;
+}
+
+.hm-group__head {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px;
+    padding: 7px 16px 7px 14px;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--hm-ink);
+    background: var(--hm-surface);
+    border: 1px solid var(--hm-line);
+    border-radius: 999px;
+}
+
+.hm-group__mark {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    background: var(--hm-accent);
+}
+
+.hm-group__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+/* البطاقة */
+
+#home .hm-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 172px;
+    padding: 22px 12px 18px;
+    font-family: inherit;
+    font-size: 20px;
+    color: var(--hm-ink);
+    text-align: center;
+    background: var(--hm-surface);
+    border: 2px solid var(--hm-line);
+    border-radius: 26px;
+    box-shadow: var(--hm-shadow);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#home .hm-tile span {
+    margin-top: 0;
+}
+
+#home .hm-tile .hm-plate {
+    display: grid;
+}
+
+.hm-plate {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 86px;
+    height: 86px;
+    color: var(--hm-accent);
+    background: var(--hm-tint);
+}
+
+.hm-plate svg {
+    width: 62%;
+    height: 62%;
+}
+
+/* شكل اللوحة يختلف لكل مجموعة — تمييز لا يعتمد على اللون وحده */
+.hm-group--lang .hm-plate,
+.hm-group--lang .hm-group__mark {
+    border-radius: 30%;
+}
+
+.hm-group--math .hm-plate,
+.hm-group--math .hm-group__mark {
+    border-radius: 50%;
+}
+
+.hm-group--deen .hm-plate,
+.hm-group--deen .hm-group__mark {
+    clip-path: polygon(50% 0%, 35.4% 14.6%, 14.6% 14.6%, 14.6% 35.4%, 0% 50%, 14.6% 64.6%, 14.6% 85.4%, 35.4% 85.4%, 50% 100%, 64.6% 85.4%, 85.4% 85.4%, 85.4% 64.6%, 100% 50%, 85.4% 35.4%, 85.4% 14.6%, 64.6% 14.6%);
+}
+
+.hm-group--deen .hm-plate svg {
+    width: 54%;
+    height: 54%;
+}
+
+.hm-group--play .hm-plate,
+.hm-group--play .hm-group__mark {
+    border-radius: 44% 56% 52% 48% / 50% 44% 56% 50%;
+}
+
+.hm-group--tools .hm-plate,
+.hm-group--tools .hm-group__mark {
+    border-radius: 16px;
+}
+
+.hm-group--tools .hm-group__mark {
+    border-radius: 4px;
+}
+
+#home .hm-tile .hm-tile__title {
+    display: block;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--hm-ink);
+}
+
+.hm-tile__go {
+    position: absolute;
+    top: 12px;
+    inset-inline-end: 12px;
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+    color: var(--hm-accent);
+    background: var(--hm-tint);
+    border-radius: 50%;
+}
+
+/* التفاعل */
+
+@media (hover: hover) {
+    #home .hm-tile:hover {
+        border-color: var(--hm-soft);
+        transform: translateY(-2px);
+    }
+}
+
+#home .hm-tile:active {
+    transform: scale(0.97);
+    background: var(--hm-tint);
+    border-color: var(--hm-accent);
+    box-shadow: none;
+}
+
+#home .hm-tile:focus-visible {
+    outline: 4px solid var(--hm-accent);
+    outline-offset: 3px;
+    border-radius: 26px;
+}
+
+/* أدواتي: بطاقات أصغر أفقية */
+
+#home .hm-group--tools .hm-tile {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 14px;
+    min-height: 92px;
+    padding: 14px 16px;
+    text-align: start;
+}
+
+.hm-group--tools .hm-plate {
+    width: 58px;
+    height: 58px;
+}
+
+#home .hm-group--tools .hm-tile__title {
+    font-size: 18px;
+}
+
+/* ---------- الجوال ---------- */
+
+@media (max-width: 599px) {
+
+    header.hm-header {
+        padding: 10px 12px 16px;
+        border-radius: 0 0 24px 24px;
+    }
+
+    header.hm-header::after {
+        inset-inline: 22px;
+        height: 4px;
+    }
+
+    .hm-header__inner {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "chip stats"
+            "brand brand";
+        gap: 10px 8px;
+    }
+
+    .hm-header .profile-chip { grid-area: chip; justify-self: start; min-height: 46px; font-size: 15px; max-width: 100%; }
+    .hm-header .stats { grid-area: stats; }
+    .hm-brand { grid-area: brand; }
+
+    .hm-header #headerAvatarDisplay { width: 36px; height: 36px; font-size: 21px; }
+    .hm-header h1 { font-size: 22px; }
+    .hm-header p { font-size: 14px; }
+
+    .hm-header .stats .hm-stat { padding: 4px 12px 4px 5px; min-height: 44px; }
+    .hm-stat__icon { width: 30px; height: 30px; }
+
+    .hm-title { margin: 20px 4px 14px; font-size: 22px; }
+
+    #home .menu.hm-groups { gap: 22px; }
+
+    .hm-group__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    #home .hm-tile { min-height: 150px; padding: 18px 10px 14px; gap: 12px; border-radius: 24px; }
+    .hm-plate { width: 72px; height: 72px; }
+    #home .hm-tile .hm-tile__title { font-size: 18px; }
+    .hm-tile__go { top: 10px; inset-inline-end: 10px; width: 26px; height: 26px; padding: 5px; }
+
+    /* أول بطاقة في كل مجموعة بعرض كامل (لا بطاقة يتيمة) */
+    #home .hm-group:not(.hm-group--tools) .hm-tile:first-child {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: flex-start;
+        min-height: 112px;
+        padding: 16px 18px;
+        gap: 16px;
+        text-align: start;
+    }
+
+    #home .hm-group:not(.hm-group--tools) .hm-tile:first-child .hm-tile__go {
+        position: static;
+        margin-inline-start: auto;
+        width: 34px;
+        height: 34px;
+        padding: 7px;
+    }
+
+    #home .hm-group:not(.hm-group--tools) .hm-tile:first-child .hm-tile__title { font-size: 20px; }
+
+    /* أدواتي على الجوال: ثلاث بطاقات عمودية مضغوطة */
+    .hm-group--tools .hm-group__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+
+    #home .hm-group--tools .hm-tile {
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+        min-height: 112px;
+        padding: 12px 6px;
+        text-align: center;
+    }
+
+    .hm-group--tools .hm-plate { width: 50px; height: 50px; }
+    #home .hm-group--tools .hm-tile__title { font-size: 15px; }
+}
+
+/* الشاشات الضيقة جدًا: إخفاء كلمتي "النجوم/المستوى" بصريًا فقط (تبقى مقروءة لقارئ الشاشة) */
+@media (max-width: 420px) {
+    .hm-header .stats .hm-stat__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+    .hm-header .stats .hm-stat { padding-inline-end: 12px; gap: 6px; }
+    .hm-header #headerNameDisplay { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* ---------- السبورة الذكية والحاسوب ---------- */
+
+@media (min-width: 1024px) {
+    #home {
+        width: min(1360px, calc(100vw - 64px));
+        margin-inline: calc((100% - min(1360px, calc(100vw - 64px))) / 2);
+    }
+
+    header.hm-header { padding: 14px 28px 20px; }
+}
+
+@media (min-width: 1200px) {
+    #home .menu.hm-groups {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px 34px;
+    }
+
+    .hm-group--tools { grid-column: 1 / -1; }
+
+    #home .hm-tile { min-height: 200px; gap: 16px; }
+    .hm-plate { width: 100px; height: 100px; }
+    #home .hm-tile .hm-tile__title { font-size: 23px; }
+    .hm-group__head { font-size: 19px; }
+    .hm-group--tools .hm-group__grid { max-width: 1000px; }
+}
+
+@media (min-width: 1600px) {
+    #home .hm-tile { min-height: 230px; }
+    .hm-plate { width: 116px; height: 116px; }
+    #home .hm-tile .hm-tile__title { font-size: 26px; }
+    #home .hm-group--tools .hm-tile__title { font-size: 20px; }
+    .hm-title { font-size: 34px; }
+}
+
+/* ---------- الوضع الليلي ---------- */
+
+html:has(body.dark-mode) {
+    background: #0e1222;
+}
+
+html body.dark-mode {
+    --hm-bg: #0e1222;
+    --hm-surface: #171d33;
+    --hm-ink: #eef1fb;
+    --hm-ink-2: #aeb5d0;
+    --hm-line: #2a3252;
+    --hm-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.8);
+    background:
+        radial-gradient(900px 520px at 100% 0%, #1b2347 0%, rgba(27, 35, 71, 0) 70%),
+        var(--hm-bg);
+}
+
+body.dark-mode header.hm-header {
+    background: linear-gradient(160deg, #10163a 0%, #1a2560 100%);
+}
+
+body.dark-mode .hm-group--lang { --hm-accent: #ff9a6b; --hm-soft: #6b3420; --hm-tint: #2a1c19; }
+body.dark-mode .hm-group--math { --hm-accent: #84b3ff; --hm-soft: #23407a; --hm-tint: #172443; }
+body.dark-mode .hm-group--deen { --hm-accent: #5fd8ac; --hm-soft: #1d5a45; --hm-tint: #14302a; }
+body.dark-mode .hm-group--play { --hm-accent: #bba0ff; --hm-soft: #4a3590; --hm-tint: #231d44; }
+body.dark-mode .hm-group--tools { --hm-accent: #c2c9e3; --hm-soft: #3d4668; --hm-tint: #222a45; }
+
+/* ---------- الوضع الهادئ ---------- */
+
+body.calm-mode #home .hm-tile:hover,
+body.calm-mode #home .hm-tile:active {
+    transform: none;
+}
+
+/* ---------- خلفيات المتجر ---------- */
+
+body.theme-space .hm-title { color: #ffffff; }
+
+/* ========== نهاية كتلة الهوية الجديدة ========== */
+</style>
+
 </head>
 
 <body>
 
 <!-- ==========================================
+     رسومات الواجهة (SVG مضمّنة — بلا ملفات خارجية، تعمل دون اتصال)
+========================================== -->
+
+<svg class="hm-sprite" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+<defs>
+    <symbol id="hm-i-letters" viewBox="0 0 48 48">
+        <rect x="5" y="13" width="21" height="24" rx="6" transform="rotate(-9 15.5 25)" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6"/>
+        <text x="15.5" y="31.5" transform="rotate(-9 15.5 25)" text-anchor="middle" font-size="15" font-weight="800" fill="currentColor" font-family="Tahoma, Arial, sans-serif">أ</text>
+        <rect x="21" y="9" width="22" height="26" rx="6" fill="var(--hm-surface)" stroke="currentColor" stroke-width="2.6"/>
+        <text x="32" y="28" text-anchor="middle" font-size="17" font-weight="800" fill="currentColor" font-family="Tahoma, Arial, sans-serif">ب</text>
+    </symbol>
+    <symbol id="hm-i-words" viewBox="0 0 48 48">
+        <rect x="7" y="6" width="34" height="36" rx="7" fill="var(--hm-surface)" stroke="currentColor" stroke-width="2.6"/>
+        <rect x="12" y="11" width="24" height="15" rx="4" fill="var(--hm-soft)"/>
+        <circle cx="30" cy="16" r="2.6" fill="currentColor"/>
+        <path d="M12.5 25.5 l6.5-6.5 5 5 3-3 8.5 4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M15 33h18M19 37.5h10" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="hm-i-numbers" viewBox="0 0 48 48">
+        <rect x="6" y="9" width="36" height="30" rx="8" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6"/>
+        <text x="24" y="31" text-anchor="middle" font-size="17" font-weight="800" fill="currentColor" font-family="Tahoma, Arial, sans-serif">١٢٣</text>
+    </symbol>
+    <symbol id="hm-i-writing" viewBox="0 0 48 48">
+        <g transform="rotate(-45 24 22)">
+            <rect x="8" y="17" width="26" height="10" rx="2.5" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6"/>
+            <path d="M34 17 l8 5 -8 5 z" fill="var(--hm-surface)" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+            <path d="M14 17v10" stroke="currentColor" stroke-width="2.6"/>
+        </g>
+        <path d="M7 41c4-4 7-4 10 0s6 4 10 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="hm-i-plus" viewBox="0 0 48 48">
+        <path d="M27 11v26M14 24h26" stroke="var(--hm-soft)" stroke-width="9" stroke-linecap="round"/>
+        <path d="M24 8v26M11 21h26" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="hm-i-minus" viewBox="0 0 48 48">
+        <path d="M14 27h26" stroke="var(--hm-soft)" stroke-width="9" stroke-linecap="round"/>
+        <path d="M11 24h26" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="hm-i-quran" viewBox="0 0 48 48">
+        <path d="M24 12c-5-3.5-11-4-17-2v20c6-2 12-1.5 17 2 5-3.5 11-4 17-2V10c-6-2-12-1.5-17 2z" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M24 12v20" stroke="currentColor" stroke-width="2.6"/>
+        <path d="M11 17h8M11 22h8M29 17h8M29 22h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+        <path d="M13 43l22-9M35 43l-22-9" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="hm-i-hadith" viewBox="0 0 48 48">
+        <path d="M24 5.5a3 3 0 1 0 2.6 4.5 3.4 3.4 0 1 1-2.6-4.5z" fill="currentColor"/>
+        <path d="M24 12v3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M11 37V28c0-7 6-12 13-13 7 1 13 6 13 13v9z" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M20.5 37v-6a3.5 3.5 0 0 1 7 0v6z" fill="currentColor"/>
+        <rect x="6" y="37" width="36" height="5.5" rx="2.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="hm-i-duas" viewBox="0 0 48 48">
+        <path d="M6 42V20a6 6 0 0 1 12 0v6h1.5a2.6 2.6 0 0 1 0 5.2H18V42z" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M42 42V20a6 6 0 0 0-12 0v6h-1.5a2.6 2.6 0 0 0 0 5.2H30V42z" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M10 20v-2.5M14 20v-2.5M34 20v-2.5M38 20v-2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+        <path d="M24 4l1.8 4.2L30 10l-4.2 1.8L24 16l-1.8-4.2L18 10l4.2-1.8z" fill="currentColor"/>
+    </symbol>
+    <symbol id="hm-i-trophy" viewBox="0 0 48 48">
+        <path d="M15 12h-5v3a6 6 0 0 0 6 6M33 12h5v3a6 6 0 0 1-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M15 8h18v11a9 9 0 0 1-18 0z" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M24 12.5l1.4 2.9 3.1.4-2.3 2.2.6 3.1-2.8-1.5-2.8 1.5.6-3.1-2.3-2.2 3.1-.4z" fill="currentColor"/>
+        <path d="M24 28v6" stroke="currentColor" stroke-width="3"/>
+        <rect x="15" y="34" width="18" height="7" rx="2.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="hm-i-teacher" viewBox="0 0 48 48">
+        <rect x="6" y="7" width="36" height="25" rx="4" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6"/>
+        <path d="M12 25l7-7 6 4 9-9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M17 32l-4 10M31 32l4 10" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="hm-i-games" viewBox="0 0 48 48">
+        <path d="M15 15h18a10 10 0 0 1 9.6 12.8l-1.7 5.8a5 5 0 0 1-8.6 1.8L29 32H19l-3.3 3.4a5 5 0 0 1-8.6-1.8l-1.7-5.8A10 10 0 0 1 15 15z" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M15.5 20.5v8M11.5 24.5h8" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+        <circle cx="31" cy="22.5" r="2.4" fill="currentColor"/>
+        <circle cx="35.5" cy="27" r="2.4" fill="currentColor"/>
+    </symbol>
+    <symbol id="hm-i-quest" viewBox="0 0 48 48">
+        <rect x="7" y="10" width="34" height="31" rx="6" fill="var(--hm-surface)" stroke="currentColor" stroke-width="2.6"/>
+        <path d="M7 16a6 6 0 0 1 6-6h22a6 6 0 0 1 6 6v3H7z" fill="currentColor"/>
+        <path d="M16 6v7M32 6v7" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M17 30l5 5 9-10" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="hm-i-profile" viewBox="0 0 48 48">
+        <circle cx="24" cy="17" r="8" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6"/>
+        <path d="M9 41c1.5-8.5 7.5-13 15-13s13.5 4.5 15 13z" fill="var(--hm-soft)" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="hm-i-settings" viewBox="0 0 48 48">
+        <path d="M8 13h32M8 24h32M8 35h32" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+        <circle cx="30" cy="13" r="5" fill="var(--hm-surface)" stroke="currentColor" stroke-width="2.6"/>
+        <circle cx="17" cy="24" r="5" fill="var(--hm-surface)" stroke="currentColor" stroke-width="2.6"/>
+        <circle cx="27" cy="35" r="5" fill="var(--hm-surface)" stroke="currentColor" stroke-width="2.6"/>
+    </symbol>
+    <symbol id="hm-i-star" viewBox="0 0 24 24">
+        <path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="hm-i-level" viewBox="0 0 24 24">
+        <rect x="3.5" y="13" width="4.5" height="7.5" rx="1.4" fill="currentColor" opacity=".55"/>
+        <rect x="9.75" y="8.5" width="4.5" height="12" rx="1.4" fill="currentColor" opacity=".8"/>
+        <rect x="16" y="3.5" width="4.5" height="17" rx="1.4" fill="currentColor"/>
+    </symbol>
+    <symbol id="hm-i-go" viewBox="0 0 24 24">
+        <path d="M14.5 6.5L9 12l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+</defs>
+</svg>
+
+<!-- ==========================================
      رأس التطبيق
 ========================================== -->
 
-<header>
+<header class="hm-header">
+
+<div class="hm-header__inner">
 
 <button
     class="profile-chip"
@@ -50,25 +728,26 @@
     <span id="headerNameDisplay">أهلًا بك!</span>
 </button>
 
-<h1>🌟 تعلم مع أ/طه محمد 🌟</h1>
-
-<p>
-    نتعلم معًا بطريقة ممتعة 😊
-</p>
-
+<div class="hm-brand">
+    <h1>تعلم مع أ/طه محمد</h1>
+    <p>نتعلم معًا بطريقة ممتعة</p>
+</div>
 
 <div class="stats">
 
-    <span>
-        ⭐ النجوم:
+    <span class="hm-stat hm-stat--stars">
+        <svg class="hm-stat__icon" width="22" height="22" aria-hidden="true" focusable="false"><use href="#hm-i-star"/></svg>
+        <span class="hm-stat__label">النجوم:</span>
         <b id="stars">٠</b>
     </span>
 
-
-    <span>
-        🎯 المستوى:
+    <span class="hm-stat hm-stat--level">
+        <svg class="hm-stat__icon" width="22" height="22" aria-hidden="true" focusable="false"><use href="#hm-i-level"/></svg>
+        <span class="hm-stat__label">المستوى:</span>
         <b id="level">١</b>
     </span>
+
+</div>
 
 </div>
 
@@ -85,133 +764,139 @@
     class="screen active"
 >
 
-<h2>
-    ماذا تريد أن تتعلم؟ 😊
+<h2 class="hm-title">
+    ماذا تريد أن تتعلم؟
 </h2>
 
 
-<div class="menu">
+<div class="menu hm-groups">
 
+    <!-- ===== اللغة ===== -->
+    <div class="hm-group hm-group--lang" role="group" aria-labelledby="hmGroupLang">
+        <h3 class="hm-group__head" id="hmGroupLang"><span class="hm-group__mark" aria-hidden="true"></span>اللغة العربية</h3>
+        <div class="hm-group__grid">
 
-    <button
-        onclick="showScreen('letters')"
-    >
-        🔤
-        <span>الحروف</span>
-    </button>
+            <button class="hm-tile" onclick="showScreen('letters')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-letters"/></svg></span>
+                <span class="hm-tile__title">الحروف</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
+            <button class="hm-tile" onclick="showScreen('words')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-words"/></svg></span>
+                <span class="hm-tile__title">الكلمات</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
-    <button
-        onclick="showScreen('words')"
-    >
-        📖
-        <span>الكلمات</span>
-    </button>
+            <button class="hm-tile" onclick="showScreen('writing')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-writing"/></svg></span>
+                <span class="hm-tile__title">الكتابة</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
+        </div>
+    </div>
 
-    <button
-        onclick="showScreen('numbers')"
-    >
-        🔢
-        <span>الأرقام</span>
-    </button>
+    <!-- ===== الرياضيات ===== -->
+    <div class="hm-group hm-group--math" role="group" aria-labelledby="hmGroupMath">
+        <h3 class="hm-group__head" id="hmGroupMath"><span class="hm-group__mark" aria-hidden="true"></span>الرياضيات</h3>
+        <div class="hm-group__grid">
 
+            <button class="hm-tile" onclick="showScreen('numbers')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-numbers"/></svg></span>
+                <span class="hm-tile__title">الأرقام</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
-    <button
-        onclick="showScreen('writing')"
-    >
-        ✏️
-        <span>الكتابة</span>
-    </button>
+            <button class="hm-tile" onclick="showScreen('addition')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-plus"/></svg></span>
+                <span class="hm-tile__title">الجمع</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
+            <button class="hm-tile" onclick="showScreen('subtraction')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-minus"/></svg></span>
+                <span class="hm-tile__title">الطرح</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
-    <button
-        onclick="showScreen('addition')"
-    >
-        ➕
-        <span>الجمع</span>
-    </button>
+        </div>
+    </div>
 
+    <!-- ===== ديني ===== -->
+    <div class="hm-group hm-group--deen" role="group" aria-labelledby="hmGroupDeen">
+        <h3 class="hm-group__head" id="hmGroupDeen"><span class="hm-group__mark" aria-hidden="true"></span>ديني</h3>
+        <div class="hm-group__grid">
 
-    <button
-        onclick="showScreen('subtraction')"
-    >
-        ➖
-        <span>الطرح</span>
-    </button>
+            <button class="hm-tile" onclick="showScreen('quran')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-quran"/></svg></span>
+                <span class="hm-tile__title">القرآن الكريم</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
+            <button class="hm-tile" onclick="showScreen('hadith')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-hadith"/></svg></span>
+                <span class="hm-tile__title">الحديث الشريف</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
-    <button
-        onclick="showScreen('quran')"
-    >
-        📖
-        <span>القرآن الكريم</span>
-    </button>
+            <button class="hm-tile" onclick="showScreen('duas')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-duas"/></svg></span>
+                <span class="hm-tile__title">الأدعية</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
+        </div>
+    </div>
 
-    <button
-        onclick="showScreen('hadith')"
-    >
-        🕌
-        <span>الحديث الشريف</span>
-    </button>
+    <!-- ===== العب واكسب ===== -->
+    <div class="hm-group hm-group--play" role="group" aria-labelledby="hmGroupPlay">
+        <h3 class="hm-group__head" id="hmGroupPlay"><span class="hm-group__mark" aria-hidden="true"></span>العب واكسب</h3>
+        <div class="hm-group__grid">
 
+            <button class="hm-tile" onclick="showScreen('games')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-games"/></svg></span>
+                <span class="hm-tile__title">الألعاب التعليمية</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
-    <button
-        onclick="showScreen('duas')"
-    >
-        🤲
-        <span>الأدعية</span>
-    </button>
+            <button class="hm-tile" onclick="showScreen('dailyQuest')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-quest"/></svg></span>
+                <span class="hm-tile__title">مهمة اليوم</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
+            <button class="hm-tile" onclick="showScreen('rewards')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-trophy"/></svg></span>
+                <span class="hm-tile__title">مكافآتي</span>
+                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            </button>
 
-    <button
-        onclick="showScreen('rewards')"
-    >
-        🏆
-        <span>مكافآتي</span>
-    </button>
+        </div>
+    </div>
 
+    <!-- ===== أدواتي ===== -->
+    <div class="hm-group hm-group--tools" role="group" aria-labelledby="hmGroupTools">
+        <h3 class="hm-group__head" id="hmGroupTools"><span class="hm-group__mark" aria-hidden="true"></span>أدواتي</h3>
+        <div class="hm-group__grid">
 
-    <button
-        onclick="showScreen('teacher')"
-    >
-        👨‍🏫
-        <span>المعلم</span>
-    </button>
+            <button class="hm-tile" onclick="openProfileScreen()">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-profile"/></svg></span>
+                <span class="hm-tile__title">ملفي الشخصي</span>
+            </button>
 
+            <button class="hm-tile" onclick="showScreen('teacher')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-teacher"/></svg></span>
+                <span class="hm-tile__title">المعلم</span>
+            </button>
 
-    <button
-        onclick="showScreen('games')"
-    >
-        🎮
-        <span>الألعاب التعليمية</span>
-    </button>
+            <button class="hm-tile" onclick="showScreen('settings')">
+                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-settings"/></svg></span>
+                <span class="hm-tile__title">الإعدادات</span>
+            </button>
 
-
-    <button
-        onclick="showScreen('dailyQuest')"
-    >
-        🗓️
-        <span>مهمة اليوم</span>
-    </button>
-
-
-    <button
-        onclick="openProfileScreen()"
-    >
-        👤
-        <span>ملفي الشخصي</span>
-    </button>
-
-
-    <button
-        onclick="showScreen('settings')"
-    >
-        ⚙️
-        <span>الإعدادات</span>
-    </button>
-
+        </div>
+    </div>
 
 </div>
 
