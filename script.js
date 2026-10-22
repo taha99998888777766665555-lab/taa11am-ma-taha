@@ -38241,3 +38241,343 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =========================================================
    🔚 نهاية طبقة واجهة قسم الطرح
 ========================================================= */
+
+
+/* ADD-RACE-BEGIN */
+/* =========================================================
+   🏎️ سباق الجمع — النموذج الأول: المستوى ١ «جمع بالصور» فقط
+   كتلة مستقلة بالكامل: لا تعدّل محرك السباق (rr3CreateEngine) ولا قسم الجمع
+   الأصلي ولا تقدّمه. تستعمل المحرك كما هو عبر مضيف خاص بها، وتستدعي
+   مولّد مهام الجمع الموجود (دالة بلا آثار جانبية) دون تغيير.
+   • تقدّم السباق في مفتاح مستقل: taha_addition_race_v1
+   • المكافآت: +٢ للإجابة الصحيحة من أول مرة التي تتجاوز أعلى عدد سبق الدفع عنه،
+     و+٥ لإكمال المستوى مرة واحدة عند ٨ من ١٠ من أول مرة. لا أوقات ضاغطة ولا عقوبات.
+========================================================= */
+
+const AR_SCREEN = "addRace3D";
+const AR_CSS_ID = "addrace-css";
+const AR_PROGRESS_KEY = "taha_addition_race_v1";
+const AR_PROGRESS_CORRUPT_KEY = "taha_addition_race_v1_corrupt_backup";
+const AR_ROUNDS = 10;
+const AR_PASS = 8;
+const AR_STARS_PER_ANSWER = 2;
+const AR_STARS_COMPLETION = 5;
+const AR_PROMPT = "كم مجموع هذه الصور؟";
+const AR_PICK_MSG = "اختر الناتج الصحيح";
+/* إعداد كل مستوى في السباق: idx = موضعه في ADDITION_LEVELS؛ يُقرأ منه نمط السؤال فقط */
+const AR_LEVELS = {
+    1: { idx: 0, mode: "picture-choice", prompt: AR_PROMPT, place: "☀️ حلبة النهار", icon: "🖼️", label: "جمع بالصور" },
+    2: { idx: 1, mode: "choice-result", prompt: "يساوي كم؟", place: "🍏 حلبة التفاح", icon: "🍎", label: "جمع ضمن ٥" }
+};
+
+const AR_CSS = `
+#addRace3D{position:fixed;inset:0;z-index:900;display:none;background:#0b1020;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+#addRace3D.active{display:block}
+#addRace3D .rr3-target,#addRace3D [data-a="levels"],#addRace3D [data-a="teach"]{display:none!important}
+.ar-bar{position:absolute;left:50%;transform:translateX(-50%);top:calc(max(8px,env(safe-area-inset-top)) + 82px);z-index:2;display:flex;flex-direction:column;align-items:center;gap:0;background:rgba(255,255,255,.96);color:#1e293b;border-radius:22px;padding:4px 16px 2px;box-shadow:0 4px 14px rgba(2,6,23,.35);max-width:94vw;pointer-events:none}
+.ar-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.ar-grp{display:flex;gap:2px;font-size:clamp(26px,6.4vmin,44px);line-height:1.25}
+.ar-plus{font-size:clamp(26px,6.4vmin,44px);font-weight:900;color:#475569;line-height:1.25}
+.ar-eq{font-size:clamp(34px,8vmin,56px);font-weight:900;color:#1e293b;line-height:1.2;direction:ltr;display:flex;gap:12px;align-items:center;justify-content:center}
+.ar-eq .ar-op{color:#475569}
+.ar-eq .ar-qm{color:#2563eb}
+.ar-q{font-size:14px;font-weight:800;color:#475569;line-height:1.5}
+@media (orientation:landscape) and (max-height:520px){.ar-bar{left:auto;right:max(16px,env(safe-area-inset-right));transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 64px)}.ar-grp,.ar-plus{font-size:clamp(22px,7vmin,34px)}.ar-eq{font-size:clamp(28px,9vmin,40px)}}
+@media (orientation:landscape) and (min-width:700px){.ar-bar{left:auto;right:24px;transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 84px)}}
+.ar-entry{margin:10px 0 4px}
+.ar-entry-btn{display:flex;align-items:center;gap:12px;width:100%;min-height:72px;border-radius:20px;border:3px solid #1d4ed8;background:linear-gradient(#2563eb,#1d4ed8);color:#fff;font-family:inherit;text-align:right;padding:8px 16px;cursor:pointer;touch-action:manipulation}
+.ar-entry-btn:focus-visible{outline:4px solid #fde047;outline-offset:2px}
+.ar-entry-ico{font-size:38px}
+.ar-entry-txt{display:flex;flex-direction:column;gap:2px}
+.ar-entry-txt b{font-size:22px}
+.ar-entry-txt small{font-size:14px;opacity:.9}
+`;
+
+(function arInjectCss() {
+    try {
+        if (document.getElementById(AR_CSS_ID)) return;
+        const s = document.createElement("style");
+        s.id = AR_CSS_ID;
+        s.textContent = AR_CSS;
+        document.head.appendChild(s);
+    } catch (e) { /* لا شيء */ }
+})();
+
+/* ---------- تقدّم السباق المستقل ---------- */
+
+function arClampInt(v, hi) {
+    const n = Math.floor(Number(v));
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(hi, n);
+}
+
+function arSanitize(raw) {
+    const out = { v: 1, levels: {} };
+    if (!raw || typeof raw !== "object" || !raw.levels || typeof raw.levels !== "object") return out;
+    Object.keys(raw.levels).forEach(k => {
+        const e = raw.levels[k];
+        if (!e || typeof e !== "object") return;
+        out.levels[k] = {
+            best: arClampInt(e.best, AR_ROUNDS),
+            paid: arClampInt(e.paid, AR_ROUNDS),
+            rewarded: e.rewarded === true,
+            plays: arClampInt(e.plays, 100000)
+        };
+    });
+    return out;
+}
+
+function arLoad() {
+    let raw = null;
+    try { raw = localStorage.getItem(AR_PROGRESS_KEY); } catch (e) { return { v: 1, levels: {} }; }
+    if (!raw) return { v: 1, levels: {} };
+    try {
+        return arSanitize(JSON.parse(raw));
+    } catch (e) {
+        try { localStorage.setItem(AR_PROGRESS_CORRUPT_KEY, String(raw).slice(0, 4000)); } catch (e2) { /* لا شيء */ }
+        return { v: 1, levels: {} };
+    }
+}
+
+/* يعيد true فقط إن نجح الحفظ فعلًا؛ لا تُمنح نجوم أبدًا قبل نجاح الحفظ */
+function arSave(p) {
+    try {
+        localStorage.setItem(AR_PROGRESS_KEY, JSON.stringify(p));
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function arRec(p, key) {
+    const k = String(key);
+    if (!p.levels[k]) p.levels[k] = { best: 0, paid: 0, rewarded: false, plays: 0 };
+    return p.levels[k];
+}
+
+/* ---------- الجلسة الحالية ---------- */
+
+const AR = { eng: null, root: null, run: null, bar: null, tick: null, timers: [], shown: -1, fails: 0, lv: 1 };
+
+function arEnsureScreen() {
+    /* نفس نمط المحرك لتنسيق الشاشة (يُحقن مرة واحدة بالمعرّف نفسه) */
+    if (typeof RR3_CSS_ID !== "undefined" && typeof RR3_CSS !== "undefined" && !document.getElementById(RR3_CSS_ID)) {
+        const s = document.createElement("style");
+        s.id = RR3_CSS_ID;
+        s.textContent = RR3_CSS;
+        document.head.appendChild(s);
+    }
+    let el = document.getElementById(AR_SCREEN);
+    if (!el) {
+        const add = document.getElementById("addition");
+        const host = (add && add.parentNode) || document.body;
+        el = document.createElement("section");
+        el.id = AR_SCREEN;
+        el.className = "screen";
+        host.appendChild(el);
+    }
+    return el;
+}
+
+function arTeardown() {
+    if (AR.tick) { clearInterval(AR.tick); AR.tick = null; }
+    AR.timers.forEach(clearTimeout);
+    AR.timers = [];
+    const eng = AR.eng;
+    AR.eng = null;
+    AR.run = null;
+    AR.bar = null;
+    AR.shown = -1;
+    if (eng) { try { eng.destroy(); } catch (e) { /* لا شيء */ } }
+}
+
+function arExit() {
+    arTeardown();
+    try { showScreen("addition"); } catch (e) { /* لا شيء */ }
+}
+
+/* المستوى ٢: الخيارات الثلاثة كلها بين ١ و٥ (الصحيح + خطآن مختلفان، الأقرب للصحيح أولًا) */
+function arLevel2Choices(sum) {
+    const near = [sum - 1, sum + 1, sum - 2, sum + 2].filter(v => v >= 1 && v <= 5 && v !== sum);
+    const rest = [1, 2, 3, 4, 5].filter(v => v !== sum && near.indexOf(v) < 0);
+    const wrong = shuffle(near.slice(0, 2).length === 2 && near.length >= 2 ? near : near.concat(shuffle(rest))).slice(0, 2);
+    return shuffle([sum, wrong[0], wrong[1]]);
+}
+
+/* جولات المستوى ١: المهام من مولّد الجمع الموجود (١٠ مهام، مجاميع ٢–٥)، والخيارات ٣ بوابات */
+function arBuildRun(lv) {
+    const cfg = AR_LEVELS[lv];
+    if (!cfg) throw new Error("ar-level-unknown");
+    const level = ADDITION_LEVELS[cfg.idx];
+    if (!level || level.mode !== cfg.mode) throw new Error("ar-level-mismatch");
+    let tasks = null, rounds = null;
+    for (let tries = 0; tries < 5 && !rounds; tries++) {
+        const t = generateAdditionTasksForLevel(level);
+        if (!t || t.length !== AR_ROUNDS) continue;
+        const r = t.map(task => {
+            const choices = lv === 2 ? arLevel2Choices(task.correct) : task.choices;
+            const options = choices.map(c => arabicNumber(c));
+            return { options: options, correctShape: arabicNumber(task.correct), correctIndex: choices.indexOf(task.correct) };
+        });
+        let ok = r.every(x => x.options.length === 3 && new Set(x.options).size === 3 && x.correctIndex >= 0);
+        if (ok && lv === 2) ok = t.every((x, i) => { const ch = r[i].options.map(o => o.split("").reduce((n, d) => n * 10 + (d.charCodeAt(0) - 0x660), 0)); return ch.every(v => v >= 1 && v <= 5) && ch.filter(v => v === x.correct).length === 1; });
+        /* المستوى ٢: المجموع لا يتجاوز ٥ والأعداد موجبة */
+        if (ok && lv === 2) ok = t.every(x => x.a >= 1 && x.b >= 1 && x.a + x.b <= 5 && x.correct === x.a + x.b);
+        if (ok) { tasks = t; rounds = r; }
+    }
+    if (!rounds) throw new Error("ar-rounds-invalid");
+    return { lv: lv, level: level, tasks: tasks, rounds: rounds, firstTry: 0, settled: new Set(), starsEarned: 0, finished: false };
+}
+
+function arRenderBar(idx) {
+    const run = AR.run, bar = AR.bar;
+    if (!bar || !run) return;
+    AR.shown = idx;
+    const t = run.tasks[idx];
+    if (!t) { bar.style.display = "none"; return; }
+    bar.style.display = "";
+    if (run.lv === 2) {
+        /* المستوى ٢: معادلة كبيرة بالأرقام الهندية، بلا صور */
+        bar.innerHTML = '<div class="ar-eq" aria-hidden="true"><span>' + arabicNumber(t.a) + '</span><span class="ar-op">+</span><span>' + arabicNumber(t.b) + '</span><span class="ar-op">=</span><span class="ar-qm">؟</span></div><span class="ar-q">كم الناتج؟</span>';
+        bar.setAttribute("role", "img");
+        bar.setAttribute("aria-label", arabicNumber(t.a) + " زائد " + arabicNumber(t.b) + " يساوي كم؟");
+        return;
+    }
+    const grp = function (n) {
+        let h = '<span class="ar-grp" aria-hidden="true">';
+        for (let i = 0; i < n; i++) h += '<span class="ar-it">' + t.emoji + "</span>";
+        return h + "</span>";
+    };
+    bar.innerHTML = '<div class="ar-row">' + grp(t.a) + '<span class="ar-plus" aria-hidden="true">+</span>' + grp(t.b) + '</div><span class="ar-q">كم المجموع؟</span>';
+    bar.setAttribute("role", "img");
+    bar.setAttribute("aria-label", arabicNumber(t.a) + " زائد " + arabicNumber(t.b) + "، كم المجموع؟");
+}
+
+function arTick(eng) {
+    if (AR.eng !== eng || !AR.root || !AR.root.classList.contains("active")) { arTeardown(); return; }
+    const S = eng.state;
+    if (S.roundIdx !== AR.shown) arRenderBar(S.roundIdx);
+    /* رسالة بداية المحرك مخصصة للحروف: نستبدلها بنص مناسب للجمع */
+    const m = AR.root.querySelector(".rr3-msg");
+    if (m && m.textContent === "اختر الحرف الصحيح") {
+        m.textContent = AR_PICK_MSG;
+        AR.timers.push(setTimeout(function () { if (m.textContent === AR_PICK_MSG) m.textContent = ""; }, 3500));
+    }
+}
+
+function openAdditionRace(lv) {
+    try {
+        lv = (lv === 2) ? 2 : 1;
+        if (typeof rr3CreateEngine !== "function") return;
+        arTeardown();
+        AR.lv = lv;
+        const lcfg = AR_LEVELS[lv];
+        const run = arBuildRun(lv);
+        const root = arEnsureScreen();
+        AR.run = run;
+        AR.root = root;
+        AR.fails = 0;
+        showScreen(AR_SCREEN);
+        if (!root.classList.contains("active")) throw new Error("ar-screen-not-active");
+
+        let reduced = false;
+        try { reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { /* لا شيء */ }
+
+        let eng = null;
+        const hooks = {
+            say: function (text, done, mode) {
+                if (typeof EduAudio === "undefined") { done(); return; }
+                let t = text;
+                if (lv === 2 && t === lcfg.prompt) {
+                    /* السؤال المنطوق: «٢ زائد ٣ يساوي كم؟» بنفس صيغة قسم الجمع الأصلي */
+                    const tk = run.tasks[Math.min(Math.max(eng ? eng.state.roundIdx : 0, 0), run.tasks.length - 1)];
+                    t = tk.a + " زائد " + tk.b + " يساوي كم؟";
+                }
+                if (Array.isArray(t)) {
+                    /* بعد الإجابة الصحيحة يكرّر المحرك نص السؤال ثم التشجيع؛ في الجمع نكتفي بالتشجيع */
+                    t = t.filter(x => x !== lcfg.prompt);
+                    if (!t.length) { done(); return; }
+                }
+                EduAudio.play(t, { mode: mode === "queue" ? "queue" : "interrupt", done: done });
+            },
+            award: function (i) {
+                const r = AR.run;
+                if (!r || r.finished || r.settled.has(i)) return false;
+                r.settled.add(i);
+                r.firstTry++;
+                const p = arLoad();
+                const rec = arRec(p, r.level.key);
+                if (r.firstTry <= rec.paid) return false;
+                rec.paid = r.firstTry;
+                if (!arSave(p)) return false;        /* الحفظ قبل منح النجوم */
+                try { addStars(AR_STARS_PER_ANSWER); r.starsEarned += AR_STARS_PER_ANSWER; } catch (e) { /* لا شيء */ }
+                return true;
+            },
+            stars: function () { return arabicNumber(typeof stars !== "undefined" ? stars : 0); },
+            alive: function () { return eng !== null && AR.eng === eng && root.classList.contains("active"); },
+            exit: function () { arExit(); },
+            error: function (e) {
+                try { console.warn("ar-engine-error", e && e.message); } catch (e2) { /* لا شيء */ }
+                AR.fails++;
+                if (AR.fails > 2) arExit();
+            },
+            finish: function (sum) {
+                const r = AR.run;
+                const ft = sum.firstTry, total = sum.total;
+                const passed = ft >= AR_PASS;
+                if (r && !r.finished) {
+                    r.finished = true;
+                    const p = arLoad();
+                    const rec = arRec(p, r.level.key);
+                    rec.plays++;
+                    if (ft > rec.best) rec.best = ft;
+                    if (passed && !rec.rewarded) {
+                        rec.rewarded = true;
+                        if (arSave(p)) {              /* الحفظ قبل منح النجوم */
+                            try { addStars(AR_STARS_COMPLETION); r.starsEarned += AR_STARS_COMPLETION; } catch (e) { /* لا شيء */ }
+                        }
+                    } else {
+                        arSave(p);
+                    }
+                }
+                const earned = r ? r.starsEarned : 0;
+                return {
+                    title: passed ? "🌟 أحسنت! أكملت المستوى" : "🌟 محاولة رائعة!",
+                    stars: ft >= total ? "★★★" : (passed ? "★★☆" : (ft > 0 ? "★☆☆" : "☆☆☆")),
+                    body: lcfg.label + " — " + arabicNumber(ft) + " من " + arabicNumber(total) + " من أول مرة" +
+                        (earned > 0 ? " — ⭐ نجوم جديدة: " + arabicNumber(earned) : " — نجومك السابقة محفوظة"),
+                    next: "🔁 العب مرة أخرى",
+                    onNext: function () { openAdditionRace(lv); },
+                    map: "🏠 قسم الجمع",
+                    onMap: function () { arExit(); },
+                    phrase: passed ? "أحسنت! أكملت المستوى بنجاح" : "محاولة رائعة، لنحاول مرة أخرى"
+                };
+            }
+        };
+
+        eng = rr3CreateEngine({
+            root: root, letter: "➕", stageIcon: lcfg.icon, stageTitle: run.level.title, placeName: lcfg.place,
+            rounds: run.rounds, theme: 9, track: "calm", flow: "", mode: "step", reduced: reduced,
+            promptText: lcfg.prompt, phrases: RACE_SUCCESS_PHRASES, hooks: hooks,
+            layout: "gate", collision: 1, similar: "auto", levels: [], levelId: "addrace" + lv, showPicker: false,
+            teacherPin: function () { return ""; }, teacherUnlocked: function () { return false; }
+        });
+        AR.eng = eng;
+
+        const host = root.querySelector(".rr3-root");
+        const bar = document.createElement("div");
+        bar.className = "ar-bar";
+        host.appendChild(bar);
+        AR.bar = bar;
+        const listen = root.querySelector('[data-a="listen"]');
+        if (listen) listen.setAttribute("aria-label", "اسمع السؤال");
+        arRenderBar(0);
+        AR.tick = setInterval(function () { arTick(eng); }, 120);
+        eng.start();
+    } catch (e) {
+        try { console.warn("ar-start-failed", e && e.message); } catch (e2) { /* لا شيء */ }
+        arTeardown();
+        try { showScreen("addition"); } catch (e3) { /* لا شيء */ }
+    }
+}
+/* ADD-RACE-END */
