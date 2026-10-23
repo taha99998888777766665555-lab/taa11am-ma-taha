@@ -38268,7 +38268,7 @@ const AR_PICK_MSG = "اختر الناتج الصحيح";
 const AR_LEVELS = {
     1: { idx: 0, mode: "picture-choice", prompt: AR_PROMPT, place: "☀️ حلبة النهار", icon: "🖼️", label: "جمع بالصور" },
     2: { idx: 1, mode: "choice-result", prompt: "يساوي كم؟", place: "🍏 حلبة التفاح", icon: "🍎", label: "جمع ضمن ٥" },
-    3: { idx: 2, mode: "digit-pad", prompt: "يساوي كم؟", place: "🔟 حلبة العشرة", icon: "🔟", label: "جمع ضمن ١٠" }
+    3: { idx: 2, mode: "digit-pad", prompt: "يساوي كم؟", place: "🐠 سباق الأسماك", icon: "🐠", label: "جمع ضمن ١٠", sea: true }
 };
 
 const AR_CSS = `
@@ -38333,6 +38333,19 @@ const AR_CSS = `
 @media (orientation:landscape) and (max-height:520px) and (max-width:760px){
 #addRace3D .rr3-top .rr3-chip:not(.rr3-starchip){display:none}
 }
+#addRace3D.ar-sea{background:#075985}
+#addRace3D.ar-sea .rr3-msg{top:auto;bottom:10px;left:50%;transform:translateX(-50%);max-width:94%;white-space:nowrap;font-size:clamp(15px,2.6vmin,20px);line-height:30px;padding:0 14px;background:rgba(8,47,73,.9);border:2px solid #67e8f9}
+#addRace3D.ar-sea .rr3-result{background:linear-gradient(#075985,#0c4a6e)}
+#addRace3D.ar-sea .rr3-btn,#addRace3D.ar-sea .rr3-chip{background:rgba(8,47,73,.9);border-color:#67e8f9}
+.ar-dock.ar-sea{background-color:#082f49;background-image:radial-gradient(circle at 20% 30%,rgba(125,211,252,.2) 0 6px,transparent 7px),radial-gradient(circle at 70% 62%,rgba(125,211,252,.16) 0 9px,transparent 10px),linear-gradient(#0c4a6e,#082f49);background-size:90px 70px,130px 90px,100% 100%;border-top-color:#67e8f9;border-left-color:#67e8f9}
+.ar-dock.ar-sea::before{height:14px;top:-20px;background:radial-gradient(circle at 10px 9px,rgba(255,255,255,.9) 0 3px,transparent 4px) 0 0/26px 14px,radial-gradient(circle at 22px 5px,rgba(255,255,255,.6) 0 2px,transparent 3px) 0 0/26px 14px}
+.ar-sea .ar-bar{border-color:#0891b2;box-shadow:0 4px 0 rgba(8,47,73,.75)}
+.ar-sea .ar-eq span:not(.ar-op):not(.ar-qm){background:#e0f2fe}
+.ar-sea .ar-eq .ar-op{color:#0e7490}
+.ar-sea .ar-q{color:#0c4a6e}
+.ar-sea .ar-pad[data-j="0"]{--c:#0e7490}
+.ar-sea .ar-pad[data-j="2"]{--c:#be185d}
+.ar-sea .ar-pad.hint{background:#86efac}
 .ar-entry{margin:10px 0 4px}
 .ar-entry-btn{display:flex;align-items:center;gap:12px;width:100%;min-height:72px;border-radius:20px;border:3px solid #1d4ed8;background:linear-gradient(#2563eb,#1d4ed8);color:#fff;font-family:inherit;text-align:right;padding:8px 16px;cursor:pointer;touch-action:manipulation}
 .ar-entry-btn:focus-visible{outline:4px solid #fde047;outline-offset:2px}
@@ -38546,7 +38559,7 @@ function arRenderBar(idx) {
    نفس مسار المحرك للاختيار (أزرار الحارة ثم ✔) دون أي تعديل على المحرك ودون تغيير شرط الإجابة الصحيحة */
 function arBuildDock(host) {
     const dock = document.createElement("div");
-    dock.className = "ar-dock" + (AR.lv >= 2 ? " ar-lv2" : "");
+    dock.className = "ar-dock" + (AR.lv >= 2 ? " ar-lv2" : "") + (AR.lv === 3 ? " ar-sea" : "");
     const bar = document.createElement("div");
     bar.className = "ar-bar";
     dock.appendChild(bar);
@@ -38565,6 +38578,7 @@ function arBuildDock(host) {
         pads.appendChild(b);
     }
     host.classList.toggle("ar-lv2", AR.lv >= 2);
+    host.classList.toggle("ar-sea", AR.lv === 3);
     if (host.parentNode) host.parentNode.insertBefore(dock, host.nextSibling);
     return dock;
 }
@@ -38593,6 +38607,7 @@ function arSyncPads() {
         const dim = !!r.dim[j];
         b.classList.toggle("dim", dim);
         b.classList.toggle("sel", !dim && S.laneIdx === j && !S.finished);
+        b.classList.toggle("hint", AR.lv === 3 && !dim && !!r.hint && r.options[j] === r.correctShape && !S.finished);
         b.setAttribute("aria-disabled", dim ? "true" : "false");
     }
 }
@@ -38602,6 +38617,7 @@ function arPick(j) {
     if (!eng || !root || !r) return;
     const S = eng.state;
     if (S.paused || S.finished || S.crash || r.dim[j]) return;
+    if (typeof eng.pick === "function") { eng.pick(j); arSyncPads(); return; }   /* المستوى ٣ البحري: الاختيار مباشرة */
     const left = root.querySelector('[data-a="left"]'), right = root.querySelector('[data-a="right"]'), go = root.querySelector('[data-a="go"]');
     if (!left || !right || !go) return;
     let g = 0;
@@ -38623,6 +38639,409 @@ function arTick(eng) {
         m.textContent = AR_PICK_MSG;
         AR.timers.push(setTimeout(function () { if (m.textContent === AR_PICK_MSG) m.textContent = ""; }, 3500));
     }
+}
+
+/* ---------- المستوى ٣: السباق البحري ----------
+   مشهد Canvas حيّ مستقل عن محرك سباق الحروف: ٣ أسماك تسبح أفقيًا نحو خط نهاية مرجاني. كل سمكة مرتبطة بزر إجابة
+   (لونًا وشكلًا ومكانًا). يعيد نفس واجهة المحرك المستعملة في هذه الكتلة (start/destroy/state/cfg + pick)
+   ويستدعي نفس الخطافات (say/award/stars/alive/exit/error/finish) فلا يتغير شيء في المكافآت أو التخزين.
+   لا مؤقتات ولا أرواح ولا خصم. تحترم «تقليل الحركة»، وتخفّض الجودة تلقائيًا على الأجهزة البطيئة. */
+const AR_SEA_FISH = [
+    { l: "#a5f3fc", m: "#06b6d4", d: "#0e7490" },
+    { l: "#fde68a", m: "#f59e0b", d: "#b45309" },
+    { l: "#fbcfe8", m: "#ec4899", d: "#9d174d" }
+];
+const AR_SEA_MAXP = 0.86;
+
+function arSeaCreate(cfg) {
+    const root = cfg.root, rounds = cfg.rounds, hooks = cfg.hooks || {}, reduced = !!cfg.reduced;
+    const S = { roundIdx: 0, laneIdx: -1, firstTry: 0, finished: false, started: false, paused: false, crash: null, busy: true, finishing: false, phraseBusy: false, wantPrompt: false, progress: null, wins: null, quality: "high", reduced: !!cfg.reduced, frames: 0 };
+    rounds.forEach(function (r) { r.wrong = 0; r.dim = [false, false, false]; r.hint = false; });
+    const timers = [];
+    let destroyed = false, raf = 0, last = 0, T = 0, roundT = 0, finClock = 0, lowQ = false, slow = 0, needFit = true, dirty = true;
+    let W = 0, H = 0, dpr = 1, geo = null, bg = null;
+    const P = [0, 0, 0], wins = [0, 0, 0], flash = [0, 0, 0], dash = [0, 0, 0], PH = [0.4, 2.1, 4.0];
+    let finalT = [0, 0, 0], goAt = [0, 0, 0], bubbles = [], streaks = [], parts = [];
+    S.progress = P; S.wins = wins;   /* للقراءة فقط (الاختبارات والتشخيص) */
+
+    root.innerHTML =
+        '<div class="rr3-root">' +
+        '<canvas class="rr3-cv" role="img" aria-label="سباق الأسماك تحت الماء"></canvas>' +
+        '<div class="rr3-top">' +
+        '<button type="button" class="rr3-btn" data-a="back" aria-label="رجوع">⬅️</button>' +
+        '<div class="rr3-chip"><b class="rr3-letter"></b><span class="rr3-stage"></span></div>' +
+        '<span class="rr3-sp"></span>' +
+        '<div class="rr3-chip rr3-starchip" aria-label="نجومي">⭐ <b class="rr3-stars"></b></div>' +
+        '<button type="button" class="rr3-btn" data-a="listen" aria-label="اسمع السؤال">🔊</button>' +
+        '</div>' +
+        '<div class="rr3-dots" aria-hidden="true"></div>' +
+        '<div class="rr3-msg" role="status" aria-live="polite"></div>' +
+        '<div class="rr3-result"><h3></h3><div class="rr3-rstars" aria-hidden="true"></div><p></p><button type="button" class="rr3-p"></button><button type="button" class="rr3-s"></button></div>' +
+        '</div>';
+    const host = root.querySelector(".rr3-root");
+    const cv = host.querySelector(".rr3-cv");
+    const ctx = cv.getContext("2d");
+    const el = { stars: host.querySelector(".rr3-stars"), dots: host.querySelector(".rr3-dots"), msg: host.querySelector(".rr3-msg"), result: host.querySelector(".rr3-result") };
+    host.querySelector(".rr3-letter").textContent = cfg.letter;
+    host.querySelector(".rr3-stage").textContent = (cfg.stageIcon || "") + " " + (cfg.stageTitle || "");
+
+    function later(fn, ms) {
+        const id = setTimeout(function () {
+            const i = timers.indexOf(id); if (i >= 0) timers.splice(i, 1);
+            if (!destroyed) { try { fn(); } catch (e) { fail(e); } }
+        }, ms);
+        timers.push(id);
+        return id;
+    }
+    function fail(e) { try { if (hooks.error) hooks.error(e); } catch (e2) { /* لا شيء */ } }
+    function say(text, done, maxMs, mode) {
+        let fired = false;
+        const fin = function () { if (fired || destroyed) return; fired = true; if (done) done(); };
+        try { if (hooks.say) hooks.say(text, fin, mode); else fin(); } catch (e) { fin(); }
+        if (done) later(fin, maxMs || 4200);
+    }
+    function msg(text) { el.msg.textContent = text || ""; }
+    function updateHud() {
+        el.stars.textContent = (typeof hooks.stars === "function") ? hooks.stars() : "";
+        let d = "";
+        for (let i = 0; i < rounds.length; i++) d += '<span class="rr3-dot ' + (i === S.roundIdx ? "cur" : (i < S.roundIdx ? "done" : "")) + '"></span>';
+        el.dots.innerHTML = d;
+    }
+    function sayPrompt() { if (rounds[S.roundIdx]) say(cfg.promptText, null); }
+
+    /* ---------- الهندسة والخلفية الساكنة (تُبنى مرة عند كل تغيير حجم) ---------- */
+    function computeGeo() {
+        const hud = 86;
+        const sandH = Math.max(46, H * 0.09);
+        const laneTop = hud + 4, laneBot = H - sandH + 10;
+        const laneH = (laneBot - laneTop) / 3;
+        const badge = Math.min(laneH * 0.46, W * 0.085);
+        const trackStart = W * 0.035 + badge + 10;
+        const finishX = W * 0.9;
+        const fishLen = Math.max(44, Math.min(laneH * 1.2, W * 0.25, 200));
+        return { hud: hud, sandH: sandH, laneTop: laneTop, laneBot: laneBot, laneH: laneH, badge: badge, trackStart: trackStart, finishX: finishX, fishLen: fishLen,
+            span: finishX - trackStart - fishLen * 0.9, sandTop: H - sandH };
+    }
+    function fishX(p) { return geo.trackStart + geo.fishLen * 0.5 + p * geo.span; }
+    function laneY(j) { return geo.laneTop + geo.laneH * (j + 0.5); }
+
+    function coral(c, x, y, h, col, depth, ang, w) {
+        const x2 = x + Math.sin(ang) * h, y2 = y - Math.cos(ang) * h;
+        c.lineWidth = w; c.strokeStyle = col; c.lineCap = "round";
+        c.beginPath(); c.moveTo(x, y); c.lineTo(x2, y2); c.stroke();
+        if (depth > 0) { coral(c, x2, y2, h * 0.68, col, depth - 1, ang - 0.55, w * 0.72); coral(c, x2, y2, h * 0.68, col, depth - 1, ang + 0.5, w * 0.72); }
+    }
+    function knob(c, x, y, r, col) {
+        c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.fill();
+        c.fillStyle = "rgba(255,255,255,.35)"; c.beginPath(); c.arc(x - r * 0.3, y - r * 0.3, r * 0.3, 0, 6.2832); c.fill();
+    }
+    function badgeShape(c, j, x, y, r, col) {
+        c.fillStyle = "#fff"; shapePath(c, j, x, y, r); c.fill();
+        c.fillStyle = col; shapePath(c, j, x, y, r * 0.78); c.fill();
+    }
+    function shapePath(c, j, x, y, r) {
+        c.beginPath();
+        if (j === 0) { for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i; const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; if (i) c.lineTo(px, py); else c.moveTo(px, py); } c.closePath(); }
+        else if (j === 1) { c.ellipse(x, y, r * 1.1, r * 0.85, 0, 0, 6.2832); }
+        else { const k = r * 0.3; c.moveTo(x - r + k, y - r); c.lineTo(x + r - k, y - r); c.quadraticCurveTo(x + r, y - r, x + r, y - r + k); c.lineTo(x + r, y + r - k); c.quadraticCurveTo(x + r, y + r, x + r - k, y + r); c.lineTo(x - r + k, y + r); c.quadraticCurveTo(x - r, y + r, x - r, y + r - k); c.lineTo(x - r, y - r + k); c.quadraticCurveTo(x - r, y - r, x - r + k, y - r); c.closePath(); }
+    }
+    function buildBg() {
+        const c = document.createElement("canvas");
+        c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+        const b = c.getContext("2d");
+        b.scale(dpr, dpr);
+        const g = geo;
+        let gr = b.createLinearGradient(0, 0, 0, H);
+        gr.addColorStop(0, "#38bdf8"); gr.addColorStop(0.45, "#0ea5e9"); gr.addColorStop(0.8, "#0369a1"); gr.addColorStop(1, "#075985");
+        b.fillStyle = gr; b.fillRect(0, 0, W, H);
+        /* أشعة ضوء ناعمة */
+        for (let i = 0; i < 4; i++) {
+            const x0 = W * (0.1 + i * 0.26), w0 = W * 0.07;
+            gr = b.createLinearGradient(0, 0, 0, H * 0.8); gr.addColorStop(0, "rgba(255,255,255,.16)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+            b.fillStyle = gr; b.beginPath(); b.moveTo(x0, 0); b.lineTo(x0 + w0, 0); b.lineTo(x0 + w0 * 2.4 - W * 0.08, H * 0.8); b.lineTo(x0 - w0 * 0.6 - W * 0.08, H * 0.8); b.closePath(); b.fill();
+        }
+        /* حارات السباق: أشرطة أفقية وخطوط فاصلة متقطعة */
+        for (let j = 0; j < 3; j++) {
+            b.fillStyle = j % 2 ? "rgba(255,255,255,.05)" : "rgba(255,255,255,.12)";
+            b.fillRect(g.trackStart - 14, g.laneTop + g.laneH * j + 2, g.finishX - g.trackStart + 14 + W * 0.05, g.laneH - 4);
+        }
+        b.strokeStyle = "rgba(255,255,255,.5)"; b.lineWidth = 2.5; b.setLineDash([12, 10]);
+        for (let i = 0; i <= 3; i++) { const y = g.laneTop + g.laneH * i; b.beginPath(); b.moveTo(g.trackStart - 14, y); b.lineTo(g.finishX + W * 0.05, y); b.stroke(); }
+        b.setLineDash([]);
+        /* خط البداية */
+        b.fillStyle = "rgba(255,255,255,.85)"; b.fillRect(g.trackStart - 16, g.laneTop, 4, g.laneBot - g.laneTop);
+        /* القاع الرملي */
+        gr = b.createLinearGradient(0, g.sandTop, 0, H); gr.addColorStop(0, "#fde7a8"); gr.addColorStop(1, "#d99a4e");
+        b.fillStyle = gr; b.beginPath(); b.moveTo(0, H);
+        for (let i = 0; i <= 24; i++) { const x = W * i / 24; b.lineTo(x, g.sandTop + 8 + Math.sin(i * 0.9) * 5 + Math.sin(i * 0.37) * 4); }
+        b.lineTo(W, H); b.closePath(); b.fill();
+        b.fillStyle = "rgba(146,92,36,.35)";
+        for (let i = 0; i < 16; i++) { const x = W * ((i * 0.137 + 0.05) % 1), y = g.sandTop + 18 + ((i * 53) % Math.max(10, g.sandH - 26)); b.beginPath(); b.ellipse(x, y, 3 + (i % 3) * 2, 2 + (i % 2), 0, 0, 6.2832); b.fill(); }
+        /* مرجان على القاع (داخل منطقة الرمل فقط) */
+        const base = g.sandTop + 14, ch = Math.min(g.sandH * 0.85, 54);
+        [[0.07, "#fb7185"], [0.17, "#f97316"], [0.33, "#c084fc"], [0.52, "#fb7185"], [0.66, "#f97316"], [0.79, "#c084fc"]].forEach(function (a, k) {
+            coral(b, W * a[0], base, ch * (0.7 + (k % 3) * 0.15), a[1], 2, (k % 2 ? 0.25 : -0.2), Math.max(4, ch * 0.09));
+        });
+        knob(b, W * 0.26, base - 4, 9, "#fb7185"); knob(b, W * 0.42, base - 2, 7, "#fbbf24"); knob(b, W * 0.58, base - 4, 8, "#a78bfa");
+        /* بوابة النهاية: وتدان مرجانيان عند كل فاصل + شريط شطرنجي في كل حارة */
+        b.fillStyle = "rgba(255,255,255,.08)"; b.fillRect(g.finishX, g.laneTop, W - g.finishX, g.laneBot - g.laneTop);
+        const cw = Math.max(12, W * 0.022), sq = cw / 2;
+        for (let j = 0; j < 3; j++) {
+            const y0 = g.laneTop + g.laneH * j + 4, hh = g.laneH - 8, n = Math.max(2, Math.round(hh / sq));
+            for (let r = 0; r < n; r++) for (let q = 0; q < 2; q++) { b.fillStyle = (r + q) % 2 ? "#0f172a" : "#fff"; b.fillRect(g.finishX + q * sq, y0 + r * (hh / n), sq, hh / n + 0.5); }
+        }
+        const posts = ["#fb7185", "#f97316", "#c084fc", "#fb7185"];
+        for (let i = 0; i <= 3; i++) {
+            const r = Math.max(8, Math.min(g.laneH * 0.18, 15)), y = g.laneTop + g.laneH * i + (i === 0 ? r * 0.55 : (i === 3 ? -r * 0.4 : 0));
+            b.fillStyle = "rgba(0,0,0,.18)"; b.fillRect(g.finishX + cw / 2 - 3, y - 2, 6, 4);
+            knob(b, g.finishX + cw / 2, y, r, posts[i]); knob(b, g.finishX + cw / 2 - r * 0.9, y + r * 0.5, r * 0.6, "#fde047"); knob(b, g.finishX + cw / 2 + r * 0.8, y - r * 0.5, r * 0.55, "#f472b6");
+        }
+        /* شارات الحارات (الشكل واللون نفسهما لأزرار الإجابة) */
+        const cols = ["#0e7490", "#f59e0b", "#be185d"];
+        for (let j = 0; j < 3; j++) badgeShape(b, j, W * 0.035 + g.badge * 0.5, laneY(j), g.badge * 0.5, cols[j]);
+        bg = c;
+    }
+
+    function initParticles() {
+        const nb = lowQ ? 7 : 15;
+        bubbles = [];
+        for (let i = 0; i < nb; i++) bubbles.push({ x: Math.random() * W, y: Math.random() * H, r: 2 + Math.random() * 5, v: 18 + Math.random() * 34, ph: Math.random() * 6.28 });
+        streaks = [];
+        if (!lowQ) for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) streaks.push({ lane: j, x: Math.random() * W, len: 18 + Math.random() * 40, v: 30 + Math.random() * 55, dy: (Math.random() - 0.5) * 0.6 });
+    }
+    function fit() {
+        needFit = false;
+        const w = host.clientWidth || 1, h = host.clientHeight || 1;
+        if (w === W && h === H && bg) return;
+        W = w; H = h;
+        dpr = Math.min(lowQ ? 1.25 : 2, window.devicePixelRatio || 1);
+        cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+        geo = computeGeo();
+        buildBg();
+        initParticles();
+        dirty = true;
+    }
+    function markFit() { needFit = true; }
+
+    /* ---------- الأسماك ---------- */
+    function drawFish(c, j, x, y, s, t, alpha) {
+        const col = AR_SEA_FISH[j], ph = PH[j];
+        const wag = reduced ? 0 : Math.sin(t * (6 + flash[j] * 5) + ph) * (0.2 + flash[j] * 0.14);
+        const bob = reduced ? 0 : Math.sin(t * 2 + ph) * s * 0.035;
+        c.save(); c.globalAlpha = alpha; c.translate(x, y + bob);
+        if (!reduced) c.rotate(Math.sin(t * 2 + ph + 1) * 0.035);
+        if (flash[j] > 0.02) {
+            const gl = c.createRadialGradient(0, 0, s * 0.1, 0, 0, s * 0.75);
+            gl.addColorStop(0, "rgba(254,240,138," + (0.65 * flash[j]).toFixed(3) + ")"); gl.addColorStop(1, "rgba(254,240,138,0)");
+            c.fillStyle = gl; c.beginPath(); c.arc(0, 0, s * 0.75, 0, 6.2832); c.fill();
+        }
+        c.save(); c.translate(-s * 0.3, 0); c.rotate(wag);
+        c.fillStyle = col.d; c.beginPath(); c.moveTo(s * 0.04, 0); c.quadraticCurveTo(-s * 0.1, -s * 0.2, -s * 0.27, -s * 0.24); c.quadraticCurveTo(-s * 0.17, 0, -s * 0.27, s * 0.24); c.quadraticCurveTo(-s * 0.1, s * 0.2, s * 0.04, 0); c.closePath(); c.fill();
+        c.restore();
+        c.fillStyle = col.d; c.globalAlpha = alpha * 0.92; c.beginPath(); c.moveTo(-s * 0.14, -s * 0.17); c.quadraticCurveTo(-s * 0.02, -s * 0.4, s * 0.17, -s * 0.16); c.closePath(); c.fill(); c.globalAlpha = alpha;
+        const gb = c.createLinearGradient(0, -s * 0.22, 0, s * 0.22);
+        gb.addColorStop(0, col.m); gb.addColorStop(0.55, col.m); gb.addColorStop(1, col.l);
+        c.fillStyle = gb; c.beginPath(); c.ellipse(0, 0, s * 0.37, s * 0.22, 0, 0, 6.2832); c.fill();
+        c.save(); c.beginPath(); c.ellipse(0, 0, s * 0.37, s * 0.22, 0, 0, 6.2832); c.clip();
+        c.strokeStyle = col.d; c.globalAlpha = alpha * 0.32; c.lineWidth = s * 0.05;
+        c.beginPath(); c.arc(-s * 0.18, 0, s * 0.23, -0.9, 0.9); c.stroke(); c.beginPath(); c.arc(-s * 0.02, 0, s * 0.23, -0.9, 0.9); c.stroke();
+        c.restore(); c.globalAlpha = alpha;
+        c.strokeStyle = col.d; c.globalAlpha = alpha * 0.5; c.lineWidth = s * 0.014; c.beginPath(); c.arc(s * 0.12, 0, s * 0.17, -0.9, 0.9); c.stroke(); c.globalAlpha = alpha;
+        c.save(); c.translate(s * 0.02, s * 0.07); c.rotate(reduced ? 0.4 : 0.4 + Math.sin(t * 5 + ph) * 0.25);
+        c.fillStyle = col.d; c.globalAlpha = alpha * 0.85; c.beginPath(); c.ellipse(-s * 0.05, 0, s * 0.09, s * 0.04, 0, 0, 6.2832); c.fill(); c.restore(); c.globalAlpha = alpha;
+        c.fillStyle = "#fff"; c.beginPath(); c.arc(s * 0.23, -s * 0.05, s * 0.065, 0, 6.2832); c.fill();
+        c.fillStyle = "#0f172a"; c.beginPath(); c.arc(s * 0.245, -s * 0.05, s * 0.036, 0, 6.2832); c.fill();
+        c.fillStyle = "#fff"; c.beginPath(); c.arc(s * 0.255, -s * 0.062, s * 0.012, 0, 6.2832); c.fill();
+        c.strokeStyle = col.d; c.lineWidth = s * 0.014; c.lineCap = "round"; c.beginPath(); c.arc(s * 0.31, s * 0.02, s * 0.05, 0.3, 1.6); c.stroke();
+        c.restore();
+    }
+    function sparkle(j) {
+        if (reduced) return;
+        const x = fishX(P[j]) + geo.fishLen * 0.3, y = laneY(j);
+        const cols = ["#fde047", "#ffffff", "#a5f3fc", "#fbcfe8"];
+        for (let i = 0; i < 12; i++) { const a = Math.random() * 6.2832, sp = 30 + Math.random() * 70; parts.push({ k: "s", x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, life: 0.9 + Math.random() * 0.5, t: 0, c: cols[i % 4], s: 4 + Math.random() * 5 }); }
+        for (let i = 0; i < 6; i++) parts.push({ k: "b", x: x - geo.fishLen * 0.5, y: y + (Math.random() - 0.5) * 10, vx: -20 - Math.random() * 20, vy: -25 - Math.random() * 25, life: 1 + Math.random() * 0.6, t: 0, c: "#ffffff", s: 2 + Math.random() * 3 });
+    }
+    function bubblesFrom(j, n) {
+        if (reduced) return;
+        const x = fishX(P[j]) + geo.fishLen * 0.3, y = laneY(j);
+        for (let i = 0; i < n; i++) parts.push({ k: "b", x: x + Math.random() * 6, y: y - 4, vx: (Math.random() - 0.5) * 12, vy: -28 - Math.random() * 20, life: 1 + Math.random() * 0.6, t: 0, c: "#ffffff", s: 2 + Math.random() * 3 });
+    }
+    function starPath(c, x, y, r) { c.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 4 * i - Math.PI / 2, rr = i % 2 ? r * 0.4 : r; const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr; if (i) c.lineTo(px, py); else c.moveTo(px, py); } c.closePath(); }
+
+    function baseTarget(j) {
+        return Math.min(AR_SEA_MAXP, 0.04 + 0.03 * S.roundIdx + 0.05 * wins[j] + Math.min(0.035, roundT * 0.0025));
+    }
+    function update(dt) {
+        if (!reduced) T += dt;
+        if (S.started && !S.finishing) roundT += dt;
+        if (S.finishing) finClock += dt;
+        let moving = false;
+        for (let j = 0; j < 3; j++) {
+            const tg = S.finishing ? (finClock >= goAt[j] ? finalT[j] : baseTarget(j)) : baseTarget(j);
+            const k = reduced ? 9 : (S.finishing ? 1.7 : 3.0);
+            const d = tg - P[j];
+            P[j] += d * (1 - Math.exp(-dt * k));
+            if (Math.abs(d) > 0.0008) moving = true;
+            if (dash[j] !== 0) { dash[j] *= Math.exp(-dt * 1.8); if (Math.abs(dash[j]) < 0.0004) dash[j] = 0; else moving = true; }
+            if (flash[j] > 0) { flash[j] = Math.max(0, flash[j] - dt * 0.8); moving = true; }
+        }
+        if (!reduced) {
+            for (let i = 0; i < bubbles.length; i++) { const b = bubbles[i]; b.y -= b.v * dt; b.x += Math.sin(T * 1.4 + b.ph) * 9 * dt; if (b.y < -12) { b.y = H + 10; b.x = Math.random() * W; } }
+            for (let i = 0; i < streaks.length; i++) { const s = streaks[i]; s.x -= s.v * dt; if (s.x + s.len < geo.trackStart - 10) s.x = geo.finishX + W * 0.04; }
+            for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.k === "s") p.vy += 60 * dt; if (p.t >= p.life) parts.splice(i, 1); }
+            moving = true;
+        }
+        if (moving) dirty = true;
+    }
+    function draw() {
+        const c = ctx;
+        c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        c.clearRect(0, 0, W, H);
+        if (bg) c.drawImage(bg, 0, 0, W, H);
+        const g = geo, r = rounds[Math.min(S.roundIdx, rounds.length - 1)];
+        /* خطوط تيار تتحرك يسارًا فتُظهر سباحة الأسماك نحو اليمين */
+        if (!reduced && streaks.length) {
+            c.strokeStyle = "rgba(255,255,255,.22)"; c.lineWidth = 1.6; c.lineCap = "round";
+            c.beginPath();
+            for (let i = 0; i < streaks.length; i++) { const s = streaks[i], y = laneY(s.lane) + s.dy * g.laneH * 0.4; c.moveTo(s.x, y); c.lineTo(s.x + s.len, y); }
+            c.stroke();
+        }
+        /* أعشاب بحرية متمايلة */
+        c.lineCap = "round"; c.lineWidth = Math.max(4, W * 0.011); c.strokeStyle = "#16a34a";
+        for (let i = 0; i < 6; i++) {
+            const bx = W * (0.12 + i * 0.165) + (i % 2 ? 8 : -6), by = g.sandTop + 18, hh = Math.min(g.sandH * 0.95, 56) * (0.8 + (i % 3) * 0.15), sw = reduced ? 0 : Math.sin(T * 1.3 + i) * hh * 0.13;
+            c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(bx + sw, by - hh * 0.5, bx - sw * 0.5, by - hh); c.stroke();
+        }
+        /* الأسماك */
+        for (let j = 0; j < 3; j++) {
+            const off = reduced ? 0 : Math.sin(T * 0.7 + PH[j]) * 0.006 + Math.sin(T * 1.3 + PH[j] * 2) * 0.003;
+            const p = P[j] + dash[j] + off;
+            const dim = r && r.dim[j];
+            drawFish(c, j, fishX(p), laneY(j), g.fishLen, T, dim ? 0.55 : 1);
+        }
+        /* جزيئات النجاح والفقاعات */
+        for (let i = 0; i < parts.length; i++) {
+            const p = parts[i], a = Math.max(0, 1 - p.t / p.life);
+            c.globalAlpha = a;
+            if (p.k === "s") { c.fillStyle = p.c; starPath(c, p.x, p.y, p.s); c.fill(); }
+            else { c.strokeStyle = "rgba(255,255,255,.8)"; c.lineWidth = 1.2; c.beginPath(); c.arc(p.x, p.y, p.s, 0, 6.2832); c.stroke(); }
+        }
+        c.globalAlpha = 1;
+        c.lineWidth = 1.2; c.strokeStyle = "rgba(255,255,255,.6)"; c.fillStyle = "rgba(255,255,255,.12)";
+        for (let i = 0; i < bubbles.length; i++) { const b = bubbles[i]; c.beginPath(); c.arc(b.x, b.y, b.r, 0, 6.2832); c.fill(); c.stroke(); }
+    }
+    function frame(ts) {
+        if (destroyed) return;
+        raf = requestAnimationFrame(frame);
+        const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
+        last = ts;
+        if (!root.classList.contains("active")) return;
+        if (needFit) fit();
+        if (!geo) return;
+        if (!reduced && !lowQ) { if (dt > 0.034) slow++; else slow = Math.max(0, slow - 1); if (slow > 50) { lowQ = true; W = 0; needFit = true; } }
+        update(dt);
+        S.frames++; S.quality = lowQ ? "low" : "high";
+        if (dirty) { draw(); dirty = reduced ? false : true; }
+    }
+
+    /* ---------- مجرى اللعبة ---------- */
+    function pick(j) {
+        const r = rounds[Math.min(S.roundIdx, rounds.length - 1)];
+        if (!r || destroyed || S.paused || S.finished || S.finishing || !S.started || S.busy || r.dim[j]) return;
+        S.busy = true;
+        if (r.options[j] === r.correctShape) {
+            const first = r.wrong === 0;
+            if (first) { S.firstTry++; try { if (hooks.award) hooks.award(S.roundIdx); } catch (e) { fail(e); } }
+            wins[j]++; flash[j] = 1; dash[j] = 0.05; sparkle(j);
+            const idx = S.roundIdx;
+            const phrase = (cfg.phrases && cfg.phrases[(idx + 1) % cfg.phrases.length]) || "صحيح";
+            msg("🎉 " + phrase);
+            updateHud();
+            let advanced = false;
+            const adv = function () { if (advanced || destroyed) return; advanced = true; afterCorrect(); };
+            S.phraseBusy = true;
+            later(adv, reduced ? 700 : 1100);
+            say([cfg.promptText, phrase], function () { S.phraseBusy = false; adv(); if (S.wantPrompt) { S.wantPrompt = false; later(sayPrompt, 300); } }, 7000);
+        } else {
+            r.wrong++; r.dim[j] = true;
+            const left = [0, 1, 2].filter(function (i) { return !r.dim[i]; });
+            if (r.wrong >= 2 || left.length === 1 || left.every(function (i) { return r.options[i] === r.correctShape; })) r.hint = true;
+            dash[j] = -0.02; bubblesFrom(j, 5);
+            msg("😊 حاول مرة أخرى");
+            say("حاول مرة أخرى", function () { S.busy = false; later(function () { if (el.msg.textContent === "😊 حاول مرة أخرى") msg(""); }, 1300); }, 3000);
+        }
+        dirty = true;
+    }
+    function afterCorrect() {
+        S.busy = false;
+        S.roundIdx++; roundT = 0;
+        updateHud();
+        if (S.roundIdx >= rounds.length) {
+            startFinish();
+        } else {
+            msg("");
+            if (S.phraseBusy) S.wantPrompt = true; else later(sayPrompt, 600);
+        }
+    }
+    function startFinish() {
+        S.finishing = true; S.busy = true; finClock = 0;
+        const order = [0, 1, 2].sort(function (a, b) { return (P[b] + wins[b] * 0.001) - (P[a] + wins[a] * 0.001) || a - b; });
+        const fin = [1.04, 0.98, 0.93], gap = [0.2, 0.9, 1.5];
+        order.forEach(function (j, rank) { finalT[j] = fin[rank]; goAt[j] = reduced ? 0 : gap[rank]; });
+        msg("🏁 الخط النهائي أمامك");
+        later(function () { if (!reduced) { for (let j = 0; j < 3; j++) sparkle(j); } finishRace(); }, reduced ? 1000 : 3300);
+    }
+    function finishRace() {
+        if (S.finished) return;
+        S.finished = true;
+        msg("");
+        let cfgRes = null;
+        try { cfgRes = hooks.finish ? hooks.finish({ firstTry: S.firstTry, total: rounds.length }) : null; } catch (e) { fail(e); }
+        cfgRes = cfgRes || { title: "🌟 أحسنت!", body: "", stars: "", next: "إغلاق", onNext: function () { if (hooks.exit) hooks.exit(); } };
+        const h = el.result;
+        h.querySelector("h3").textContent = cfgRes.title || "";
+        h.querySelector(".rr3-rstars").textContent = cfgRes.stars || "";
+        h.querySelector("p").textContent = cfgRes.body || "";
+        const bn = h.querySelector(".rr3-p"), bm = h.querySelector(".rr3-s");
+        bn.textContent = cfgRes.next || ""; bn.onclick = function () { try { cfgRes.onNext && cfgRes.onNext(); } catch (e) { fail(e); } };
+        if (cfgRes.map) { bm.style.display = ""; bm.textContent = cfgRes.map; bm.onclick = function () { try { cfgRes.onMap && cfgRes.onMap(); } catch (e) { fail(e); } }; } else bm.style.display = "none";
+        h.classList.add("on");
+        try { bn.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ }
+        if (cfgRes.phrase) say(cfgRes.phrase, null, null, "queue");
+    }
+
+    host.addEventListener("click", function (ev) {
+        const b = ev.target && ev.target.closest ? ev.target.closest("[data-a]") : null;
+        if (!b || destroyed) return;
+        const a = b.getAttribute("data-a");
+        if (a === "back") { try { if (hooks.exit) hooks.exit(); } catch (e) { fail(e); } }
+        else if (a === "listen") { if (S.started && !S.finished) sayPrompt(); }
+    });
+    let ro = null;
+    window.addEventListener("resize", markFit);
+    window.addEventListener("orientationchange", markFit);
+    try { if (typeof ResizeObserver !== "undefined") { ro = new ResizeObserver(markFit); ro.observe(root); } } catch (e) { ro = null; }
+
+    function start() {
+        fit();
+        updateHud();
+        msg(cfg.placeName ? cfg.placeName : "🏁 استعد للانطلاق");
+        later(function () { S.started = true; S.busy = false; msg(AR_PICK_MSG); sayPrompt(); }, cfg.placeName ? 1700 : 900);
+        later(function () { if (el.msg.textContent === AR_PICK_MSG) msg(""); }, 5200);
+        raf = requestAnimationFrame(frame);
+    }
+    function destroy() {
+        if (destroyed) return;
+        destroyed = true;
+        cancelAnimationFrame(raf);
+        timers.forEach(clearTimeout); timers.length = 0;
+        window.removeEventListener("resize", markFit);
+        window.removeEventListener("orientationchange", markFit);
+        try { if (ro) ro.disconnect(); } catch (e) { /* لا شيء */ }
+        try { root.innerHTML = ""; } catch (e) { /* لا شيء */ }
+    }
+    return { start: start, destroy: destroy, state: S, cfg: cfg, pick: pick };
 }
 
 function openAdditionRace(lv) {
@@ -38715,13 +39134,15 @@ function openAdditionRace(lv) {
             }
         };
 
-        eng = rr3CreateEngine({
+        const engCfg = {
             root: root, letter: "➕", stageIcon: lcfg.icon, stageTitle: run.level.title, placeName: lcfg.place,
             rounds: run.rounds, theme: 0, track: "calm", flow: "", mode: "step", reduced: reduced,
             promptText: lcfg.prompt, phrases: RACE_SUCCESS_PHRASES, hooks: hooks,
             layout: "gate", collision: 1, similar: "auto", levels: [], levelId: "addrace" + lv, showPicker: false,
             teacherPin: function () { return ""; }, teacherUnlocked: function () { return false; }
-        });
+        };
+        root.classList.toggle("ar-sea", !!lcfg.sea);
+        eng = lcfg.sea ? arSeaCreate(engCfg) : rr3CreateEngine(engCfg);
         AR.eng = eng;
 
         const host = root.querySelector(".rr3-root");
