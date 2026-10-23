@@ -15980,10 +15980,14 @@ body.dark-mode .wbk-card.right { background: #17402b; }
 body.dark-mode .wbk-msg.ok { background: #17402b; color: #bfeed3; }
 
 @keyframes wbkNudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-body.calm-mode .wbk *, body.calm-mode .wbk *::before, body.calm-mode .wbk *::after { animation: none !important; transition: none !important; }
-@media (prefers-reduced-motion: reduce) { .wbk *, .wbk *::before, .wbk *::after { animation: none !important; transition: none !important; } }
+body.calm-mode .wbk, body.calm-mode .wbk *, body.calm-mode .wbk *::before, body.calm-mode .wbk *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .wbk, .wbk *, .wbk *::before, .wbk *::after { animation: none !important; transition: none !important; } }
 
 /* السبورة الذكية والشاشات العريضة */
+@media (min-width: 1400px) {
+    .wbk { max-width: 1240px; }
+    .wbk-card.row { aspect-ratio: 1 / .95; }
+}
 @media (min-width: 900px) {
     .wbk { padding: 16px 24px 22px; }
     .wbk-card.big { width: min(40vw, 46vh, 460px); height: min(40vw, 46vh, 460px); }
