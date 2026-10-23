@@ -38267,7 +38267,8 @@ const AR_PICK_MSG = "اختر الناتج الصحيح";
 /* إعداد كل مستوى في السباق: idx = موضعه في ADDITION_LEVELS؛ يُقرأ منه نمط السؤال فقط */
 const AR_LEVELS = {
     1: { idx: 0, mode: "picture-choice", prompt: AR_PROMPT, place: "☀️ حلبة النهار", icon: "🖼️", label: "جمع بالصور" },
-    2: { idx: 1, mode: "choice-result", prompt: "يساوي كم؟", place: "🍏 حلبة التفاح", icon: "🍎", label: "جمع ضمن ٥" }
+    2: { idx: 1, mode: "choice-result", prompt: "يساوي كم؟", place: "🍏 حلبة التفاح", icon: "🍎", label: "جمع ضمن ٥" },
+    3: { idx: 2, mode: "digit-pad", prompt: "يساوي كم؟", place: "🔟 حلبة العشرة", icon: "🔟", label: "جمع ضمن ١٠" }
 };
 
 const AR_CSS = `
@@ -38295,6 +38296,7 @@ const AR_CSS = `
 .ar-pad[data-j="1"]{--c:#f59e0b;--n:#1f2937;--shape:ellipse(50% 50% at 50% 50%)}
 .ar-pad[data-j="2"]{--c:#6d28d9;--n:#fff;--shape:inset(0 round 24%)}
 .ar-num{position:relative;z-index:1;display:block;font-size:calc(var(--ar-dock) * .62);font-weight:900;line-height:1;color:var(--n);direction:rtl}
+.ar-num.two{font-size:calc(var(--ar-dock) * .5)}
 .ar-pad.sel,.ar-pad:focus-visible{background:#fde047;transform:translateY(-6px) scale(1.06);outline:none}
 .ar-pad.dim{--c:#64748b;--n:#e2e8f0;opacity:.55;cursor:default}
 .ar-bar{position:relative;flex:none;height:var(--ar-qh);max-width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#fff;color:#1e1b4b;border:4px solid #6d28d9;border-radius:26px;padding:2px 10px;box-shadow:0 4px 0 rgba(0,0,0,.35);pointer-events:none}
@@ -38453,6 +38455,37 @@ function arLevel2Choices(sum) {
     return shuffle([sum, wrong[0], wrong[1]]);
 }
 
+/* المستوى ٣ (جمع ضمن ١٠): تدرج من ٥ إلى ١٠ — المجموع لا ينقص عبر الجولات ويصل إلى ١٠ في الأخيرة.
+   الجولة الأولى ٤ أو ٥ (امتداد سلس من المستوى ٢)، ثم ٦ ٦ ٧ ٧ ٨ ٨ ٩ ٩ ثم ١٠. المضافان ≥١، ولا يتكرر زوج
+   (ولا مقلوبه) داخل الجلسة. يُبنى هنا في طبقة السباق فقط دون لمس مولّد الجمع الأصلي. */
+const AR3_SUMS = [null, 6, 6, 7, 7, 8, 8, 9, 9, 10];
+function arLevel3Tasks() {
+    const used = new Set();
+    const tasks = [];
+    for (let i = 0; i < AR_ROUNDS; i++) {
+        const s = i === 0 ? (Math.random() < 0.5 ? 4 : 5) : AR3_SUMS[i];
+        const cands = [];
+        for (let a = 1; a <= s - 1; a++) {
+            const b = s - a, key = Math.min(a, b) + "+" + Math.max(a, b);
+            if (!used.has(key)) cands.push({ a: a, b: b, key: key });
+        }
+        const pick = cands[Math.floor(Math.random() * cands.length)];
+        used.add(pick.key);
+        const flip = Math.random() < 0.5;
+        tasks.push({ a: flip ? pick.b : pick.a, b: flip ? pick.a : pick.b, correct: s });
+    }
+    return tasks;
+}
+
+/* خيارات المستوى ٣: الصحيح + خطآن مختلفان ضمن ٠–١٠ (أحدهما ±١ دائمًا، والآخر ±١ أو ±٢) */
+function arLevel3Choices(sum) {
+    const ok = v => v >= 0 && v <= 10 && v !== sum;
+    const c1 = shuffle([sum - 1, sum + 1].filter(ok));
+    const w1 = c1[0];
+    const rest = shuffle([sum - 1, sum + 1, sum - 2, sum + 2].filter(v => ok(v) && v !== w1));
+    return shuffle([sum, w1, rest[0]]);
+}
+
 /* جولات المستوى ١: المهام من مولّد الجمع الموجود (١٠ مهام، مجاميع ٢–٥)، والخيارات ٣ بوابات */
 function arBuildRun(lv) {
     const cfg = AR_LEVELS[lv];
@@ -38461,10 +38494,10 @@ function arBuildRun(lv) {
     if (!level || level.mode !== cfg.mode) throw new Error("ar-level-mismatch");
     let tasks = null, rounds = null;
     for (let tries = 0; tries < 5 && !rounds; tries++) {
-        const t = generateAdditionTasksForLevel(level);
+        const t = lv === 3 ? arLevel3Tasks() : generateAdditionTasksForLevel(level);
         if (!t || t.length !== AR_ROUNDS) continue;
         const r = t.map(task => {
-            const choices = lv === 2 ? arLevel2Choices(task.correct) : task.choices;
+            const choices = lv === 3 ? arLevel3Choices(task.correct) : (lv === 2 ? arLevel2Choices(task.correct) : task.choices);
             const options = choices.map(c => arabicNumber(c));
             return { options: options, correctShape: arabicNumber(task.correct), correctIndex: choices.indexOf(task.correct) };
         });
@@ -38472,6 +38505,8 @@ function arBuildRun(lv) {
         if (ok && lv === 2) ok = t.every((x, i) => { const ch = r[i].options.map(o => o.split("").reduce((n, d) => n * 10 + (d.charCodeAt(0) - 0x660), 0)); return ch.every(v => v >= 1 && v <= 5) && ch.filter(v => v === x.correct).length === 1; });
         /* المستوى ٢: المجموع لا يتجاوز ٥ والأعداد موجبة */
         if (ok && lv === 2) ok = t.every(x => x.a >= 1 && x.b >= 1 && x.a + x.b <= 5 && x.correct === x.a + x.b);
+        /* المستوى ٣: المجموع بين ٤ و١٠، المضافان ≥١، الخيارات كلها ضمن ٠–١٠ */
+        if (ok && lv === 3) ok = t.every((x, i) => x.a >= 1 && x.b >= 1 && x.a + x.b === x.correct && x.correct >= 4 && x.correct <= 10 && r[i].options.every(o => { const v = o.split("").reduce((n, d) => n * 10 + (d.charCodeAt(0) - 0x660), 0); return v >= 0 && v <= 10; }));
         if (ok) { tasks = t; rounds = r; }
     }
     if (!rounds) throw new Error("ar-rounds-invalid");
@@ -38485,8 +38520,8 @@ function arRenderBar(idx) {
     const t = run.tasks[idx];
     if (!t) { bar.style.display = "none"; return; }
     bar.style.display = "";
-    if (run.lv === 2) {
-        /* المستوى ٢: معادلة بمربعات ضخمة بالأرقام الهندية، بلا صور */
+    if (run.lv >= 2) {
+        /* المستوى ٢ و٣: معادلة بمربعات ضخمة بالأرقام الهندية، بلا صور */
         bar.innerHTML = '<div class="ar-eq" aria-hidden="true"><span>' + arabicNumber(t.a) + '</span><span class="ar-op">+</span><span>' + arabicNumber(t.b) + '</span><span class="ar-op">=</span><span class="ar-qm">؟</span></div><span class="ar-q">كم الناتج؟</span>';
         bar.setAttribute("role", "img");
         bar.setAttribute("aria-label", arabicNumber(t.a) + " زائد " + arabicNumber(t.b) + " يساوي كم؟");
@@ -38511,7 +38546,7 @@ function arRenderBar(idx) {
    نفس مسار المحرك للاختيار (أزرار الحارة ثم ✔) دون أي تعديل على المحرك ودون تغيير شرط الإجابة الصحيحة */
 function arBuildDock(host) {
     const dock = document.createElement("div");
-    dock.className = "ar-dock" + (AR.lv === 2 ? " ar-lv2" : "");
+    dock.className = "ar-dock" + (AR.lv >= 2 ? " ar-lv2" : "");
     const bar = document.createElement("div");
     bar.className = "ar-bar";
     dock.appendChild(bar);
@@ -38529,7 +38564,7 @@ function arBuildDock(host) {
         b.addEventListener("click", function () { arPick(j); });
         pads.appendChild(b);
     }
-    host.classList.toggle("ar-lv2", AR.lv === 2);
+    host.classList.toggle("ar-lv2", AR.lv >= 2);
     if (host.parentNode) host.parentNode.insertBefore(dock, host.nextSibling);
     return dock;
 }
@@ -38552,6 +38587,7 @@ function arSyncPads() {
         if (b.getAttribute("data-v") !== txt) {
             b.setAttribute("data-v", txt);
             b.firstChild.textContent = txt;
+            b.firstChild.classList.toggle("two", txt.length > 1);
             b.setAttribute("aria-label", "الرقم " + txt);
         }
         const dim = !!r.dim[j];
@@ -38591,7 +38627,7 @@ function arTick(eng) {
 
 function openAdditionRace(lv) {
     try {
-        lv = (lv === 2) ? 2 : 1;
+        lv = (lv === 2 || lv === 3) ? lv : 1;
         if (typeof rr3CreateEngine !== "function") return;
         arTeardown();
         AR.lv = lv;
@@ -38612,7 +38648,7 @@ function openAdditionRace(lv) {
             say: function (text, done, mode) {
                 if (typeof EduAudio === "undefined") { done(); return; }
                 let t = text;
-                if (lv === 2 && t === lcfg.prompt) {
+                if (lv >= 2 && t === lcfg.prompt) {
                     /* السؤال المنطوق: «٢ زائد ٣ يساوي كم؟» بنفس صيغة قسم الجمع الأصلي */
                     const tk = run.tasks[Math.min(Math.max(eng ? eng.state.roundIdx : 0, 0), run.tasks.length - 1)];
                     t = tk.a + " زائد " + tk.b + " يساوي كم؟";
