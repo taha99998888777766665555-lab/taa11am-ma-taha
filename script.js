@@ -38356,6 +38356,7 @@ const AR_CSS = `
 .ar-reward{flex:0 0 auto;display:inline-block;padding:3px 16px;border-radius:999px;background:#fde047;color:#422006;font-weight:900;font-size:clamp(15px,4.2vw,20px);line-height:1.4}
 .ar-reward:empty{display:none}
 .ar-brk{flex:0 0 100%;height:0;margin:0;padding:0}
+.ar-endmsg{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:8px 16px var(--ar-sb);text-align:center;direction:rtl;font-weight:900;font-size:clamp(20px,5.6vw,34px);line-height:1.35;color:#fff;text-shadow:0 2px 0 rgba(8,47,73,.85);pointer-events:none}
 .ar-dock.ar-sea .rr3-result button{flex:0 1 46%;min-width:0;min-height:46px;padding:0 10px;white-space:nowrap;border:0;border-radius:16px;font-size:clamp(15px,4vw,19px);font-weight:900;cursor:pointer;touch-action:manipulation}
 .ar-dock.ar-sea .rr3-result .rr3-p{background:#fbbf24;color:#1f2937}
 .ar-dock.ar-sea .rr3-result .rr3-s{background:#e0f2fe;color:#0c4a6e}
@@ -38363,6 +38364,7 @@ const AR_CSS = `
 .ar-dock.ar-sea .rr3-result>h3,.ar-dock.ar-sea .rr3-result>.rr3-rstars,.ar-dock.ar-sea .rr3-result>p{flex:0 1 auto}
 .ar-dock.ar-sea .rr3-result button{flex:0 1 240px}
 .ar-dock.ar-sea .ar-brk{display:none}
+.ar-endmsg{font-size:clamp(24px,3.4vw,44px)}
 }
 @media (orientation:landscape) and (max-height:520px){
 .ar-dock.ar-sea .rr3-result button{flex:0 0 100%}
@@ -39041,7 +39043,14 @@ function arSeaCreate(cfg) {
     }
     function startFinish() {
         S.finishing = true; S.busy = true; finClock = 0;
-        try { if (AR.dock) AR.dock.classList.add("ar-end"); } catch (e) { /* لا شيء */ }
+        try {
+            if (AR.dock) {
+                AR.dock.classList.add("ar-end");
+                const em = document.createElement("div");   /* رسالة داخل لوحة الإجابات الفارغة أثناء سباق النهاية، تُزال عند ظهور النتيجة */
+                em.className = "ar-endmsg"; em.setAttribute("role", "status"); em.textContent = "🐠 الأسماك تقترب من النهاية!";
+                AR.dock.appendChild(em);
+            }
+        } catch (e) { /* لا شيء */ }
         const order = [0, 1, 2].sort(function (a, b) { return (P[b] + wins[b] * 0.001) - (P[a] + wins[a] * 0.001) || a - b; });
         const fin = [1.04, 0.98, 0.93], gap = [0.2, 0.9, 1.5];
         order.forEach(function (j, rank) { finalT[j] = fin[rank]; goAt[j] = reduced ? 0 : gap[rank]; });
@@ -39065,7 +39074,13 @@ function arSeaCreate(cfg) {
         const mm = /نجوم جديدة:\s*([٠-٩0-9]+)/.exec(cfgRes.body || "");
         el.reward.textContent = (mm && !/^[٠0]+$/.test(mm[1])) ? "⭐ " + mm[1] + " نجمة جديدة" : "";
         /* لوحة النتيجة تُوضَع في لوحة الإجابات (التي أُخفيت أزرارها) فيبقى مشهد البحر كاملًا ظاهرًا ولا تغطي اللوحة شيئًا منه */
-        try { const dk = AR.dock; if (dk && dk.isConnected && dk.classList.contains("ar-sea")) dk.appendChild(h); } catch (e) { /* لا شيء */ }
+        try {
+            const dk = AR.dock;
+            if (dk && dk.isConnected && dk.classList.contains("ar-sea")) {
+                const em = dk.querySelector(".ar-endmsg"); if (em) em.remove();
+                dk.appendChild(h);
+            }
+        } catch (e) { /* لا شيء */ }
         h.classList.add("on");
         try { bn.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ }
         if (cfgRes.phrase) say(cfgRes.phrase, null, null, "queue");
