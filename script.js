@@ -38271,19 +38271,55 @@ const AR_LEVELS = {
 };
 
 const AR_CSS = `
-#addRace3D{position:fixed;inset:0;z-index:900;display:none;background:#0b1020;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+#addRace3D,.ar-dock{--ar-dock:clamp(88px,14vh,146px);--ar-h:calc(var(--ar-dock) + max(12px,env(safe-area-inset-bottom)) + 22px);--ar-pw:min(calc(var(--ar-dock) * 1.18),calc((100vw - 56px) / 3))}
+#addRace3D{position:fixed;inset:0 0 var(--ar-h) 0;z-index:900;display:none;background:#1e1b4b;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;}
 #addRace3D.active{display:block}
-#addRace3D .rr3-target,#addRace3D [data-a="levels"],#addRace3D [data-a="teach"]{display:none!important}
-.ar-bar{position:absolute;left:50%;transform:translateX(-50%);top:calc(max(8px,env(safe-area-inset-top)) + 82px);z-index:2;display:flex;flex-direction:column;align-items:center;gap:0;background:rgba(255,255,255,.96);color:#1e293b;border-radius:22px;padding:4px 16px 2px;box-shadow:0 4px 14px rgba(2,6,23,.35);max-width:94vw;pointer-events:none}
-.ar-row{display:flex;align-items:center;justify-content:center;gap:10px}
-.ar-grp{display:flex;gap:2px;font-size:clamp(26px,6.4vmin,44px);line-height:1.25}
-.ar-plus{font-size:clamp(26px,6.4vmin,44px);font-weight:900;color:#475569;line-height:1.25}
-.ar-eq{font-size:clamp(34px,8vmin,56px);font-weight:900;color:#1e293b;line-height:1.2;direction:ltr;display:flex;gap:12px;align-items:center;justify-content:center}
-.ar-eq .ar-op{color:#475569}
-.ar-eq .ar-qm{color:#2563eb}
-.ar-q{font-size:14px;font-weight:800;color:#475569;line-height:1.5}
-@media (orientation:landscape) and (max-height:520px){.ar-bar{left:auto;right:max(16px,env(safe-area-inset-right));transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 64px)}.ar-grp,.ar-plus{font-size:clamp(22px,7vmin,34px)}.ar-eq{font-size:clamp(28px,9vmin,40px)}}
-@media (orientation:landscape) and (min-width:700px){.ar-bar{left:auto;right:24px;transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 84px)}}
+#addRace3D.active + .ar-dock{display:flex}
+#addRace3D .rr3-target,#addRace3D [data-a="levels"],#addRace3D [data-a="teach"],#addRace3D .rr3-ctl{display:none!important}
+#addRace3D .rr3-btn,#addRace3D .rr3-chip{background:rgba(30,27,75,.93);border:2px solid #a5b4fc}
+#addRace3D .rr3-dots{gap:9px}
+#addRace3D .rr3-dot{width:16px;height:16px;border:2px solid #c7d2fe;background:rgba(30,27,75,.6)}
+#addRace3D .rr3-dot.cur{background:#fbbf24;border-color:#fff;transform:scale(1.25)}
+#addRace3D .rr3-dot.done{background:#2dd4bf;border-color:#fff}
+#addRace3D .rr3-msg{background:rgba(30,27,75,.95);border:2px solid #fbbf24;font-size:clamp(17px,2.6vmin,24px)}
+#addRace3D .rr3-result{background:linear-gradient(#1e1b4b,#134e4a)}
+#addRace3D .rr3-result .rr3-p{background:#fbbf24;color:#1f2937}
+#addRace3D .rr3-result .rr3-s{background:#e0e7ff;color:#1e1b4b}
+#addRace3D .rr3-rstars{color:#fbbf24}
+.ar-dock{display:none;position:fixed;left:0;right:0;bottom:0;height:var(--ar-h);padding:16px 12px max(12px,env(safe-area-inset-bottom));box-sizing:border-box;display:flex;justify-content:center;align-items:center;gap:clamp(10px,3vw,30px);direction:ltr;z-index:901;background-color:#1e1b4b;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:24px 24px;border-top:6px solid #fbbf24}
+.ar-dock::before{content:"";position:absolute;left:0;right:0;top:-16px;height:10px;background:repeating-conic-gradient(#fff 0 25%,#1e1b4b 0 50%) 0 0/20px 20px;pointer-events:none}
+.ar-pad{--c:#0e7490;--n:#fff;--shape:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);position:relative;display:grid;place-items:center;width:var(--ar-pw);height:var(--ar-dock);border:0;padding:0;margin:0;background:#fff;clip-path:var(--shape);cursor:pointer;font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
+.ar-pad::before{content:"";position:absolute;inset:7px;background:var(--c);clip-path:var(--shape)}
+.ar-pad[data-j="1"]{--c:#f59e0b;--n:#1f2937;--shape:ellipse(50% 50% at 50% 50%)}
+.ar-pad[data-j="2"]{--c:#6d28d9;--n:#fff;--shape:inset(0 round 24%)}
+.ar-num{position:relative;z-index:1;display:block;font-size:calc(var(--ar-dock) * .62);font-weight:900;line-height:1;color:var(--n);direction:rtl}
+.ar-pad.sel,.ar-pad:focus-visible{background:#fde047;transform:translateY(-6px) scale(1.06);outline:none}
+.ar-pad.dim{--c:#64748b;--n:#e2e8f0;opacity:.55;cursor:default}
+.ar-bar{position:absolute;left:50%;transform:translateX(-50%);top:calc(max(8px,env(safe-area-inset-top)) + 80px);z-index:2;display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;color:#1e1b4b;border:4px solid #6d28d9;border-radius:26px;padding:8px 14px 6px;box-shadow:0 6px 0 rgba(30,27,75,.55),0 10px 24px rgba(2,6,23,.35);max-width:96vw;box-sizing:border-box;pointer-events:none;--ar-s:clamp(40px,10.5vmin,120px);--ar-s2:clamp(54px,14vmin,130px)}
+.ar-bar.pop{animation:ar-pop .25s ease-out}
+@keyframes ar-pop{from{scale:.94;opacity:.35}to{scale:1;opacity:1}}
+@media (prefers-reduced-motion:reduce){.ar-bar.pop{animation:none}.ar-pad{transition:none}}
+.ar-row{display:flex;align-items:center;justify-content:center;gap:clamp(6px,2vmin,16px);direction:ltr}
+.ar-pan{display:flex;align-items:center;justify-content:center;border-radius:18px;border:3px solid;padding:6px 8px;min-width:calc(var(--ar-s) * 1.3)}
+.ar-pan-a{background:#ccfbf1;border-color:#0e7490}
+.ar-pan-b{background:#fef3c7;border-color:#d97706}
+.ar-grp{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;font-size:var(--ar-s);line-height:1.15;max-width:calc(var(--ar-s) * 2.5)}
+.ar-it{display:block;width:calc(var(--ar-s) * 1.2);text-align:center}
+.ar-plus{display:grid;place-items:center;flex:none;width:calc(var(--ar-s) * .95);height:calc(var(--ar-s) * .95);border-radius:50%;background:#6d28d9;color:#fff;font-size:calc(var(--ar-s) * .75);font-weight:900;line-height:1}
+.ar-eq{display:flex;gap:clamp(6px,1.6vmin,14px);align-items:center;justify-content:center;direction:ltr}
+.ar-eq span{display:grid;place-items:center;min-width:calc(var(--ar-s2) * .9);height:calc(var(--ar-s2) * 1.1);border-radius:16px;background:#ede9fe;color:#1e1b4b;font-weight:900;font-size:var(--ar-s2);line-height:1;font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif}
+.ar-eq .ar-op{min-width:0;padding:0 2px;background:transparent;color:#6d28d9;font-size:calc(var(--ar-s2) * .8)}
+.ar-eq .ar-qm{background:#fbbf24;color:#1f2937}
+.ar-q{font-size:clamp(15px,2.4vmin,22px);font-weight:900;color:#4c1d95;line-height:1.4}
+@media (orientation:landscape) and (max-height:520px){
+#addRace3D,.ar-dock{--ar-dock:clamp(66px,19vh,84px);--ar-pw:calc(var(--ar-dock) * 1.45)}
+.ar-bar{left:auto;right:max(16px,env(safe-area-inset-right));transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 88px);--ar-s:clamp(30px,10.5vmin,52px);--ar-s2:clamp(40px,11vmin,60px);padding:6px 10px 4px}
+.ar-pad::before{inset:5px}
+.ar-dock{padding-top:12px}
+}
+@media (orientation:landscape) and (min-width:700px) and (min-height:521px){
+.ar-bar{left:auto;right:24px;transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 84px);--ar-s:clamp(40px,7.5vmin,84px);--ar-s2:clamp(46px,8vmin,78px)}
+}
 .ar-entry{margin:10px 0 4px}
 .ar-entry-btn{display:flex;align-items:center;gap:12px;width:100%;min-height:72px;border-radius:20px;border:3px solid #1d4ed8;background:linear-gradient(#2563eb,#1d4ed8);color:#fff;font-family:inherit;text-align:right;padding:8px 16px;cursor:pointer;touch-action:manipulation}
 .ar-entry-btn:focus-visible{outline:4px solid #fde047;outline-offset:2px}
@@ -38357,7 +38393,7 @@ function arRec(p, key) {
 
 /* ---------- الجلسة الحالية ---------- */
 
-const AR = { eng: null, root: null, run: null, bar: null, tick: null, timers: [], shown: -1, fails: 0, lv: 1 };
+const AR = { eng: null, root: null, run: null, bar: null, tick: null, timers: [], shown: -1, fails: 0, lv: 1, dock: null };
 
 function arEnsureScreen() {
     /* نفس نمط المحرك لتنسيق الشاشة (يُحقن مرة واحدة بالمعرّف نفسه) */
@@ -38387,6 +38423,8 @@ function arTeardown() {
     AR.eng = null;
     AR.run = null;
     AR.bar = null;
+    if (AR.dock && AR.dock.parentNode) AR.dock.parentNode.removeChild(AR.dock);
+    AR.dock = null;
     AR.shown = -1;
     if (eng) { try { eng.destroy(); } catch (e) { /* لا شيء */ } }
 }
@@ -38437,28 +38475,96 @@ function arRenderBar(idx) {
     if (!t) { bar.style.display = "none"; return; }
     bar.style.display = "";
     if (run.lv === 2) {
-        /* المستوى ٢: معادلة كبيرة بالأرقام الهندية، بلا صور */
+        /* المستوى ٢: معادلة بمربعات ضخمة بالأرقام الهندية، بلا صور */
         bar.innerHTML = '<div class="ar-eq" aria-hidden="true"><span>' + arabicNumber(t.a) + '</span><span class="ar-op">+</span><span>' + arabicNumber(t.b) + '</span><span class="ar-op">=</span><span class="ar-qm">؟</span></div><span class="ar-q">كم الناتج؟</span>';
         bar.setAttribute("role", "img");
         bar.setAttribute("aria-label", arabicNumber(t.a) + " زائد " + arabicNumber(t.b) + " يساوي كم؟");
-        return;
+    } else {
+        /* المستوى ١: الصور هي العنصر الأساسي — مجموعتان في لوحتين ملوّنتين وقرص «+» كبير */
+        const grp = function (n, cls) {
+            let h = '<span class="ar-pan ' + cls + '"><span class="ar-grp" aria-hidden="true">';
+            for (let i = 0; i < n; i++) h += '<span class="ar-it">' + t.emoji + "</span>";
+            return h + "</span></span>";
+        };
+        bar.innerHTML = '<div class="ar-row">' + grp(t.a, "ar-pan-a") + '<span class="ar-plus" aria-hidden="true">+</span>' + grp(t.b, "ar-pan-b") + '</div><span class="ar-q">كم المجموع؟</span>';
+        bar.setAttribute("role", "img");
+        bar.setAttribute("aria-label", arabicNumber(t.a) + " زائد " + arabicNumber(t.b) + "، كم المجموع؟");
     }
-    const grp = function (n) {
-        let h = '<span class="ar-grp" aria-hidden="true">';
-        for (let i = 0; i < n; i++) h += '<span class="ar-it">' + t.emoji + "</span>";
-        return h + "</span>";
-    };
-    bar.innerHTML = '<div class="ar-row">' + grp(t.a) + '<span class="ar-plus" aria-hidden="true">+</span>' + grp(t.b) + '</div><span class="ar-q">كم المجموع؟</span>';
-    bar.setAttribute("role", "img");
-    bar.setAttribute("aria-label", arabicNumber(t.a) + " زائد " + arabicNumber(t.b) + "، كم المجموع؟");
+    bar.classList.remove("pop");
+    void bar.offsetWidth;
+    bar.classList.add("pop");
+    arSyncPads();
+}
+
+/* لوحة البوابات الرقمية الكبيرة: ثلاث أزرار بأشكال مميزة تقابل الحارات (يسار/وسط/يمين)، وتستعمل
+   نفس مسار المحرك للاختيار (أزرار الحارة ثم ✔) دون أي تعديل على المحرك ودون تغيير شرط الإجابة الصحيحة */
+function arBuildDock(host) {
+    const dock = document.createElement("div");
+    dock.className = "ar-dock";
+    dock.setAttribute("role", "group");
+    dock.setAttribute("aria-label", "اختر الناتج");
+    for (let j = 0; j < 3; j++) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ar-pad";
+        b.setAttribute("data-j", String(j));
+        b.innerHTML = '<span class="ar-num"></span>';
+        b.addEventListener("click", function () { arPick(j); });
+        dock.appendChild(b);
+    }
+    if (host.parentNode) host.parentNode.insertBefore(dock, host.nextSibling);
+    return dock;
+}
+
+function arCurRound() {
+    const run = AR.run, eng = AR.eng;
+    if (!run || !eng) return null;
+    const idx = Math.min(Math.max(eng.state.roundIdx, 0), run.rounds.length - 1);
+    return run.rounds[idx];
+}
+
+function arSyncPads() {
+    const dock = AR.dock, eng = AR.eng, r = arCurRound();
+    if (!dock || !eng || !r) return;
+    const S = eng.state;
+    for (let j = 0; j < 3; j++) {
+        const b = dock.children[j];
+        if (!b) continue;
+        const txt = r.options[j];
+        if (b.getAttribute("data-v") !== txt) {
+            b.setAttribute("data-v", txt);
+            b.firstChild.textContent = txt;
+            b.setAttribute("aria-label", "الرقم " + txt);
+        }
+        const dim = !!r.dim[j];
+        b.classList.toggle("dim", dim);
+        b.classList.toggle("sel", !dim && S.laneIdx === j && !S.finished);
+        b.setAttribute("aria-disabled", dim ? "true" : "false");
+    }
+}
+
+function arPick(j) {
+    const eng = AR.eng, root = AR.root, r = arCurRound();
+    if (!eng || !root || !r) return;
+    const S = eng.state;
+    if (S.paused || S.finished || S.crash || r.dim[j]) return;
+    const left = root.querySelector('[data-a="left"]'), right = root.querySelector('[data-a="right"]'), go = root.querySelector('[data-a="go"]');
+    if (!left || !right || !go) return;
+    let g = 0;
+    while (S.laneIdx !== j && g++ < 3) (j < S.laneIdx ? left : right).click();
+    if (S.laneIdx === j) go.click();      /* لا تأكيد إلا إن وصل الاختيار فعلًا إلى الحارة المقصودة */
+    arSyncPads();
 }
 
 function arTick(eng) {
     if (AR.eng !== eng || !AR.root || !AR.root.classList.contains("active")) { arTeardown(); return; }
     const S = eng.state;
     if (S.roundIdx !== AR.shown) arRenderBar(S.roundIdx);
+    arSyncPads();
     /* رسالة بداية المحرك مخصصة للحروف: نستبدلها بنص مناسب للجمع */
     const m = AR.root.querySelector(".rr3-msg");
+    /* رسالة المحرك «اختر حارة (أو اضغط ✔)» تشير إلى زر ✔ المخفي في هذه اللعبة، فتُفرَّغ؛ رسائل الخطأ والتشجيع تبقى كما هي */
+    if (m && m.textContent.indexOf("اختر حارة") === 0) m.textContent = "";   /* تعليمة الحارة/✔ زائدة هنا: البوابات الرقمية السفلية واضحة */
     if (m && m.textContent === "اختر الحرف الصحيح") {
         m.textContent = AR_PICK_MSG;
         AR.timers.push(setTimeout(function () { if (m.textContent === AR_PICK_MSG) m.textContent = ""; }, 3500));
@@ -38557,7 +38663,7 @@ function openAdditionRace(lv) {
 
         eng = rr3CreateEngine({
             root: root, letter: "➕", stageIcon: lcfg.icon, stageTitle: run.level.title, placeName: lcfg.place,
-            rounds: run.rounds, theme: 9, track: "calm", flow: "", mode: "step", reduced: reduced,
+            rounds: run.rounds, theme: 0, track: "calm", flow: "", mode: "step", reduced: reduced,
             promptText: lcfg.prompt, phrases: RACE_SUCCESS_PHRASES, hooks: hooks,
             layout: "gate", collision: 1, similar: "auto", levels: [], levelId: "addrace" + lv, showPicker: false,
             teacherPin: function () { return ""; }, teacherUnlocked: function () { return false; }
@@ -38569,6 +38675,7 @@ function openAdditionRace(lv) {
         bar.className = "ar-bar";
         host.appendChild(bar);
         AR.bar = bar;
+        AR.dock = arBuildDock(root);
         const listen = root.querySelector('[data-a="listen"]');
         if (listen) listen.setAttribute("aria-label", "اسمع السؤال");
         arRenderBar(0);
