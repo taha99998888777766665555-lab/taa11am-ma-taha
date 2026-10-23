@@ -38271,8 +38271,9 @@ const AR_LEVELS = {
 };
 
 const AR_CSS = `
-#addRace3D,.ar-dock{--ar-dock:clamp(88px,14vh,146px);--ar-h:calc(var(--ar-dock) + max(12px,env(safe-area-inset-bottom)) + 22px);--ar-pw:min(calc(var(--ar-dock) * 1.18),calc((100vw - 56px) / 3))}
-#addRace3D{position:fixed;inset:0 0 var(--ar-h) 0;z-index:900;display:none;background:#1e1b4b;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;}
+#addRace3D,.ar-dock{--ar-dock:clamp(84px,13vh,140px);--ar-pw:min(calc(var(--ar-dock) * 1.2),calc((100vw - 48px) / 3));--ar-s:clamp(30px,9.6vw,60px);--ar-s2:clamp(44px,12vw,80px);--ar-qh:calc(var(--ar-s) * 2.3 + 66px);--ar-sb:max(10px,env(safe-area-inset-bottom));--ar-h:calc(var(--ar-qh) + var(--ar-dock) + var(--ar-sb) + 30px);--ar-inset:0 0 var(--ar-h) 0}
+#addRace3D.ar-lv2,.ar-dock.ar-lv2{--ar-qh:calc(var(--ar-s2) * 1.1 + 62px)}
+#addRace3D{position:fixed;inset:var(--ar-inset);z-index:900;display:none;background:#1e1b4b;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
 #addRace3D.active{display:block}
 #addRace3D.active + .ar-dock{display:flex}
 #addRace3D .rr3-target,#addRace3D [data-a="levels"],#addRace3D [data-a="teach"],#addRace3D .rr3-ctl{display:none!important}
@@ -38286,7 +38287,8 @@ const AR_CSS = `
 #addRace3D .rr3-result .rr3-p{background:#fbbf24;color:#1f2937}
 #addRace3D .rr3-result .rr3-s{background:#e0e7ff;color:#1e1b4b}
 #addRace3D .rr3-rstars{color:#fbbf24}
-.ar-dock{display:none;position:fixed;left:0;right:0;bottom:0;height:var(--ar-h);padding:16px 12px max(12px,env(safe-area-inset-bottom));box-sizing:border-box;display:flex;justify-content:center;align-items:center;gap:clamp(10px,3vw,30px);direction:ltr;z-index:901;background-color:#1e1b4b;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:24px 24px;border-top:6px solid #fbbf24}
+.ar-dock{display:none;position:fixed;left:0;right:0;bottom:0;height:var(--ar-h);box-sizing:border-box;padding:10px 10px var(--ar-sb);flex-direction:column;align-items:center;gap:14px;direction:ltr;z-index:901;background-color:#1e1b4b;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:24px 24px;border-top:6px solid #fbbf24}
+.ar-pads{display:flex;justify-content:center;align-items:center;gap:clamp(8px,3vw,28px);direction:ltr;flex:none;height:var(--ar-dock)}
 .ar-dock::before{content:"";position:absolute;left:0;right:0;top:-16px;height:10px;background:repeating-conic-gradient(#fff 0 25%,#1e1b4b 0 50%) 0 0/20px 20px;pointer-events:none}
 .ar-pad{--c:#0e7490;--n:#fff;--shape:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);position:relative;display:grid;place-items:center;width:var(--ar-pw);height:var(--ar-dock);border:0;padding:0;margin:0;background:#fff;clip-path:var(--shape);cursor:pointer;font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
 .ar-pad::before{content:"";position:absolute;inset:7px;background:var(--c);clip-path:var(--shape)}
@@ -38295,7 +38297,7 @@ const AR_CSS = `
 .ar-num{position:relative;z-index:1;display:block;font-size:calc(var(--ar-dock) * .62);font-weight:900;line-height:1;color:var(--n);direction:rtl}
 .ar-pad.sel,.ar-pad:focus-visible{background:#fde047;transform:translateY(-6px) scale(1.06);outline:none}
 .ar-pad.dim{--c:#64748b;--n:#e2e8f0;opacity:.55;cursor:default}
-.ar-bar{position:absolute;left:50%;transform:translateX(-50%);top:calc(max(8px,env(safe-area-inset-top)) + 80px);z-index:2;display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;color:#1e1b4b;border:4px solid #6d28d9;border-radius:26px;padding:8px 14px 6px;box-shadow:0 6px 0 rgba(30,27,75,.55),0 10px 24px rgba(2,6,23,.35);max-width:96vw;box-sizing:border-box;pointer-events:none;--ar-s:clamp(40px,10.5vmin,120px);--ar-s2:clamp(54px,14vmin,130px)}
+.ar-bar{position:relative;flex:none;height:var(--ar-qh);max-width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#fff;color:#1e1b4b;border:4px solid #6d28d9;border-radius:26px;padding:2px 10px;box-shadow:0 4px 0 rgba(0,0,0,.35);pointer-events:none}
 .ar-bar.pop{animation:ar-pop .25s ease-out}
 @keyframes ar-pop{from{scale:.94;opacity:.35}to{scale:1;opacity:1}}
 @media (prefers-reduced-motion:reduce){.ar-bar.pop{animation:none}.ar-pad{transition:none}}
@@ -38310,15 +38312,24 @@ const AR_CSS = `
 .ar-eq span{display:grid;place-items:center;min-width:calc(var(--ar-s2) * .9);height:calc(var(--ar-s2) * 1.1);border-radius:16px;background:#ede9fe;color:#1e1b4b;font-weight:900;font-size:var(--ar-s2);line-height:1;font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif}
 .ar-eq .ar-op{min-width:0;padding:0 2px;background:transparent;color:#6d28d9;font-size:calc(var(--ar-s2) * .8)}
 .ar-eq .ar-qm{background:#fbbf24;color:#1f2937}
-.ar-q{font-size:clamp(15px,2.4vmin,22px);font-weight:900;color:#4c1d95;line-height:1.4}
-@media (orientation:landscape) and (max-height:520px){
-#addRace3D,.ar-dock{--ar-dock:clamp(66px,19vh,84px);--ar-pw:calc(var(--ar-dock) * 1.45)}
-.ar-bar{left:auto;right:max(16px,env(safe-area-inset-right));transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 88px);--ar-s:clamp(30px,10.5vmin,52px);--ar-s2:clamp(40px,11vmin,60px);padding:6px 10px 4px}
-.ar-pad::before{inset:5px}
-.ar-dock{padding-top:12px}
+.ar-q{font-size:clamp(15px,4vw,20px);font-weight:900;color:#4c1d95;line-height:1.2}
+@media (orientation:landscape) and (min-height:521px){
+#addRace3D,.ar-dock{--ar-dock:clamp(88px,15vh,140px);--ar-s:clamp(40px,7vmin,84px);--ar-s2:clamp(46px,8vmin,80px);--ar-h:calc(max(var(--ar-qh),var(--ar-dock)) + var(--ar-sb) + 26px)}
+.ar-dock{flex-direction:row-reverse;justify-content:center;align-items:center;gap:clamp(20px,4vw,60px)}
 }
-@media (orientation:landscape) and (min-width:700px) and (min-height:521px){
-.ar-bar{left:auto;right:24px;transform:none;top:calc(max(8px,env(safe-area-inset-top)) + 84px);--ar-s:clamp(40px,7.5vmin,84px);--ar-s2:clamp(46px,8vmin,78px)}
+@media (orientation:landscape) and (max-height:520px){
+#addRace3D,.ar-dock{--ar-wb:clamp(340px,44vw,390px);--ar-ins:env(safe-area-inset-right,0px);--ar-w:calc(var(--ar-wb) + var(--ar-ins));--ar-pw:calc((var(--ar-wb) - 42px) / 3);--ar-dock:min(calc(var(--ar-pw) * .85),22vh);--ar-s:calc((var(--ar-wb) - 100px) / 5.75);--ar-s2:calc((var(--ar-wb) - 110px) / 4.3);--ar-inset:0 var(--ar-w) 0 0}
+.ar-dock{top:0;left:auto;right:0;bottom:0;width:var(--ar-w);height:auto;flex-direction:column;justify-content:center;gap:10px;padding:max(8px,env(safe-area-inset-top)) calc(10px + var(--ar-ins)) var(--ar-sb) 10px;border-top:0;border-left:6px solid #fbbf24}
+.ar-dock::before{display:none}
+.ar-pads{gap:8px}
+.ar-pad::before{inset:5px}
+.ar-bar{padding:2px 8px}
+.ar-pan{padding:4px}
+.ar-row{gap:8px}
+.ar-eq{gap:6px}
+}
+@media (orientation:landscape) and (max-height:520px) and (max-width:760px){
+#addRace3D .rr3-top .rr3-chip:not(.rr3-starchip){display:none}
 }
 .ar-entry{margin:10px 0 4px}
 .ar-entry-btn{display:flex;align-items:center;gap:12px;width:100%;min-height:72px;border-radius:20px;border:3px solid #1d4ed8;background:linear-gradient(#2563eb,#1d4ed8);color:#fff;font-family:inherit;text-align:right;padding:8px 16px;cursor:pointer;touch-action:manipulation}
@@ -38500,7 +38511,13 @@ function arRenderBar(idx) {
    نفس مسار المحرك للاختيار (أزرار الحارة ثم ✔) دون أي تعديل على المحرك ودون تغيير شرط الإجابة الصحيحة */
 function arBuildDock(host) {
     const dock = document.createElement("div");
-    dock.className = "ar-dock";
+    dock.className = "ar-dock" + (AR.lv === 2 ? " ar-lv2" : "");
+    const bar = document.createElement("div");
+    bar.className = "ar-bar";
+    dock.appendChild(bar);
+    const pads = document.createElement("div");
+    pads.className = "ar-pads";
+    dock.appendChild(pads);
     dock.setAttribute("role", "group");
     dock.setAttribute("aria-label", "اختر الناتج");
     for (let j = 0; j < 3; j++) {
@@ -38510,8 +38527,9 @@ function arBuildDock(host) {
         b.setAttribute("data-j", String(j));
         b.innerHTML = '<span class="ar-num"></span>';
         b.addEventListener("click", function () { arPick(j); });
-        dock.appendChild(b);
+        pads.appendChild(b);
     }
+    host.classList.toggle("ar-lv2", AR.lv === 2);
     if (host.parentNode) host.parentNode.insertBefore(dock, host.nextSibling);
     return dock;
 }
@@ -38528,7 +38546,7 @@ function arSyncPads() {
     if (!dock || !eng || !r) return;
     const S = eng.state;
     for (let j = 0; j < 3; j++) {
-        const b = dock.children[j];
+        const b = dock.querySelectorAll(".ar-pad")[j];
         if (!b) continue;
         const txt = r.options[j];
         if (b.getAttribute("data-v") !== txt) {
@@ -38671,11 +38689,8 @@ function openAdditionRace(lv) {
         AR.eng = eng;
 
         const host = root.querySelector(".rr3-root");
-        const bar = document.createElement("div");
-        bar.className = "ar-bar";
-        host.appendChild(bar);
-        AR.bar = bar;
         AR.dock = arBuildDock(root);
+        AR.bar = AR.dock.querySelector(".ar-bar");
         const listen = root.querySelector('[data-a="listen"]');
         if (listen) listen.setAttribute("aria-label", "اسمع السؤال");
         arRenderBar(0);
