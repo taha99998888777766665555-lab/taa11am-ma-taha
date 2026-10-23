@@ -39236,3 +39236,679 @@ function openAdditionRace(lv) {
     }
 }
 /* ADD-RACE-END */
+/* WBK-BEGIN */
+/* =========================================================================
+   📘 نموذج تجريبي — «الدليل المبسط لتعلم القراءة بالحركات القصيرة»
+   الدرس ١: «أقرأ الحروف بالفتحة» (٢٨ حرفًا بترتيب الكتاب حرفيًا)
+   -------------------------------------------------------------------------
+   كتلة معزولة بالكامل: لا تغيّر قسم «الكلمات» الحالي ولا مستوياته التسعة
+   ولا نظام الصوت ولا محرك الكتابة. تُعرَض فقط عبر رابط المعاينة
+   (?wbk=1 يضيف بطاقة المعاينة، و?wbk=open يفتح الدرس مباشرة).
+   - ثلاثة أوضاع: تعلّم (حرف ← صف ← شبكة) / تدرّب / تقييم المعلم.
+   - بلا أقفال ولا مؤقتات ولا عقوبات؛ المساعدة ٣ مراحل وتُسجَّل.
+   - لمس الحرف وسماعه لا يُسجَّل دليلًا على الإتقان؛ الإتقان يقرّره المعلم.
+   - الصوت: EduAudio المحلي فقط (لا TTS). التخزين: taha_wbk_progress_v1.
+   ========================================================================= */
+(function () {
+    "use strict";
+
+    var KEY = "taha_wbk_progress_v1";
+    var SCREEN = "wbkL1";
+
+    /* الحروف بترتيب الكتاب حرفيًا (ص١): [العرض كما في الكتاب] — مفتاح الصوت بلا الكشيدة */
+    var BOOK = ["أَ", "بَ", "تَ", "ثَ", "جَ", "حَ", "خَ", "دَ", "ذَ", "رَ", "زَ", "سَ", "شَ", "صَ", "ضَ", "طَ",
+        "ظَ", "عَ", "غَ", "فَ", "قَ", "كَ", "لَ", "مَ", "نَ", "هَـ", "وَ", "يَ"];
+    var PER_ROW = 4;
+    var ROWS = BOOK.length / PER_ROW;
+    var PRAISE = ["أحسنت يا بطل", "أحسنت، عمل رائع", "صحيح"];
+    var ROUNDS = 5;
+
+    var S = {
+        mode: "learn", stage: "one", idx: 0, row: 0, pointer: false, spot: -1,
+        scope: "all", p: null, session: 0, timers: [], gateOk: false, sel: -1, root: null, built: false
+    };
+
+    /* ---------- أدوات ---------- */
+    function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text != null) e.textContent = text;
+        return e;
+    }
+    function ar(n) { return (typeof arabicNumber === "function") ? arabicNumber(n) : String(n); }
+    function audioKey(i) { return BOOK[i].replace(/ـ/g, ""); }
+    function calm() {
+        try { return !!(typeof Settings !== "undefined" && Settings.get().calm); } catch (e) { return false; }
+    }
+    function later(fn, ms) {
+        var ses = S.session;
+        var t = setTimeout(function () {
+            S.timers = S.timers.filter(function (x) { return x !== t; });
+            if (ses === S.session) fn();
+        }, ms);
+        S.timers.push(t);
+        return t;
+    }
+    function clearTimers() { S.timers.forEach(clearTimeout); S.timers = []; }
+    function shuffle(a) {
+        var r = a.slice();
+        for (var i = r.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = r[i]; r[i] = r[j]; r[j] = t;
+        }
+        return r;
+    }
+    function say(keys, done) {
+        try { EduAudio.play(keys, { mode: "interrupt", done: done }); } catch (e) { if (done) done(); }
+    }
+    function sayLetter(i, done) { say([audioKey(i)], done); }
+
+    /* ---------- التخزين ---------- */
+    function blank() { return { v: 1, prefs: { companion: true }, l1: { items: {}, sessions: 0, stars: 0 } }; }
+    function load() {
+        try {
+            var o = JSON.parse(localStorage.getItem(KEY));
+            if (o && o.v === 1 && o.l1 && o.l1.items && typeof o.l1.items === "object") {
+                if (!o.prefs) o.prefs = { companion: true };
+                return o;
+            }
+        } catch (e) { /* لا شيء */ }
+        return blank();
+    }
+    function save(p) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) { /* لا شيء */ } }
+    function item(p, i) {
+        var k = BOOK[i][0];
+        var it = p.l1.items[k];
+        if (!it) it = p.l1.items[k] = { ind: 0, asst: 0, lastHelp: null, star: false, tr: "", att: 0, m: false, at: 0 };
+        return it;
+    }
+
+    /* ---------- الشخصية المرافقة (SVG ثابت بلا حركة) ---------- */
+    function companionSVG() {
+        return '<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">' +
+            '<path d="M8 20c8-4 17-4 24 2 7-6 16-6 24-2v30c-8-4-17-4-24 2-7-6-16-6-24-2z" fill="#fff8e6" stroke="#2f6fb5" stroke-width="3" stroke-linejoin="round"/>' +
+            '<path d="M32 22v30" stroke="#2f6fb5" stroke-width="2.5"/>' +
+            '<circle cx="22" cy="34" r="3.4" fill="#1f3f66"/><circle cx="42" cy="34" r="3.4" fill="#1f3f66"/>' +
+            '<circle cx="23" cy="33" r="1.1" fill="#fff"/><circle cx="43" cy="33" r="1.1" fill="#fff"/>' +
+            '<path d="M25 41q7 6 14 0" fill="none" stroke="#1f3f66" stroke-width="2.6" stroke-linecap="round"/>' +
+            '<path d="M32 10l1.9 4 4.4.5-3.3 3 1 4.3-4-2.3-4 2.3 1-4.3-3.3-3 4.4-.5z" fill="#f2b632" transform="translate(0 -4) scale(1)"/></svg>';
+    }
+
+    /* ---------- بناء الهيكل (مرة واحدة) ---------- */
+    function build() {
+        var sec = document.getElementById(SCREEN);
+        if (!sec) return null;
+        if (S.built && sec.querySelector(".wbk")) { S.root = sec.querySelector(".wbk"); return S.root; }
+        sec.innerHTML = "";
+        var root = el("div", "wbk");
+        root.setAttribute("data-mode", "learn");
+
+        var top = el("div", "wbk-top");
+        var back = el("button", "wbk-back", "⬅️");
+        back.type = "button"; back.setAttribute("aria-label", "رجوع");
+        back.addEventListener("click", function () { exitToWords(); });
+        var ttl = el("div", "wbk-title");
+        var t1 = el("strong", "", "الدرس ١ · أقرأ الحروف بالفتحة");
+        var t2 = el("span", "wbk-badge");
+        t2.appendChild(el("b", "", "بَ"));
+        t2.appendChild(document.createTextNode(" مرحلة الفتحة · نموذج تجريبي"));
+        ttl.appendChild(t1); ttl.appendChild(t2);
+        var cmp = el("button", "wbk-cmp-toggle", "🙂");
+        cmp.type = "button"; cmp.id = "wbkCmpToggle";
+        cmp.addEventListener("click", function () {
+            var p = load(); p.prefs.companion = !p.prefs.companion; save(p); applyCompanion();
+        });
+        top.appendChild(back); top.appendChild(ttl); top.appendChild(cmp);
+        root.appendChild(top);
+
+        var modes = el("div", "wbk-modes");
+        modes.setAttribute("role", "tablist");
+        [["learn", "📖 تعلّم"], ["practice", "🎯 تدرّب"], ["teacher", "👩‍🏫 المعلم"]].forEach(function (m) {
+            var b = el("button", "wbk-mode", m[1]);
+            b.type = "button"; b.dataset.mode = m[0];
+            b.setAttribute("role", "tab");
+            b.addEventListener("click", function () { setMode(m[0]); });
+            modes.appendChild(b);
+        });
+        root.appendChild(modes);
+
+        var body = el("div", "wbk-body"); body.id = "wbkBody";
+        root.appendChild(body);
+
+        var foot = el("div", "wbk-foot");
+        var cmpBox = el("div", "wbk-companion"); cmpBox.id = "wbkCompanion";
+        cmpBox.innerHTML = companionSVG();
+        var msg = el("div", "wbk-msg"); msg.id = "wbkMsg";
+        msg.setAttribute("role", "status"); msg.setAttribute("aria-live", "polite");
+        foot.appendChild(cmpBox); foot.appendChild(msg);
+        root.appendChild(foot);
+
+        sec.appendChild(root);
+        S.root = root; S.built = true;
+        return root;
+    }
+    function applyCompanion() {
+        var on = load().prefs.companion !== false;
+        var c = document.getElementById("wbkCompanion");
+        if (c) c.style.display = on ? "" : "none";
+        var b = document.getElementById("wbkCmpToggle");
+        if (b) {
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+            b.setAttribute("aria-label", on ? "إخفاء الشخصية المرافقة" : "إظهار الشخصية المرافقة");
+            b.classList.toggle("off", !on);
+        }
+    }
+    function msg(text, kind) {
+        var m = document.getElementById("wbkMsg");
+        if (!m) return;
+        m.textContent = text || "";
+        m.className = "wbk-msg" + (kind ? " " + kind : "");
+    }
+    function body() { return document.getElementById("wbkBody"); }
+
+    /* ---------- التنقل بين الأوضاع ---------- */
+    function setMode(m) {
+        S.session++; clearTimers(); try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
+        S.mode = m;
+        if (S.root) S.root.setAttribute("data-mode", m);
+        S.root.querySelectorAll(".wbk-mode").forEach(function (b) {
+            var on = b.dataset.mode === m;
+            b.classList.toggle("on", on);
+            b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        msg("");
+        if (m === "learn") renderLearn();
+        else if (m === "practice") renderPracticeHome();
+        else renderTeacherEntry();
+    }
+
+    /* ---------- بطاقة حرف ---------- */
+    function card(i, cls) {
+        var b = el("button", "wbk-card " + (cls || "") + (((Math.floor(i / PER_ROW) + i) % 2) ? " alt" : ""));
+        b.type = "button"; b.dataset.i = String(i);
+        b.setAttribute("aria-label", "الحرف " + BOOK[i].replace(/ـ/g, "") + " بالفتحة");
+        var g = el("span", "wbk-g", BOOK[i]);
+        g.setAttribute("lang", "ar");
+        b.appendChild(g);
+        return b;
+    }
+
+    /* =====================================================================
+       وضع التعلّم: حرف واحد ← صف ← الشبكة الكاملة
+       (لا يُسجَّل شيء هنا: السماع واللمس ليسا دليل إتقان)
+       ===================================================================== */
+    function renderLearn() {
+        var b = body(); b.innerHTML = "";
+        var steps = el("div", "wbk-steps");
+        [["one", "١ · حرف"], ["row", "٢ · صف"], ["grid", "٣ · الشبكة"]].forEach(function (s) {
+            var x = el("button", "wbk-step" + (S.stage === s[0] ? " on" : ""), s[1]);
+            x.type = "button"; x.dataset.stage = s[0];
+            x.addEventListener("click", function () { goStage(s[0]); });
+            steps.appendChild(x);
+        });
+        b.appendChild(steps);
+        var area = el("div", "wbk-area"); area.id = "wbkArea";
+        b.appendChild(area);
+        if (S.stage === "one") renderOne(area);
+        else if (S.stage === "row") renderRow(area);
+        else renderGrid(area);
+    }
+    function goStage(st) {
+        S.session++; clearTimers(); try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
+        if (st === "row") S.row = Math.floor(S.idx / PER_ROW);
+        S.stage = st; S.spot = -1;
+        renderLearn();
+    }
+
+    function miniMap(cur) {
+        var m = el("div", "wbk-map");
+        m.setAttribute("aria-label", "موضع الحرف في الشبكة");
+        for (var i = 0; i < BOOK.length; i++) {
+            var c = el("button", "wbk-dot" + (i === cur ? " cur" : "") + (Math.floor(i / PER_ROW) === Math.floor(cur / PER_ROW) ? " inrow" : ""), BOOK[i].replace(/ـ/g, ""));
+            c.type = "button"; c.dataset.i = String(i);
+            c.setAttribute("aria-label", "انتقل إلى الحرف " + BOOK[i].replace(/ـ/g, ""));
+            c.addEventListener("click", function (e) { S.idx = Number(e.currentTarget.dataset.i); renderLearn(); sayLetter(S.idx); });
+            m.appendChild(c);
+        }
+        return m;
+    }
+
+    function renderOne(area) {
+        var i = S.idx;
+        var big = card(i, "big"); big.id = "wbkBig";
+        big.addEventListener("click", function () { sayLetter(S.idx); flash(big); });
+        area.appendChild(big);
+        area.appendChild(el("div", "wbk-count", "الحرف " + ar(i + 1) + " من " + ar(BOOK.length)));
+        var ctl = el("div", "wbk-ctl");
+        var prev = el("button", "wbk-btn", "▶ السابق"); prev.type = "button";
+        prev.disabled = i === 0;
+        prev.addEventListener("click", function () { S.idx = Math.max(0, S.idx - 1); renderLearn(); sayLetter(S.idx); });
+        var snd = el("button", "wbk-btn main", "🔊 اسمع"); snd.type = "button"; snd.id = "wbkListen";
+        snd.addEventListener("click", function () { sayLetter(S.idx); });
+        var next = el("button", "wbk-btn", "التالي ◀"); next.type = "button";
+        next.disabled = i === BOOK.length - 1;
+        next.addEventListener("click", function () { S.idx = Math.min(BOOK.length - 1, S.idx + 1); renderLearn(); sayLetter(S.idx); });
+        ctl.appendChild(prev); ctl.appendChild(snd); ctl.appendChild(next);
+        area.appendChild(ctl);
+        area.appendChild(miniMap(i));
+        var go = el("button", "wbk-btn soft", "الصف كله ◂"); go.type = "button"; go.id = "wbkToRow";
+        go.addEventListener("click", function () { goStage("row"); });
+        area.appendChild(go);
+        msg("المس الحرف أو زر الاستماع، ثم اقرأه بصوتك 🌟");
+    }
+
+    function renderRow(area) {
+        var r = S.row;
+        var cards = el("div", "wbk-rowcards");
+        for (var k = 0; k < PER_ROW; k++) {
+            (function (i) {
+                var c = card(i, "row");
+                c.addEventListener("click", function () { sayLetter(i); flash(c); });
+                cards.appendChild(c);
+            })(r * PER_ROW + k);
+        }
+        area.appendChild(cards);
+        area.appendChild(el("div", "wbk-count", "الصف " + ar(r + 1) + " من " + ar(ROWS)));
+        var ctl = el("div", "wbk-ctl");
+        var prev = el("button", "wbk-btn", "▶ السابق"); prev.type = "button"; prev.disabled = r === 0;
+        prev.addEventListener("click", function () { S.row = Math.max(0, S.row - 1); S.idx = S.row * PER_ROW; renderLearn(); });
+        var snd = el("button", "wbk-btn main", "🔊 اسمع الصف"); snd.type = "button"; snd.id = "wbkListenRow";
+        snd.addEventListener("click", function () {
+            var keys = []; for (var k2 = 0; k2 < PER_ROW; k2++) keys.push(audioKey(r * PER_ROW + k2));
+            say(keys);
+        });
+        var next = el("button", "wbk-btn", "التالي ◀"); next.type = "button"; next.disabled = r === ROWS - 1;
+        next.addEventListener("click", function () { S.row = Math.min(ROWS - 1, S.row + 1); S.idx = S.row * PER_ROW; renderLearn(); });
+        ctl.appendChild(prev); ctl.appendChild(snd); ctl.appendChild(next);
+        area.appendChild(ctl);
+        var go = el("button", "wbk-btn soft", "الشبكة كاملة ◂"); go.type = "button"; go.id = "wbkToGrid";
+        go.addEventListener("click", function () { goStage("grid"); });
+        area.appendChild(go);
+        msg("المس كل حرف في الصف واسمعه، ثم اقرأ الصف كله ✨");
+    }
+
+    function renderGrid(area) {
+        var tools = el("div", "wbk-gridtools");
+        var pt = el("button", "wbk-btn soft" + (S.pointer ? " on" : ""), "☝️ المعلم يشير");
+        pt.type = "button"; pt.id = "wbkPointer"; pt.setAttribute("aria-pressed", S.pointer ? "true" : "false");
+        pt.addEventListener("click", function () { S.pointer = !S.pointer; S.spot = -1; renderLearn(); });
+        var hear = el("button", "wbk-btn main", "🔊 اسمع الحرف المحدد"); hear.type = "button"; hear.id = "wbkHearSpot";
+        hear.disabled = !(S.pointer && S.spot >= 0);
+        hear.addEventListener("click", function () { if (S.spot >= 0) sayLetter(S.spot); });
+        tools.appendChild(pt); tools.appendChild(hear);
+        area.appendChild(tools);
+        var g = el("div", "wbk-grid" + (S.pointer && S.spot >= 0 ? " spotlight" : ""));
+        for (var i = 0; i < BOOK.length; i++) {
+            (function (i) {
+                var c = card(i, "cell");
+                if (S.pointer && S.spot === i) c.classList.add("spot");
+                c.addEventListener("click", function () {
+                    if (S.pointer) { S.spot = (S.spot === i) ? -1 : i; renderLearn(); }
+                    else { sayLetter(i); flash(c); }
+                });
+                g.appendChild(c);
+            })(i);
+        }
+        area.appendChild(g);
+        msg(S.pointer ? "المعلم يشير إلى حرف، والطالب يقرؤه بصوته 🌟" : "اقرأ الحروف بالترتيب، ثم المس أي حرف لتسمعه 🌟");
+    }
+
+    function flash(c) {
+        if (!c) return;
+        c.classList.add("tap");
+        setTimeout(function () { c.classList.remove("tap"); }, 260);
+    }
+
+    /* =====================================================================
+       وضع التدرّب: اسمع ← المس الحرف (مساعدة ٣ مراحل تُسجَّل)
+       ===================================================================== */
+    function hardSet(p) {
+        var out = [];
+        for (var i = 0; i < BOOK.length; i++) {
+            var it = p.l1.items[BOOK[i][0]];
+            if (it && !it.m && (it.tr === "retrain" || it.tr === "asst" || (it.lastHelp && it.lastHelp > 0))) out.push(i);
+        }
+        return out;
+    }
+    function renderPracticeHome() {
+        var b = body(); b.innerHTML = "";
+        var p = load();
+        b.appendChild(el("div", "wbk-lead", "اختر ما تتدرّب عليه:"));
+        var chips = el("div", "wbk-chips");
+        function chip(label, scope, extra) {
+            var c = el("button", "wbk-chip" + (extra ? " " + extra : ""), label);
+            c.type = "button"; c.dataset.scope = scope;
+            c.addEventListener("click", function () { startPractice(scope); });
+            chips.appendChild(c);
+        }
+        chip("كل الحروف", "all", "wide");
+        for (var r = 0; r < ROWS; r++) chip("الصف " + ar(r + 1) + "  " + BOOK[r * PER_ROW].replace(/ـ/g, "") + " " + BOOK[r * PER_ROW + 3].replace(/ـ/g, ""), "row" + r);
+        var hs = hardSet(p).length;
+        if (hs) chip("حروف تحتاج تدريبًا (" + ar(hs) + ")", "hard", "wide warm");
+        b.appendChild(chips);
+        msg("لا مؤقّت هنا ولا عقوبة. خذ وقتك 🌟");
+    }
+    function pickTargets(scope, p) {
+        var pool = [], i;
+        if (scope === "all") { for (i = 0; i < BOOK.length; i++) pool.push(i); }
+        else if (scope === "hard") { pool = hardSet(p); }
+        else { var r = Number(scope.slice(3)); for (i = 0; i < PER_ROW; i++) pool.push(r * PER_ROW + i); }
+        if (!pool.length) { for (i = 0; i < BOOK.length; i++) pool.push(i); }
+        var t = shuffle(pool).slice(0, ROUNDS);
+        while (t.length < ROUNDS && pool.length) t.push(pool[Math.floor(Math.random() * pool.length)]);
+        return { pool: pool, targets: t };
+    }
+    function startPractice(scope) {
+        S.session++; clearTimers();
+        var p = load();
+        var pk = pickTargets(scope, p);
+        S.p = { scope: scope, pool: pk.pool, targets: pk.targets, round: 0, help: 0, solved: false, tried: {}, stars: 0, cur: null, done: false };
+        renderRound();
+    }
+    function renderRound() {
+        var P = S.p; var b = body(); b.innerHTML = "";
+        P.help = 0; P.solved = false; P.tried = {};
+        var target = P.targets[P.round];
+        var n = P.round < 2 ? 2 : 3;
+        var dis = shuffle(P.pool.concat(BOOK.map(function (x, i) { return i; })).filter(function (x, k, a) { return x !== target && a.indexOf(x) === k; }));
+        var choices = shuffle([target].concat(dis.slice(0, n - 1)));
+        P.cur = { target: target, choices: choices };
+
+        var hud = el("div", "wbk-hud");
+        var pips = el("div", "wbk-pips");
+        for (var k = 0; k < ROUNDS; k++) pips.appendChild(el("i", "wbk-pip" + (k < P.round ? " done" : (k === P.round ? " now" : ""))));
+        pips.setAttribute("aria-label", "الجولة " + ar(P.round + 1) + " من " + ar(ROUNDS));
+        hud.appendChild(el("span", "wbk-roundtxt", "الجولة " + ar(P.round + 1) + " / " + ar(ROUNDS)));
+        hud.appendChild(pips);
+        hud.appendChild(el("span", "wbk-starpill", "⭐ " + ar(P.stars)));
+        b.appendChild(hud);
+
+        var ask = el("div", "wbk-ask");
+        var model = el("div", "wbk-model"); model.id = "wbkModel"; model.setAttribute("aria-hidden", "true");
+        ask.appendChild(model);
+        var listen = el("button", "wbk-btn main big", "🔊 اسمع الحرف"); listen.type = "button"; listen.id = "wbkListen";
+        listen.addEventListener("click", function () { sayLetter(target); });
+        ask.appendChild(listen);
+        b.appendChild(ask);
+
+        var cards = el("div", "wbk-choices n" + choices.length); cards.id = "wbkChoices";
+        choices.forEach(function (i) {
+            var c = card(i, "choice");
+            c.addEventListener("click", function () { tapChoice(c, i); });
+            cards.appendChild(c);
+        });
+        b.appendChild(cards);
+
+        var ctl = el("div", "wbk-ctl");
+        var h = el("button", "wbk-btn help", "💡 مساعدة"); h.type = "button"; h.id = "wbkHelp";
+        h.addEventListener("click", function () { helpBtn(); });
+        var lv = el("span", "wbk-helplv"); lv.id = "wbkHelpLv"; lv.setAttribute("aria-label", "مستوى المساعدة");
+        var ex = el("button", "wbk-btn soft", "إنهاء التدريب"); ex.type = "button"; ex.id = "wbkEndPractice";
+        ex.addEventListener("click", function () { S.session++; clearTimers(); try { EduAudio.stop(); } catch (e) { /* لا شيء */ } renderPracticeHome(); });
+        ctl.appendChild(h); ctl.appendChild(lv); ctl.appendChild(ex);
+        b.appendChild(ctl);
+        paintHelp();
+        msg("اسمع الحرف ثم المس الحرف الذي سمعته 👂");
+        later(function () { sayLetter(target); }, 450);
+    }
+    function paintHelp() {
+        var P = S.p; if (!P) return;
+        var lv = document.getElementById("wbkHelpLv");
+        if (lv) { lv.textContent = "●".repeat(P.help) + "○".repeat(3 - P.help); lv.dataset.level = String(P.help); }
+        var cards = document.querySelectorAll("#wbkChoices .wbk-card");
+        var model = document.getElementById("wbkModel");
+        cards.forEach(function (c) {
+            c.classList.remove("hint", "dim");
+            var f = c.querySelector(".wbk-finger"); if (f) f.remove();
+        });
+        if (model) { model.innerHTML = ""; model.classList.remove("show"); }
+        if (P.help >= 2) {
+            cards.forEach(function (c) { if (Number(c.dataset.i) === P.cur.target) c.classList.add("hint"); });
+        }
+        if (P.help >= 3) {
+            cards.forEach(function (c) {
+                if (Number(c.dataset.i) === P.cur.target) {
+                    var f = el("span", "wbk-finger");
+                    f.innerHTML = '<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><path d="M13 4a2 2 0 0 1 4 0v10l2-1a2 2 0 0 1 3 2v3c0 4-3 8-7 8h-1c-3 0-5-2-6-4l-3-5a2 2 0 0 1 3-2l2 2z" fill="#fff" stroke="#1f3f66" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+                    c.appendChild(f);
+                } else c.classList.add("dim");
+            });
+            if (model) {
+                model.classList.add("show");
+                model.appendChild(el("span", "wbk-model-cap", "هذا هو الحرف:"));
+                var g = el("span", "wbk-model-g", BOOK[P.cur.target]); g.setAttribute("lang", "ar");
+                model.appendChild(g);
+            }
+        }
+    }
+    function helpBtn() {
+        var P = S.p; if (!P || P.solved) return;
+        P.help = Math.min(3, P.help + 1);
+        if (P.help === 1) { sayLetter(P.cur.target); msg("اسمع جيدًا 👂"); }
+        else if (P.help === 2) { sayLetter(P.cur.target); msg("انظر إلى البطاقة المضيئة 💡"); }
+        else { msg("المس البطاقة التي أشير إليها 👆"); }
+        paintHelp();
+    }
+    function tapChoice(c, i) {
+        var P = S.p; if (!P || P.solved || !P.cur) return;
+        if (i === P.cur.target) correct(c, i); else wrong(c, i);
+    }
+    function wrong(c, i) {
+        var P = S.p;
+        var first = !P.tried[i]; P.tried[i] = true;
+        if (first) P.help = Math.min(3, P.help + 1);
+        c.classList.remove("wrong"); void c.offsetWidth; c.classList.add("wrong");
+        setTimeout(function () { c.classList.remove("wrong"); }, 600);
+        msg("هذه «" + BOOK[i].replace(/ـ/g, "") + "»، جرّب بطاقة أخرى 💙");
+        var t = P.cur; var tg = t.target;
+        say([audioKey(i)], function () { if (S.p === P && !P.solved && P.cur === t) sayLetter(tg); });
+        paintHelp();
+    }
+    function correct(c, i) {
+        var P = S.p; P.solved = true;
+        c.classList.add("right");
+        document.querySelectorAll("#wbkChoices .wbk-card").forEach(function (x) { if (x !== c) x.classList.add("dim"); });
+        var fg = document.querySelector("#wbkChoices .wbk-finger"); if (fg) fg.remove();
+        /* تسجيل مستوى المساعدة: ٠ = مستقل، ١–٣ = بمساعدة */
+        var pr = load(); var it = item(pr, i);
+        if (P.help === 0) it.ind++; else it.asst++;
+        it.lastHelp = P.help; it.at = Date.now();
+        var starNow = false;
+        if (!it.star) { it.star = true; starNow = true; pr.l1.stars = (pr.l1.stars || 0) + 1; }
+        save(pr);
+        if (starNow) { P.stars++; try { if (typeof addStars === "function") addStars(1); } catch (e) { /* لا شيء */ } }
+        var pill = document.querySelector(".wbk-starpill"); if (pill) pill.textContent = "⭐ " + ar(P.stars);
+        msg(P.help === 0 ? "أحسنت! قرأتها وحدك 🌟" : "أحسنت! 🌟", "ok");
+        var praise = P.round >= ROUNDS - 1 ? "صحيح" : PRAISE[P.round % PRAISE.length];
+        var ses = S.session;
+        var go = function () { later(function () { nextRound(); }, calm() ? 700 : 400); };
+        say([audioKey(i), praise], function () { if (ses === S.session) go(); });
+    }
+    function nextRound() {
+        var P = S.p; if (!P || !P.solved) return;
+        if (P.round >= ROUNDS - 1) { finishPractice(); return; }
+        P.round++; renderRound();
+    }
+    function finishPractice() {
+        var P = S.p; var b = body(); b.innerHTML = "";
+        var pr = load(); pr.l1.sessions = (pr.l1.sessions || 0) + 1; save(pr);
+        var box = el("div", "wbk-done");
+        box.appendChild(el("div", "wbk-done-emoji", "🌟"));
+        box.appendChild(el("div", "wbk-done-title", "أحسنت! أنهيت التدريب"));
+        box.appendChild(el("div", "wbk-done-sub", P.stars ? "حصلت على " + ar(P.stars) + " نجمة جديدة ⭐" : "تدرّبت على حروف نلتَ نجومها من قبل ⭐"));
+        var again = el("button", "wbk-btn main", "🔁 جلسة أخرى"); again.type = "button"; again.id = "wbkAgain";
+        again.addEventListener("click", function () { startPractice(P.scope); });
+        var home = el("button", "wbk-btn", "📖 العودة للتعلّم"); home.type = "button"; home.id = "wbkBackLearn";
+        home.addEventListener("click", function () { setMode("learn"); });
+        box.appendChild(again); box.appendChild(home);
+        b.appendChild(box);
+        msg("");
+        say(["أحسنت يا بطل"]);
+    }
+
+    /* =====================================================================
+       وضع المعلم: تقييم القراءة الشفهية يدويًا + «أتقن» + المحاولات ١–٤
+       ===================================================================== */
+    function pinGate(cb) {
+        var unlocked = false;
+        try { unlocked = (typeof teacherUnlockedSession !== "undefined") && !!teacherUnlockedSession; } catch (e) { /* لا شيء */ }
+        if (unlocked || S.gateOk) { S.gateOk = true; cb(); return; }
+        var b = body(); b.innerHTML = "";
+        var pin = ""; try { pin = localStorage.getItem("taha_teacher_pin") || ""; } catch (e) { /* لا شيء */ }
+        var a = 2 + Math.floor(Math.random() * 8), c = 2 + Math.floor(Math.random() * 8);
+        var box = el("div", "wbk-gate");
+        box.appendChild(el("div", "wbk-lead", pin ? "🔢 أدخل الرمز السري للمعلم (٤ أرقام)" : "🔢 للمعلم فقط: " + ar(a) + " + " + ar(c) + " = ؟"));
+        var inp = el("input", "wbk-input"); inp.type = "text"; inp.inputMode = "numeric"; inp.id = "wbkGateInput";
+        inp.setAttribute("autocomplete", "off"); inp.setAttribute("aria-label", "إجابة المعلم");
+        var ok = el("button", "wbk-btn main", "دخول"); ok.type = "button"; ok.id = "wbkGateOk";
+        var err = el("div", "wbk-gate-err");
+        function tryIt() {
+            var v = inp.value.trim().replace(/[٠-٩]/g, function (d) { return "٠١٢٣٤٥٦٧٨٩".indexOf(d); });
+            var good = pin ? v === pin : Number(v) === a + c;
+            if (good) { S.gateOk = true; cb(); } else { err.textContent = "😊 حاول مرة أخرى"; inp.value = ""; }
+        }
+        ok.addEventListener("click", tryIt);
+        inp.addEventListener("keydown", function (e) { if (e.key === "Enter") tryIt(); });
+        box.appendChild(inp); box.appendChild(ok); box.appendChild(err);
+        b.appendChild(box);
+        msg("هذا الوضع مخصّص للمعلم");
+    }
+    function renderTeacherEntry() { pinGate(renderTeacher); }
+
+    var RES = { ind: ["✅", "مستقل"], asst: ["🤝", "بمساعدة"], retrain: ["🔁", "يحتاج تدريبًا"] };
+
+    function renderTeacher() {
+        var b = body(); b.innerHTML = "";
+        var p = load();
+        var cnt = { m: 0, ind: 0, asst: 0, retrain: 0 };
+        for (var i = 0; i < BOOK.length; i++) {
+            var it = p.l1.items[BOOK[i][0]];
+            if (!it) continue;
+            if (it.m) cnt.m++;
+            if (it.tr && cnt[it.tr] != null) cnt[it.tr]++;
+        }
+        var sum = el("div", "wbk-sum"); sum.id = "wbkSummary";
+        sum.innerHTML = "<span>أتقن: <b>" + ar(cnt.m) + "/" + ar(BOOK.length) + "</b></span>" +
+            "<span>✅ مستقل: <b>" + ar(cnt.ind) + "</b></span>" +
+            "<span>🤝 بمساعدة: <b>" + ar(cnt.asst) + "</b></span>" +
+            "<span>🔁 يحتاج تدريبًا: <b>" + ar(cnt.retrain) + "</b></span>";
+        b.appendChild(sum);
+        b.appendChild(el("div", "wbk-lead sm", "اختر حرفًا لتقييم قراءته الشفهية (اللمس والسماع داخل التطبيق لا يُحتسبان إتقانًا):"));
+        var g = el("div", "wbk-grid teach");
+        for (var j = 0; j < BOOK.length; j++) {
+            (function (j) {
+                var c = card(j, "cell");
+                var it2 = p.l1.items[BOOK[j][0]];
+                if (S.sel === j) c.classList.add("spot");
+                if (it2 && it2.tr) { c.classList.add("tr-" + it2.tr); c.appendChild(el("span", "wbk-tag", RES[it2.tr][0])); }
+                if (it2 && it2.m) { c.classList.add("mastered"); c.appendChild(el("span", "wbk-tag m", "⭐")); }
+                c.addEventListener("click", function () { S.sel = j; renderTeacher(); });
+                g.appendChild(c);
+            })(j);
+        }
+        b.appendChild(g);
+        if (S.sel >= 0) b.appendChild(teacherPanel(p, S.sel));
+        var tools = el("div", "wbk-ctl");
+        var hard = el("button", "wbk-btn soft", "🎯 تدريب الحروف الصعبة"); hard.type = "button"; hard.id = "wbkTrainHard";
+        hard.addEventListener("click", function () { setMode("practice"); startPractice("hard"); });
+        var lock = el("button", "wbk-btn soft", "🔒 قفل وضع المعلم"); lock.type = "button"; lock.id = "wbkLock";
+        lock.addEventListener("click", function () { S.gateOk = false; S.sel = -1; try { if (typeof lockTeacherPanel === "function") lockTeacherPanel(); } catch (e) { /* لا شيء */ } renderTeacherEntry(); });
+        var rst = el("button", "wbk-btn soft", "🗑️ مسح تقدّم هذا الدرس"); rst.type = "button"; rst.id = "wbkReset";
+        rst.addEventListener("click", function () {
+            if (rst.dataset.arm !== "1") { rst.dataset.arm = "1"; rst.textContent = "اضغط مرة أخرى للتأكيد"; return; }
+            var pp = load(); pp.l1 = { items: {}, sessions: 0, stars: 0 }; save(pp); S.sel = -1; renderTeacher();
+        });
+        tools.appendChild(hard); tools.appendChild(lock); tools.appendChild(rst);
+        b.appendChild(tools);
+        msg("");
+    }
+    function teacherPanel(p, i) {
+        var it = item(p, i);
+        var pn = el("div", "wbk-panel"); pn.id = "wbkPanel";
+        var head = el("div", "wbk-panel-head");
+        var g = el("span", "wbk-panel-g", BOOK[i]); g.setAttribute("lang", "ar");
+        var hear = el("button", "wbk-btn", "🔊 اسمع النموذج"); hear.type = "button"; hear.id = "wbkTModel";
+        hear.addEventListener("click", function () { sayLetter(i); });
+        head.appendChild(g); head.appendChild(hear);
+        pn.appendChild(head);
+        var rs = el("div", "wbk-res");
+        ["ind", "asst", "retrain"].forEach(function (k) {
+            var r = el("button", "wbk-res-btn" + (it.tr === k ? " on" : ""), RES[k][0] + " " + (k === "ind" ? "قرأ مستقلًا" : k === "asst" ? "قرأ بمساعدة" : "يحتاج تدريبًا"));
+            r.type = "button"; r.dataset.res = k; r.setAttribute("aria-pressed", it.tr === k ? "true" : "false");
+            r.addEventListener("click", function () {
+                var pp = load(); var x = item(pp, i);
+                x.tr = (x.tr === k) ? "" : k; x.at = Date.now(); save(pp); renderTeacher();
+            });
+            rs.appendChild(r);
+        });
+        pn.appendChild(rs);
+        var at = el("div", "wbk-att");
+        at.appendChild(el("span", "", "المحاولات:"));
+        for (var n = 1; n <= 4; n++) {
+            (function (n) {
+                var a = el("button", "wbk-attbtn" + (it.att >= n ? " on" : ""), ar(n));
+                a.type = "button"; a.dataset.att = String(n); a.setAttribute("aria-label", "المحاولة " + n);
+                a.addEventListener("click", function () {
+                    var pp = load(); var x = item(pp, i); x.att = (x.att === n) ? n - 1 : n; save(pp); renderTeacher();
+                });
+                at.appendChild(a);
+            })(n);
+        }
+        var mast = el("button", "wbk-master" + (it.m ? " on" : ""), (it.m ? "☑" : "☐") + " أتقن");
+        mast.type = "button"; mast.id = "wbkMaster"; mast.setAttribute("aria-pressed", it.m ? "true" : "false");
+        mast.addEventListener("click", function () { var pp = load(); var x = item(pp, i); x.m = !x.m; x.at = Date.now(); save(pp); renderTeacher(); });
+        at.appendChild(mast);
+        pn.appendChild(at);
+        var st = el("div", "wbk-panel-stats",
+            "تدرّب التطبيق: مستقل " + ar(it.ind) + " · بمساعدة " + ar(it.asst) +
+            (it.lastHelp != null ? " · آخر مساعدة: " + (it.lastHelp === 0 ? "بلا" : "المرحلة " + ar(it.lastHelp)) : ""));
+        pn.appendChild(st);
+        return pn;
+    }
+
+    /* ---------- الدخول والخروج ---------- */
+    function open() {
+        if (!build()) return;
+        S.session++; clearTimers();
+        S.mode = "learn"; S.stage = "one"; S.idx = 0; S.row = 0; S.pointer = false; S.spot = -1; S.sel = -1;
+        try { showScreen(SCREEN); } catch (e) { /* لا شيء */ }
+        applyCompanion();
+        setMode("learn");
+    }
+    function exitToWords() { teardown(); try { showScreen("words"); } catch (e) { /* لا شيء */ } }
+    function teardown() {
+        S.session++; clearTimers(); S.p = null;
+        try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
+    }
+
+    var prevShow = showScreen;
+    showScreen = function (id) {
+        if (id !== SCREEN) teardown();
+        return prevShow.apply(this, arguments);
+    };
+
+    /* ---------- بطاقة المعاينة (تظهر فقط مع ?wbk في الرابط) ---------- */
+    function previewParam() {
+        try { return new URLSearchParams(location.search).get("wbk"); } catch (e) { return null; }
+    }
+    function injectEntry() {
+        var q = previewParam();
+        if (!q) return;
+        var hub = document.getElementById("wordsLevelsHub");
+        if (hub && !document.getElementById("wbkEntry")) {
+            var b = el("button", "wbk-entry", "📘 معاينة: الدليل المبسط — الدرس ١ «أقرأ الحروف بالفتحة» (نموذج تجريبي)");
+            b.type = "button"; b.id = "wbkEntry";
+            b.addEventListener("click", open);
+            var grid = document.getElementById("wordsLevelsGrid");
+            if (grid) hub.insertBefore(b, grid); else hub.appendChild(b);
+        }
+        /* بعد شاشة الملف الشخصي التي يفتحها التطبيق عند أول تشغيل (٥٠٠م.ث) */
+        if (q === "open") setTimeout(open, 900);
+    }
+    document.addEventListener("DOMContentLoaded", function () { setTimeout(injectEntry, 0); });
+    if (document.readyState !== "loading") setTimeout(injectEntry, 0);
+
+    window.wbkOpen = open;
+    window.wbkState = S; /* للاختبار */
+})();
+/* WBK-END */

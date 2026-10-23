@@ -15803,3 +15803,195 @@ body.dark-mode .teacher-letter-row .tl-note { color: #ffcc80; }
     .ltr-star-pop { animation: none; opacity: 1; }
     .ltr-stage-card, .ltr-menu-main, .ltr-menu-short, .ltr-menu-suggest { transition: none; animation: none; }
 }
+/* WBK-BEGIN */
+/* نموذج تجريبي: الدليل المبسط — الدرس ١. كل المحددات تبدأ بـ .wbk لعزلها عن بقية التطبيق */
+.wbk, .wbk-entry {
+    --wbk-ink: #1f3f66;
+    --wbk-main: #2f6fb5;
+    --wbk-soft: #e4eefa;
+    --wbk-soft2: #f4f8fd;
+    --wbk-line: #c4d6ec;
+    --wbk-card: #ffffff;
+    --wbk-ok: #2f9e62;
+    --wbk-warm: #d9822b;
+    --wbk-bg: #f7faff;
+}
+body.dark-mode .wbk, body.dark-mode .wbk-entry {
+    --wbk-ink: #e8f0fb;
+    --wbk-main: #6aa6ec;
+    --wbk-soft: #1f3250;
+    --wbk-soft2: #172640;
+    --wbk-line: #3a557c;
+    --wbk-card: #14213a;
+    --wbk-bg: #0f1a2e;
+}
+.wbk-entry {
+    display: block; width: 100%; margin: 0 0 14px; padding: 14px 16px; min-height: 56px;
+    font: inherit; font-weight: 700; font-size: 1rem; line-height: 1.5; text-align: center;
+    color: var(--wbk-ink); background: var(--wbk-soft); border: 2px dashed var(--wbk-main);
+    border-radius: 16px; cursor: pointer;
+}
+.wbk {
+    max-width: 980px; margin: 0 auto; padding: 10px 12px 18px; color: var(--wbk-ink);
+    background: var(--wbk-bg); border-radius: 22px; font-family: "Tahoma", "Arial", "Noto Sans Arabic", "DejaVu Sans", sans-serif;
+}
+.wbk button { font: inherit; color: inherit; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.wbk-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.wbk-back, .wbk-cmp-toggle {
+    flex: 0 0 auto; width: 52px; height: 52px; border-radius: 16px; border: 2px solid var(--wbk-line);
+    background: var(--wbk-card); font-size: 1.4rem; cursor: pointer;
+}
+.wbk-cmp-toggle.off { opacity: .55; }
+.wbk-title { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.wbk-title strong { font-size: clamp(1.05rem, 3.4vw, 1.5rem); line-height: 1.3; }
+.wbk-badge {
+    align-self: flex-start; font-size: .8rem; font-weight: 700; padding: 3px 12px 3px 10px; border-radius: 99px;
+    background: var(--wbk-main); color: #fff;
+}
+.wbk-badge b { display: inline-block; min-width: 1.4em; margin-inline-start: 4px; padding: 0 4px; background: #fff; color: var(--wbk-main); border-radius: 99px; text-align: center; }
+.wbk-modes { display: flex; gap: 6px; padding: 5px; margin: 8px 0 10px; background: var(--wbk-soft); border-radius: 18px; }
+.wbk-mode {
+    flex: 1 1 0; min-height: 52px; border: 0; border-radius: 14px; background: transparent; font-weight: 700;
+    font-size: clamp(.95rem, 2.8vw, 1.15rem); cursor: pointer;
+}
+.wbk-mode.on { background: var(--wbk-card); box-shadow: 0 1px 4px rgba(31, 63, 102, .22); color: var(--wbk-main); }
+.wbk-body { min-height: 300px; }
+.wbk-steps { display: flex; gap: 6px; margin-bottom: 10px; }
+.wbk-step {
+    flex: 1 1 0; min-height: 46px; border-radius: 12px; border: 2px solid var(--wbk-line); background: var(--wbk-card);
+    font-weight: 700; cursor: pointer;
+}
+.wbk-step.on { background: var(--wbk-main); border-color: var(--wbk-main); color: #fff; }
+
+/* البطاقات */
+.wbk-card {
+    position: relative; display: flex; align-items: center; justify-content: center; border: 2px solid var(--wbk-line);
+    border-radius: 18px; background: var(--wbk-card); cursor: pointer; padding: 0; color: var(--wbk-ink);
+    transition: background-color .2s, border-color .2s, transform .2s; min-width: 0;
+}
+.wbk-card.alt { background: var(--wbk-soft); }
+.wbk-g { display: block; line-height: 1.9; padding-top: .35em; font-weight: 400; direction: rtl; }
+.wbk-card.big { width: min(78vw, 44vh, 430px); height: min(78vw, 44vh, 430px); margin: 4px auto 6px; border-width: 3px; border-radius: 28px; }
+.wbk-card.big .wbk-g { font-size: min(44vw, 26vh, 250px); }
+.wbk-card.tap { transform: scale(.97); border-color: var(--wbk-main); }
+.wbk-count { text-align: center; font-weight: 700; margin: 4px 0 8px; color: var(--wbk-main); }
+.wbk-ctl { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin: 10px 0; }
+.wbk-btn {
+    min-height: 56px; min-width: 56px; padding: 8px 18px; border-radius: 16px; border: 2px solid var(--wbk-line);
+    background: var(--wbk-card); font-weight: 700; font-size: 1.05rem; cursor: pointer;
+}
+.wbk-btn.main { background: var(--wbk-main); border-color: var(--wbk-main); color: #fff; }
+.wbk-btn.big { min-height: 66px; font-size: 1.25rem; }
+.wbk-btn.soft { background: var(--wbk-soft); }
+.wbk-btn.soft.on { background: var(--wbk-main); color: #fff; }
+.wbk-btn.help { background: #fff4d6; border-color: #e5b94a; color: #5a4300; }
+.wbk-btn:disabled { opacity: .4; cursor: default; }
+#wbkToRow, #wbkToGrid { display: block; margin: 8px auto 0; }
+
+/* الخريطة المصغّرة */
+.wbk-map { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; max-width: 280px; margin: 10px auto 0; direction: rtl; }
+.wbk-dot {
+    min-height: 40px; border-radius: 10px; border: 1.5px solid var(--wbk-line); background: var(--wbk-card);
+    font-size: 1.15rem; line-height: 1.4; cursor: pointer; padding: 2px 0;
+}
+.wbk-dot.inrow { background: var(--wbk-soft); }
+.wbk-dot.cur { background: var(--wbk-main); border-color: var(--wbk-main); color: #fff; font-weight: 700; }
+
+/* الصف */
+.wbk-rowcards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; direction: rtl; }
+.wbk-card.row { aspect-ratio: 1 / 1.15; border-radius: 22px; }
+.wbk-card.row .wbk-g { font-size: min(17vw, 20vh, 140px); }
+
+/* الشبكة */
+.wbk-gridtools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.wbk-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; direction: rtl; }
+.wbk-card.cell { height: clamp(62px, 9.6vh, 104px); border-radius: 16px; }
+.wbk-card.cell .wbk-g { font-size: clamp(2.1rem, 7.4vh, 3.6rem); line-height: 1.7; padding-top: .3em; }
+.wbk-grid.spotlight .wbk-card.cell:not(.spot) { opacity: .28; }
+.wbk-card.spot { border-color: var(--wbk-main); border-width: 3px; background: #fff7cf; z-index: 1; box-shadow: 0 0 0 4px rgba(47, 111, 181, .25); }
+body.dark-mode .wbk-card.spot { background: #3a3513; }
+
+/* التدرّب */
+.wbk-lead { text-align: center; font-weight: 700; font-size: 1.1rem; margin: 6px 0 12px; }
+.wbk-lead.sm { font-size: .95rem; margin: 8px 0; }
+.wbk-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.wbk-chip { min-height: 64px; border-radius: 16px; border: 2px solid var(--wbk-line); background: var(--wbk-card); font-weight: 700; font-size: 1.05rem; cursor: pointer; }
+.wbk-chip.wide { grid-column: 1 / -1; background: var(--wbk-soft); }
+.wbk-chip.warm { background: #ffe9cf; border-color: #e0a45e; color: #5a3500; }
+.wbk-hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-weight: 700; }
+.wbk-pips { display: flex; gap: 6px; }
+.wbk-pip { width: 14px; height: 14px; border-radius: 50%; background: var(--wbk-line); display: inline-block; }
+.wbk-pip.done { background: var(--wbk-ok); }
+.wbk-pip.now { background: var(--wbk-main); outline: 3px solid rgba(47, 111, 181, .3); }
+.wbk-starpill { padding: 4px 12px; border-radius: 99px; background: #fff4d6; color: #5a4300; }
+.wbk-ask { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 6px 0 12px; }
+.wbk-model { display: none; align-items: center; gap: 10px; padding: 6px 18px; border-radius: 18px; background: var(--wbk-soft); }
+.wbk-model.show { display: flex; }
+.wbk-model-cap { font-weight: 700; }
+.wbk-model-g { font-size: 3.6rem; line-height: 1.8; padding-top: .2em; }
+.wbk-choices { display: grid; gap: 12px; justify-content: center; direction: rtl; margin: 6px auto; }
+.wbk-choices.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; }
+.wbk-choices.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 760px; }
+.wbk-card.choice { aspect-ratio: 1 / 1.1; border-radius: 24px; }
+.wbk-card.choice .wbk-g { font-size: min(22vw, 24vh, 160px); }
+.wbk-card.hint { border-color: #f0b52b; border-width: 4px; background: #fff3c4; box-shadow: 0 0 0 5px rgba(240, 181, 43, .35); }
+body.dark-mode .wbk-card.hint { background: #4a3d10; }
+.wbk-card.dim { opacity: .3; }
+.wbk-card.right { border-color: var(--wbk-ok); background: #dff5e8; border-width: 4px; opacity: 1; }
+body.dark-mode .wbk-card.right { background: #17402b; }
+.wbk-card.right::after { content: "✓"; position: absolute; top: 6px; inset-inline-start: 10px; font-size: 1.6rem; color: var(--wbk-ok); font-weight: 700; }
+.wbk-card.wrong { border-color: #cfa0a0; background: var(--wbk-soft2); animation: wbkNudge .45s; }
+.wbk-finger { position: absolute; bottom: 4px; inset-inline-end: 6px; pointer-events: none; }
+.wbk-helplv { letter-spacing: 3px; font-size: 1.1rem; color: #b07d00; min-width: 60px; text-align: center; }
+.wbk-done { text-align: center; padding: 24px 8px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.wbk-done-emoji { font-size: 4rem; }
+.wbk-done-title { font-size: 1.5rem; font-weight: 700; }
+
+/* المعلم */
+.wbk-gate { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px 0; }
+.wbk-input { width: min(240px, 80%); min-height: 54px; text-align: center; font-size: 1.4rem; border-radius: 14px; border: 2px solid var(--wbk-line); background: var(--wbk-card); color: var(--wbk-ink); }
+.wbk-gate-err { min-height: 1.4em; font-weight: 700; color: #9a5b00; }
+.wbk-sum { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: center; padding: 10px; border-radius: 14px; background: var(--wbk-soft); font-weight: 700; }
+.wbk-grid.teach .wbk-card.cell { height: clamp(58px, 8.4vh, 92px); }
+.wbk-tag { position: absolute; top: 2px; inset-inline-start: 4px; font-size: .95rem; line-height: 1; }
+.wbk-tag.m { inset-inline-start: auto; inset-inline-end: 4px; }
+.wbk-card.tr-ind { border-color: var(--wbk-ok); }
+.wbk-card.tr-asst { border-color: #e5b94a; border-style: dashed; }
+.wbk-card.tr-retrain { border-color: var(--wbk-warm); border-style: dotted; border-width: 3px; }
+.wbk-panel { margin-top: 12px; padding: 12px; border: 2px solid var(--wbk-main); border-radius: 18px; background: var(--wbk-card); }
+.wbk-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.wbk-panel-g { font-size: 4rem; line-height: 1.8; padding-top: .2em; }
+.wbk-res { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
+.wbk-res-btn { min-height: 56px; border-radius: 14px; border: 2px solid var(--wbk-line); background: var(--wbk-soft2); font-weight: 700; cursor: pointer; padding: 4px; }
+.wbk-res-btn.on { background: var(--wbk-main); color: #fff; border-color: var(--wbk-main); }
+.wbk-att { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-weight: 700; }
+.wbk-attbtn { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--wbk-main); background: var(--wbk-card); font-weight: 700; cursor: pointer; }
+.wbk-attbtn.on { background: var(--wbk-main); color: #fff; }
+.wbk-master { min-height: 48px; padding: 4px 16px; border-radius: 14px; border: 2px solid var(--wbk-ok); background: var(--wbk-card); font-weight: 700; cursor: pointer; margin-inline-start: auto; }
+.wbk-master.on { background: var(--wbk-ok); color: #fff; }
+.wbk-panel-stats { margin-top: 8px; font-size: .9rem; opacity: .85; }
+
+/* التذييل: الشخصية المرافقة والرسالة */
+.wbk-foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; min-height: 64px; }
+.wbk-companion { flex: 0 0 auto; width: 60px; height: 60px; }
+.wbk-msg { flex: 1 1 auto; padding: 10px 14px; border-radius: 16px; background: var(--wbk-soft); font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.wbk-msg:empty { visibility: hidden; }
+.wbk-msg.ok { background: #dff5e8; color: #1c5a39; }
+body.dark-mode .wbk-msg.ok { background: #17402b; color: #bfeed3; }
+
+@keyframes wbkNudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+body.calm-mode .wbk *, body.calm-mode .wbk *::before, body.calm-mode .wbk *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .wbk *, .wbk *::before, .wbk *::after { animation: none !important; transition: none !important; } }
+
+/* السبورة الذكية والشاشات العريضة */
+@media (min-width: 900px) {
+    .wbk { padding: 16px 24px 22px; }
+    .wbk-card.big { width: min(40vw, 46vh, 460px); height: min(40vw, 46vh, 460px); }
+    .wbk-card.big .wbk-g { font-size: min(22vw, 28vh, 270px); }
+    .wbk-grid { gap: 10px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+    .wbk-card.big { width: 36vh; height: 36vh; }
+    .wbk-card.big .wbk-g { font-size: 20vh; }
+}
+/* WBK-END */
