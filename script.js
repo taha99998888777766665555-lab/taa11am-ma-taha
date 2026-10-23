@@ -39238,7 +39238,7 @@ function openAdditionRace(lv) {
 /* ADD-RACE-END */
 /* WBK-BEGIN */
 /* =========================================================================
-   📘 نموذج تجريبي (V3) — «الدليل المبسط لتعلم القراءة بالحركات القصيرة»
+   📘 نموذج تجريبي (V4) — «الدليل المبسط لتعلم القراءة بالحركات القصيرة»
    الدرس ١: «أقرأ الحروف بالفتحة» (٢٨ حرفًا بترتيب الكتاب حرفيًا)
    -------------------------------------------------------------------------
    كتلة معزولة بالكامل: لا تغيّر قسم «الكلمات» الحالي ولا مستوياته التسعة
@@ -39264,8 +39264,18 @@ function openAdditionRace(lv) {
     var ROWS = BOOK.length / PER_ROW;
     var PRAISE = ["أحسنت يا بطل", "أحسنت، عمل رائع", "صحيح"];
 
-    /* عائلات التشابه البصري (هيكل الحرف نفسه يتشابه ويختلف بالنقاط) — تصميم تربوي للمشتّتات فقط */
-    var FAMILIES = ["بتثني", "جحخ", "دذ", "رز", "سش", "صض", "طظ", "عغ", "فق"];
+    /* عائلات التشابه البصري (الهيكل نفسه يتشابه ويختلف بالنقاط) — للمشتّتات فقط، ولا تمسّ ترتيب المستهدفات.
+       القياس: تطابق هيكل الحرف (دون النقاط) عمليًا بالبكسل على ٥ خطوط عربية، فخرجت هذه المجموعات بتطابق كامل.
+       التشابه يختلف بين الحرف المنفصل والمتصل:
+       - isolated (الدرس ١: حروف منفصلة بالفتحة كما في الكتاب): «ن» و«ي» لا تشبهان «ب ت ث» (جسم مختلف)، و«ف/ق» غير متشابهتين.
+       - connected (للدروس اللاحقة حين تُكتب مقاطع وكلمات متصلة): بـ تـ ثـ نـ يـ بجسم واحد، وفـ قـ متشابهتان.
+       الدرس ١ يستعمل isolated فقط. */
+    var FAMILY_FORMS = {
+        isolated: ["بتث", "جحخ", "دذ", "رز", "سش", "صض", "طظ", "عغ"],
+        connected: ["بتثني", "جحخ", "دذ", "رز", "سش", "صض", "طظ", "عغ", "فق"]
+    };
+    var FORM = "isolated";
+    var FAMILIES = FAMILY_FORMS[FORM];
     var FAMID = {}; /* فهرس الحرف ← رقم العائلة */
     var FAMMEMBERS = []; /* رقم العائلة ← فهارس الأعضاء */
     (function () {
@@ -39399,7 +39409,9 @@ function openAdditionRace(lv) {
         if (typeof it.asst !== "number") it.asst = 0;
         if (typeof it.f !== "number") it.f = 0;    /* صحيح من أول محاولة دون مساعدة */
         if (typeof it.sc !== "number") it.sc = 0;  /* صحيح بعد خطأ دون مساعدة (تصحيح ذاتي) */
-        if (typeof it.rv !== "number") it.rv = 0;  /* من «بمساعدة»: كم مرة رأى الحل (مساعدة ٢ أو ٣) */
+        if (typeof it.rp !== "number") it.rp = 0;  /* زيارات استعمل فيها «إعادة السماع» (لا تُعدّ مساعدة ما لم تكشف الإجابة) */
+        if (typeof it.hn !== "number") it.hn = 0;  /* زيارات استعمل فيها «تلميحًا بصريًا» (إخفاء مشتّت) */
+        if (typeof it.rv !== "number") it.rv = 0;  /* زيارات رأى فيها الحل (عرض الحل) */
         if (typeof it.w !== "number") it.w = 0;    /* مجموع الأخطاء */
         if (typeof it.hist !== "string") it.hist = ""; /* آخر ٦ نتائج: f / s / a / r */
         return it;
@@ -39415,17 +39427,18 @@ function openAdditionRace(lv) {
        تسجيل الأداء (٤ حالات منفصلة)
        f = صحيح من أول محاولة دون مساعدة
        s = صحيح بعد خطأ دون مساعدة (تصحيح ذاتي — لا يُعادَل بالمساعدة)
-       a = صحيح بمساعدة (زر المساعدة)
-       r = صحيح بعد رؤية الحل (المساعدة ٢ أو ٣) — نوع من «بمساعدة»
+       a = صحيح بمساعدة: تلميح بصري (إخفاء مشتّت) — لا يكشف الإجابة بالكامل
+       r = صحيح بعد عرض الحل (إضاءة + إصبع + نموذج) — نوع من «بمساعدة» ولا يُعدّ إتقانًا مستقلًا
+       إعادة سماع المطلوب وحدها ليست مساعدة (لا تكشف الإجابة)؛ تُسجَّل عدّادًا فقط (rp)
        «يحتاج تدريبًا» حالة مشتقّة للحرف من آخر نتائجه (انظر needsTraining)
        ===================================================================== */
     function classify(P) {
-        if (P.hmax >= 2) return "r";
-        if (P.hmax === 1) return "a";
+        if (P.hmax >= 3) return "r";
+        if (P.hmax === 2) return "a";
         return P.wrongs > 0 ? "s" : "f";
     }
-    var RESNAME = { f: "من أول محاولة", s: "بعد تصحيح ذاتي", a: "بمساعدة", r: "بعد رؤية الحل" };
-    var RESICON = { f: "🎯", s: "💪", a: "🤝", r: "👁️" };
+    var RESNAME = { f: "من أول محاولة", s: "بعد تصحيح ذاتي", a: "بمساعدة (تلميح بصري)", r: "بعد عرض الحل" };
+    var RESICON = { f: "🎯", s: "💪", a: "💡", r: "👁️" };
     /* يحتاج تدريبًا: آخر نتيجة رأى فيها الحل، أو مساعدتان متتاليتان؛ التقييم اليدوي للمعلم يغلب */
     function needsTraining(it) {
         if (!it) return false;
@@ -39436,7 +39449,7 @@ function openAdditionRace(lv) {
             if (last === "r") return true;
             return last === "a" && (prev === "a" || prev === "r");
         }
-        return !!(it.lastHelp && it.lastHelp > 0); /* بيانات V1/V2 القديمة بلا سجل */
+        return !!(it.lastHelp && it.lastHelp >= 2); /* بيانات V1/V2 القديمة بلا سجل: المرحلة ٢ فأكثر كانت كشفًا للحل */
     }
 
     /* ---------- بناء الهيكل (مرة واحدة) ---------- */
@@ -39777,7 +39790,7 @@ function openAdditionRace(lv) {
 
     /* =====================================================================
        المشتّتات: ثابتة بلا عشوائية، متدرّجة، ولا تمسّ ترتيب المستهدفات أبدًا
-         المستوى ١ «سهل»: حروف من عائلات شكلية مختلفة، الأقرب سابقًا في الكتاب أولًا
+         المستوى ١ «سهل» (البداية): حروف من عائلات شكلية مختلفة، الأقرب سابقًا في الكتاب أولًا
          المستوى ٢ «متقارب»: حرف واحد متشابه بصريًا + البقية سهلة
          المستوى ٣ «متشابه بصريًا»: كل المشتّتات (ما أمكن) من عائلة الحرف نفسها
        الأقرب سابقًا في الكتاب (الحروف التي سبق تقديمها) يُفضَّل دائمًا، ثم اللاحق.
@@ -39811,10 +39824,13 @@ function openAdditionRace(lv) {
         var pref = p.prefs && p.prefs.discr;
         if (pref === 1 || pref === 2 || pref === 3) return pref;
         var it = p.l1.items[BOOK[i][0]];
+        /* تدرّج هادئ يُجمَّع عبر الجلسات: سهل ← (بعد نجاحين مستقلين) متقارب ← (بعد ٣ نجاحات مستقلة إضافية) متشابه.
+           «مستقل» = صحيح دون تلميح بصري أو عرض حل (أول محاولة أو بعد تصحيح ذاتي). الإجابة بعد عرض الحل لا تُحتسب. */
         var clean = it && typeof it.ind === "number" ? it.ind : 0;
-        var t = clean >= 2 ? 3 : (clean === 1 ? 2 : 1);
-        var last = (it && typeof it.hist === "string") ? it.hist.slice(-1) : "";
-        if ((last === "a" || last === "r") && t > 1) t--; /* بعد مساعدة نعود خطوة للأسهل */
+        var t = clean >= 5 ? 3 : (clean >= 2 ? 2 : 1);
+        /* لا نخفض المستوى لخطأ واحد ولا لمساعدة واحدة؛ فقط عند زيارتين متتاليتين بمساعدة أو عرض حل */
+        var h = (it && typeof it.hist === "string") ? it.hist.slice(-2) : "";
+        if (h.length === 2 && /^[ar]{2}$/.test(h) && t > 1) t--;
         return t;
     }
     function distractors(target, n, tier) {
@@ -39866,11 +39882,11 @@ function openAdditionRace(lv) {
         if (opt.from != null) pos = posFrom(seq, opt.from);
         else if (!opt.fresh) pos = resumePos(seq, getResume(p, scope));
         if (opt.fresh || opt.from != null) { setResume(p, scope, seq[pos], false); save(p); }
-        S.p = { scope: scope, seq: seq, pos: pos, maxSolved: pos - 1, help: 0, hmax: 0, wrongs: 0, solved: false, tried: {}, stars: 0, cur: null, rec: true, started: pos, res: [], vis: null };
+        S.p = { scope: scope, seq: seq, pos: pos, maxSolved: pos - 1, help: 0, hmax: 0, wrongs: 0, used: {}, out: null, solved: false, tried: {}, stars: 0, cur: null, rec: true, started: pos, res: [], vis: null };
         renderRound();
     }
     function visitStart(P) {
-        P.help = 0; P.hmax = 0; P.wrongs = 0; P.solved = false; P.tried = {}; P.vis = null;
+        P.help = 0; P.hmax = 0; P.wrongs = 0; P.used = {}; P.out = null; P.solved = false; P.tried = {}; P.vis = null;
         /* الحرف المسبوق حلّه في هذه الجلسة يُعاد للتكرار فقط ولا يُسجَّل */
         P.rec = P.pos > P.maxSolved;
     }
@@ -39963,7 +39979,7 @@ function openAdditionRace(lv) {
         var target = P.seq[P.pos];
         var vis = makeSet(P, target);
         P.cur = { target: target, choices: shuffleCardPositions(vis.ids), tier: vis.tier };
-        P.help = 0; P.tried = {}; P.solved = false;
+        P.help = 0; P.tried = {}; P.solved = false; P.out = null;
         /* بعد حلّ سابق لا يُحتسب أي حلّ جديد لهذه الزيارة */
         P.rec = wasSolved ? false : keepRec;
         drawChoices(P);
@@ -39973,8 +39989,21 @@ function openAdditionRace(lv) {
         msg(P.rec ? "حاول مرة أخرى 💙" : "تكرار للتمرين فقط 🔁");
         later(function () { sayLetter(target); }, 300);
     }
-    var HELPLBL = ["مساعدة", "مساعدة ١: اسمعه ثانية", "مساعدة ٢: أضئ الحرف", "مساعدة ٣: أرني"];
-    var HELPNEXT = ["مساعدة (١) اسمعه ثانية", "مساعدة (٢) أضئ الحرف", "مساعدة (٣) أرني الحرف", "اكتملت المساعدة"];
+    /* أنواع المساعدة الثلاثة (تُسجَّل بنوعها الفعلي):
+       ١ إعادة السماع — لا تكشف الإجابة، فلا تجعل الإجابة «بمساعدة»
+       ٢ تلميح بصري — يُخفي أحد المشتّتات (لا يكشف الحرف الصحيح)؛ يُتخطّى إن كان الخياران اثنين
+       ٣ عرض الحل — إضاءة وإصبع ونموذج؛ لا يُعدّ إتقانًا مستقلًا */
+    var HELPNEXT = ["مساعدة (١) اسمعه ثانية", "مساعدة (٢) تلميح: أُخفي حرفًا", "مساعدة (٣) أرني الحرف", "اكتملت المساعدة"];
+    function nextHelpLevel(P) {
+        var n = P.help + 1;
+        if (n === 2 && P.cur.choices.length < 3) n = 3; /* خياران فقط: إخفاء مشتّت سيكشف الحل، فلا تلميح بصري */
+        return n;
+    }
+    function hintOut(P) {
+        var ids = P.vis ? P.vis.ids : P.cur.choices;
+        for (var k = ids.length - 1; k >= 0; k--) if (ids[k] !== P.cur.target) return ids[k]; /* آخر مشتّت (الأسهل) يُخفى ويبقى الأصعب */
+        return null;
+    }
     function paintHelp() {
         var P = S.p; if (!P) return;
         var lv = document.getElementById("wbkHelpLv");
@@ -39984,21 +40013,24 @@ function openAdditionRace(lv) {
         }
         var hb = document.getElementById("wbkHelp");
         if (hb) {
-            hb.querySelector(".wbk-lbl").textContent = HELPNEXT[P.help];
+            var nl = nextHelpLevel(P);
+            hb.querySelector(".wbk-lbl").textContent = P.help >= 3 ? HELPNEXT[3] : HELPNEXT[nl - 1];
             hb.disabled = P.help >= 3 || P.solved;
             hb.classList.toggle("nudge", P.wrongs >= 2 && P.help === 0 && !P.solved);
         }
         var cards = document.querySelectorAll("#wbkChoices .wbk-card");
         var model = document.getElementById("wbkModel");
         cards.forEach(function (c) {
-            c.classList.remove("hint", "dim");
+            c.classList.remove("hint", "dim", "out");
+            c.removeAttribute("aria-disabled");
             var f = c.querySelector(".wbk-finger"); if (f) f.remove();
         });
         if (model) { model.innerHTML = ""; model.classList.remove("show"); }
-        if (P.help >= 2) {
-            cards.forEach(function (c) { if (Number(c.dataset.i) === P.cur.target) c.classList.add("hint"); });
+        if (P.out != null && P.help === 2) {
+            cards.forEach(function (c) { if (Number(c.dataset.i) === P.out) { c.classList.add("out"); c.setAttribute("aria-disabled", "true"); } });
         }
         if (P.help >= 3) {
+            cards.forEach(function (c) { if (Number(c.dataset.i) === P.cur.target) c.classList.add("hint"); });
             cards.forEach(function (c) {
                 if (Number(c.dataset.i) === P.cur.target) {
                     var f = el("span", "wbk-finger");
@@ -40014,18 +40046,20 @@ function openAdditionRace(lv) {
             }
         }
     }
-    function raise(P, to) { P.help = Math.min(3, to); if (P.help > P.hmax) P.hmax = P.help; }
+    function raise(P, to) { P.help = Math.min(3, to); P.used[P.help] = true; if (P.help > P.hmax) P.hmax = P.help; }
     function helpBtn() {
         var P = S.p; if (!P || P.solved || P.help >= 3) return;
-        raise(P, P.help + 1);
-        if (P.help === 1) { sayLetter(P.cur.target); msg("اسمع جيدًا 👂"); }
-        else if (P.help === 2) { sayLetter(P.cur.target); msg("انظر إلى البطاقة المضيئة 💡"); }
-        else { msg("المس البطاقة التي أشير إليها 👆"); }
+        var to = nextHelpLevel(P);
+        raise(P, to);
+        if (to === 1) { sayLetter(P.cur.target); msg("اسمع جيدًا 👂"); }
+        else if (to === 2) { P.out = hintOut(P); msg("أخفيتُ حرفًا ليس هو 💡 — اختر من الباقي"); }
+        else { sayLetter(P.cur.target); msg("المس البطاقة التي أشير إليها 👆"); }
         setMood("hint");
         paintHelp();
     }
     function tapChoice(c, i) {
         var P = S.p; if (!P || P.solved || !P.cur) return;
+        if (c.classList.contains("out")) return; /* مشتّت مُخفى بالتلميح: غير قابل للّمس */
         if (i === P.cur.target) correct(c, i); else wrong(c, i);
     }
     /* الخطأ: رسالة لطيفة فقط — لا انتقال ولا تغيير للتسلسل ولا تصعيد تلقائي للمساعدة
@@ -40045,8 +40079,8 @@ function openAdditionRace(lv) {
     var DONEMSG = {
         f: "أحسنت! قرأتها وحدك من أول مرة 🌟",
         s: "أحسنت! صحّحتَ بنفسك 💪",
-        a: "أحسنت! ساعدناك هذه المرة 🤝",
-        r: "أحسنت! رأينا الحرف معًا 🤝"
+        a: "أحسنت! ساعدك التلميح 💡",
+        r: "أحسنت! رأينا الحرف معًا 👁️"
     };
     function correct(c, i) {
         var P = S.p; P.solved = true;
@@ -40062,10 +40096,13 @@ function openAdditionRace(lv) {
             var pr = load(); var it = item(pr, i);
             if (res === "f") { it.f++; it.ind++; }
             else if (res === "s") { it.sc++; it.ind++; }
-            else { it.asst++; if (res === "r") it.rv++; }
+            else { it.asst++; }
+            if (P.used[1]) it.rp++;
+            if (P.used[2]) it.hn++;
+            if (P.used[3]) it.rv++;
             it.w += P.wrongs;
             it.hist = (it.hist + res).slice(-6);
-            it.lastHelp = P.hmax; it.reveal = P.hmax >= 2; it.at = Date.now();
+            it.lastHelp = P.hmax; it.reveal = P.hmax >= 3; it.at = Date.now();
             if (!pr.l1.starred) pr.l1.starred = {};
             var k = BOOK[i][0];
             if (!pr.l1.starred[k] && !it.star) { pr.l1.starred[k] = 1; starNow = true; pr.l1.stars = (pr.l1.stars || 0) + 1; }
@@ -40100,14 +40137,14 @@ function openAdditionRace(lv) {
         var P = S.p; var b = body(); b.innerHTML = "";
         var pr = load(); pr.l1.sessions = (pr.l1.sessions || 0) + 1;
         setResume(pr, P.scope, null, true); save(pr);
-        var tally = { f: 0, s: 0, a: 0 };
-        P.res.forEach(function (x) { if (x) tally[x === "r" ? "a" : x]++; });
+        var tally = { f: 0, s: 0, a: 0, r: 0 };
+        P.res.forEach(function (x) { if (x) tally[x]++; });
         var box = el("div", "wbk-done");
         box.appendChild(el("div", "wbk-done-emoji", "🌟"));
         box.appendChild(el("div", "wbk-done-title", "أحسنت! أكملت " + scopeName(P.scope)));
         box.appendChild(el("div", "wbk-done-sub", P.stars ? "حصلت على " + ar(P.stars) + " نجمة جديدة ⭐" : "النجوم السابقة لهذه الحروف محفوظة ⭐"));
         var sm = el("div", "wbk-done-tally"); sm.id = "wbkTally";
-        sm.innerHTML = "<span>🎯 من أول مرة: <b>" + ar(tally.f) + "</b></span><span>💪 صحّحتَ بنفسك: <b>" + ar(tally.s) + "</b></span><span>🤝 بمساعدة: <b>" + ar(tally.a) + "</b></span>";
+        sm.innerHTML = "<span>🎯 من أول مرة: <b>" + ar(tally.f) + "</b></span><span>💪 صحّحتَ بنفسك: <b>" + ar(tally.s) + "</b></span><span>💡 بتلميح: <b>" + ar(tally.a) + "</b></span><span>👁️ بعد عرض الحل: <b>" + ar(tally.r) + "</b></span>";
         box.appendChild(sm);
         var scope = P.scope;
         var again = btn("main", "restart", "إعادة من البداية", "wbkAgain");
@@ -40179,7 +40216,7 @@ function openAdditionRace(lv) {
         asum.innerHTML = "<span class=\"cap\">آخر تدرّب في التطبيق (آلي):</span>" +
             "<span>🎯 أول مرة: <b>" + ar(app.f) + "</b></span>" +
             "<span>💪 تصحيح ذاتي: <b>" + ar(app.s) + "</b></span>" +
-            "<span>🤝 بمساعدة: <b>" + ar(app.a) + "</b></span>" +
+            "<span>💡 بمساعدة: <b>" + ar(app.a) + "</b></span>" +
             "<span>↻ يحتاج تدريبًا: <b>" + ar(app.need) + "</b></span>";
         b.appendChild(asum);
         b.appendChild(el("div", "wbk-lead sm", "اختر حرفًا لتقييم قراءته الشفهية (اللمس والسماع داخل التطبيق لا يُحتسبان إتقانًا):"));
@@ -40268,12 +40305,14 @@ function openAdditionRace(lv) {
         var chips = el("div", "wbk-stchips");
         chips.innerHTML = "<span class=\"wbk-stc f\">🎯 من أول محاولة: <b>" + ar(it.f) + "</b></span>" +
             "<span class=\"wbk-stc s\">💪 بعد تصحيح ذاتي: <b>" + ar(it.sc) + "</b></span>" +
-            "<span class=\"wbk-stc a\">🤝 بمساعدة: <b>" + ar(it.asst) + "</b>" + (it.rv ? " (رأى الحل " + ar(it.rv) + ")" : "") + "</span>" +
+            "<span class=\"wbk-stc a\">💡 بتلميح بصري: <b>" + ar(it.hn) + "</b></span>" +
+            "<span class=\"wbk-stc a\">👁️ بعد عرض الحل: <b>" + ar(it.rv) + "</b></span>" +
+            "<span class=\"wbk-stc\">🔊 أعاد السماع: <b>" + ar(it.rp) + "</b></span>" +
             (legacy ? "<span class=\"wbk-stc\">قبل التحديث (دون مساعدة): <b>" + ar(legacy) + "</b></span>" : "") +
             "<span class=\"wbk-stc n" + (needsTraining(it) ? " on" : "") + "\">↻ يحتاج تدريبًا: <b>" + (needsTraining(it) ? "نعم" : "لا") + "</b></span>";
         st.appendChild(chips);
         var hl = el("div", "wbk-histline"); hl.appendChild(el("span", "", "آخر النتائج: ")); hl.appendChild(histStrip(it));
-        if (it.lastHelp != null) hl.appendChild(el("span", "wbk-lasthelp", " · آخر مساعدة: " + (it.lastHelp === 0 ? "بلا" : "المرحلة " + ar(it.lastHelp))));
+        if (it.lastHelp != null) hl.appendChild(el("span", "wbk-lasthelp", " · آخر مساعدة: " + (it.lastHelp === 0 ? "بلا" : (it.lastHelp === 1 ? "إعادة سماع" : (it.lastHelp === 2 ? "تلميح بصري" : "عرض الحل")))));
         st.appendChild(hl);
         pn.appendChild(st);
         var go = el("div", "wbk-ctl");
@@ -40336,6 +40375,16 @@ function openAdditionRace(lv) {
     window.wbkInternals = { distractors: distractors, tierFor: tierFor, classify: classify, needsTraining: needsTraining, similarOf: similarOf, easyPick: easyPick, FAMILIES: FAMILIES }; /* للاختبار فقط */
 })();
 /* WBK-END */
+
+
+
+
+
+
+
+
+
+
 
 
 

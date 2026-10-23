@@ -16009,6 +16009,7 @@ body.dark-mode .wbk-tier.t3 { color: #ff9bd6; }
 .wbk-card.hint { border-color: #f0b52b; border-width: 4px; border-bottom-width: 8px; background: #fff3c4; box-shadow: 0 0 0 5px rgba(240, 181, 43, .35); }
 body.dark-mode .wbk-card.hint { background: #4a3d10; }
 .wbk-card.dim { opacity: .3; }
+.wbk-card.out { opacity: .2; filter: grayscale(1); border-style: dashed; cursor: default; pointer-events: none; }
 .wbk-card.right { border-color: var(--wbk-ok); background: #dff5e8; border-width: 4px; border-bottom-width: 8px; opacity: 1; }
 body.dark-mode .wbk-card.right { background: #17402b; }
 .wbk-card.right::after { content: "✓"; position: absolute; top: 6px; inset-inline-start: 10px; font-size: 1.6rem; color: var(--wbk-ok); font-weight: 700; }
@@ -16152,6 +16153,16 @@ body.dark-mode .wbk-scope.warm { background: #3d2c14; color: #ffe0b8; }
 .wbk-nav .wbk-btn.soft { flex-basis: 100%; }
 @media (min-width: 760px) { .wbk-nav .wbk-btn.soft { flex-basis: 0; } .wbk-dot { min-height: 46px; font-size: 1.3rem; } .wbk-map { gap: 7px; } }
 /* WBK-END */
+
+
+
+
+
+
+
+
+
+
 
 
 
