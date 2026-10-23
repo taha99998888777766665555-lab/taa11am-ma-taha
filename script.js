@@ -38346,6 +38346,27 @@ const AR_CSS = `
 .ar-sea .ar-pad[data-j="0"]{--c:#0e7490}
 .ar-sea .ar-pad[data-j="2"]{--c:#be185d}
 .ar-sea .ar-pad.hint{background:#86efac}
+.ar-dock.ar-end .ar-pads,.ar-dock.ar-end .ar-bar{visibility:hidden}
+.ar-dock.ar-sea .rr3-result{position:absolute;inset:0;z-index:6;display:none;flex-flow:row wrap;align-items:center;align-content:center;justify-content:center;gap:6px 12px;padding:8px 14px var(--ar-sb);box-sizing:border-box;text-align:center;direction:rtl;background:linear-gradient(#0c4a6e,#082f49);overflow:hidden}
+.ar-dock.ar-sea .rr3-result.on{display:flex}
+.ar-dock.ar-sea .rr3-result>h3,.ar-dock.ar-sea .rr3-result>.rr3-rstars,.ar-dock.ar-sea .rr3-result>p{flex:0 0 100%;margin:0}
+.ar-dock.ar-sea .rr3-result h3{font-size:clamp(18px,5vw,26px);line-height:1.2;color:#fff}
+.ar-dock.ar-sea .rr3-rstars{font-size:clamp(26px,7.5vw,36px);line-height:1;letter-spacing:5px;color:#fde047}
+.ar-dock.ar-sea .rr3-result>p{font-size:clamp(11.5px,3.1vw,14px);line-height:1.35;color:#bae6fd;max-width:none}
+.ar-reward{flex:0 0 auto;display:inline-block;padding:3px 16px;border-radius:999px;background:#fde047;color:#422006;font-weight:900;font-size:clamp(15px,4.2vw,20px);line-height:1.4}
+.ar-reward:empty{display:none}
+.ar-brk{flex:0 0 100%;height:0;margin:0;padding:0}
+.ar-dock.ar-sea .rr3-result button{flex:0 1 46%;min-width:0;min-height:46px;padding:0 10px;white-space:nowrap;border:0;border-radius:16px;font-size:clamp(15px,4vw,19px);font-weight:900;cursor:pointer;touch-action:manipulation}
+.ar-dock.ar-sea .rr3-result .rr3-p{background:#fbbf24;color:#1f2937}
+.ar-dock.ar-sea .rr3-result .rr3-s{background:#e0f2fe;color:#0c4a6e}
+@media (orientation:landscape) and (min-height:521px){
+.ar-dock.ar-sea .rr3-result>h3,.ar-dock.ar-sea .rr3-result>.rr3-rstars,.ar-dock.ar-sea .rr3-result>p{flex:0 1 auto}
+.ar-dock.ar-sea .rr3-result button{flex:0 1 240px}
+.ar-dock.ar-sea .ar-brk{display:none}
+}
+@media (orientation:landscape) and (max-height:520px){
+.ar-dock.ar-sea .rr3-result button{flex:0 0 100%}
+}
 .ar-entry{margin:10px 0 4px}
 .ar-entry-btn{display:flex;align-items:center;gap:12px;width:100%;min-height:72px;border-radius:20px;border:3px solid #1d4ed8;background:linear-gradient(#2563eb,#1d4ed8);color:#fff;font-family:inherit;text-align:right;padding:8px 16px;cursor:pointer;touch-action:manipulation}
 .ar-entry-btn:focus-visible{outline:4px solid #fde047;outline-offset:2px}
@@ -38594,6 +38615,7 @@ function arSyncPads() {
     const dock = AR.dock, eng = AR.eng, r = arCurRound();
     if (!dock || !eng || !r) return;
     const S = eng.state;
+    if (AR.lv === 3) dock.classList.toggle("ar-end", !!(S.finishing || S.finished));   /* المستوى ٣: لا أزرار إجابة أثناء سباق النهاية والنتيجة */
     for (let j = 0; j < 3; j++) {
         const b = dock.querySelectorAll(".ar-pad")[j];
         if (!b) continue;
@@ -38662,7 +38684,7 @@ function arSeaCreate(cfg) {
     let W = 0, H = 0, dpr = 1, geo = null, bg = null;
     const P = [0, 0, 0], wins = [0, 0, 0], flash = [0, 0, 0], dash = [0, 0, 0], PH = [0.4, 2.1, 4.0];
     let finalT = [0, 0, 0], goAt = [0, 0, 0], bubbles = [], streaks = [], parts = [];
-    S.progress = P; S.wins = wins;   /* للقراءة فقط (الاختبارات والتشخيص) */
+    S.progress = P; S.wins = wins; S.parts = parts;   /* للقراءة فقط (الاختبارات والتشخيص) */
 
     root.innerHTML =
         '<div class="rr3-root">' +
@@ -38676,12 +38698,12 @@ function arSeaCreate(cfg) {
         '</div>' +
         '<div class="rr3-dots" aria-hidden="true"></div>' +
         '<div class="rr3-msg" role="status" aria-live="polite"></div>' +
-        '<div class="rr3-result"><h3></h3><div class="rr3-rstars" aria-hidden="true"></div><p></p><button type="button" class="rr3-p"></button><button type="button" class="rr3-s"></button></div>' +
+        '<div class="rr3-result"><h3></h3><div class="rr3-rstars" aria-hidden="true"></div><p></p><div class="ar-reward"></div><i class="ar-brk"></i><button type="button" class="rr3-p"></button><button type="button" class="rr3-s"></button></div>' +
         '</div>';
     const host = root.querySelector(".rr3-root");
     const cv = host.querySelector(".rr3-cv");
     const ctx = cv.getContext("2d");
-    const el = { stars: host.querySelector(".rr3-stars"), dots: host.querySelector(".rr3-dots"), msg: host.querySelector(".rr3-msg"), result: host.querySelector(".rr3-result") };
+    const el = { stars: host.querySelector(".rr3-stars"), dots: host.querySelector(".rr3-dots"), msg: host.querySelector(".rr3-msg"), result: host.querySelector(".rr3-result"), reward: host.querySelector(".ar-reward") };
     host.querySelector(".rr3-letter").textContent = cfg.letter;
     host.querySelector(".rr3-stage").textContent = (cfg.stageIcon || "") + " " + (cfg.stageTitle || "");
 
@@ -38783,19 +38805,32 @@ function arSeaCreate(cfg) {
             coral(b, W * a[0], base, ch * (0.7 + (k % 3) * 0.15), a[1], 2, (k % 2 ? 0.25 : -0.2), Math.max(4, ch * 0.09));
         });
         knob(b, W * 0.26, base - 4, 9, "#fb7185"); knob(b, W * 0.42, base - 2, 7, "#fbbf24"); knob(b, W * 0.58, base - 4, 8, "#a78bfa");
-        /* بوابة النهاية: وتدان مرجانيان عند كل فاصل + شريط شطرنجي في كل حارة */
+        /* بوابة النهاية البحرية: عمودان مرجانيان وقوس مرجاني تعلوه نجمة بحر، والشريط الشطرنجي بينهما، وشعاب كبيرة عند القاعدة */
         b.fillStyle = "rgba(255,255,255,.08)"; b.fillRect(g.finishX, g.laneTop, W - g.finishX, g.laneBot - g.laneTop);
-        const cw = Math.max(12, W * 0.022), sq = cw / 2;
+        const cw = Math.max(14, W * 0.026), sq = cw / 2, gx = g.finishX, pw = Math.max(8, cw * 0.55);
+        const gTop = g.laneTop - 4, gBot = g.sandTop + 14, cxL = gx - pw / 2 - 3, cxR = gx + cw + pw / 2 + 3, cxm = (cxL + cxR) / 2;
+        gr = b.createLinearGradient(gx - cw * 2, 0, gx + cw * 3, 0); gr.addColorStop(0, "rgba(254,240,138,0)"); gr.addColorStop(0.5, "rgba(254,240,138,.3)"); gr.addColorStop(1, "rgba(254,240,138,0)");
+        b.fillStyle = gr; b.fillRect(gx - cw * 2, gTop - 10, cw * 5, gBot - gTop + 10);
         for (let j = 0; j < 3; j++) {
             const y0 = g.laneTop + g.laneH * j + 4, hh = g.laneH - 8, n = Math.max(2, Math.round(hh / sq));
-            for (let r = 0; r < n; r++) for (let q = 0; q < 2; q++) { b.fillStyle = (r + q) % 2 ? "#0f172a" : "#fff"; b.fillRect(g.finishX + q * sq, y0 + r * (hh / n), sq, hh / n + 0.5); }
+            for (let r = 0; r < n; r++) for (let q = 0; q < 2; q++) { b.fillStyle = (r + q) % 2 ? "#0f172a" : "#fff"; b.fillRect(gx + q * sq, y0 + r * (hh / n), sq, hh / n + 0.5); }
         }
-        const posts = ["#fb7185", "#f97316", "#c084fc", "#fb7185"];
-        for (let i = 0; i <= 3; i++) {
-            const r = Math.max(8, Math.min(g.laneH * 0.18, 15)), y = g.laneTop + g.laneH * i + (i === 0 ? r * 0.55 : (i === 3 ? -r * 0.4 : 0));
-            b.fillStyle = "rgba(0,0,0,.18)"; b.fillRect(g.finishX + cw / 2 - 3, y - 2, 6, 4);
-            knob(b, g.finishX + cw / 2, y, r, posts[i]); knob(b, g.finishX + cw / 2 - r * 0.9, y + r * 0.5, r * 0.6, "#fde047"); knob(b, g.finishX + cw / 2 + r * 0.8, y - r * 0.5, r * 0.55, "#f472b6");
-        }
+        b.lineCap = "round";
+        const archRy = Math.max(10, Math.min(g.laneH * 0.22, 20)), archY = gTop + pw / 2;
+        [[cxL, "#fb7185", -1], [cxR, "#f97316", 1]].forEach(function (a) {
+            b.strokeStyle = a[1]; b.lineWidth = pw; b.beginPath(); b.moveTo(a[0], archY); b.lineTo(a[0], gBot); b.stroke();
+            b.strokeStyle = "rgba(255,255,255,.38)"; b.lineWidth = pw * 0.28; b.beginPath(); b.moveTo(a[0] - a[2] * pw * 0.14, archY + 2); b.lineTo(a[0] - a[2] * pw * 0.14, gBot - 4); b.stroke();
+            for (let i = 0; i < 3; i++) knob(b, a[0] + a[2] * pw * 0.55, g.laneTop + g.laneH * (i + 0.5), pw * 0.4, a[2] < 0 ? "#f472b6" : "#fbbf24");
+        });
+        b.strokeStyle = "#fb7185"; b.lineWidth = pw * 0.9; b.beginPath(); b.ellipse(cxm, archY, (cxR - cxL) / 2, archRy, 0, Math.PI, 6.2832); b.stroke();
+        b.strokeStyle = "rgba(255,255,255,.38)"; b.lineWidth = pw * 0.24; b.beginPath(); b.ellipse(cxm, archY + 1, (cxR - cxL) / 2, archRy, 0, Math.PI * 1.1, Math.PI * 1.9); b.stroke();
+        const sx = cxm, sy = archY - archRy, sr = pw * 0.95;
+        b.fillStyle = "#fde047"; b.beginPath();
+        for (let i = 0; i < 10; i++) { const a2 = Math.PI / 5 * i - Math.PI / 2, rr = i % 2 ? sr * 0.45 : sr; const px = sx + Math.cos(a2) * rr, py = sy + Math.sin(a2) * rr; if (i) b.lineTo(px, py); else b.moveTo(px, py); }
+        b.closePath(); b.fill(); b.strokeStyle = "#f59e0b"; b.lineWidth = 1.5; b.stroke();
+        const bigH = Math.min(g.sandH * 1.5, g.laneH * 0.7, 74), bw = Math.max(4, bigH * 0.1);
+        coral(b, gx - pw * 2.4, gBot, bigH, "#fb7185", 2, -0.3, bw);
+        coral(b, gx + cw + pw * 2.4, gBot, bigH * 0.9, "#f97316", 2, 0.3, bw);
         /* شارات الحارات (الشكل واللون نفسهما لأزرار الإجابة) */
         const cols = ["#0e7490", "#f59e0b", "#be185d"];
         for (let j = 0; j < 3; j++) badgeShape(b, j, W * 0.035 + g.badge * 0.5, laneY(j), g.badge * 0.5, cols[j]);
@@ -38831,17 +38866,19 @@ function arSeaCreate(cfg) {
         c.save(); c.globalAlpha = alpha; c.translate(x, y + bob);
         if (!reduced) c.rotate(Math.sin(t * 2 + ph + 1) * 0.035);
         if (flash[j] > 0.02) {
-            const gl = c.createRadialGradient(0, 0, s * 0.1, 0, 0, s * 0.75);
-            gl.addColorStop(0, "rgba(254,240,138," + (0.65 * flash[j]).toFixed(3) + ")"); gl.addColorStop(1, "rgba(254,240,138,0)");
-            c.fillStyle = gl; c.beginPath(); c.arc(0, 0, s * 0.75, 0, 6.2832); c.fill();
+            const gl = c.createRadialGradient(0, 0, s * 0.1, 0, 0, s * 0.95);
+            gl.addColorStop(0, "rgba(254,240,138," + (0.8 * flash[j]).toFixed(3) + ")"); gl.addColorStop(1, "rgba(254,240,138,0)");
+            c.fillStyle = gl; c.beginPath(); c.arc(0, 0, s * 0.95, 0, 6.2832); c.fill();
         }
         c.save(); c.translate(-s * 0.3, 0); c.rotate(wag);
-        c.fillStyle = col.d; c.beginPath(); c.moveTo(s * 0.04, 0); c.quadraticCurveTo(-s * 0.1, -s * 0.2, -s * 0.27, -s * 0.24); c.quadraticCurveTo(-s * 0.17, 0, -s * 0.27, s * 0.24); c.quadraticCurveTo(-s * 0.1, s * 0.2, s * 0.04, 0); c.closePath(); c.fill();
+        c.strokeStyle = "rgba(255,255,255,.9)"; c.lineWidth = s * 0.05; c.lineJoin = "round"; c.fillStyle = col.d; c.beginPath(); c.moveTo(s * 0.04, 0); c.quadraticCurveTo(-s * 0.1, -s * 0.2, -s * 0.27, -s * 0.24); c.quadraticCurveTo(-s * 0.17, 0, -s * 0.27, s * 0.24); c.quadraticCurveTo(-s * 0.1, s * 0.2, s * 0.04, 0); c.closePath(); c.stroke(); c.fill();
         c.restore();
-        c.fillStyle = col.d; c.globalAlpha = alpha * 0.92; c.beginPath(); c.moveTo(-s * 0.14, -s * 0.17); c.quadraticCurveTo(-s * 0.02, -s * 0.4, s * 0.17, -s * 0.16); c.closePath(); c.fill(); c.globalAlpha = alpha;
+        c.strokeStyle = "rgba(255,255,255,.9)"; c.lineWidth = s * 0.05; c.lineJoin = "round"; c.fillStyle = col.d; c.globalAlpha = alpha * 0.92; c.beginPath(); c.moveTo(-s * 0.14, -s * 0.17); c.quadraticCurveTo(-s * 0.02, -s * 0.4, s * 0.17, -s * 0.16); c.closePath(); c.stroke(); c.fill(); c.globalAlpha = alpha;
         const gb = c.createLinearGradient(0, -s * 0.22, 0, s * 0.22);
         gb.addColorStop(0, col.m); gb.addColorStop(0.55, col.m); gb.addColorStop(1, col.l);
-        c.fillStyle = gb; c.beginPath(); c.ellipse(0, 0, s * 0.37, s * 0.22, 0, 0, 6.2832); c.fill();
+        c.fillStyle = gb; c.beginPath(); c.ellipse(0, 0, s * 0.37, s * 0.22, 0, 0, 6.2832);
+        c.strokeStyle = "rgba(255,255,255,.92)"; c.lineWidth = s * 0.05; c.stroke(); c.fill();
+        c.strokeStyle = col.d; c.globalAlpha = alpha * 0.6; c.lineWidth = s * 0.016; c.stroke(); c.globalAlpha = alpha;
         c.save(); c.beginPath(); c.ellipse(0, 0, s * 0.37, s * 0.22, 0, 0, 6.2832); c.clip();
         c.strokeStyle = col.d; c.globalAlpha = alpha * 0.32; c.lineWidth = s * 0.05;
         c.beginPath(); c.arc(-s * 0.18, 0, s * 0.23, -0.9, 0.9); c.stroke(); c.beginPath(); c.arc(-s * 0.02, 0, s * 0.23, -0.9, 0.9); c.stroke();
@@ -38859,8 +38896,24 @@ function arSeaCreate(cfg) {
         if (reduced) return;
         const x = fishX(P[j]) + geo.fishLen * 0.3, y = laneY(j);
         const cols = ["#fde047", "#ffffff", "#a5f3fc", "#fbcfe8"];
-        for (let i = 0; i < 12; i++) { const a = Math.random() * 6.2832, sp = 30 + Math.random() * 70; parts.push({ k: "s", x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, life: 0.9 + Math.random() * 0.5, t: 0, c: cols[i % 4], s: 4 + Math.random() * 5 }); }
+        for (let i = 0; i < 16; i++) { const a = Math.random() * 6.2832, sp = 36 + Math.random() * 84; parts.push({ k: "s", x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, life: 0.9 + Math.random() * 0.5, t: 0, c: cols[i % 4], s: 5 + Math.random() * 6 }); }
         for (let i = 0; i < 6; i++) parts.push({ k: "b", x: x - geo.fishLen * 0.5, y: y + (Math.random() - 0.5) * 10, vx: -20 - Math.random() * 20, vy: -25 - Math.random() * 25, life: 1 + Math.random() * 0.6, t: 0, c: "#ffffff", s: 2 + Math.random() * 3 });
+    }
+    function ring(j) {
+        if (reduced) return;
+        parts.push({ k: "r", x: fishX(P[j]) + geo.fishLen * 0.1, y: laneY(j), vx: 0, vy: 0, life: 0.85, t: 0, g: geo.fishLen * 0.7, s: geo.fishLen * 0.12 });
+    }
+    function celebrate() {
+        if (reduced || destroyed) return;
+        let w = 0; for (let j = 1; j < 3; j++) if (P[j] > P[w]) w = j;
+        flash[w] = 1; ring(w);
+        const cols = ["#fde047", "#ffffff", "#a5f3fc", "#fbcfe8"];
+        const wave = function () {
+            if (destroyed || !geo) return;
+            for (let i = 0; i < 14; i++) parts.push({ k: "b", x: W * (0.06 + Math.random() * 0.88), y: geo.sandTop + 6, vx: (Math.random() - 0.5) * 14, vy: -(60 + Math.random() * 70), life: 2.2 + Math.random() * 0.8, t: 0, c: "#ffffff", s: 3 + Math.random() * 5 });
+            for (let i = 0; i < 7; i++) parts.push({ k: "t", x: W * (0.1 + Math.random() * 0.8), y: geo.laneTop + Math.random() * (geo.laneBot - geo.laneTop) * 0.8, vx: (Math.random() - 0.5) * 10, vy: -8 - Math.random() * 12, life: 1.8 + Math.random() * 0.8, t: 0, c: cols[i % 4], s: 6 + Math.random() * 6 });
+        };
+        wave(); later(wave, 900); later(wave, 1800);
     }
     function bubblesFrom(j, n) {
         if (reduced) return;
@@ -38870,7 +38923,7 @@ function arSeaCreate(cfg) {
     function starPath(c, x, y, r) { c.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 4 * i - Math.PI / 2, rr = i % 2 ? r * 0.4 : r; const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr; if (i) c.lineTo(px, py); else c.moveTo(px, py); } c.closePath(); }
 
     function baseTarget(j) {
-        return Math.min(AR_SEA_MAXP, 0.04 + 0.03 * S.roundIdx + 0.05 * wins[j] + Math.min(0.035, roundT * 0.0025));
+        return Math.min(AR_SEA_MAXP, 0.04 + 0.02 * S.roundIdx + 0.075 * wins[j] + Math.min(0.035, roundT * 0.0025));
     }
     function update(dt) {
         if (!reduced) T += dt;
@@ -38925,6 +38978,8 @@ function arSeaCreate(cfg) {
             const p = parts[i], a = Math.max(0, 1 - p.t / p.life);
             c.globalAlpha = a;
             if (p.k === "s") { c.fillStyle = p.c; starPath(c, p.x, p.y, p.s); c.fill(); }
+            else if (p.k === "t") { c.fillStyle = p.c; starPath(c, p.x, p.y, p.s * (0.8 + 0.2 * Math.sin(p.t * 8))); c.fill(); }
+            else if (p.k === "r") { c.strokeStyle = "rgba(254,240,138,.95)"; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.s + p.t * p.g, 0, 6.2832); c.stroke(); }
             else { c.strokeStyle = "rgba(255,255,255,.8)"; c.lineWidth = 1.2; c.beginPath(); c.arc(p.x, p.y, p.s, 0, 6.2832); c.stroke(); }
         }
         c.globalAlpha = 1;
@@ -38953,7 +39008,7 @@ function arSeaCreate(cfg) {
         if (r.options[j] === r.correctShape) {
             const first = r.wrong === 0;
             if (first) { S.firstTry++; try { if (hooks.award) hooks.award(S.roundIdx); } catch (e) { fail(e); } }
-            wins[j]++; flash[j] = 1; dash[j] = 0.05; sparkle(j);
+            wins[j]++; flash[j] = 1; dash[j] = 0.08; sparkle(j); ring(j);
             const idx = S.roundIdx;
             const phrase = (cfg.phrases && cfg.phrases[(idx + 1) % cfg.phrases.length]) || "صحيح";
             msg("🎉 " + phrase);
@@ -38986,6 +39041,7 @@ function arSeaCreate(cfg) {
     }
     function startFinish() {
         S.finishing = true; S.busy = true; finClock = 0;
+        try { if (AR.dock) AR.dock.classList.add("ar-end"); } catch (e) { /* لا شيء */ }
         const order = [0, 1, 2].sort(function (a, b) { return (P[b] + wins[b] * 0.001) - (P[a] + wins[a] * 0.001) || a - b; });
         const fin = [1.04, 0.98, 0.93], gap = [0.2, 0.9, 1.5];
         order.forEach(function (j, rank) { finalT[j] = fin[rank]; goAt[j] = reduced ? 0 : gap[rank]; });
@@ -39006,9 +39062,14 @@ function arSeaCreate(cfg) {
         const bn = h.querySelector(".rr3-p"), bm = h.querySelector(".rr3-s");
         bn.textContent = cfgRes.next || ""; bn.onclick = function () { try { cfgRes.onNext && cfgRes.onNext(); } catch (e) { fail(e); } };
         if (cfgRes.map) { bm.style.display = ""; bm.textContent = cfgRes.map; bm.onclick = function () { try { cfgRes.onMap && cfgRes.onMap(); } catch (e) { fail(e); } }; } else bm.style.display = "none";
+        const mm = /نجوم جديدة:\s*([٠-٩0-9]+)/.exec(cfgRes.body || "");
+        el.reward.textContent = (mm && !/^[٠0]+$/.test(mm[1])) ? "⭐ " + mm[1] + " نجمة جديدة" : "";
+        /* لوحة النتيجة تُوضَع في لوحة الإجابات (التي أُخفيت أزرارها) فيبقى مشهد البحر كاملًا ظاهرًا ولا تغطي اللوحة شيئًا منه */
+        try { const dk = AR.dock; if (dk && dk.isConnected && dk.classList.contains("ar-sea")) dk.appendChild(h); } catch (e) { /* لا شيء */ }
         h.classList.add("on");
         try { bn.focus({ preventScroll: true }); } catch (e) { /* لا شيء */ }
         if (cfgRes.phrase) say(cfgRes.phrase, null, null, "queue");
+        celebrate();
     }
 
     host.addEventListener("click", function (ev) {
