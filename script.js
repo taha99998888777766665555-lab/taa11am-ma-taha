@@ -39054,7 +39054,7 @@ function arSeaCreate(cfg) {
         const order = [0, 1, 2].sort(function (a, b) { return (P[b] + wins[b] * 0.001) - (P[a] + wins[a] * 0.001) || a - b; });
         const fin = [1.04, 0.98, 0.93], gap = [0.2, 0.9, 1.5];
         order.forEach(function (j, rank) { finalT[j] = fin[rank]; goAt[j] = reduced ? 0 : gap[rank]; });
-        msg("🏁 الخط النهائي أمامك");
+        msg("");   /* المستوى ٣: تكفي رسالة «الأسماك تقترب من النهاية» داخل لوحة الإجابات */
         later(function () { if (!reduced) { for (let j = 0; j < 3; j++) sparkle(j); } finishRace(); }, reduced ? 1000 : 3300);
     }
     function finishRace() {
