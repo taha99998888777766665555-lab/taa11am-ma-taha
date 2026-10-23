@@ -39238,7 +39238,7 @@ function openAdditionRace(lv) {
 /* ADD-RACE-END */
 /* WBK-BEGIN */
 /* =========================================================================
-   📘 نموذج تجريبي — «الدليل المبسط لتعلم القراءة بالحركات القصيرة»
+   📘 نموذج تجريبي (V2) — «الدليل المبسط لتعلم القراءة بالحركات القصيرة»
    الدرس ١: «أقرأ الحروف بالفتحة» (٢٨ حرفًا بترتيب الكتاب حرفيًا)
    -------------------------------------------------------------------------
    كتلة معزولة بالكامل: لا تغيّر قسم «الكلمات» الحالي ولا مستوياته التسعة
@@ -39290,26 +39290,20 @@ function openAdditionRace(lv) {
         return t;
     }
     function clearTimers() { S.timers.forEach(clearTimeout); S.timers = []; }
-    function shuffle(a) {
-        var r = a.slice();
-        for (var i = r.length - 1; i > 0; i--) {
-            var j = Math.floor(Math.random() * (i + 1));
-            var t = r[i]; r[i] = r[j]; r[j] = t;
-        }
-        return r;
-    }
     function say(keys, done) {
         try { EduAudio.play(keys, { mode: "interrupt", done: done }); } catch (e) { if (done) done(); }
     }
     function sayLetter(i, done) { say([audioKey(i)], done); }
 
     /* ---------- التخزين ---------- */
-    function blank() { return { v: 1, prefs: { companion: true }, l1: { items: {}, sessions: 0, stars: 0 } }; }
+    function blank() { return { v: 1, prefs: { companion: true }, l1: { items: {}, sessions: 0, stars: 0, resume: {}, starred: {} } }; }
     function load() {
         try {
             var o = JSON.parse(localStorage.getItem(KEY));
             if (o && o.v === 1 && o.l1 && o.l1.items && typeof o.l1.items === "object") {
                 if (!o.prefs) o.prefs = { companion: true };
+                if (!o.l1.resume || typeof o.l1.resume !== "object") o.l1.resume = {};
+                if (!o.l1.starred || typeof o.l1.starred !== "object") o.l1.starred = {};
                 return o;
             }
         } catch (e) { /* لا شيء */ }
@@ -39560,7 +39554,12 @@ function openAdditionRace(lv) {
     }
 
     /* =====================================================================
-       وضع التدرّب: اسمع ← المس الحرف (مساعدة ٣ مراحل تُسجَّل)
+       وضع التدرّب (V2): اسمع ← المس الحرف، بتسلسل الكتاب حرفيًا
+       - الحروف المستهدفة تُقدَّم دائمًا بترتيب الكتاب (لا shuffle ولا اختيار عشوائي).
+       - صف: حروفه الأربعة بالترتيب. كل الحروف: الـ٢٨ بالتسلسل. الصعبة: بترتيبها في الكتاب.
+       - يُحفَظ موضع الاستكمال لكل نطاق على حدة ولكل طالب (l1.resume).
+       - العشوائية الوحيدة المسموحة: مواضع بطاقات الاختيار داخل السؤال الواحد.
+       - لا انتقال تلقائي: الانتقال بزر «التالي» الواضح بعد الإجابة الصحيحة فقط.
        ===================================================================== */
     function hardSet(p) {
         var out = [];
@@ -39568,60 +39567,129 @@ function openAdditionRace(lv) {
             var it = p.l1.items[BOOK[i][0]];
             if (it && !it.m && (it.tr === "retrain" || it.tr === "asst" || (it.lastHelp && it.lastHelp > 0))) out.push(i);
         }
+        return out; /* بترتيب الكتاب تصاعديًا */
+    }
+    function scopeSeq(scope, p) {
+        var out = [], i;
+        if (scope === "all") { for (i = 0; i < BOOK.length; i++) out.push(i); }
+        else if (scope === "hard") { out = hardSet(p); }
+        else { var r = Number(scope.slice(3)); for (i = 0; i < PER_ROW; i++) out.push(r * PER_ROW + i); }
         return out;
     }
+    function plain(i) { return BOOK[i].replace(/ـ/g, ""); }
+    function scopeName(scope) {
+        if (scope === "all") return "كل الحروف";
+        if (scope === "hard") return "الحروف التي تحتاج تدريبًا";
+        var r = Number(scope.slice(3));
+        return "الصف " + ar(r + 1) + "  (" + plain(r * PER_ROW) + " … " + plain(r * PER_ROW + 3) + ")";
+    }
+    function getResume(p, scope) {
+        var r = p.l1.resume && p.l1.resume[scope];
+        return (r && typeof r === "object") ? r : null;
+    }
+    function setResume(p, scope, next, done) {
+        if (!p.l1.resume) p.l1.resume = {};
+        p.l1.resume[scope] = { next: next, done: !!done };
+    }
+    /* أول موضع في التسلسل رقمه ≥ الحرف المحدَّد (التسلسل نفسه لا يتغيّر أبدًا) */
+    function posFrom(seq, letterIdx) {
+        for (var k = 0; k < seq.length; k++) if (seq[k] >= letterIdx) return k;
+        return 0;
+    }
+    function resumePos(seq, res) {
+        if (!res || res.done || res.next == null) return 0;
+        return posFrom(seq, res.next);
+    }
+
     function renderPracticeHome() {
         var b = body(); b.innerHTML = "";
         var p = load();
-        b.appendChild(el("div", "wbk-lead", "اختر ما تتدرّب عليه:"));
-        var chips = el("div", "wbk-chips");
-        function chip(label, scope, extra) {
-            var c = el("button", "wbk-chip" + (extra ? " " + extra : ""), label);
-            c.type = "button"; c.dataset.scope = scope;
-            c.addEventListener("click", function () { startPractice(scope); });
-            chips.appendChild(c);
+        S.p = null;
+        b.appendChild(el("div", "wbk-lead", "اختر نطاق التدرّب (بترتيب الكتاب):"));
+        var list = el("div", "wbk-scopes"); list.id = "wbkScopes";
+        var scopes = ["all"];
+        for (var r = 0; r < ROWS; r++) scopes.push("row" + r);
+        if (hardSet(p).length) scopes.push("hard");
+        scopes.forEach(function (scope) {
+            var seq = scopeSeq(scope, p);
+            var res = getResume(p, scope);
+            var pos = resumePos(seq, res);
+            var started = res && !res.done && pos > 0;
+            var done = res && res.done;
+            var row = el("div", "wbk-scope" + (scope === "all" ? " wide" : "") + (scope === "hard" ? " warm" : ""));
+            row.dataset.scope = scope;
+            var info = el("div", "wbk-scope-info");
+            info.appendChild(el("strong", "", scopeName(scope) + (scope === "hard" ? " (" + ar(seq.length) + ")" : "")));
+            info.appendChild(el("span", "wbk-scope-st", done ? "✔ أكملت هذا النطاق" : (started ? "تتابع من «" + plain(seq[pos]) + "» — الحرف " + ar(pos + 1) + " من " + ar(seq.length) : "لم تبدأ بعد — " + ar(seq.length) + " حروف")));
+            row.appendChild(info);
+            var go = el("button", "wbk-btn main", done ? "↺ أعد" : (started ? "▶ تابع" : "▶ ابدأ"));
+            go.type = "button"; go.className += " wbk-go";
+            go.addEventListener("click", function () { startPractice(scope, done ? { fresh: true } : {}); });
+            row.appendChild(go);
+            if (started) {
+                var fr = el("button", "wbk-btn soft wbk-fresh", "↺ من البداية"); fr.type = "button";
+                fr.addEventListener("click", function () { startPractice(scope, { fresh: true }); });
+                row.appendChild(fr);
+            }
+            list.appendChild(row);
+        });
+        b.appendChild(list);
+        msg("لا مؤقّت هنا ولا عقوبة. يمكنك الإيقاف والمتابعة لاحقًا 🌟");
+    }
+
+    /* المشتّتات بقاعدة ثابتة بلا عشوائية: الأقرب سابقًا في الكتاب (الحروف التي سبق تقديمها)،
+       وإن لم يكفِ (أول حروف الكتاب) فالأقرب لاحقًا */
+    function distractors(target, n) {
+        var out = [], k;
+        for (k = target - 1; k >= 0 && out.length < n; k--) out.push(k);
+        for (k = target + 1; k < BOOK.length && out.length < n; k++) out.push(k);
+        return out;
+    }
+    /* الوحيد الذي يستعمل العشوائية: مواضع البطاقات داخل السؤال (لا الحروف المستهدفة) */
+    function shuffleCardPositions(a) {
+        var r = a.slice();
+        for (var i = r.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = r[i]; r[i] = r[j]; r[j] = t;
         }
-        chip("كل الحروف", "all", "wide");
-        for (var r = 0; r < ROWS; r++) chip("الصف " + ar(r + 1) + "  " + BOOK[r * PER_ROW].replace(/ـ/g, "") + " " + BOOK[r * PER_ROW + 3].replace(/ـ/g, ""), "row" + r);
-        var hs = hardSet(p).length;
-        if (hs) chip("حروف تحتاج تدريبًا (" + ar(hs) + ")", "hard", "wide warm");
-        b.appendChild(chips);
-        msg("لا مؤقّت هنا ولا عقوبة. خذ وقتك 🌟");
+        return r;
     }
-    function pickTargets(scope, p) {
-        var pool = [], i;
-        if (scope === "all") { for (i = 0; i < BOOK.length; i++) pool.push(i); }
-        else if (scope === "hard") { pool = hardSet(p); }
-        else { var r = Number(scope.slice(3)); for (i = 0; i < PER_ROW; i++) pool.push(r * PER_ROW + i); }
-        if (!pool.length) { for (i = 0; i < BOOK.length; i++) pool.push(i); }
-        var t = shuffle(pool).slice(0, ROUNDS);
-        while (t.length < ROUNDS && pool.length) t.push(pool[Math.floor(Math.random() * pool.length)]);
-        return { pool: pool, targets: t };
-    }
-    function startPractice(scope) {
+
+    function startPractice(scope, opt) {
+        opt = opt || {};
         S.session++; clearTimers();
         var p = load();
-        var pk = pickTargets(scope, p);
-        S.p = { scope: scope, pool: pk.pool, targets: pk.targets, round: 0, help: 0, solved: false, tried: {}, stars: 0, cur: null, done: false };
+        var seq = scopeSeq(scope, p);
+        if (!seq.length) { renderPracticeHome(); msg("لا توجد حروف في هذا النطاق بعد — يحدّدها المعلم من وضع المعلم"); return; }
+        var pos = 0;
+        if (opt.from != null) pos = posFrom(seq, opt.from);
+        else if (!opt.fresh) pos = resumePos(seq, getResume(p, scope));
+        if (opt.fresh || opt.from != null) { setResume(p, scope, seq[pos], false); save(p); }
+        S.p = { scope: scope, seq: seq, pos: pos, maxSolved: pos - 1, help: 0, hmax: 0, solved: false, tried: {}, stars: 0, cur: null, rec: true, started: pos };
         renderRound();
+    }
+    function visitStart(P) {
+        P.help = 0; P.hmax = 0; P.solved = false; P.tried = {};
+        /* الحرف المسبوق حلّه في هذه الجلسة يُعاد للتكرار فقط ولا يُسجَّل */
+        P.rec = P.pos > P.maxSolved;
     }
     function renderRound() {
         var P = S.p; var b = body(); b.innerHTML = "";
-        P.help = 0; P.solved = false; P.tried = {};
-        var target = P.targets[P.round];
-        var n = P.round < 2 ? 2 : 3;
-        var dis = shuffle(P.pool.concat(BOOK.map(function (x, i) { return i; })).filter(function (x, k, a) { return x !== target && a.indexOf(x) === k; }));
-        var choices = shuffle([target].concat(dis.slice(0, n - 1)));
+        visitStart(P);
+        var target = P.seq[P.pos];
+        var n = P.pos - P.started < 2 ? 2 : 3;
+        var choices = shuffleCardPositions([target].concat(distractors(target, n - 1)));
         P.cur = { target: target, choices: choices };
 
         var hud = el("div", "wbk-hud");
-        var pips = el("div", "wbk-pips");
-        for (var k = 0; k < ROUNDS; k++) pips.appendChild(el("i", "wbk-pip" + (k < P.round ? " done" : (k === P.round ? " now" : ""))));
-        pips.setAttribute("aria-label", "الجولة " + ar(P.round + 1) + " من " + ar(ROUNDS));
-        hud.appendChild(el("span", "wbk-roundtxt", "الجولة " + ar(P.round + 1) + " / " + ar(ROUNDS)));
-        hud.appendChild(pips);
+        hud.appendChild(el("span", "wbk-roundtxt", "الحرف " + ar(P.pos + 1) + " من " + ar(P.seq.length)));
+        var bar = el("div", "wbk-bar"); bar.setAttribute("aria-hidden", "true");
+        var fill = el("i", "wbk-bar-fill"); fill.style.width = Math.round(((P.pos) / P.seq.length) * 100) + "%";
+        bar.appendChild(fill);
+        hud.appendChild(bar);
         hud.appendChild(el("span", "wbk-starpill", "⭐ " + ar(P.stars)));
         b.appendChild(hud);
+        b.appendChild(el("div", "wbk-scope-name", scopeName(P.scope) + (P.rec ? "" : " — تكرار لا يُحتسب")));
 
         var ask = el("div", "wbk-ask");
         var model = el("div", "wbk-model"); model.id = "wbkModel"; model.setAttribute("aria-hidden", "true");
@@ -39643,13 +39711,55 @@ function openAdditionRace(lv) {
         var h = el("button", "wbk-btn help", "💡 مساعدة"); h.type = "button"; h.id = "wbkHelp";
         h.addEventListener("click", function () { helpBtn(); });
         var lv = el("span", "wbk-helplv"); lv.id = "wbkHelpLv"; lv.setAttribute("aria-label", "مستوى المساعدة");
-        var ex = el("button", "wbk-btn soft", "إنهاء التدريب"); ex.type = "button"; ex.id = "wbkEndPractice";
-        ex.addEventListener("click", function () { S.session++; clearTimers(); try { EduAudio.stop(); } catch (e) { /* لا شيء */ } renderPracticeHome(); });
-        ctl.appendChild(h); ctl.appendChild(lv); ctl.appendChild(ex);
+        var again = el("button", "wbk-btn", "🔁 أعد هذا الحرف"); again.type = "button"; again.id = "wbkRetry";
+        again.addEventListener("click", function () { retryLetter(); });
+        ctl.appendChild(h); ctl.appendChild(lv); ctl.appendChild(again);
         b.appendChild(ctl);
+
+        var nav = el("div", "wbk-ctl wbk-nav");
+        var prev = el("button", "wbk-btn", "▶ السابق"); prev.type = "button"; prev.id = "wbkPrev"; prev.disabled = P.pos === 0;
+        prev.addEventListener("click", function () { goPos(P.pos - 1); });
+        var next = el("button", "wbk-btn main", P.pos === P.seq.length - 1 ? "إنهاء ✔" : "التالي ◀"); next.type = "button"; next.id = "wbkNext"; next.disabled = P.rec;
+        next.addEventListener("click", function () { nextRound(); });
+        var stop = el("button", "wbk-btn soft", "⏸ إيقاف وأتابع لاحقًا"); stop.type = "button"; stop.id = "wbkEndPractice";
+        stop.addEventListener("click", function () { S.session++; clearTimers(); try { EduAudio.stop(); } catch (e) { /* لا شيء */ } renderPracticeHome(); });
+        nav.appendChild(prev); nav.appendChild(next); nav.appendChild(stop);
+        b.appendChild(nav);
         paintHelp();
-        msg("اسمع الحرف ثم المس الحرف الذي سمعته 👂");
+        msg(P.rec ? "اسمع الحرف ثم المس الحرف الذي سمعته 👂" : "حرف سبق أن أجبتَ عنه — تكرار للتمرين فقط 🔁");
         later(function () { sayLetter(target); }, 450);
+    }
+    function goPos(pos) {
+        var P = S.p; if (!P || pos < 0 || pos >= P.seq.length) return;
+        S.session++; clearTimers(); try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
+        P.pos = pos; renderRound();
+    }
+    /* إعادة المحاولة: تصفير العرض فقط؛ ما كُشف من حلّ في هذه الزيارة يبقى مسجَّلًا (hmax) */
+    function retryLetter() {
+        var P = S.p; if (!P) return;
+        S.session++; clearTimers(); try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
+        var keepH = P.hmax, keepRec = P.rec, wasSolved = P.solved;
+        var target = P.seq[P.pos];
+        var n = P.pos - P.started < 2 ? 2 : 3;
+        P.cur = { target: target, choices: shuffleCardPositions([target].concat(distractors(target, n - 1))) };
+        P.help = 0; P.tried = {}; P.solved = false;
+        P.hmax = keepH;
+        /* بعد حلّ سابق لا يُحتسب أي حلّ جديد لهذه الزيارة */
+        P.rec = wasSolved ? false : keepRec;
+        var cards = document.getElementById("wbkChoices");
+        if (cards) {
+            cards.innerHTML = "";
+            cards.className = "wbk-choices n" + P.cur.choices.length;
+            P.cur.choices.forEach(function (i) {
+                var c = card(i, "choice");
+                c.addEventListener("click", function () { tapChoice(c, i); });
+                cards.appendChild(c);
+            });
+        }
+        var nx = document.getElementById("wbkNext"); if (nx) nx.disabled = !(P.pos <= P.maxSolved);
+        paintHelp();
+        msg(P.rec ? "حاول مرة أخرى 💙" : "تكرار للتمرين فقط 🔁");
+        later(function () { sayLetter(target); }, 300);
     }
     function paintHelp() {
         var P = S.p; if (!P) return;
@@ -39681,9 +39791,10 @@ function openAdditionRace(lv) {
             }
         }
     }
+    function raise(P, to) { P.help = Math.min(3, to); if (P.help > P.hmax) P.hmax = P.help; }
     function helpBtn() {
         var P = S.p; if (!P || P.solved) return;
-        P.help = Math.min(3, P.help + 1);
+        raise(P, P.help + 1);
         if (P.help === 1) { sayLetter(P.cur.target); msg("اسمع جيدًا 👂"); }
         else if (P.help === 2) { sayLetter(P.cur.target); msg("انظر إلى البطاقة المضيئة 💡"); }
         else { msg("المس البطاقة التي أشير إليها 👆"); }
@@ -39693,13 +39804,14 @@ function openAdditionRace(lv) {
         var P = S.p; if (!P || P.solved || !P.cur) return;
         if (i === P.cur.target) correct(c, i); else wrong(c, i);
     }
+    /* الخطأ: رسالة لطيفة وتصعيد المساعدة فقط — لا انتقال ولا تغيير للتسلسل */
     function wrong(c, i) {
         var P = S.p;
         var first = !P.tried[i]; P.tried[i] = true;
-        if (first) P.help = Math.min(3, P.help + 1);
+        if (first) raise(P, P.help + 1);
         c.classList.remove("wrong"); void c.offsetWidth; c.classList.add("wrong");
         setTimeout(function () { c.classList.remove("wrong"); }, 600);
-        msg("هذه «" + BOOK[i].replace(/ـ/g, "") + "»، جرّب بطاقة أخرى 💙");
+        msg("هذه «" + plain(i) + "»، جرّب بطاقة أخرى 💙");
         var t = P.cur; var tg = t.target;
         say([audioKey(i)], function () { if (S.p === P && !P.solved && P.cur === t) sayLetter(tg); });
         paintHelp();
@@ -39709,39 +39821,52 @@ function openAdditionRace(lv) {
         c.classList.add("right");
         document.querySelectorAll("#wbkChoices .wbk-card").forEach(function (x) { if (x !== c) x.classList.add("dim"); });
         var fg = document.querySelector("#wbkChoices .wbk-finger"); if (fg) fg.remove();
-        /* تسجيل مستوى المساعدة: ٠ = مستقل، ١–٣ = بمساعدة */
-        var pr = load(); var it = item(pr, i);
-        if (P.help === 0) it.ind++; else it.asst++;
-        it.lastHelp = P.help; it.at = Date.now();
         var starNow = false;
-        if (!it.star) { it.star = true; starNow = true; pr.l1.stars = (pr.l1.stars || 0) + 1; }
-        save(pr);
+        if (P.rec) {
+            /* التسجيل بحسب أعلى مساعدة في هذه الزيارة: ٠ = مستقل فقط؛ أي مساعدة أو خطأ سابق = بمساعدة،
+               فلا إتقان مستقل لإجابة جاءت بعد كشف الحل */
+            var pr = load(); var it = item(pr, i);
+            if (P.hmax === 0) it.ind++; else it.asst++;
+            it.lastHelp = P.hmax; it.reveal = P.hmax >= 2; it.at = Date.now();
+            if (!pr.l1.starred) pr.l1.starred = {};
+            var k = BOOK[i][0];
+            if (!pr.l1.starred[k] && !it.star) { pr.l1.starred[k] = 1; starNow = true; pr.l1.stars = (pr.l1.stars || 0) + 1; }
+            P.maxSolved = Math.max(P.maxSolved, P.pos);
+            var nextLetter = P.pos + 1 < P.seq.length ? P.seq[P.pos + 1] : null;
+            setResume(pr, P.scope, nextLetter, nextLetter == null);
+            save(pr);
+        }
         if (starNow) { P.stars++; try { if (typeof addStars === "function") addStars(1); } catch (e) { /* لا شيء */ } }
         var pill = document.querySelector(".wbk-starpill"); if (pill) pill.textContent = "⭐ " + ar(P.stars);
-        msg(P.help === 0 ? "أحسنت! قرأتها وحدك 🌟" : "أحسنت! 🌟", "ok");
-        var praise = P.round >= ROUNDS - 1 ? "صحيح" : PRAISE[P.round % PRAISE.length];
-        var ses = S.session;
-        var go = function () { later(function () { nextRound(); }, calm() ? 700 : 400); };
-        say([audioKey(i), praise], function () { if (ses === S.session) go(); });
+        var nx = document.getElementById("wbkNext"); if (nx) nx.disabled = false;
+        msg(!P.rec ? "صحيح 🔁 (تكرار للتمرين)" : (P.hmax === 0 ? "أحسنت! قرأتها وحدك 🌟" : "أحسنت! 🌟 اضغط «التالي» حين تكون جاهزًا"), "ok");
+        var praise = PRAISE[P.pos % PRAISE.length];
+        say([audioKey(i), praise]);
     }
     function nextRound() {
         var P = S.p; if (!P || !P.solved) return;
-        if (P.round >= ROUNDS - 1) { finishPractice(); return; }
-        P.round++; renderRound();
+        if (P.pos >= P.seq.length - 1) { finishPractice(); return; }
+        S.session++; clearTimers(); try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
+        P.pos++; renderRound();
     }
     function finishPractice() {
         var P = S.p; var b = body(); b.innerHTML = "";
-        var pr = load(); pr.l1.sessions = (pr.l1.sessions || 0) + 1; save(pr);
+        var pr = load(); pr.l1.sessions = (pr.l1.sessions || 0) + 1;
+        setResume(pr, P.scope, null, true); save(pr);
         var box = el("div", "wbk-done");
         box.appendChild(el("div", "wbk-done-emoji", "🌟"));
-        box.appendChild(el("div", "wbk-done-title", "أحسنت! أنهيت التدريب"));
-        box.appendChild(el("div", "wbk-done-sub", P.stars ? "حصلت على " + ar(P.stars) + " نجمة جديدة ⭐" : "تدرّبت على حروف نلتَ نجومها من قبل ⭐"));
-        var again = el("button", "wbk-btn main", "🔁 جلسة أخرى"); again.type = "button"; again.id = "wbkAgain";
-        again.addEventListener("click", function () { startPractice(P.scope); });
+        box.appendChild(el("div", "wbk-done-title", "أحسنت! أكملت " + scopeName(P.scope)));
+        box.appendChild(el("div", "wbk-done-sub", P.stars ? "حصلت على " + ar(P.stars) + " نجمة جديدة ⭐" : "النجوم السابقة لهذه الحروف محفوظة ⭐"));
+        var scope = P.scope;
+        var again = el("button", "wbk-btn main", "↺ إعادة من البداية"); again.type = "button"; again.id = "wbkAgain";
+        again.addEventListener("click", function () { startPractice(scope, { fresh: true }); });
+        var homeB = el("button", "wbk-btn", "🎯 قائمة التدرّب"); homeB.type = "button"; homeB.id = "wbkPracHome";
+        homeB.addEventListener("click", function () { renderPracticeHome(); });
         var home = el("button", "wbk-btn", "📖 العودة للتعلّم"); home.type = "button"; home.id = "wbkBackLearn";
         home.addEventListener("click", function () { setMode("learn"); });
-        box.appendChild(again); box.appendChild(home);
+        box.appendChild(again); box.appendChild(homeB); box.appendChild(home);
         b.appendChild(box);
+        S.p = null;
         msg("");
         say(["أحسنت يا بطل"]);
     }
@@ -39816,7 +39941,7 @@ function openAdditionRace(lv) {
         var rst = el("button", "wbk-btn soft", "🗑️ مسح تقدّم هذا الدرس"); rst.type = "button"; rst.id = "wbkReset";
         rst.addEventListener("click", function () {
             if (rst.dataset.arm !== "1") { rst.dataset.arm = "1"; rst.textContent = "اضغط مرة أخرى للتأكيد"; return; }
-            var pp = load(); pp.l1 = { items: {}, sessions: 0, stars: 0 }; save(pp); S.sel = -1; renderTeacher();
+            var pp = load(); pp.l1 = { items: {}, sessions: 0, stars: 0, resume: {}, starred: pp.l1.starred || {} }; save(pp); S.sel = -1; renderTeacher();
         });
         tools.appendChild(hard); tools.appendChild(lock); tools.appendChild(rst);
         b.appendChild(tools);
@@ -39863,6 +39988,16 @@ function openAdditionRace(lv) {
             "تدرّب التطبيق: مستقل " + ar(it.ind) + " · بمساعدة " + ar(it.asst) +
             (it.lastHelp != null ? " · آخر مساعدة: " + (it.lastHelp === 0 ? "بلا" : "المرحلة " + ar(it.lastHelp)) : ""));
         pn.appendChild(st);
+        var go = el("div", "wbk-ctl");
+        var f1 = el("button", "wbk-btn soft", "🎯 تدرّب من هذا الحرف (كل الحروف)"); f1.type = "button"; f1.id = "wbkPracFrom";
+        f1.addEventListener("click", function () { setMode("practice"); startPractice("all", { from: i }); });
+        go.appendChild(f1);
+        if (hardSet(p).indexOf(i) >= 0) {
+            var f2 = el("button", "wbk-btn soft", "🎯 من هنا في الحروف الصعبة"); f2.type = "button"; f2.id = "wbkPracFromHard";
+            f2.addEventListener("click", function () { setMode("practice"); startPractice("hard", { from: i }); });
+            go.appendChild(f2);
+        }
+        pn.appendChild(go);
         return pn;
     }
 

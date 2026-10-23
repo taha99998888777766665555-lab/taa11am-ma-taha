@@ -15998,4 +15998,16 @@ body.calm-mode .wbk, body.calm-mode .wbk *, body.calm-mode .wbk *::before, body.
     .wbk-card.big { width: 36vh; height: 36vh; }
     .wbk-card.big .wbk-g { font-size: 20vh; }
 }
+/* تدرّب V2: نطاقات بترتيب الكتاب مع الاستكمال */
+.wbk-scopes { display: flex; flex-direction: column; gap: 10px; }
+.wbk-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; border: 2px solid var(--wbk-line); border-radius: 16px; background: var(--wbk-card); }
+.wbk-scope.wide { background: var(--wbk-soft); }
+.wbk-scope.warm { background: #ffe9cf; border-color: #e0a45e; color: #5a3500; }
+.wbk-scope-info { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.wbk-scope-st { font-size: .88rem; opacity: .85; }
+.wbk-scope .wbk-btn { min-height: 52px; padding: 6px 14px; }
+.wbk-bar { flex: 1 1 auto; height: 10px; border-radius: 99px; background: var(--wbk-line); overflow: hidden; margin: 0 6px; }
+.wbk-bar-fill { display: block; height: 100%; background: var(--wbk-main); border-radius: 99px; }
+.wbk-scope-name { text-align: center; font-size: .9rem; opacity: .85; margin-bottom: 4px; }
+.wbk-nav .wbk-btn { flex: 1 1 0; }
 /* WBK-END */
