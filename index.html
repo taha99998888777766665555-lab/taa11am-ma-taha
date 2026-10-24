@@ -30,6 +30,11 @@
     href="style.css"
 >
 
+<link
+    rel="stylesheet"
+    href="wbk2.css"
+>
+
 <style id="hm-home-styles">
 /* =========================================================
    ✨ الهوية الجديدة — الرأس والصفحة الرئيسية فقط
@@ -1062,6 +1067,20 @@ body.theme-space .hm-title { color: #ffffff; }
         </span>
     </button>
 
+    <!-- مدخل الدرس الثاني: أقرأ حرفين مفتوحين -->
+    <button
+        type="button"
+        id="wbk2Entry"
+        class="wbk-entry wbk2-entry"
+        aria-label="الدرس الثاني – أقرأ حرفين مفتوحين"
+    >
+        <span class="wbk-entry-ic" aria-hidden="true">📗</span>
+        <span class="wbk-entry-tx">
+            <strong>الدرس الثاني – أقرأ حرفين مفتوحين</strong>
+            <small>أدمج حرفين مفتوحين في مقطع واحد</small>
+        </span>
+    </button>
+
     <div
         id="wordsLevelsGrid"
         class="words-levels-grid"
@@ -1189,6 +1208,16 @@ body.theme-space .hm-title { color: #ffffff; }
     class="screen"
 >
     <!-- يُبنى محتواه برمجيًا (wbk-*) -->
+</section>
+
+<!-- ==========================================
+     📗 الدرس الثاني: أقرأ حرفين مفتوحين
+========================================== -->
+<section
+    id="wbkL2"
+    class="screen"
+>
+    <!-- يُبنى محتواه برمجيًا (wb2-*) -->
 </section>
 
 <!-- ==========================================
@@ -4917,6 +4946,8 @@ body.theme-space .hm-title { color: #ffffff; }
 </main>
 
 <script src="script.js"></script>
+<script src="wbk2-data.js"></script>
+<script src="wbk2.js"></script>
 
 </body>
 

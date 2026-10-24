@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v39";
+const CACHE_VERSION = "taha-app-v40";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -11,6 +11,11 @@ const APP_SHELL = [
     "./index.html",
     "./style.css",
     "./script.js",
+    "./wbk2-data.js",
+    "./wbk2.js",
+    "./wbk2.css",
+    "./assets/fonts/readex-pro/readex-pro-arabic-400-normal.woff2",
+    "./assets/fonts/readex-pro/readex-pro-arabic-600-normal.woff2",
     "./manifest.json",
     "./icons/icon-192.png",
     "./icons/icon-512.png",
@@ -226,6 +231,15 @@ const LESSON_AUDIO = [
     "./assets/audio/educational/phrases/writing_done.mp3",
     "./assets/audio/educational/phrases/correct_short.mp3"
 ];
+
+/* الدرس الثاني: التسجيلات المعتمدة فقط (من wbk2-data.js — مصدر واحد للحقيقة).
+   ملف غير معتمد لا يُخزَّن ولا يُشغَّل. فشل الاستيراد لا يُفشل التثبيت. */
+try {
+    importScripts("wbk2-data.js");
+    if (self.WBK2_DATA && typeof self.WBK2_DATA.approvedAudioFiles === "function") {
+        self.WBK2_DATA.approvedAudioFiles().forEach(f => { LESSON_AUDIO.push("./" + f); });
+    }
+} catch (e) { /* بصمت */ }
 
 /* =========================================================
    🔊 أصوات الدرس: تحميل مسبق موثوق + علاج ذاتي
