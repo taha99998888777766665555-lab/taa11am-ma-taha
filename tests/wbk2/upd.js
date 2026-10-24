@@ -17,7 +17,7 @@ let pass=0,fail=0;const ok=(c,m,d='')=>{if(c)pass++;else{fail++;console.log('FAI
  const after=await p.evaluate(()=>[localStorage.getItem('taha_wbk_progress_v1'),localStorage.getItem('taha_app_stars'),StudentStore.currentId()]);
  ok(JSON.stringify(before)===JSON.stringify(after),'lesson1/app/student data preserved');
  await p.evaluate(()=>{showScreen('words')});await p.click('#wbk2Entry');await p.waitForTimeout(500);
- ok(await p.$$eval('#wb2Grid .wb2-cell',c=>c.length)===25,'lesson 2 runs after update');
+ ok(await p.$$eval('#wb2Path .wb2-stepbtn',c=>c.length)===7,'lesson 2 runs after update');
  // lesson 1 still opens and works
  await p.evaluate(()=>{showScreen('words')});await p.click('#wbkEntry');await p.waitForTimeout(600);
  ok(await p.evaluate(()=>document.getElementById('wbkL1').classList.contains('active')&&document.querySelectorAll('#wbkL1 .wbk-card, #wbkL1 .wbk-dot').length>0),'lesson 1 opens');

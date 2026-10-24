@@ -10,14 +10,16 @@ const BOOK=[["قَرَ","كَتَـ","جَلَـ","زَرَ","أَكَـ"],["ر�
  const cells=await p.evaluate(()=>WBK2_DATA.CELLS.map(id=>WBK2_DATA.SYLLABLES.find(s=>s.id===id).shown));
  ok(cells.length===25 && cells.every((c,i)=>c===BOOK[i]),'25 cells match book');
  ok(await p.evaluate(()=>new Set(WBK2_DATA.SYLLABLES.map(s=>s.id)).size)===24,'24 unique');
+ await p.click('#wb2LibBtn');await p.waitForTimeout(200);
  const shown=await p.$$eval('#wb2Grid .wb2-cell',b=>b.map(x=>x.textContent.replace(/[○◐↻✔=]/g,'').trim()));
  ok(shown.every((c,i)=>c===BOOK[i]),'rendered grid matches book');
  ok(await p.evaluate(()=>getComputedStyle(document.getElementById('wbkL2')).direction)==='rtl','rtl');
+ await p.click('#wb2Back');await p.waitForTimeout(200);
  // helpers
  const cur=()=>p.evaluate(()=>{const R=wbk2State.run;return R.items[R.i]});
  const st=()=>p.evaluate(()=>wbk2Internals.load());
  // discover s02
- await p.click('#wb2Grid [data-id=s02]'); await p.waitForTimeout(200);
+ await p.evaluate(()=>wbk2Internals.renderLibrary());await p.click('#wb2Grid [data-id=s02]'); await p.waitForTimeout(200);
  for(let i=0;i<5;i++){await p.click('#wb2Acts .main');await p.waitForTimeout(150);}
  let s=await st(); ok(s.syl.s02&&s.syl.s02.seen===1,'discover marks seen'); ok(s.stars===0,'discover gives no star');
  // hear: scope all

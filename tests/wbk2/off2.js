@@ -15,13 +15,13 @@ let pass=0,fail=0;const ok=(c,m,d='')=>{if(c)pass++;else{fail++;console.log('FAI
  ok(u.filter(x=>/\.mp3/.test(x)).length===38,'38 mp3 total (31+7), got '+u.filter(x=>/\.mp3/.test(x)).length);
  await p.evaluate(()=>showScreen('words'));await p.waitForTimeout(200);
  await p.click('#wbk2Entry');await p.waitForTimeout(500);
- execSync('kill '+fs.readFileSync('/tmp/v61/srv2.pid','utf8').trim());await p.waitForTimeout(800);
+ execSync('fuser -k 8962/tcp || true');await p.waitForTimeout(800);
  let loaded=true;try{await p.reload({timeout:15000});await p.waitForTimeout(3000)}catch(e){loaded=false}
  ok(loaded,'offline reload');
  await p.evaluate(()=>showScreen('words'));await p.waitForTimeout(200);
  ok(await p.evaluate(()=>document.getElementById('wbk2Entry').offsetParent!==null),'entry visible offline');
  await p.click('#wbk2Entry');await p.waitForTimeout(600);
- ok(await p.evaluate(()=>document.getElementById('wbkL2').classList.contains('active')&&!!document.querySelector('#wb2Grid .wb2-cell')),'lesson 2 opens offline');
+ ok(await p.evaluate(()=>document.getElementById('wbkL2').classList.contains('active')&&!!document.querySelector('#wb2Path .wb2-stepbtn')),'lesson 2 opens offline');
  ok(await p.evaluate(async()=>{await document.fonts.load('600 40px "Readex Pro"','قَرَ');return document.fonts.check('600 40px "Readex Pro"','قَرَ')}),'local font loaded offline');
  await p.evaluate(()=>wbk2State.scope='all'); await p.evaluate(()=>{window.__au.length=0});
  // play every approved syllable via hear until all 7 heard

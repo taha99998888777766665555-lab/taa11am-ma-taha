@@ -268,21 +268,14 @@
     }
 
     /* ---------- عرض المقطع (الحرفان في نص واحد متصل؛ ألوان وخطوط فقط بلا حشو) ---------- */
-    function synEl(s, cls, colored) {
-        var w = el("span", "wb2-syl" + (cls ? " " + cls : ""));
+    /* المقطع المتصل يُعرض بلون واحد في نص واحد: لا تقسيم إلى spans فلا يتشوّه الاتصال.
+       تمييز الحرفين بالألوان يكون في الحرفين المنفصلين (letterEl) فقط */
+    function synEl(s, cls) {
+        var w = el("span", "wb2-syl" + (cls ? " " + cls : ""), s.shown);
         w.setAttribute("dir", "rtl");
         w.setAttribute("lang", "ar");
+        w.setAttribute("role", "img");
         w.setAttribute("aria-label", "المقطع " + s.key);
-        if (colored) {
-            var a = el("span", "wb2-l1", s.a.ch);
-            var b = el("span", "wb2-l2", s.b.ch + (s.shown.slice(-1) === D.TATWEEL ? D.TATWEEL : ""));
-            a.setAttribute("aria-hidden", "true"); b.setAttribute("aria-hidden", "true");
-            w.appendChild(a); w.appendChild(b);
-        } else {
-            var t = el("span", "wb2-plain", s.shown);
-            t.setAttribute("aria-hidden", "true");
-            w.appendChild(t);
-        }
         return w;
     }
     function letterEl(ch, which) {
@@ -351,7 +344,7 @@
         refreshHead(sub);
         var b = body(); if (b) { b.innerHTML = ""; b.scrollTop = 0; }
         var b2 = document.getElementById("wb2Back");
-        if (b2) b2.querySelector("span").textContent = (v === "home") ? "الكلمات" : "الرئيسية";
+        if (b2) b2.querySelector("span").textContent = (v === "home") ? "الكلمات" : (v === "library" ? "الرحلة" : "الرحلة");
         try { window.scrollTo(0, 0); } catch (e) { /* لا شيء */ }
     }
     function onBack() {
@@ -429,69 +422,100 @@
     }
     var GLYPH = { "new": "○", learning: "◐", review: "↻", mastered: "✔" };
 
+    /* حالة كل مرحلة بكلمات قصيرة تخدم قرار الطفل/المعلم */
+    function stageStatus(p, id) {
+        var seen = SYL.filter(function (s) { var r = p.syl[s.id]; return r && r.seen; }).length;
+        if (id === "discover") return seen ? "اكتشفتَ " + ar(seen) + " من " + ar(SYL.length) : "لم تبدأ بعد";
+        if (id === "hear" || id === "build" || id === "decode") {
+            var a = accuracy(p, id);
+            if (id === "build") { var v = accuracy(p, "buildv"); a = [a[0] + v[0], a[1] + v[1]]; }
+            return a[1] ? "نجاح مستقل " + ar(Math.round(a[0] * 100 / a[1])) + "٪" : "لم تبدأ بعد";
+        }
+        if (id === "read") {
+            var n = SYL.filter(function (s) { var r = p.syl[s.id]; return r && r.read.last === "ok"; }).length;
+            return n ? "قراءة مؤكدة: " + ar(n) : "لم تبدأ بعد";
+        }
+        if (id === "test") {
+            var t = p.tests[p.tests.length - 1];
+            if (!t) return "لم تُجرِ تقييمًا بعد";
+            return ({ pending: "بانتظار تأكيد المعلم", pass: "نجحتَ", fail: "أعد المحاولة", incomplete: "غير مكتمل" })[t.status];
+        }
+        var rv = SYL.filter(function (s) { return needsReview(p.syl[s.id]); }).length;
+        return rv ? ar(rv) + " مقاطع للمراجعة" : "لا شيء للمراجعة الآن";
+    }
+    function scopeLabel() {
+        if (S.scope === "all") return "كل المقاطع";
+        if (/^g[0-4]$/.test(S.scope)) return "السطر " + ar(+S.scope.charAt(1) + 1);
+        return "السطر الحالي";
+    }
+
     function renderHome() {
-        setView("home", "اقرأ المقطع من حرفين مفتوحين");
+        setView("home", "أقرأ المقطع من حرفين مفتوحين");
         var p = load(), b = body();
         var sg = suggest(p);
         var masteredN = SYL.filter(function (s) { return stateOf(p, s.id) === "mastered"; }).length;
-        var nApproved = approvedAll().length;
 
-        var hero = el("section", "wb2-hero");
-        var rg = el("div", "wb2-ring"); rg.innerHTML = ring(masteredN, SYL.length); hero.appendChild(rg);
-        var ht = el("div", "wb2-hero-tx");
-        ht.appendChild(el("h2", "", "أتعلّم دمج حرفين"));
-        ht.appendChild(el("p", "", "أرى الحرفين، أسمع المقطع، ثم أقرؤه وحدي."));
-        var sug = el("div", "wb2-suggest"); sug.id = "wb2Suggest";
-        var sgS = STAGE_BY[sg.stage];
-        sug.appendChild(el("span", "wb2-tag", "مقترح"));
-        sug.appendChild(el("b", "", " " + sgS.title));
-        sug.appendChild(el("span", "wb2-why", " — " + sg.why));
-        ht.appendChild(sug);
-        var go = btn("main big", "ابدأ: " + sgS.title, function () { openStage(sg.stage); });
-        go.id = "wb2Go";
-        ht.appendChild(go);
-        hero.appendChild(ht);
-        b.appendChild(hero);
+        /* شريط موجز هادئ: التقدّم + مكتبة المقاطع */
+        var top = el("section", "wb2-top");
+        var rg = el("div", "wb2-ring"); rg.innerHTML = ring(masteredN, SYL.length); top.appendChild(rg);
+        var tx = el("div", "wb2-top-tx");
+        tx.appendChild(el("h2", "", "رحلتي في قراءة المقطع"));
+        tx.appendChild(el("p", "", "أتقنتُ " + ar(masteredN) + " من " + ar(SYL.length) + " مقطعًا"));
+        top.appendChild(tx);
+        var lib = btn("ghost", "مكتبة المقاطع", function () { renderLibrary(); }); lib.id = "wb2LibBtn";
+        top.appendChild(lib);
+        b.appendChild(top);
 
-        /* نطاق التدريب */
-        var sc = el("div", "wb2-scope"); sc.id = "wb2Scope";
-        sc.appendChild(el("span", "wb2-scope-l", "أتدرّب على:"));
-        var opts = [["current", "السطر الحالي"], ["g0", "السطر ١"], ["g1", "٢"], ["g2", "٣"], ["g3", "٤"], ["g4", "٥"], ["all", "كل المقاطع"]];
-        opts.forEach(function (o) {
-            var c = el("button", "wb2-chip" + (S.scope === o[0] ? " on" : ""), o[1]);
-            c.type = "button"; c.setAttribute("aria-pressed", S.scope === o[0] ? "true" : "false");
-            c.addEventListener("click", function () { S.scope = o[0]; renderHome(); });
-            sc.appendChild(c);
-        });
-        b.appendChild(sc);
-
-        /* مسار المراحل */
-        var path = el("ol", "wb2-path"); path.id = "wb2Path";
+        /* الرحلة: العنصر الأساسي */
+        var path = el("ol", "wb2-journey"); path.id = "wb2Path";
         STAGES.forEach(function (st) {
-            var li = el("li", "wb2-node");
-            var bt = el("button", "wb2-nodebtn" + (st.id === sg.stage ? " sug" : ""));
-            bt.type = "button"; bt.setAttribute("data-stage", st.id);
-            var disabledNote = "";
-            if (st.id === "hear" && !audioStagesOpen()) disabledNote = "يحتاج " + ar(CFG.minApprovedForAudioStages) + " تسجيلات معتمدة";
-            if (st.id === "test" && !testOpen()) disabledNote = "يحتاج تسجيلات معتمدة أكثر";
-            bt.appendChild(el("span", "wb2-num", ar(st.n)));
-            var tx = el("span", "wb2-ntx");
-            tx.appendChild(el("b", "", st.title));
-            tx.appendChild(el("small", "", disabledNote || st.how));
-            bt.appendChild(tx);
-            if (st.id === sg.stage) bt.appendChild(el("span", "wb2-tag sm", "مقترح"));
-            if (disabledNote) bt.setAttribute("data-pending", "1");
+            var isSug = st.id === sg.stage;
+            var li = el("li", "wb2-step" + (isSug ? " sug" : ""));
+            li.appendChild(el("span", "wb2-num", ar(st.n)));
+            var bt = el("button", "wb2-stepbtn"); bt.type = "button"; bt.setAttribute("data-stage", st.id);
+            var note = "";
+            if (st.id === "hear" && !audioStagesOpen()) note = "يحتاج " + ar(CFG.minApprovedForAudioStages) + " تسجيلات معتمدة";
+            if (st.id === "test" && !testOpen()) note = "يحتاج تسجيلات معتمدة أكثر";
+            var t = el("span", "wb2-stx");
+            var h = el("b", "", st.title); t.appendChild(h);
+            t.appendChild(el("small", "", st.how));
+            t.appendChild(el("em", "wb2-st", note || stageStatus(p, st.id)));
+            bt.appendChild(t);
+            if (isSug) {
+                var why = el("span", "wb2-sugwhy"); why.appendChild(el("span", "wb2-tag", "الخطوة المقترحة")); why.appendChild(el("span", "", sg.why));
+                t.appendChild(why);
+                var go = el("span", "wb2-gobtn", "ابدأ"); go.id = "wb2Go"; bt.appendChild(go);
+            } else bt.appendChild(el("span", "wb2-chev", "‹"));
+            if (note) bt.setAttribute("data-pending", "1");
             bt.addEventListener("click", function () { openStage(st.id); });
             li.appendChild(bt); path.appendChild(li);
         });
         b.appendChild(path);
 
-        /* خريطة المقاطع (٢٥ خلية كما في الكتاب) */
+        /* نطاق التدريب: مطوي حتى لا يزاحم الرحلة */
+        var det = el("details", "wb2-scopebox"); det.id = "wb2ScopeBox";
+        det.appendChild(el("summary", "", "نطاق التدريب: " + scopeLabel()));
+        var sc = el("div", "wb2-scope"); sc.id = "wb2Scope";
+        [["current", "السطر الحالي"], ["g0", "السطر ١"], ["g1", "٢"], ["g2", "٣"], ["g3", "٤"], ["g4", "٥"], ["all", "كل المقاطع"]].forEach(function (o) {
+            var c = el("button", "wb2-chip" + (S.scope === o[0] ? " on" : ""), o[1]);
+            c.type = "button"; c.setAttribute("aria-pressed", S.scope === o[0] ? "true" : "false");
+            c.addEventListener("click", function () { S.scope = o[0]; renderHome(); });
+            sc.appendChild(c);
+        });
+        det.appendChild(sc);
+        b.appendChild(det);
+        var nApproved = approvedAll().length;
+        b.appendChild(el("p", "wb2-note", nApproved >= SYL.length ? "كل التسجيلات معتمدة." : "تسجيلات معتمدة: " + ar(nApproved) + " من " + ar(SYL.length) + ". باقي المقاطع تُعرض بصريًا حتى تُعتمد تسجيلاتها."));
+    }
+
+    /* ---------- مكتبة المقاطع (شاشة مستقلة: ٢٥ خلية كما في الكتاب) ---------- */
+    function renderLibrary() {
+        setView("library", "مكتبة المقاطع");
+        var p = load(), b = body();
         var gw = el("section", "wb2-mapw");
         var gh = el("div", "wb2-maph");
-        gh.appendChild(el("h3", "", "مقاطع الكتاب"));
-        var lg = el("span", "wb2-legend", "○ جديد · ◐ أتدرّب · ↻ أراجع · ✔ أتقنت");
-        gh.appendChild(lg);
+        gh.appendChild(el("h2", "", "مقاطع الكتاب"));
+        gh.appendChild(el("span", "wb2-legend", "○ جديد · ◐ أتدرّب · ↻ أراجع · ✔ أتقنت · اختر مقطعًا لتكتشفه"));
         gw.appendChild(gh);
         var grid = el("div", "wb2-grid"); grid.id = "wb2Grid";
         CELLS.forEach(function (id, ci) {
@@ -501,7 +525,7 @@
             var dup = (ci + 1) === 19;
             if (dup) c.classList.add("dup");
             c.setAttribute("aria-label", "الخلية " + (ci + 1) + ": المقطع " + s.key + "، " + STATE_LABEL[stt] + (p.starred[id] ? "، له نجمة" : "") + (dup ? "، تكرار لمقطع في الخلية ١٥" : "") + (s.approved ? "" : "، تسجيله قيد الإعداد"));
-            c.appendChild(synEl(s, "cellsyl", false));
+            c.appendChild(synEl(s, "cellsyl"));
             var meta = el("span", "wb2-cellm");
             meta.appendChild(el("i", "g", GLYPH[stt]));
             if (p.starred[id]) { var si = el("i", "s"); si.innerHTML = ICONS.star; meta.appendChild(si); }
@@ -511,7 +535,8 @@
             grid.appendChild(c);
         });
         gw.appendChild(grid);
-        gw.appendChild(el("p", "wb2-note", nApproved >= SYL.length ? "كل التسجيلات معتمدة." : "تسجيلات معتمدة: " + ar(nApproved) + " من " + ar(SYL.length) + " — باقي المقاطع تُعرض بصريًا حتى تُعتمد تسجيلاتها."));
+        var nA = approvedAll().length;
+        gw.appendChild(el("p", "wb2-note", "الخلية المخططة (١٩) هي «وَقَـ» نفسه المكرر في الخلية ١٥؛ يُحسب إتقانه ونجمته مرة واحدة." + (nA >= SYL.length ? "" : " تسجيلات معتمدة: " + ar(nA) + " من " + ar(SYL.length) + ".")));
         b.appendChild(gw);
     }
 
@@ -581,14 +606,14 @@
                 if (reduced()) merge(pair, stage, s);
                 else later(function () { merge(pair, stage, s); }, 500);
             } else if (st.n === 3) {
-                stage.appendChild(synEl(s, "huge", true));
+                stage.appendChild(synEl(s, "huge"));
                 var ap = s.approved;
                 cap.textContent = ap ? "اسمع المقطع كاملًا، ثم كرّره بصوتك." : "تسجيل هذا المقطع قيد الإعداد؛ انظر إليه وأشر إلى الحرفين بالترتيب.";
                 var lb = listenBtn(ap ? "اسمع المقطع" : "التسجيل قيد الإعداد", function () { playSyllable(s); });
                 if (!ap) { lb.disabled = true; lb.setAttribute("aria-disabled", "true"); }
                 acts.appendChild(lb);
             } else {
-                stage.appendChild(synEl(s, "huge", true));
+                stage.appendChild(synEl(s, "huge"));
                 cap.textContent = "هذا هو المقطع: " + s.a.base + " ثم " + s.b.base + ".";
             }
             if (st.n > 0) acts.appendChild(btn("ghost", "السابق", function () { st.n--; show(); }));
@@ -607,7 +632,7 @@
         var done = function () {
             if (!pair.parentNode) return;
             stage.innerHTML = "";
-            var j = synEl(s, "huge pop", true); stage.appendChild(j);
+            var j = synEl(s, "huge pop"); stage.appendChild(j);
         };
         if (reduced()) done(); else later(done, 650);
     }
@@ -724,7 +749,7 @@
             F.acts.appendChild(sk);
         }
         if (kind === "hear") {
-            var sp = iconBtn("listen xl", ICONS.speaker, "اسمع المقطع", function () { playIt(false); });
+            var sp = iconBtn("listen xl", ICONS.speaker, "اسمع", function () { playIt(false); }); sp.setAttribute("aria-label", "اسمع المقطع");
             sp.id = "wb2Listen"; F.area.appendChild(sp);
             if (!reduced()) later(function () { playIt(true); }, 350); else later(function () { playIt(true); }, 100);
         } else {
@@ -896,7 +921,7 @@
             if (test) { ctx.done("ok", {}); return; }
             board.classList.add("joined");
             var join = function () {
-                var j = synEl(s, "huge pop", true); j.id = "wb2Joined";
+                var j = synEl(s, "huge pop"); j.id = "wb2Joined";
                 board.innerHTML = ""; board.classList.add("done"); board.appendChild(j);
                 tray.classList.add("gone");
                 if (s.approved) playSyllable(s);
@@ -1021,7 +1046,7 @@
         R.tok++; var tok = R.tok;
         setViewKeep(); refreshHead("تحدي القراءة");
         var F = frame(R, "اقرأ المقطع بصوتك");
-        F.area.appendChild(synEl(s, "huge", true));
+        F.area.appendChild(synEl(s, "huge"));
         setMsg(F, "انظر إلى الحرفين ثم انطق المقطع كاملًا. لا يبدأ الصوت وحده.");
         var read = btn("main big", "قرأتُ", function () {
             read.disabled = true; F.acts.innerHTML = "";
@@ -1109,7 +1134,7 @@
         if (it.type === "read") {
             var s = BYID[it.id], F = frame(R, "اقرأ المقطع بصوتك");
             F.box.classList.add("test");
-            F.area.appendChild(synEl(s, "huge", true));
+            F.area.appendChild(synEl(s, "huge"));
             setMsg(F, "انطق المقطع، ثم اضغط «قرأتُ». سيؤكد المعلم نطقك في النهاية.");
             var rb = btn("main big", "قرأتُ", function () { R.reads.push(it.id); nxt(); }); rb.id = "wb2Read";
             F.acts.appendChild(rb);
@@ -1158,7 +1183,7 @@
             var rl = el("div", "wb2-reads"); rl.id = "wb2Reads";
             t.reads.forEach(function (rid, k) {
                 var row = el("div", "wb2-readrow");
-                row.appendChild(synEl(BYID[rid], "small", true));
+                row.appendChild(synEl(BYID[rid], "small"));
                 var v = t.readOk[k];
                 if (v === true || v === false) row.appendChild(el("span", "wb2-tag " + (v ? "ok" : "no"), v ? "قرأ صحيحًا" : "يحتاج تدريبًا"));
                 else {
@@ -1287,5 +1312,5 @@
 
     window.wbk2Open = open;
     window.wbk2State = S; /* للاختبار */
-    window.wbk2Internals = { load: load, save: save, rec: rec, logResult: logResult, stateOf: stateOf, giveStar: giveStar, suggest: suggest, playSyllable: playSyllable, playKey: playKey, needsReview: needsReview, mastered: mastered, applyRead: applyRead, confirmTest: confirmTest, poolFor: poolFor, pickDistractors: pickDistractors, KEY: KEY, MAX_STARS: MAX_STARS, renderHome: renderHome, startTest: startTest };
+    window.wbk2Internals = { load: load, save: save, rec: rec, logResult: logResult, stateOf: stateOf, giveStar: giveStar, suggest: suggest, playSyllable: playSyllable, playKey: playKey, needsReview: needsReview, mastered: mastered, applyRead: applyRead, confirmTest: confirmTest, poolFor: poolFor, pickDistractors: pickDistractors, KEY: KEY, MAX_STARS: MAX_STARS, renderHome: renderHome, renderLibrary: renderLibrary, startTest: startTest };
 })();
