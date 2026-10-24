@@ -39337,6 +39337,7 @@ function openAdditionRace(lv) {
         redo: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M25 12a10 10 0 1 0 2 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M26 4v9h-9z" fill="currentColor"/></svg>',
         next: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M20 6l-10 10 10 10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         prev: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M12 6l10 10-10 10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        mic: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect x="11" y="3" width="10" height="16" rx="5" fill="currentColor"/><path d="M7 15a9 9 0 0 0 18 0M16 24v5M11 29h10" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round"/></svg>',
         pause: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect x="8" y="6" width="5.5" height="20" rx="2" fill="currentColor"/><rect x="18.5" y="6" width="5.5" height="20" rx="2" fill="currentColor"/></svg>',
         play: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M10 5l17 11-17 11z" fill="currentColor" transform="scale(-1 1) translate(-32 0)"/></svg>',
         restart: '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M7 16a9 9 0 1 0 3-6.7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M6 4v8h8z" fill="currentColor"/></svg>',
@@ -39427,6 +39428,8 @@ function openAdditionRace(lv) {
         if (typeof it.rp !== "number") it.rp = 0;  /* زيارات استعمل فيها «إعادة السماع» (لا تُعدّ مساعدة ما لم تكشف الإجابة) */
         if (typeof it.hn !== "number") it.hn = 0;  /* زيارات استعمل فيها «تلميحًا بصريًا» (إخفاء مشتّت) */
         if (typeof it.rv !== "number") it.rv = 0;  /* زيارات رأى فيها الحل (عرض الحل) */
+        if (typeof it.ha !== "number") it.ha = Math.max(0, it.hn - it.rv); /* زيارات انتهت بتلميح بصري دون عرض الحل (تقدير للبيانات القديمة، لا يغيّر أي قيمة موجودة) */
+        if (typeof it.im !== "number") it.im = 0;  /* مرات «استمع وقلّد» (الحرف الأول): مشاركة فقط، لا تدخل في الإتقان ولا النجوم */
         if (typeof it.w !== "number") it.w = 0;    /* مجموع الأخطاء */
         if (typeof it.hist !== "string") it.hist = ""; /* آخر ٦ نتائج: f / s / a / r */
         if (!it.ac || typeof it.ac !== "object") it.ac = { listen: 0, drag: 0, game: 0 }; /* عدد الزيارات المسجَّلة لكل نشاط (للمعلم فقط؛ لا يدخل في التدرّج) */
@@ -39454,8 +39457,8 @@ function openAdditionRace(lv) {
         if (P.hmax === 2) return "a";
         return P.wrongs > 0 ? "s" : "f";
     }
-    var RESNAME = { f: "من أول محاولة", s: "بعد تصحيح ذاتي", a: "بمساعدة (تلميح بصري)", r: "بعد عرض الحل" };
-    var RESICON = { f: "🎯", s: "💪", a: "💡", r: "👁️" };
+    var RESNAME = { f: "من أول محاولة", s: "بعد تصحيح ذاتي", a: "بمساعدة (تلميح بصري)", r: "إكمال بعد عرض الحل", m: "استمع وقلّد — يقيّمه المعلم" };
+    var RESICON = { f: "🎯", s: "💪", a: "💡", r: "👁️", m: "🗣️" };
     /* يحتاج تدريبًا: آخر نتيجة رأى فيها الحل، أو مساعدتان متتاليتان؛ التقييم اليدوي للمعلم يغلب */
     function needsTraining(it) {
         if (!it) return false;
@@ -39886,8 +39889,7 @@ function openAdditionRace(lv) {
         if (mode === "all") { for (k = 0; k < BOOK.length; k++) if (k !== t) out.push(k); return out.sort(byNear(t)); }
         for (k = 0; k < t; k++) out.push(k);
         out.sort(byNear(t)); /* الأقرب سابقًا أولًا */
-        if (!out.length && t + 1 < BOOK.length) out.push(t + 1);
-        return out;
+        return out; /* الحرف الأول «أ»: لا شيء قبله ← لا مشتّتات (تدريب استماع وتقليد) */
     }
     function similarIn(t, pool) { return similarOf(t).filter(function (k) { return pool.indexOf(k) >= 0; }); }
     /* اختيار مشتّتات «سهلة»: من عائلات مختلفة أولًا، ثم (إن لم يكفِ المتاح) أي حرف من المتاح بالترتيب نفسه */
@@ -40012,6 +40014,13 @@ function openAdditionRace(lv) {
         var cards = document.getElementById("wbkChoices");
         if (!cards) return;
         cards.innerHTML = "";
+        if (P.cur.imitate) { /* بطاقة واحدة: لمسها تُسمعك الحرف فقط (ليست إجابة) */
+            cards.className = "wbk-choices n1 imit";
+            var ic1 = card(P.cur.target, "choice imit");
+            ic1.addEventListener("click", function () { if (!S.paused) sayLetter(P.cur.target); });
+            cards.appendChild(ic1);
+            return;
+        }
         cards.className = "wbk-choices n" + P.cur.choices.length + (P.act === "game" ? " wbk-balloons" : "");
         P.cur.choices.forEach(function (i, k) {
             var c = P.act === "game" ? balloon(i, k) : card(i, "choice" + (P.act === "drag" ? " drag" : ""));
@@ -40039,7 +40048,8 @@ function openAdditionRace(lv) {
             var done = !!P.got[k];
             var prior = !done && k < P.started && touched(items[BOOK[li][0]]); /* أُجيب عنه في جلسة سابقة */
             if (done || prior) got++;
-            var w = el("span", "wbk-wagon r" + rowOf(li) + (done ? " got" : "") + (prior ? " old" : "") + (k === P.pos && !done ? " now" : ""));
+            var rvw = done && (P.res[k] === "r" || P.res[k] === "m" || (k === P.pos && P.solved && (P.cur.imitate || classify(P) === "r"))); /* عربة بلا نجمة: عرض الحل أو تقليد */
+            var w = el("span", "wbk-wagon r" + rowOf(li) + (done ? " got" : "") + (rvw ? " rv" : "") + (prior ? " old" : "") + (k === P.pos && !done ? " now" : ""));
             w.dataset.pos = String(k); w.dataset.letter = String(li);
             w.setAttribute("aria-label", "العربة " + ar(k - c[0] + 1) + (done || prior ? ": الحرف " + plain(li) : ": لم يُجَب عنها بعد"));
             if (done || prior) { var g = el("span", "wbk-wagon-g", BOOK[li]); g.setAttribute("lang", "ar"); w.appendChild(g); }
@@ -40127,8 +40137,9 @@ function openAdditionRace(lv) {
         S.paused = false;
         var target = P.seq[P.pos];
         var vis = makeSet(P, target);
-        P.cur = { target: target, choices: shuffleCardPositions(vis.ids), tier: vis.tier };
+        P.cur = { target: target, choices: shuffleCardPositions(vis.ids), tier: vis.tier, imitate: vis.ids.length === 1 };
         setMood("");
+        var imit = P.cur.imitate;
 
         var hud = el("div", "wbk-hud");
         hud.appendChild(el("span", "wbk-roundtxt", "الحرف " + ar(P.pos + 1) + " من " + ar(P.seq.length)));
@@ -40139,7 +40150,7 @@ function openAdditionRace(lv) {
         var an = el("span", "wbk-actname a-" + P.act, actOf(P.act).name); an.id = "wbkActName";
         sn.appendChild(an);
         sn.appendChild(document.createTextNode(scopeName(P.scope) + (P.rec ? "" : " — تكرار لا يُحتسب")));
-        var tb = el("span", "wbk-tier t" + vis.tier, "التمييز: " + TIER_NAMES[vis.tier]); tb.id = "wbkTier";
+        var tb = el("span", "wbk-tier t" + vis.tier, imit ? "استماع وتقليد" : "التمييز: " + TIER_NAMES[vis.tier]); tb.id = "wbkTier";
         sn.appendChild(tb);
         b.appendChild(sn);
 
@@ -40150,7 +40161,12 @@ function openAdditionRace(lv) {
         ask.appendChild(listen);
         var model = el("div", "wbk-model"); model.id = "wbkModel"; model.setAttribute("aria-hidden", "true");
         ask.appendChild(model);
-        if (P.act === "drag") ask.appendChild(slotEl());
+        if (imit) {
+            var im = btn("main big wbk-imit", "mic", "قلّدتُ الحرف", "wbkImitate");
+            im.addEventListener("click", function () { imitated(); });
+            ask.appendChild(im);
+        }
+        if (P.act === "drag" && !imit) ask.appendChild(slotEl());
 
         var cards = el("div", "wbk-choices"); cards.id = "wbkChoices";
         if (P.act === "game") {
@@ -40165,6 +40181,7 @@ function openAdditionRace(lv) {
         } else { play.appendChild(ask); play.appendChild(cards); }
 
         var tools = el("div", "wbk-tools");
+        if (imit) tools.hidden = true; /* لا خطأ ولا مساعدة في الاستماع والتقليد */
         var h = btn("help", "bulb", "مساعدة", "wbkHelp");
         h.addEventListener("click", function () { helpBtn(); });
         var lv = el("span", "wbk-helplv"); lv.id = "wbkHelpLv"; lv.setAttribute("aria-label", "مستوى المساعدة");
@@ -40191,7 +40208,7 @@ function openAdditionRace(lv) {
         nav.appendChild(prev); nav.appendChild(next); nav.appendChild(stop);
         b.appendChild(nav);
         paintHelp();
-        var how = { listen: "اسمع الحرف ثم المس الحرف الذي سمعته 👂", drag: tapOnly() ? "اسمع الحرف ثم المس بطاقته 👂" : "اسمع الحرف ثم اسحب بطاقته إلى الخانة 👂", game: "اسمع الحرف ثم فرقع البالون الذي عليه هذا الحرف 🎈" };
+        var how = imit ? { listen: "أول حرف في الكتاب: اسمعه، ثم قُله بصوتك 🗣️ والمس «قلّدتُ الحرف»", drag: "أول حرف في الكتاب: اسمعه، ثم قُله بصوتك 🗣️ والمس «قلّدتُ الحرف»", game: "أول حرف في الكتاب: اسمعه، ثم قُله بصوتك 🗣️ والمس «قلّدتُ الحرف»" } : { listen: "اسمع الحرف ثم المس الحرف الذي سمعته 👂", drag: tapOnly() ? "اسمع الحرف ثم المس بطاقته 👂" : "اسمع الحرف ثم اسحب بطاقته إلى الخانة 👂", game: "اسمع الحرف ثم فرقع البالون الذي عليه هذا الحرف 🎈" };
         msg(P.rec ? how[P.act] : "حرف سبق أن أجبتَ عنه — تكرار للتمرين فقط 🔁");
         later(function () { sayLetter(target); }, 450);
     }
@@ -40310,7 +40327,7 @@ function openAdditionRace(lv) {
         f: "أحسنت! قرأتها وحدك من أول مرة 🌟",
         s: "أحسنت! صحّحتَ بنفسك 💪",
         a: "أحسنت! ساعدك التلميح 💡",
-        r: "أحسنت! رأينا الحرف معًا 👁️"
+        r: "أحسنت! أكملتَ معنا 👁️ — نجرّبه مرة أخرى ونكسب نجمته 🌟"
     };
     function correct(c, i) {
         var P = S.p; P.solved = true;
@@ -40338,7 +40355,7 @@ function openAdditionRace(lv) {
             var pr = load(); var it = item(pr, i);
             if (res === "f") { it.f++; it.ind++; }
             else if (res === "s") { it.sc++; it.ind++; }
-            else { it.asst++; }
+            else { it.asst++; if (res === "a") it.ha++; }
             if (P.used[1]) it.rp++;
             if (P.used[2]) it.hn++;
             if (P.used[3]) it.rv++;
@@ -40348,7 +40365,9 @@ function openAdditionRace(lv) {
             it.lastHelp = P.hmax; it.reveal = P.hmax >= 3; it.at = Date.now();
             if (!pr.l1.starred) pr.l1.starred = {};
             var k = BOOK[i][0];
-            if (!pr.l1.starred[k] && !it.star) { pr.l1.starred[k] = 1; starNow = true; pr.l1.stars = (pr.l1.stars || 0) + 1; }
+            /* نجمة الحرف تُمنح عند الوصول للإجابة دون عرض الحل (أول مرة / تصحيح ذاتي / بتلميح). الإكمال بعد عرض الحل يُشجَّع دون نجمة،
+               وتبقى فرصة النجمة قائمة عند أول نجاح لاحق. ما مُنح سابقًا (starred / star) لا يُمسّ أبدًا. */
+            if (res !== "r" && !pr.l1.starred[k] && !it.star) { pr.l1.starred[k] = 1; starNow = true; pr.l1.stars = (pr.l1.stars || 0) + 1; }
             P.maxSolved = Math.max(P.maxSolved, P.pos);
             P.res[P.pos] = res;
             refreshTrail();
@@ -40370,6 +40389,38 @@ function openAdditionRace(lv) {
         var praise = PRAISE[P.pos % PRAISE.length];
         say([audioKey(i), praise]);
     }
+    /* الحرف الأول: «قلّدتُ الحرف» يسجّل مشاركة فقط (im). لا f ولا ind ولا نجمة ولا أثر في تدرّج المستوى؛
+       تقييم النطق للمعلم (أتقن / مستقل / بمساعدة / يحتاج تدريبًا) */
+    function imitated() {
+        var P = S.p; if (!P || P.solved || !P.cur || !P.cur.imitate || S.paused) return;
+        P.solved = true; P.got[P.pos] = true;
+        var i = P.cur.target;
+        var card1 = document.querySelector("#wbkChoices .wbk-card"); if (card1) card1.classList.add("right");
+        if (P.act === "game") {
+            refreshTrain();
+            var wg = document.querySelector('#wbkTrain .wbk-wagon[data-pos="' + P.pos + '"]'); if (wg) wg.classList.add("fill");
+        }
+        if (P.rec) {
+            var pr = load(); var it = item(pr, i);
+            it.im++; it.ac[P.act] = (it.ac[P.act] || 0) + 1; it.at = Date.now();
+            P.maxSolved = Math.max(P.maxSolved, P.pos);
+            P.res[P.pos] = "m";
+            refreshTrail();
+            var nextLetter = P.pos + 1 < P.seq.length ? P.seq[P.pos + 1] : null;
+            setResume(pr, P.scope, nextLetter, nextLetter == null);
+            save(pr);
+        }
+        var nx = document.getElementById("wbkNext"); if (nx) nx.disabled = false;
+        var im = document.getElementById("wbkImitate"); if (im) im.disabled = true;
+        var chip = document.getElementById("wbkResChip");
+        if (chip) {
+            if (P.rec) { chip.textContent = RESICON.m + " " + RESNAME.m; chip.className = "wbk-reschip show m"; }
+            else { chip.textContent = "🔁 تكرار للتمرين — لا يُحتسب"; chip.className = "wbk-reschip show rep"; }
+        }
+        setMood("happy");
+        msg(P.rec ? "أحسنت! سمعتَ الحرف وقلّدته 🌟 — اضغط «التالي» حين تكون جاهزًا" : "صحيح 🔁 (تكرار للتمرين)", "ok");
+        say([audioKey(i), PRAISE[P.pos % PRAISE.length]]);
+    }
     function nextRound() {
         var P = S.p; if (!P || !P.solved) return;
         if (P.pos >= P.seq.length - 1) { finishPractice(); return; }
@@ -40380,14 +40431,14 @@ function openAdditionRace(lv) {
         var P = S.p; var b = body(); b.innerHTML = "";
         var pr = load(); pr.l1.sessions = (pr.l1.sessions || 0) + 1;
         setResume(pr, P.scope, null, true); save(pr);
-        var tally = { f: 0, s: 0, a: 0, r: 0 };
+        var tally = { f: 0, s: 0, a: 0, r: 0, m: 0 };
         P.res.forEach(function (x) { if (x) tally[x]++; });
         var box = el("div", "wbk-done");
         box.appendChild(el("div", "wbk-done-emoji", "🌟"));
         box.appendChild(el("div", "wbk-done-title", "أحسنت! أكملت " + scopeName(P.scope)));
         box.appendChild(el("div", "wbk-done-sub", P.stars ? "حصلت على " + ar(P.stars) + " نجمة جديدة ⭐" : "النجوم السابقة لهذه الحروف محفوظة ⭐"));
         var sm = el("div", "wbk-done-tally"); sm.id = "wbkTally";
-        sm.innerHTML = "<span>🎯 من أول مرة: <b>" + ar(tally.f) + "</b></span><span>💪 صحّحتَ بنفسك: <b>" + ar(tally.s) + "</b></span><span>💡 بتلميح: <b>" + ar(tally.a) + "</b></span><span>👁️ بعد عرض الحل: <b>" + ar(tally.r) + "</b></span>";
+        sm.innerHTML = "<span>🎯 من أول مرة: <b>" + ar(tally.f) + "</b></span><span>💪 صحّحتَ بنفسك: <b>" + ar(tally.s) + "</b></span><span>💡 بتلميح: <b>" + ar(tally.a) + "</b></span><span>👁️ بعد عرض الحل: <b>" + ar(tally.r) + "</b></span>" + (tally.m ? "<span>🗣️ استمع وقلّد: <b>" + ar(tally.m) + "</b></span>" : "");
         box.appendChild(sm);
         var ind = el("div", "wbk-done-ind"); ind.id = "wbkDoneInd";
         ind.textContent = "✅ دون مساعدة في هذه الجولة: " + ar(tally.f + tally.s) + " (من أول مرة " + ar(tally.f) + " + بتصحيح ذاتي " + ar(tally.s) + ")";
@@ -40438,12 +40489,12 @@ function openAdditionRace(lv) {
 
     var RES = { ind: ["✅", "مستقل"], asst: ["🤝", "بمساعدة"], retrain: ["🔁", "يحتاج تدريبًا"] };
 
-    function touched(it) { return !!(it && (it.ind || it.asst || it.hist || it.tr || it.m || it.att)); }
+    function touched(it) { return !!(it && (it.ind || it.asst || it.hist || it.tr || it.m || it.att || it.im)); }
     function renderTeacher() {
         var b = body(); b.innerHTML = "";
         var p = load();
         var cnt = { m: 0, ind: 0, asst: 0, retrain: 0 };
-        var app = { f: 0, s: 0, a: 0, need: 0 };
+        var app = { f: 0, s: 0, a: 0, r: 0, need: 0 };
         var tried = 0;
         for (var i = 0; i < BOOK.length; i++) {
             var it = p.l1.items[BOOK[i][0]];
@@ -40452,7 +40503,7 @@ function openAdditionRace(lv) {
             if (it.m) cnt.m++;
             if (it.tr && cnt[it.tr] != null) cnt[it.tr]++;
             var lr = (typeof it.hist === "string") ? it.hist.slice(-1) : "";
-            if (lr === "f") app.f++; else if (lr === "s") app.s++; else if (lr === "a" || lr === "r") app.a++;
+            if (lr === "f") app.f++; else if (lr === "s") app.s++; else if (lr === "a") app.a++; else if (lr === "r") app.r++;
             if (needsTraining(it)) app.need++;
         }
         /* ١ ملخص واضح لتقدّم الطالب */
@@ -40476,7 +40527,8 @@ function openAdditionRace(lv) {
         asum.innerHTML = "<span class=\"cap\">آخر تدرّب في التطبيق (آلي):</span>" +
             "<span>🎯 أول مرة: <b>" + ar(app.f) + "</b></span>" +
             "<span>💪 تصحيح ذاتي: <b>" + ar(app.s) + "</b></span>" +
-            "<span>💡 بمساعدة: <b>" + ar(app.a) + "</b></span>" +
+            "<span>💡 بتلميح: <b>" + ar(app.a) + "</b></span>" +
+            "<span>👁️ بعد عرض الحل: <b>" + ar(app.r) + "</b></span>" +
             "<span>↻ يحتاج تدريبًا: <b>" + ar(app.need) + "</b></span>";
         head.appendChild(asum);
         b.appendChild(head);
@@ -40625,8 +40677,9 @@ function openAdditionRace(lv) {
         chips.innerHTML = "<span class=\"wbk-stc f\">🎯 من أول محاولة: <b>" + ar(it.f) + "</b></span>" +
             "<span class=\"wbk-stc s\">💪 بعد تصحيح ذاتي: <b>" + ar(it.sc) + "</b></span>" +
             "<span class=\"wbk-stc ind\" id=\"wbkIndChip\">✅ كل النجاحات دون مساعدة: <b>" + ar(it.ind) + "</b></span>" +
-            "<span class=\"wbk-stc a\">💡 بتلميح بصري: <b>" + ar(it.hn) + "</b></span>" +
-            "<span class=\"wbk-stc a\">👁️ بعد عرض الحل: <b>" + ar(it.rv) + "</b></span>" +
+            "<span class=\"wbk-stc a\" id=\"wbkHintChip\">💡 بمساعدة (تلميح بصري): <b>" + ar(it.ha) + "</b></span>" +
+            "<span class=\"wbk-stc r\" id=\"wbkRevChip\">👁️ إكمال بعد عرض الحل: <b>" + ar(it.rv) + "</b></span>" +
+            (it.im ? "<span class=\"wbk-stc m\" id=\"wbkImChip\">🗣️ استمع وقلّد: <b>" + ar(it.im) + "</b> — التكرار وحده لا يعني الإتقان، قيّم نطقه بنفسك</span>" : "") +
             "<span class=\"wbk-stc\">🔊 أعاد السماع: <b>" + ar(it.rp) + "</b></span>" +
             (legacy ? "<span class=\"wbk-stc\">قبل التحديث (دون مساعدة): <b>" + ar(legacy) + "</b></span>" : "") +
             "<span class=\"wbk-stc n" + (needsTraining(it) ? " on" : "") + "\">↻ يحتاج تدريبًا: <b>" + (needsTraining(it) ? "نعم" : "لا") + "</b></span>";
@@ -40695,6 +40748,23 @@ function openAdditionRace(lv) {
     window.wbkInternals = { distractors: distractors, tierFor: tierFor, classify: classify, needsTraining: needsTraining, similarOf: similarOf, easyPick: easyPick, FAMILIES: FAMILIES, ACTS: ACTS, poolFor: poolFor, similarIn: similarIn }; /* للاختبار فقط */
 })();
 /* WBK-END */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

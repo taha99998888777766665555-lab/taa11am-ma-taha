@@ -16418,7 +16418,33 @@ body.dark-mode .wbk-pauseov { background: rgba(15, 26, 46, .9); }
 @media (max-width: 759px) and (orientation: portrait) { .wbk-wagon { height: clamp(62px, 8vh, 84px); } .wbk-wagon-g { font-size: clamp(1.7rem, 7.5vw, 2.3rem); } }
 @media (min-width: 900px) { .wbk-wagon-g { font-size: clamp(2.2rem, 6vh, 3.6rem); } }
 @media (min-width: 760px) { .wbk-rowsgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.wbk-choices.n1 { grid-template-columns: minmax(0, 1fr); max-width: 220px; }
+.wbk-choices.imit .wbk-card { cursor: default; }
+.wbk-imit { margin-top: 10px; min-height: 64px; }
+.wbk-play.game .wbk-choices.imit { display: grid; max-width: 200px; margin-inline: auto; }
+.wbk-tdot.m { background: #8a5cd6; border-radius: 3px; }
+.wbk-reschip.m { background: #efe6fb; color: #3f2480; border-color: #8a5cd6; }
+.wbk-wagon.got.rv::before { content: none; }
+.wbk-stc.r { background: #fff2cc; }
+.wbk-stc.m { background: #efe6fb; }
 /* WBK-END */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
