@@ -39238,7 +39238,7 @@ function openAdditionRace(lv) {
 /* ADD-RACE-END */
 /* WBK-BEGIN */
 /* =========================================================================
-   📘 نموذج تجريبي (V5) — «الدليل المبسط لتعلم القراءة بالحركات القصيرة»
+   📘 نموذج تجريبي (V5.1) — «الدليل المبسط لتعلم القراءة بالحركات القصيرة»
    الدرس ١: «أقرأ الحروف بالفتحة» (٢٨ حرفًا بترتيب الكتاب حرفيًا)
    -------------------------------------------------------------------------
    كتلة معزولة بالكامل: لا تغيّر قسم «الكلمات» الحالي ولا مستوياته التسعة
@@ -39400,7 +39400,7 @@ function openAdditionRace(lv) {
     }
 
     /* ---------- التخزين (توافق V1/V2: الحقول الجديدة تُضاف دون مسّ القديمة) ---------- */
-    function blank() { return { v: 1, prefs: { companion: true, discr: "auto", act: "listen", tap: false }, l1: { items: {}, sessions: 0, stars: 0, resume: {}, starred: {} } }; }
+    function blank() { return { v: 1, prefs: { companion: true, discr: "auto", act: "listen", tap: false, pool: "taught" }, l1: { items: {}, sessions: 0, stars: 0, resume: {}, starred: {} } }; }
     function load() {
         try {
             var o = JSON.parse(localStorage.getItem(KEY));
@@ -39409,6 +39409,7 @@ function openAdditionRace(lv) {
                 if (o.prefs.discr == null) o.prefs.discr = "auto";
                 if (o.prefs.act !== "listen" && o.prefs.act !== "drag" && o.prefs.act !== "game") o.prefs.act = "listen";
                 if (typeof o.prefs.tap !== "boolean") o.prefs.tap = false;
+                if (o.prefs.pool !== "taught" && o.prefs.pool !== "all") o.prefs.pool = "taught"; /* خيارات التدريب: ما سبق تقديمه فقط (الافتراضي) أو كل الحروف (باختيار المعلم) */
                 if (!o.l1.resume || typeof o.l1.resume !== "object") o.l1.resume = {};
                 if (!o.l1.starred || typeof o.l1.starred !== "object") o.l1.starred = {};
                 return o;
@@ -39751,12 +39752,15 @@ function openAdditionRace(lv) {
         return posFrom(seq, res.next);
     }
 
+    function wideScreen() { try { return window.innerWidth >= 900; } catch (e) { return false; } }
     function renderPracticeHome() {
         var b = body(); b.innerHTML = "";
         var p = load();
-        S.p = null;
+        S.p = null; S.paused = false;
         S.act = p.prefs.act;
-        b.appendChild(el("div", "wbk-lead", "١ · اختر النشاط (يناسب قدرات الطالب، ولا يلزم أداؤها كلها):"));
+
+        /* ١ النشاط أولًا */
+        b.appendChild(el("div", "wbk-lead", "١ · اختر النشاط"));
         var acts = el("div", "wbk-acts"); acts.id = "wbkActs";
         acts.setAttribute("role", "group"); acts.setAttribute("aria-label", "نوع النشاط");
         ACTS.forEach(function (a) {
@@ -39775,42 +39779,14 @@ function openAdditionRace(lv) {
             acts.appendChild(c);
         });
         b.appendChild(acts);
-        if (p.prefs.act === "drag") {
-            var tp = el("div", "wbk-discr wbk-tapopt"); tp.id = "wbkTapOpt";
-            tp.appendChild(el("span", "wbk-discr-lbl", "طريقة الوضع:"));
-            [[false, "سحب أو لمس"], [true, "لمس فقط (دون سحب)"]].forEach(function (d) {
-                var on2 = !!p.prefs.tap === d[0];
-                var c2 = el("button", "wbk-dchip" + (on2 ? " on" : ""), d[1]);
-                c2.type = "button"; c2.dataset.tap = d[0] ? "1" : "0"; c2.setAttribute("aria-pressed", on2 ? "true" : "false");
-                c2.addEventListener("click", function () { var pp = load(); pp.prefs.tap = d[0]; save(pp); renderPracticeHome(); });
-                tp.appendChild(c2);
-            });
-            b.appendChild(tp);
-        }
-        b.appendChild(el("div", "wbk-lead", "٢ · اختر نطاق التدرّب (بترتيب الكتاب):"));
+        var how = el("div", "wbk-act-now"); how.id = "wbkActHow";
+        how.textContent = actOf(p.prefs.act).how;
+        b.appendChild(how);
 
-        /* مستوى التمييز بين الحروف */
-        var dz = el("div", "wbk-discr"); dz.id = "wbkDiscr";
-        dz.appendChild(el("span", "wbk-discr-lbl", "مستوى التمييز:"));
-        [["auto", "تلقائي"], [1, "١ سهل"], [2, "٢ متقارب"], [3, "٣ متشابه"]].forEach(function (d) {
-            var on = String(p.prefs.discr) === String(d[0]);
-            var c = el("button", "wbk-dchip" + (on ? " on" : ""), d[1]);
-            c.type = "button"; c.dataset.v = String(d[0]); c.setAttribute("aria-pressed", on ? "true" : "false");
-            c.addEventListener("click", function () {
-                var pp = load(); pp.prefs.discr = d[0] === "auto" ? "auto" : Number(d[0]); save(pp); renderPracticeHome();
-            });
-            dz.appendChild(c);
-        });
-        b.appendChild(dz);
-        b.appendChild(el("div", "wbk-discr-note", String(p.prefs.discr) === "auto"
-            ? "تلقائي: يبدأ كل حرف بخيارات سهلة، ثم تقترب الحروف المتشابهة كلما قرأه الطالب وحده."
-            : "ثابت على المستوى «" + TIER_NAMES[p.prefs.discr] + "» لكل الحروف (ترتيب الحروف المستهدفة لا يتغيّر)."));
-
+        /* ٢ نطاق التدريب: «كل الحروف» (و«الحروف الصعبة» إن وُجدت) ظاهران، وبقية الصفوف في قسم مطويّ */
+        b.appendChild(el("div", "wbk-lead", "٢ · اختر نطاق التدرّب (بترتيب الكتاب)"));
         var list = el("div", "wbk-scopes"); list.id = "wbkScopes";
-        var scopes = ["all"];
-        for (var r = 0; r < ROWS; r++) scopes.push("row" + r);
-        if (hardSet(p).length) scopes.push("hard");
-        scopes.forEach(function (scope) {
+        function scopeRow(scope) {
             var seq = scopeSeq(scope, p);
             var res = getResume(p, scope);
             var pos = resumePos(seq, res);
@@ -39830,9 +39806,56 @@ function openAdditionRace(lv) {
                 fr.addEventListener("click", function () { startPractice(scope, { fresh: true }); });
                 row.appendChild(fr);
             }
-            list.appendChild(row);
-        });
+            return { row: row, started: started };
+        }
+        list.appendChild(scopeRow("all").row);
+        if (hardSet(p).length) list.appendChild(scopeRow("hard").row);
+        var rowsSec = document.createElement("details"); rowsSec.className = "wbk-sec wbk-rowsec"; rowsSec.id = "wbkRowsSec";
+        rowsSec.appendChild(el("summary", "", "أو اختر صفًا واحدًا (" + ar(ROWS) + " صفوف)"));
+        var rg = el("div", "wbk-rowsgrid"); var anyStarted = false;
+        for (var r = 0; r < ROWS; r++) { var sr = scopeRow("row" + r); if (sr.started) anyStarted = true; rg.appendChild(sr.row); }
+        rowsSec.appendChild(rg);
+        if (anyStarted || wideScreen()) rowsSec.open = true;
+        list.appendChild(rowsSec);
         b.appendChild(list);
+
+        /* ٣ الإعدادات (مطويّة على الجوال): مستوى التمييز، خيارات الحروف، ووضع السحب */
+        var setSec = document.createElement("details"); setSec.className = "wbk-sec wbk-setsec"; setSec.id = "wbkSetSec";
+        var dtxt = String(p.prefs.discr) === "auto" ? "تلقائي" : TIER_NAMES[p.prefs.discr];
+        setSec.appendChild(el("summary", "", "إعدادات التدريب · التمييز: " + dtxt + (p.prefs.act === "drag" ? " · " + (p.prefs.tap ? "لمس فقط" : "سحب أو لمس") : "")));
+        var dz = el("div", "wbk-discr"); dz.id = "wbkDiscr";
+        dz.appendChild(el("span", "wbk-discr-lbl", "مستوى التمييز:"));
+        [["auto", "تلقائي"], [1, "١ سهل"], [2, "٢ متقارب"], [3, "٣ متشابه"]].forEach(function (d) {
+            var on = String(p.prefs.discr) === String(d[0]);
+            var c = el("button", "wbk-dchip" + (on ? " on" : ""), d[1]);
+            c.type = "button"; c.dataset.v = String(d[0]); c.setAttribute("aria-pressed", on ? "true" : "false");
+            c.addEventListener("click", function () {
+                var pp = load(); pp.prefs.discr = d[0] === "auto" ? "auto" : Number(d[0]); save(pp); S.setOpen = true; renderPracticeHome();
+            });
+            dz.appendChild(c);
+        });
+        setSec.appendChild(dz);
+        setSec.appendChild(el("div", "wbk-discr-note", String(p.prefs.discr) === "auto"
+            ? "تلقائي: يبدأ كل حرف بخيارات سهلة، ثم تقترب الحروف المتشابهة كلما قرأه الطالب وحده."
+            : "ثابت على المستوى «" + TIER_NAMES[p.prefs.discr] + "» لكل الحروف (ترتيب الحروف المستهدفة لا يتغيّر)."));
+        setSec.appendChild(el("div", "wbk-discr-note wbk-pool-note", p.prefs.pool === "all"
+            ? "الخيارات من كل الحروف (اختيار المعلم)."
+            : "الخيارات من الحروف التي سبق تقديمها فقط (يغيّر ذلك المعلم)."));
+        if (p.prefs.act === "drag") {
+            var tp = el("div", "wbk-discr wbk-tapopt"); tp.id = "wbkTapOpt";
+            tp.appendChild(el("span", "wbk-discr-lbl", "طريقة الوضع:"));
+            [[false, "سحب أو لمس"], [true, "لمس فقط (دون سحب)"]].forEach(function (d) {
+                var on2 = !!p.prefs.tap === d[0];
+                var c2 = el("button", "wbk-dchip" + (on2 ? " on" : ""), d[1]);
+                c2.type = "button"; c2.dataset.tap = d[0] ? "1" : "0"; c2.setAttribute("aria-pressed", on2 ? "true" : "false");
+                c2.addEventListener("click", function () { var pp = load(); pp.prefs.tap = d[0]; save(pp); S.setOpen = true; renderPracticeHome(); });
+                tp.appendChild(c2);
+            });
+            setSec.appendChild(tp);
+        }
+        if (S.setOpen || wideScreen()) setSec.open = true;
+        setSec.addEventListener("toggle", function () { S.setOpen = setSec.open; });
+        b.appendChild(setSec);
         msg("لا مؤقّت هنا ولا عقوبة. يمكنك الإيقاف والمتابعة لاحقًا 🌟");
     }
 
@@ -39855,15 +39878,29 @@ function openAdditionRace(lv) {
         if (FAMID[t] == null) return [];
         return FAMMEMBERS[FAMID[t]].filter(function (k) { return k !== t; }).sort(byNear(t));
     }
-    function easyPick(t, count, taken) {
-        var used = {}, out = [], k;
+    /* حروف الخيارات: «ما سبق تقديمه» = الحروف التي تسبق الحرف المستهدف في ترتيب الكتاب فقط.
+       الاستثناء الوحيد: الحرف الأول «أ» (لا حرف قبله) فيُستعار له أقرب حرف لاحق ليصير السؤال ممكنًا.
+       «كل الحروف» لا يُفعَّل إلا باختيار المعلم (prefs.pool = "all"). ترتيب الحروف المستهدفة لا يتأثر. */
+    function poolFor(t, mode) {
+        var k, out = [];
+        if (mode === "all") { for (k = 0; k < BOOK.length; k++) if (k !== t) out.push(k); return out.sort(byNear(t)); }
+        for (k = 0; k < t; k++) out.push(k);
+        out.sort(byNear(t)); /* الأقرب سابقًا أولًا */
+        if (!out.length && t + 1 < BOOK.length) out.push(t + 1);
+        return out;
+    }
+    function similarIn(t, pool) { return similarOf(t).filter(function (k) { return pool.indexOf(k) >= 0; }); }
+    /* اختيار مشتّتات «سهلة»: من عائلات مختلفة أولًا، ثم (إن لم يكفِ المتاح) أي حرف من المتاح بالترتيب نفسه */
+    function easyPick(t, count, taken, pool) {
+        var used = {}, out = [], k, cand = pool || poolFor(t, "all");
         used[famKey(t)] = true;
         (taken || []).forEach(function (x) { used[famKey(x)] = true; });
-        var cand = [];
-        for (k = 0; k < BOOK.length; k++) if (k !== t) cand.push(k);
-        cand.sort(byNear(t));
         for (k = 0; k < cand.length && out.length < count; k++) {
+            if ((taken || []).indexOf(cand[k]) >= 0) continue;
             if (!used[famKey(cand[k])]) { out.push(cand[k]); used[famKey(cand[k])] = true; }
+        }
+        for (k = 0; k < cand.length && out.length < count; k++) {
+            if ((taken || []).indexOf(cand[k]) < 0 && out.indexOf(cand[k]) < 0) out.push(cand[k]);
         }
         return out;
     }
@@ -39881,11 +39918,13 @@ function openAdditionRace(lv) {
         if (h.length === 2 && /^[ar]{2}$/.test(h) && t > 1) t--;
         return t;
     }
-    function distractors(target, n, tier) {
-        var need = n - 1;
+    function distractors(target, n, tier, mode) {
+        mode = (mode === "all") ? "all" : "taught";
+        var pool = poolFor(target, mode);
+        var need = Math.min(n - 1, pool.length);
         var sim = [];
-        if (tier >= 2) sim = similarOf(target).slice(0, tier === 2 ? 1 : need);
-        var easy = easyPick(target, need - sim.length, sim);
+        if (tier >= 2) sim = similarIn(target, pool).slice(0, tier === 2 ? 1 : need);
+        var easy = easyPick(target, need - sim.length, sim, pool);
         return { ids: sim.concat(easy), sim: sim.length, tier: sim.length ? tier : 1 };
     }
     /* الوحيد الذي يستعمل العشوائية: مواضع البطاقات داخل السؤال (لا الحروف المستهدفة) */
@@ -39903,7 +39942,7 @@ function openAdditionRace(lv) {
             var p = load();
             var tier = tierFor(p, target);
             var n = (tier === 1 && P.pos - P.started < 2) ? 2 : 3;
-            var d = distractors(target, n, tier);
+            var d = distractors(target, n, tier, p.prefs.pool);
             P.vis = { target: target, ids: [target].concat(d.ids), tier: d.tier, asked: tier, sim: d.sim };
         }
         return P.vis;
@@ -39986,25 +40025,36 @@ function openAdditionRace(lv) {
     function chunkOf(P) { var s = Math.floor(P.pos / PER_ROW) * PER_ROW; return [s, Math.min(P.seq.length, s + PER_ROW)]; }
     var LOCO_SVG = '<svg viewBox="0 0 96 70" focusable="false" aria-hidden="true"><rect x="38" y="8" width="14" height="14" rx="3" fill="#7a8aa3"/><rect x="34" y="4" width="22" height="7" rx="3" fill="#5d6e88"/><rect x="6" y="22" width="60" height="30" rx="8" fill="#e5584f" stroke="#1f3f66" stroke-width="2.500"/><rect x="58" y="12" width="32" height="40" rx="7" fill="#2f6fb5" stroke="#1f3f66" stroke-width="2.500"/><rect x="64" y="18" width="20" height="14" rx="4" fill="#dff1ff" stroke="#1f3f66" stroke-width="2"/><circle cx="24" cy="56" r="10" fill="#33415c" stroke="#1f3f66" stroke-width="2"/><circle cx="24" cy="56" r="3.500" fill="#cdd8e8"/><circle cx="68" cy="56" r="10" fill="#33415c" stroke="#1f3f66" stroke-width="2"/><circle cx="68" cy="56" r="3.500" fill="#cdd8e8"/></svg>';
     function trainEl(P) {
-        var t = el("div", "wbk-train"); t.id = "wbkTrain";
-        var c = chunkOf(P), got = 0;
+        var wrap = el("div", "wbk-train"); wrap.id = "wbkTrain";
+        var c = chunkOf(P), got = 0, items = load().l1.items;
+        var first = P.seq[c[0]];
+        var cap = el("div", "wbk-train-cap");
+        cap.appendChild(el("strong", "", P.scope === "hard" ? "قطار الحروف التي تحتاج تدريبًا" : "قطار الصف " + ar(rowOf(first) + 1)));
+        var capn = el("span", "wbk-train-n"); cap.appendChild(capn);
+        wrap.appendChild(cap);
+        var rail = el("div", "wbk-rail");
+        var letters = [];
         for (var k = c[0]; k < c[1]; k++) {
-            var done = !!P.got[k], old = !done && k < P.started;
-            if (done || old) got++;
-            var li = P.seq[k];
-            var w = el("span", "wbk-wagon" + (done ? " got r" + rowOf(li) : "") + (old ? " old r" + rowOf(li) : "") + (k === P.pos && !done ? " now" : ""));
-            w.dataset.pos = String(k);
-            if (done || old) { var g = el("span", "wbk-wagon-g", BOOK[li]); g.setAttribute("lang", "ar"); w.appendChild(g); }
-            else w.appendChild(el("span", "wbk-wagon-n", ar(k - c[0] + 1)));
+            var li = P.seq[k]; letters.push(plain(li));
+            var done = !!P.got[k];
+            var prior = !done && k < P.started && touched(items[BOOK[li][0]]); /* أُجيب عنه في جلسة سابقة */
+            if (done || prior) got++;
+            var w = el("span", "wbk-wagon r" + rowOf(li) + (done ? " got" : "") + (prior ? " old" : "") + (k === P.pos && !done ? " now" : ""));
+            w.dataset.pos = String(k); w.dataset.letter = String(li);
+            w.setAttribute("aria-label", "العربة " + ar(k - c[0] + 1) + (done || prior ? ": الحرف " + plain(li) : ": لم يُجَب عنها بعد"));
+            if (done || prior) { var g = el("span", "wbk-wagon-g", BOOK[li]); g.setAttribute("lang", "ar"); w.appendChild(g); }
+            else w.appendChild(el("span", "wbk-wagon-q", "؟")); /* لا يظهر الحرف قبل الإجابة، كي لا يكشف الحل */
             w.appendChild(el("i", "wbk-wheel")); w.appendChild(el("i", "wbk-wheel w2"));
-            t.appendChild(w);
+            rail.appendChild(w);
         }
         var lo = el("span", "wbk-loco"); lo.setAttribute("aria-hidden", "true"); lo.innerHTML = LOCO_SVG;
-        t.appendChild(lo);
-        t.setAttribute("role", "img");
-        t.setAttribute("aria-label", "قطار الحروف: " + ar(got) + " من " + ar(c[1] - c[0]) + " عربات ممتلئة");
-        if (got === c[1] - c[0]) t.classList.add("full");
-        return t;
+        rail.appendChild(lo);
+        wrap.appendChild(rail);
+        capn.textContent = ar(got) + " من " + ar(c[1] - c[0]) + " حروف في عرباتها";
+        wrap.setAttribute("role", "group");
+        wrap.setAttribute("aria-label", "قطار الحروف: " + ar(got) + " من " + ar(c[1] - c[0]) + " عربات ممتلئة (" + letters.join("، ") + ")");
+        if (got === c[1] - c[0]) wrap.classList.add("full");
+        return wrap;
     }
     function refreshTrain() {
         var P = S.p, old = document.getElementById("wbkTrain");
@@ -40278,6 +40328,7 @@ function openAdditionRace(lv) {
         } else if (P.act === "game") {
             c.classList.add("popped");
             refreshTrain();
+            var wg = document.querySelector('#wbkTrain .wbk-wagon[data-pos="' + P.pos + '"]'); if (wg) wg.classList.add("fill");
             var tr = document.getElementById("wbkTrain");
             if (tr && tr.classList.contains("full")) { tr.classList.add("go"); }
         }
@@ -40338,6 +40389,9 @@ function openAdditionRace(lv) {
         var sm = el("div", "wbk-done-tally"); sm.id = "wbkTally";
         sm.innerHTML = "<span>🎯 من أول مرة: <b>" + ar(tally.f) + "</b></span><span>💪 صحّحتَ بنفسك: <b>" + ar(tally.s) + "</b></span><span>💡 بتلميح: <b>" + ar(tally.a) + "</b></span><span>👁️ بعد عرض الحل: <b>" + ar(tally.r) + "</b></span>";
         box.appendChild(sm);
+        var ind = el("div", "wbk-done-ind"); ind.id = "wbkDoneInd";
+        ind.textContent = "✅ دون مساعدة في هذه الجولة: " + ar(tally.f + tally.s) + " (من أول مرة " + ar(tally.f) + " + بتصحيح ذاتي " + ar(tally.s) + ")";
+        box.appendChild(ind);
         var scope = P.scope;
         var again = btn("main", "restart", "إعادة من البداية", "wbkAgain");
         again.addEventListener("click", function () { startPractice(scope, { fresh: true }); });
@@ -40427,6 +40481,8 @@ function openAdditionRace(lv) {
         head.appendChild(asum);
         b.appendChild(head);
 
+        /* على الجوال: اختيار حرف يفتح تفاصيله في واجهة مستقلة مع زر عودة إلى الشبكة */
+        if (S.sel >= 0 && !wideScreen()) { renderTeacherDetail(p, b); return; }
         /* ٢ شبكة الحروف + ٣ تفاصيل الحرف المختار (جنبًا إلى جنب على الشاشات العريضة) */
         var lay = el("div", "wbk-tlay");
         var colG = el("div", "wbk-tcol-grid");
@@ -40438,10 +40494,11 @@ function openAdditionRace(lv) {
                 var c = card(j, "cell");
                 var it2 = p.l1.items[BOOK[j][0]];
                 if (S.sel === j) { c.classList.add("spot"); c.setAttribute("aria-current", "true"); }
+                else if (S.sel < 0 && S.selMem === j) c.classList.add("lastsel");
                 if (it2 && it2.tr) { c.classList.add("tr-" + it2.tr); c.appendChild(el("span", "wbk-tag", RES[it2.tr][0])); }
                 if (it2 && it2.m) { c.classList.add("mastered"); c.appendChild(el("span", "wbk-tag m", "⭐")); }
                 if (it2 && needsTraining(it2)) { c.classList.add("need"); c.appendChild(el("span", "wbk-tag app", "↻")); }
-                c.addEventListener("click", function () { S.sel = j; renderTeacher(); try { if (window.innerWidth < 900) document.getElementById("wbkPanel").scrollIntoView({ block: "nearest" }); } catch (e) { /* لا شيء */ } });
+                c.addEventListener("click", function () { S.sel = j; S.selMem = j; renderTeacher(); try { window.scrollTo(0, 0); } catch (e) { /* لا شيء */ } });
                 g.appendChild(c);
             })(j);
         }
@@ -40463,8 +40520,26 @@ function openAdditionRace(lv) {
             if (rst.dataset.arm !== "1") { rst.dataset.arm = "1"; lbl.textContent = "اضغط مرة أخرى للتأكيد"; return; }
             var pp = load(); pp.l1 = { items: {}, sessions: 0, stars: 0, resume: {}, starred: pp.l1.starred || {} }; save(pp); S.sel = -1; renderTeacher();
         });
-        tools.appendChild(hard); tools.appendChild(lock); tools.appendChild(rst);
+        var pool = btn("soft", "", p.prefs.pool === "all" ? "🔤 الخيارات: كل الحروف (اختيار المعلم)" : "🔤 الخيارات: ما سبق تقديمه فقط", "wbkPoolToggle");
+        pool.setAttribute("aria-pressed", p.prefs.pool === "all" ? "true" : "false");
+        pool.addEventListener("click", function () { var pp = load(); pp.prefs.pool = pp.prefs.pool === "all" ? "taught" : "all"; save(pp); renderTeacher(); });
+        tools.appendChild(hard); tools.appendChild(pool); tools.appendChild(lock); tools.appendChild(rst);
         b.appendChild(tools);
+        b.appendChild(el("div", "wbk-actnote", p.prefs.pool === "all" ? "تنبيه: الخيارات تتضمّن حروفًا لم تُقدَّم بعد، وقد اخترتَ ذلك." : "الخيارات في التدريب من الحروف السابقة للحرف المطلوب في الكتاب فقط؛ لا تدخل حروف جديدة إلا باختيارك."));
+        msg("");
+    }
+    function renderTeacherDetail(p, b) {
+        var i = S.sel;
+        function back(id) {
+            var x = btn("main wbk-tback", "next", "العودة إلى شبكة الحروف", id);
+            x.addEventListener("click", function () { S.sel = -1; renderTeacher(); try { window.scrollTo(0, 0); } catch (e) { /* لا شيء */ } });
+            return x;
+        }
+        var bar = el("div", "wbk-tbar"); bar.id = "wbkTDetail";
+        bar.appendChild(back("wbkTBack"));
+        b.appendChild(bar);
+        b.appendChild(teacherPanel(p, i));
+        var bot = el("div", "wbk-tbar bottom"); bot.appendChild(back("wbkTBack2")); b.appendChild(bot);
         msg("");
     }
     function histStrip(it) {
@@ -40549,6 +40624,7 @@ function openAdditionRace(lv) {
         var chips = el("div", "wbk-stchips");
         chips.innerHTML = "<span class=\"wbk-stc f\">🎯 من أول محاولة: <b>" + ar(it.f) + "</b></span>" +
             "<span class=\"wbk-stc s\">💪 بعد تصحيح ذاتي: <b>" + ar(it.sc) + "</b></span>" +
+            "<span class=\"wbk-stc ind\" id=\"wbkIndChip\">✅ كل النجاحات دون مساعدة: <b>" + ar(it.ind) + "</b></span>" +
             "<span class=\"wbk-stc a\">💡 بتلميح بصري: <b>" + ar(it.hn) + "</b></span>" +
             "<span class=\"wbk-stc a\">👁️ بعد عرض الحل: <b>" + ar(it.rv) + "</b></span>" +
             "<span class=\"wbk-stc\">🔊 أعاد السماع: <b>" + ar(it.rp) + "</b></span>" +
@@ -40582,6 +40658,11 @@ function openAdditionRace(lv) {
         try { EduAudio.stop(); } catch (e) { /* لا شيء */ }
     }
 
+    try {
+        var mq = window.matchMedia("(min-width: 900px)");
+        var onMq = function () { if (S.mode === "teacher" && S.gateOk && S.root && document.getElementById("wbkL1") && document.getElementById("wbkL1").classList.contains("active")) renderTeacher(); };
+        if (mq.addEventListener) mq.addEventListener("change", onMq); else if (mq.addListener) mq.addListener(onMq);
+    } catch (e) { /* لا شيء */ }
     var prevShow = showScreen;
     showScreen = function (id) {
         if (id !== SCREEN) teardown();
@@ -40611,9 +40692,14 @@ function openAdditionRace(lv) {
 
     window.wbkOpen = open;
     window.wbkState = S; /* للاختبار */
-    window.wbkInternals = { distractors: distractors, tierFor: tierFor, classify: classify, needsTraining: needsTraining, similarOf: similarOf, easyPick: easyPick, FAMILIES: FAMILIES, ACTS: ACTS }; /* للاختبار فقط */
+    window.wbkInternals = { distractors: distractors, tierFor: tierFor, classify: classify, needsTraining: needsTraining, similarOf: similarOf, easyPick: easyPick, FAMILIES: FAMILIES, ACTS: ACTS, poolFor: poolFor, similarIn: similarIn }; /* للاختبار فقط */
 })();
 /* WBK-END */
+
+
+
+
+
 
 
 

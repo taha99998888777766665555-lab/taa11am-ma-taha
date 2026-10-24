@@ -16232,8 +16232,17 @@ body.dark-mode .wbk-scene { background: linear-gradient(180deg, #1b3558 0%, #254
 .wbk-card.balloon.popped .wbk-bl-g { background: #dff5e8; border-color: var(--wbk-ok); border-width: 5px; top: 42%; }
 .wbk-card.balloon.wrong .wbk-bl-art { filter: grayscale(.5); }
 .wbk-card.balloon .wbk-finger { bottom: 2px; inset-inline-end: 8px; z-index: 3; }
-.wbk-train { display: flex; align-items: flex-end; justify-content: center; gap: 6px; margin: 14px auto 0; direction: rtl; padding-bottom: 12px; position: relative; max-width: 640px; }
-.wbk-train::after { content: ""; position: absolute; left: 4%; right: 4%; bottom: 4px; height: 6px; border-radius: 3px; background: #7a6a58; opacity: .55; }
+.wbk-train { display: block; margin: 14px auto 0; direction: rtl; position: relative; max-width: 640px; }
+.wbk-train-cap { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin-bottom: 8px; font-size: .95rem; text-align: center; }
+.wbk-train-cap strong { font-weight: 800; }
+.wbk-train-n { opacity: .85; }
+.wbk-train.full .wbk-train-n { color: var(--wbk-ok); font-weight: 800; }
+.wbk-rail { display: flex; align-items: flex-end; justify-content: center; gap: 6px; direction: rtl; padding-bottom: 12px; position: relative; }
+.wbk-rail::after { content: ""; position: absolute; left: 4%; right: 4%; bottom: 4px; height: 6px; border-radius: 3px; background: #7a6a58; opacity: .55; }
+.wbk-wagon-q { font-size: 1.8rem; opacity: .55; font-weight: 800; }
+.wbk-wagon.fill .wbk-wagon-g { animation: wbkFill .6s ease-out 1; }
+@keyframes wbkFill { 0% { transform: scale(.2); opacity: 0; } 70% { transform: scale(1.25); opacity: 1; } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .wbk-wagon.fill .wbk-wagon-g { animation: none; } }
 .wbk-wagon {
     position: relative; flex: 1 1 0; min-width: 0; max-width: 118px; height: clamp(58px, 9vh, 92px); display: flex; align-items: center; justify-content: center;
     border: 3px dashed #7f93ad; border-radius: 12px 12px 8px 8px; background: rgba(255, 255, 255, .55); color: #5d6e88; font-weight: 700;
@@ -16383,7 +16392,36 @@ body.dark-mode .wbk-pauseov { background: rgba(15, 26, 46, .9); }
     .wbk-card.choice, .wbk-card.choice.drag { aspect-ratio: auto; }
 }
 @media (min-width: 760px) { .wbk-map { width: 100%; } }
+/* V5.1: واجهة تفاصيل الحرف في لوحة المعلم + نطاق التدرّب + بطاقات */
+.wbk-tbar { margin: 8px 0; display: flex; }
+.wbk-tbar .wbk-tback, .wbk-tbar button { min-height: 52px; flex: 1; }
+.wbk-tbar.bottom { margin-top: 14px; }
+.wbk-card.cell.lastsel:not(.spot) { outline: 3px dashed var(--wbk-main); outline-offset: 2px; }
+.wbk-done-ind { margin-top: 8px; font-weight: 800; text-align: center; color: var(--wbk-ok); }
+.wbk-stc.ind { background: #dff5e8; }
+.wbk-sec { margin-top: 10px; }
+.wbk-sec > summary { cursor: pointer; font-weight: 800; padding: 10px 12px; min-height: 48px; border-radius: 12px; background: var(--wbk-soft2); list-style: none; }
+.wbk-rowsgrid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
+.wbk-pool-note { font-size: .85rem; opacity: .85; margin-top: 6px; }
+@media (max-width: 759px) {
+    .wbk-acts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .wbk-act { flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; min-height: 118px; padding: 24px 4px 8px; gap: 6px; min-width: 0; }
+    .wbk-act-art { width: 44px; height: 44px; border-radius: 14px; }
+    .wbk-act-art .wbk-ic { width: 26px; height: 26px; }
+    .wbk-act-tx { align-items: center; }
+    .wbk-act-tx strong { font-size: .98rem; line-height: 1.35; overflow-wrap: anywhere; }
+    .wbk-act-how { display: none; }
+    .wbk-act-tag { top: 4px; inset-inline-end: auto; font-size: .7rem; padding: 0 8px; }
+}
+.wbk-wagon { overflow: visible; }
+.wbk-wagon-g { font-size: clamp(1.6rem, 5vh, 2.6rem); line-height: 1.5; padding-top: 0; }
+@media (max-width: 759px) and (orientation: portrait) { .wbk-wagon { height: clamp(62px, 8vh, 84px); } .wbk-wagon-g { font-size: clamp(1.7rem, 7.5vw, 2.3rem); } }
+@media (min-width: 900px) { .wbk-wagon-g { font-size: clamp(2.2rem, 6vh, 3.6rem); } }
+@media (min-width: 760px) { .wbk-rowsgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* WBK-END */
+
+
+
 
 
 
