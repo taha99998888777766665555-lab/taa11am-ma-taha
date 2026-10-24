@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v37";
+const CACHE_VERSION = "taha-app-v38";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -250,9 +250,17 @@ self.addEventListener("install", event => {
                     )
                 ).then(() =>
                     Promise.allSettled(
-                        LETTER_ART.concat(LESSON_AUDIO).map(url =>
+                        LETTER_ART.map(url =>
                             fetch(url).then(response =>
                                 response && response.ok ? cache.put(url, response) : null
+                            )
+                        ).concat(
+                            /* أصوات الدرس: cache: "reload" كي لا تُخزَّن نسخة قديمة من كاش المتصفح (HTTP)
+                               عند استبدال تسجيل بنفس اسم الملف */
+                            LESSON_AUDIO.map(url =>
+                                fetch(new Request(url, { cache: "reload" })).then(response =>
+                                    response && response.ok ? cache.put(url, response) : null
+                                )
                             )
                         )
                     )
