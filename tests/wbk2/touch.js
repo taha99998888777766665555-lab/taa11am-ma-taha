@@ -12,7 +12,7 @@ let pass=0,fail=0;const ok=(c,m)=>{if(c)pass++;else{fail++;console.log('FAIL',m)
  await p.evaluate(()=>wbk2Internals.renderHome()); await p.tap('[data-stage=build]'); await p.waitForTimeout(400);
  it=await cur(); sy=await p.evaluate(id=>WBK2_DATA.SYLLABLES.find(s=>s.id===id),it.id);
  const cdp=await p.context().newCDPSession(p);
- async function tdrag(letter,slot){await p.evaluate(()=>{document.querySelector('.wb2-board').scrollIntoView({block:'start'})});await p.waitForTimeout(100);const a=await (await p.$(`#wb2Tray [data-letter="${letter}"]`)).boundingBox();const b=await (await p.$(`.wb2-slot[data-slot="${slot}"]`)).boundingBox();
+ async function tdrag(letter,slot){await p.evaluate(()=>{document.querySelector('.wb2-board').scrollIntoView({block:'start',behavior:'instant'})});await p.waitForTimeout(300);const a=await (await p.$(`#wb2Tray [data-letter="${letter}"]`)).boundingBox();const b=await (await p.$(`.wb2-slot[data-slot="${slot}"]`)).boundingBox();
   console.log(letter,JSON.stringify(a),JSON.stringify(b));const sx=a.x+a.width/2,sy2=a.y+a.height/2,ex=b.x+b.width/2,ey=b.y+b.height/2;
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:sx,y:sy2}]});
   for(let i=1;i<=8;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:sx+(ex-sx)*i/8,y:sy2+(ey-sy2)*i/8}]});

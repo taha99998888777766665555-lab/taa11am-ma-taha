@@ -479,11 +479,10 @@
             var t = el("span", "wb2-stx");
             var h = el("b", "", st.title); t.appendChild(h);
             t.appendChild(el("small", "", st.how));
-            t.appendChild(el("em", "wb2-st", note || stageStatus(p, st.id)));
+            if (note) t.appendChild(el("em", "wb2-st", note));
             bt.appendChild(t);
             if (isSug) {
-                var why = el("span", "wb2-sugwhy"); why.appendChild(el("span", "wb2-tag", "الخطوة المقترحة")); why.appendChild(el("span", "", sg.why));
-                t.appendChild(why);
+                t.insertBefore(el("span", "wb2-tag", "الخطوة المقترحة"), h);
                 var go = el("span", "wb2-gobtn", "ابدأ"); go.id = "wb2Go"; bt.appendChild(go);
             } else bt.appendChild(el("span", "wb2-chev", "‹"));
             if (note) bt.setAttribute("data-pending", "1");
@@ -568,7 +567,15 @@
         var st = { n: 0 };
         var wrap = el("section", "wb2-disc"); wrap.id = "wb2Disc";
         var dots = el("ol", "wb2-steps");
-        steps.forEach(function (t, i) { var li = el("li", "", t); li.setAttribute("data-i", String(i)); dots.appendChild(li); });
+        steps.forEach(function (t, i) {
+            var li = el("li", ""); li.setAttribute("data-i", String(i));
+            var sb = el("button", "wb2-stepdot"); sb.type = "button"; sb.setAttribute("data-i", String(i));
+            sb.setAttribute("aria-label", "الخطوة " + (i + 1) + ": " + t);
+            sb.appendChild(el("span", "wb2-sdn", ar(i + 1)));
+            sb.appendChild(el("span", "wb2-sdt", t));
+            sb.addEventListener("click", function () { if (st.n !== i) { st.n = i; show(); } });
+            li.appendChild(sb); dots.appendChild(li);
+        });
         wrap.appendChild(dots);
         var stage = el("div", "wb2-stage"); stage.id = "wb2Stage";
         wrap.appendChild(stage);
@@ -616,8 +623,8 @@
                 stage.appendChild(synEl(s, "huge"));
                 cap.textContent = "هذا هو المقطع: " + s.a.base + " ثم " + s.b.base + ".";
             }
-            if (st.n > 0) acts.appendChild(btn("ghost", "السابق", function () { st.n--; show(); }));
-            acts.appendChild(btn("main", last ? (R.i + 1 < R.list.length ? "المقطع التالي" : "انتهيت") : "التالي", function () {
+            if (st.n > 0) acts.appendChild(btn("ghost big", "السابق", function () { st.n--; show(); }));
+            acts.appendChild(btn("main big", last ? (R.i + 1 < R.list.length ? "المقطع التالي" : "انتهيت") : "التالي", function () {
                 if (!last) { st.n++; show(); return; }
                 var pp = load(); var r = rec(pp, id); r.seen++; r.last = Date.now(); save(pp);
                 R.done++;
@@ -843,12 +850,13 @@
         var slotEls = [0, 1].map(function (i) {
             var se = el("button", "wb2-slot"); se.type = "button"; se.setAttribute("data-slot", String(i));
             se.setAttribute("aria-label", i === 0 ? "الخانة الأولى (الحرف الأول)" : "الخانة الثانية (الحرف الثاني)");
-            se.appendChild(el("span", "wb2-slotn", ar(i + 1)));
+            se.appendChild(el("span", "wb2-slotn", ar(i + 1) + " " + (i === 0 ? "الأول" : "الثاني")));
             se.addEventListener("click", function () { if (!locked && slots[i]) release(i); });
             return se;
         });
         board.appendChild(slotEls[0]); board.appendChild(slotEls[1]);
         F.area.appendChild(board);
+        var dn = el("p", "wb2-dirnote", "نبدأ من اليمين: الحرف الأول ثم الثاني"); dn.id = "wb2DirNote"; F.area.appendChild(dn);
         var tray = el("div", "wb2-tray"); tray.id = "wb2Tray";
         tiles.forEach(function (t) {
             var te = el("button", "wb2-tile"); te.type = "button"; te.setAttribute("data-letter", t.base);
@@ -1223,6 +1231,14 @@
         var h = el("div", "wb2-tsum");
         h.innerHTML = "<span>أتقن: <b>" + ar(cnt.mastered) + "</b>/" + ar(SYL.length) + "</span><span>يتدرّب: <b>" + ar(cnt.learning) + "</b></span><span>يراجع: <b>" + ar(cnt.review) + "</b></span><span>جديد: <b>" + ar(cnt["new"]) + "</b></span><span>النجوم: <b>" + ar(p.stars) + "</b>/" + ar(MAX_STARS) + "</span><span>الجولات: <b>" + ar(p.sessions) + "</b></span>";
         sec.appendChild(h);
+
+        var sgT = suggest(p);
+        var jr = el("div", "wb2-tbox"); jr.id = "wb2Journey";
+        jr.appendChild(el("h3", "", "الرحلة والتوصية"));
+        jr.appendChild(el("p", "", "الخطوة المقترحة: " + STAGE_BY[sgT.stage].title + " — " + sgT.why));
+        var jl = el("ul", "wb2-acts");
+        STAGES.forEach(function (st) { var li = el("li"); li.appendChild(el("span", "", st.title)); li.appendChild(el("b", "", stageStatus(p, st.id))); jl.appendChild(li); });
+        jr.appendChild(jl); sec.appendChild(jr);
 
         var ap = approvedAll();
         var au = el("div", "wb2-tbox"); au.id = "wb2AudioStatus";
