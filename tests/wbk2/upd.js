@@ -12,7 +12,7 @@ let pass=0,fail=0;const ok=(c,m,d='')=>{if(c)pass++;else{fail++;console.log('FAI
  execSync('fuser -k 8963/tcp || true');await p.waitForTimeout(500);
  const sv=spawn('python3',['-m','http.server','8963','--bind','127.0.0.1'],{cwd:'/home/claude/wt-words-l2',stdio:'ignore'});await p.waitForTimeout(1200);
  await p.reload();await p.waitForTimeout(4000);await p.reload();await p.waitForTimeout(4000);
- ks=await p.evaluate(()=>caches.keys()); ok(ks.join()==='taha-app-v40','updated to v40 only',ks.join());
+ ks=await p.evaluate(()=>caches.keys()); ok(ks.join()==='taha-app-v41','updated to v40 only',ks.join());
  ok(await p.evaluate(()=>!!document.getElementById('wbk2Entry')),'new entry present after update');
  const after=await p.evaluate(()=>[localStorage.getItem('taha_wbk_progress_v1'),localStorage.getItem('taha_app_stars'),StudentStore.currentId()]);
  ok(JSON.stringify(before)===JSON.stringify(after),'lesson1/app/student data preserved');

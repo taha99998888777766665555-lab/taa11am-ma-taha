@@ -41,24 +41,25 @@
         12: { file: DIR + "l2_14.mp3", approved: true },  /* فَتَـ */
         16: { file: DIR + "l2_03.mp3", approved: true },  /* نَظَـ */
         24: { file: DIR + "l2_04.mp3", approved: true },  /* جَمَـ */
-        /* قيد التسجيل (ناقصة أو مرفوضة سابقًا) */
+        /* معتمدة بعد استماع صاحب المشروع (التسجيلات الجديدة) */
+        /* مرفوضة بعد الاستماع: قيد الإعداد ولا يُشغَّل شيء (الملف غير موجود عمدًا) — قَرَ */
         1: { file: DIR + "wbk2_01_qaf-raa.mp3", approved: false },
-        3: { file: DIR + "wbk2_03_jeem-lam.mp3", approved: false },
-        4: { file: DIR + "wbk2_04_zay-raa.mp3", approved: false },
-        6: { file: DIR + "wbk2_06_raa-faa.mp3", approved: false },
-        8: { file: DIR + "wbk2_08_haa-raa.mp3", approved: false },
-        9: { file: DIR + "wbk2_09_raa-seen.mp3", approved: false },
-        11: { file: DIR + "wbk2_11_ghain-raa.mp3", approved: false },
-        13: { file: DIR + "wbk2_13_alef-khaa.mp3", approved: false },
-        14: { file: DIR + "wbk2_14_ha-raa.mp3", approved: false },
-        15: { file: DIR + "wbk2_15_waw-qaf.mp3", approved: false },
-        17: { file: DIR + "wbk2_17_meem-kaf.mp3", approved: false },
-        18: { file: DIR + "wbk2_18_haa-meem.mp3", approved: false },
-        20: { file: DIR + "wbk2_20_sheen-raa.mp3", approved: false },
-        21: { file: DIR + "wbk2_21_noon-sheen.mp3", approved: false },
-        22: { file: DIR + "wbk2_22_noon-ba.mp3", approved: false },
-        23: { file: DIR + "wbk2_23_khaa-ba.mp3", approved: false },
-        25: { file: DIR + "wbk2_25_waw-jeem.mp3", approved: false }
+        3: { file: DIR + "wbk2_03_jeem-lam.mp3", approved: true },
+        4: { file: DIR + "wbk2_04_zay-raa.mp3", approved: true },
+        6: { file: DIR + "wbk2_06_raa-faa.mp3", approved: true },
+        8: { file: DIR + "wbk2_08_haa-raa.mp3", approved: true },
+        9: { file: DIR + "wbk2_09_raa-seen.mp3", approved: true },
+        11: { file: DIR + "wbk2_11_ghain-raa.mp3", approved: true },
+        13: { file: DIR + "wbk2_13_alef-khaa.mp3", approved: true },
+        14: { file: DIR + "wbk2_14_ha-raa.mp3", approved: true },
+        15: { file: DIR + "wbk2_15_waw-qaf.mp3", approved: true },
+        17: { file: DIR + "wbk2_17_meem-kaf.mp3", approved: true },
+        18: { file: DIR + "wbk2_18_haa-meem.mp3", approved: true },
+        20: { file: DIR + "wbk2_20_sheen-raa.mp3", approved: true },
+        21: { file: DIR + "wbk2_21_noon-sheen.mp3", approved: false },  /* مرفوض: نَشَـ */
+        22: { file: DIR + "wbk2_22_noon-ba.mp3", approved: true },
+        23: { file: DIR + "wbk2_23_khaa-ba.mp3", approved: false },    /* مرفوض: خَبَـ */
+        25: { file: DIR + "wbk2_25_waw-jeem.mp3", approved: true }
     };
 
     function pad(n) { return (n < 10 ? "0" : "") + n; }

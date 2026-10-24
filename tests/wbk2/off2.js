@@ -6,13 +6,13 @@ let pass=0,fail=0;const ok=(c,m,d='')=>{if(c)pass++;else{fail++;console.log('FAI
  await p.goto('http://127.0.0.1:8962/index.html');await p.waitForTimeout(3500);
  await p.evaluate(()=>navigator.serviceWorker.ready.then(()=>1));await p.waitForTimeout(3500);
  const c=await p.evaluate(async()=>{const ks=await caches.keys();const out={};for(const k of ks){const c=await caches.open(k);const r=await c.keys();out[k]=r.map(x=>x.url.replace(location.origin,''))}return out});
- const k=Object.keys(c); ok(k.length===1&&k[0]==='taha-app-v40','only v40 cache',k.join());
- const u=c['taha-app-v40']||[];
+ const k=Object.keys(c); ok(k.length===1&&k[0]==='taha-app-v41','only v40 cache',k.join());
+ const u=c['taha-app-v41']||[];
  ['/wbk2.js','/wbk2-data.js','/wbk2.css','/assets/fonts/readex-pro/readex-pro-arabic-400-normal.woff2','/assets/fonts/readex-pro/readex-pro-arabic-600-normal.woff2'].forEach(f=>ok(u.includes(f),'cached '+f));
  const syl=u.filter(x=>x.includes('/syllables/'));
- ok(syl.length===7,'7 approved syllable files cached, got '+syl.length,syl.join());
- ok(!syl.some(x=>/wbk2_|l2_(01|05|06|08|10|11)\.mp3/.test(x)),'no rejected/unapproved cached');
- ok(u.filter(x=>/\.mp3/.test(x)).length===38,'38 mp3 total (31+7), got '+u.filter(x=>/\.mp3/.test(x)).length);
+ ok(syl.length===21,'21 approved syllable files cached, got '+syl.length,syl.join());
+ ok(!syl.some(x=>/wbk2_01|wbk2_21|wbk2_23|l2_(01|05|06|08|10|11)\.mp3/.test(x)),'no rejected/unapproved cached');
+ ok(u.filter(x=>/\.mp3/.test(x)).length===52,'52 mp3 total (31+21), got '+u.filter(x=>/\.mp3/.test(x)).length);
  await p.evaluate(()=>showScreen('words'));await p.waitForTimeout(200);
  await p.click('#wbk2Entry');await p.waitForTimeout(500);
  execSync('fuser -k 8962/tcp || true');await p.waitForTimeout(800);
@@ -34,6 +34,11 @@ let pass=0,fail=0;const ok=(c,m,d='')=>{if(c)pass++;else{fail++;console.log('FAI
  ok(au.every(a=>!a.ev.includes('error')),'no audio errors offline',JSON.stringify(au.filter(a=>a.ev.includes('error'))));
  ok(heard.size>=5,'approved syllables play offline (distinct ended: '+heard.size+')');
  ok(au.every(a=>appr.includes(a.src)),'only approved');
+ // كل الـ21 صوتًا تعمل بلا إنترنت (تشغيل مباشر لكل مقطع معتمد)
+ const allA=await p.evaluate(()=>WBK2_DATA.SYLLABLES.filter(s=>s.approved).map(s=>s.id));
+ ok(allA.length===21,'21 approved in data');
+ const res=[];for(const id of allA){const r=await p.evaluate(id=>new Promise(res=>{const s=WBK2_DATA.SYLLABLES.find(x=>x.id===id);const a=new Audio(s.audio);const t=setTimeout(()=>res('timeout'),4000);a.onended=()=>{clearTimeout(t);res('ended')};a.onerror=()=>{clearTimeout(t);res('error')};a.play().catch(()=>res('blocked'))}),id);res.push(id+':'+r)}
+ ok(res.every(x=>x.endsWith(':ended')),'all 21 play offline',res.filter(x=>!x.endsWith(':ended')).join());
  const sv=await p.evaluate(()=>wbk2Internals.load().stars); ok(sv>=1,'progress saved offline '+sv);
  console.log('errs',errs);ok(errs.length===0,'no js errors');
  console.log('PASS',pass,'FAIL',fail);await br.close();
