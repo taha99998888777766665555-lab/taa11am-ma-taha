@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v36";
+const CACHE_VERSION = "taha-app-v37";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -188,6 +188,45 @@ const LETTER_ART = [
     "./assets/images/letters/2b50.svg"
 ];
 
+/* أصوات «الدرس الأول – الحروف بالفتحة» (٢٨ حرفًا + ٣ عبارات تشجيع) — تُحمَّل مسبقًا
+   ليعمل الدرس صوتيًا دون إنترنت. بأفضل جهد ومنفصلة عن الهيكل: فشل ملف لا يُفشل التثبيت.
+   ملاحظة: طلبات الوسائط (Range) لا تُحدِّث الكاش في الخلفية؛ فاستبدال تسجيل بنفس اسم الملف
+   يصل إلى الأجهزة عبر رفع CACHE_VERSION فقط.
+   لا بديل صوتيًا عند غياب الملف (لا TTS). */
+const LESSON_AUDIO = [
+    "./assets/audio/educational/letters/letter_01_alef.mp3",
+    "./assets/audio/educational/letters/letter_02_ba.mp3",
+    "./assets/audio/educational/letters/letter_03_ta.mp3",
+    "./assets/audio/educational/letters/letter_04_tha.mp3",
+    "./assets/audio/educational/letters/letter_05_jeem.mp3",
+    "./assets/audio/educational/letters/letter_06_haa.mp3",
+    "./assets/audio/educational/letters/letter_07_khaa.mp3",
+    "./assets/audio/educational/letters/letter_08_dal.mp3",
+    "./assets/audio/educational/letters/letter_09_thal.mp3",
+    "./assets/audio/educational/letters/letter_10_raa.mp3",
+    "./assets/audio/educational/letters/letter_11_zay.mp3",
+    "./assets/audio/educational/letters/letter_12_seen.mp3",
+    "./assets/audio/educational/letters/letter_13_sheen.mp3",
+    "./assets/audio/educational/letters/letter_14_sad.mp3",
+    "./assets/audio/educational/letters/letter_15_dad.mp3",
+    "./assets/audio/educational/letters/letter_16_taa.mp3",
+    "./assets/audio/educational/letters/letter_17_zaa.mp3",
+    "./assets/audio/educational/letters/letter_18_ain.mp3",
+    "./assets/audio/educational/letters/letter_19_ghain.mp3",
+    "./assets/audio/educational/letters/letter_20_faa.mp3",
+    "./assets/audio/educational/letters/letter_21_qaf.mp3",
+    "./assets/audio/educational/letters/letter_22_kaf.mp3",
+    "./assets/audio/educational/letters/letter_23_lam.mp3",
+    "./assets/audio/educational/letters/letter_24_meem.mp3",
+    "./assets/audio/educational/letters/letter_25_noon.mp3",
+    "./assets/audio/educational/letters/letter_26_ha.mp3",
+    "./assets/audio/educational/letters/letter_27_waw.mp3",
+    "./assets/audio/educational/letters/letter_28_yaa.mp3",
+    "./assets/audio/educational/phrases/ahsant_ya_batal.mp3",
+    "./assets/audio/educational/phrases/writing_done.mp3",
+    "./assets/audio/educational/phrases/correct_short.mp3"
+];
+
 /* =========================================================
    📦 التثبيت: تخزين ملفات التطبيق الأساسية
 ========================================================= */
@@ -211,7 +250,7 @@ self.addEventListener("install", event => {
                     )
                 ).then(() =>
                     Promise.allSettled(
-                        LETTER_ART.map(url =>
+                        LETTER_ART.concat(LESSON_AUDIO).map(url =>
                             fetch(url).then(response =>
                                 response && response.ok ? cache.put(url, response) : null
                             )

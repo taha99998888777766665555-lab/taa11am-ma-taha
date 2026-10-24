@@ -39238,12 +39238,12 @@ function openAdditionRace(lv) {
 /* ADD-RACE-END */
 /* WBK-BEGIN */
 /* =========================================================================
-   📘 نموذج تجريبي (V5.1) — «الدليل المبسط لتعلم القراءة بالحركات القصيرة»
+   📘 «الدليل المبسط لتعلم القراءة بالحركات القصيرة» — الدرس الأول فقط (V5.2)
    الدرس ١: «أقرأ الحروف بالفتحة» (٢٨ حرفًا بترتيب الكتاب حرفيًا)
    -------------------------------------------------------------------------
    كتلة معزولة بالكامل: لا تغيّر قسم «الكلمات» الحالي ولا مستوياته التسعة
-   ولا نظام الصوت ولا محرك الكتابة. تُعرَض فقط عبر رابط المعاينة
-   (?wbk=1 يضيف بطاقة المعاينة، و?wbk=open يفتح الدرس مباشرة).
+   ولا نظام الصوت ولا محرك الكتابة. المدخل: بطاقة «الدرس الأول – الحروف بالفتحة»
+   في واجهة الكلمات (index.html#wbkEntry)، و?wbk=open يفتح الدرس مباشرة للاختبار.
    - ثلاثة أوضاع: تعلّم (حرف ← صف ← شبكة) / تدرّب / تقييم المعلم.
    - V5: ثلاثة أنشطة تدرّب بمنطق تربوي واحد: «اسمع واختر» و«اسحب الحرف» و«لعبة قطار الحروف»
      (المساعدة والتقييم الرباعي والنجوم والاستكمال مشتركة؛ تغيير النشاط لا يكرّر مكافأة).
@@ -39487,10 +39487,10 @@ function openAdditionRace(lv) {
         back.appendChild(ic("exit")); back.appendChild(el("span", "wbk-back-lbl", "خروج"));
         back.addEventListener("click", function () { exitToWords(); });
         var ttl = el("div", "wbk-title");
-        var t1 = el("strong", "", "الدرس ١ · أقرأ الحروف بالفتحة");
+        var t1 = el("strong", "", "الدرس الأول – الحروف بالفتحة");
         var t2 = el("span", "wbk-badge");
         t2.appendChild(el("b", "", "بَ"));
-        t2.appendChild(document.createTextNode(" مرحلة الفتحة · نموذج تجريبي"));
+        t2.appendChild(document.createTextNode(" ٢٨ حرفًا بالفتحة"));
         ttl.appendChild(t1); ttl.appendChild(t2);
         var cmp = el("button", "wbk-cmp-toggle", "🙂");
         cmp.type = "button"; cmp.id = "wbkCmpToggle";
@@ -40722,26 +40722,22 @@ function openAdditionRace(lv) {
         return prevShow.apply(this, arguments);
     };
 
-    /* ---------- بطاقة المعاينة (تظهر فقط مع ?wbk في الرابط) ---------- */
+    /* ---------- مدخل الدرس (بطاقة ثابتة في index.html داخل واجهة الكلمات) ----------
+       الزر يُربَط هنا؛ ?wbk=open يفتح الدرس مباشرة (للاختبار فقط) */
     function previewParam() {
         try { return new URLSearchParams(location.search).get("wbk"); } catch (e) { return null; }
     }
-    function injectEntry() {
-        var q = previewParam();
-        if (!q) return;
-        var hub = document.getElementById("wordsLevelsHub");
-        if (hub && !document.getElementById("wbkEntry")) {
-            var b = el("button", "wbk-entry", "📘 معاينة: الدليل المبسط — الدرس ١ «أقرأ الحروف بالفتحة» (نموذج تجريبي)");
-            b.type = "button"; b.id = "wbkEntry";
+    function bindEntry() {
+        var b = document.getElementById("wbkEntry");
+        if (b && !b.getAttribute("data-wbk-bound")) {
+            b.setAttribute("data-wbk-bound", "1");
             b.addEventListener("click", open);
-            var grid = document.getElementById("wordsLevelsGrid");
-            if (grid) hub.insertBefore(b, grid); else hub.appendChild(b);
         }
         /* بعد شاشة الملف الشخصي التي يفتحها التطبيق عند أول تشغيل (٥٠٠م.ث) */
-        if (q === "open") setTimeout(open, 900);
+        if (previewParam() === "open") setTimeout(open, 900);
     }
-    document.addEventListener("DOMContentLoaded", function () { setTimeout(injectEntry, 0); });
-    if (document.readyState !== "loading") setTimeout(injectEntry, 0);
+    document.addEventListener("DOMContentLoaded", function () { setTimeout(bindEntry, 0); });
+    if (document.readyState !== "loading") setTimeout(bindEntry, 0);
 
     window.wbkOpen = open;
     window.wbkState = S; /* للاختبار */

@@ -15848,11 +15848,16 @@ body.dark-mode .wbk .r5, body.dark-mode .wbk-scope.r5 { --rcs: #1f3050; }
 body.dark-mode .wbk .r6, body.dark-mode .wbk-scope.r6 { --rcs: #2d2650; }
 
 .wbk-entry {
-    display: block; width: 100%; margin: 0 0 14px; padding: 14px 16px; min-height: 56px;
-    font: inherit; font-weight: 700; font-size: 1rem; line-height: 1.5; text-align: center;
-    color: var(--wbk-ink); background: var(--wbk-soft); border: 2px dashed var(--wbk-main);
-    border-radius: 16px; cursor: pointer;
+    display: flex; align-items: center; gap: 12px; width: 100%; margin: 0 0 14px; padding: 14px 16px; min-height: 64px;
+    font: inherit; text-align: right;
+    color: var(--wbk-ink); background: var(--wbk-soft); border: 2px solid var(--wbk-main);
+    border-radius: 16px; cursor: pointer; box-shadow: 0 3px 0 rgba(0, 0, 0, .12);
 }
+.wbk-entry-ic { font-size: 2rem; line-height: 1; flex: 0 0 auto; }
+.wbk-entry-tx { display: flex; flex-direction: column; gap: 2px; }
+.wbk-entry-tx strong { font-size: 1.1rem; line-height: 1.5; }
+.wbk-entry-tx small { font-size: .9rem; font-weight: 400; opacity: .85; }
+.wbk-entry:focus-visible { outline: 3px solid #f0b52b; outline-offset: 2px; }
 .wbk {
     max-width: 980px; margin: 0 auto; padding: 10px 12px 18px; color: var(--wbk-ink);
     background: linear-gradient(180deg, var(--wbk-bg), var(--wbk-bg2)); border-radius: 24px;
