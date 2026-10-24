@@ -30,7 +30,7 @@ const BOOK=[["قَرَ","كَتَـ","جَلَـ","زَرَ","أَكَـ"],["ر�
  ok(approved.includes(it.id),'hear target approved');
  // right first try
  await p.click(`#wb2Opts [data-id=${it.id}]`); await p.waitForTimeout(300);
- s=await st(); ok(s.syl[it.id].f===1 && s.stars===1 && s.starred[it.id]===1,'first-try f + 1 star');
+ s=await st(); ok(s.syl[it.id].f===1 && s.stars===0 && !s.starred[it.id] && s.syl[it.id].ev.length===1,'first-try f: recorded, ONE independent success is not enough for a star');
  const firstId=it.id;
  // next question: wrong then right -> s
  await p.click('#wb2QActs .main'); await p.waitForTimeout(300);
@@ -85,8 +85,11 @@ const BOOK=[["قَرَ","كَتَـ","جَلَـ","زَرَ","أَكَـ"],["ر�
  await drag(sy.a.base,0); await drag(sy.b.base,1); await p.waitForTimeout(1500);
  s=await st(); ok(s.syl[it.id].f===f0+1,'drag build correct -> f');
  // wbk duplicated star
- const r=await p.evaluate(()=>{const q=wbk2Internals.load();const b=q.stars;wbk2Internals.logResult(q,'s15','decode','f',{});const m=q.stars;wbk2Internals.logResult(q,'s15','decode','f',{});return [b,m,q.stars]});
- ok((r[1]===r[0]||r[1]===r[0]+1) && r[2]===r[1],'s15 (وَقَـ) star at most once');
+ const r=await p.evaluate(()=>{const q=wbk2Internals.load();const I=wbk2Internals;const b=q.stars,had=!!q.starred.s15;
+  const r1=I.logResult(q,'s15','decode','f',{}),r2=I.logResult(q,'s15','decode','f',{});const sameType=q.starred.s15?1:0;
+  const r3=I.logResult(q,'s15','build','f',{});const m=q.stars;const r4=I.logResult(q,'s15','hear','f',{});I.logResult(q,'s15','build','f',{});return [b,m,q.stars,sameType,had,q.syl.s15.ev.length]});
+ ok(r[4]||r[3]===0,'s15: same activity twice != star');
+ ok(r[1]===r[0]+(r[4]?0:1)&&r[2]===r[1],'s15 (وَقَـ) star exactly once (two different activities), never doubled');
  // audio spies
  const au=await p.evaluate(()=>({a:window.__aud,e:window.__edu}));
  const appr=await p.evaluate(()=>WBK2_DATA.SYLLABLES.filter(s=>s.approved).map(s=>s.audio));

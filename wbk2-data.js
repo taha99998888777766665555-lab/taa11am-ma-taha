@@ -113,6 +113,8 @@
         promoteStreak: 3,
         minApprovedForAudioStages: 3,
         groupAdvanceRatio: 0.8,
+        /* نجمة إتقان المقطع: نجاح مستقل (من أول مرة بلا مساعدة) في نشاطين مختلفين، أو قراءة مؤكدة من المعلم */
+        star: { independentActivities: 2 },
         test: { total: 8, mix: { hear: 2, build: 2, decode: 2, read: 2 }, passAuto: 5, autoTotal: 6, maxStars: 1 }
     };
 

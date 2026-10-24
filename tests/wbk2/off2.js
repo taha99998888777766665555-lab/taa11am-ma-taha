@@ -39,7 +39,7 @@ let pass=0,fail=0;const ok=(c,m,d='')=>{if(c)pass++;else{fail++;console.log('FAI
  ok(allA.length===21,'21 approved in data');
  const res=[];for(const id of allA){const r=await p.evaluate(id=>new Promise(res=>{const s=WBK2_DATA.SYLLABLES.find(x=>x.id===id);const a=new Audio(s.audio);const t=setTimeout(()=>res('timeout'),4000);a.onended=()=>{clearTimeout(t);res('ended')};a.onerror=()=>{clearTimeout(t);res('error')};a.play().catch(()=>res('blocked'))}),id);res.push(id+':'+r)}
  ok(res.every(x=>x.endsWith(':ended')),'all 21 play offline',res.filter(x=>!x.endsWith(':ended')).join());
- const sv=await p.evaluate(()=>wbk2Internals.load().stars); ok(sv>=1,'progress saved offline '+sv);
+ const sv=await p.evaluate(()=>Object.values(wbk2Internals.load().syl).reduce((a,r)=>a+r.f+r.s+r.a+r.r,0)); ok(sv>=1,'progress saved offline (answers recorded: '+sv+')');
  console.log('errs',errs);ok(errs.length===0,'no js errors');
  console.log('PASS',pass,'FAIL',fail);await br.close();
 })();

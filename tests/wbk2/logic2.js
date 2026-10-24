@@ -6,7 +6,7 @@ let pass=0,fail=0;const ok=(c,m)=>{if(c){pass++;}else{fail++;console.log('FAIL',
  const st=()=>p.evaluate(()=>wbk2Internals.load());
  const cur=()=>p.evaluate(()=>{const R=wbk2State.run;return R.items[R.i]});
  // per-student isolation
- await p.evaluate(()=>{const q=wbk2Internals.load();wbk2Internals.logResult(q,'s02','decode','f',{});wbk2Internals.save(q)});
+ await p.evaluate(()=>{const q=wbk2Internals.load();wbk2Internals.logResult(q,'s02','decode','f',{});wbk2Internals.logResult(q,'s02','build','f',{});wbk2Internals.save(q)});
  const a=await st(); ok(a.stars===1,'student A has star');
  const raw=await p.evaluate(()=>{const r=[];for(let i=0;i<800;i++){const k=localStorage.key(i);if(k===null)break;r.push(k)}return r});
  ok(raw.some(k=>/^taha_s_.+__taha_wbk2_progress_v1$/.test(k)),'stored under per-student prefix: '+raw.filter(k=>k.includes('wbk2')));

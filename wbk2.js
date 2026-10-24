@@ -90,7 +90,7 @@
     /* ---------- التخزين لكل طالب ---------- */
     function newRec() {
         return {
-            seen: 0, f: 0, s: 0, a: 0, r: 0, w: 0, hist: "", rp: 0, last: 0,
+            seen: 0, f: 0, s: 0, a: 0, r: 0, w: 0, hist: "", rp: 0, last: 0, ev: [],
             act: { hear: [0, 0], build: [0, 0], buildv: [0, 0], decode: [0, 0] },
             read: { att: 0, ok: 0, sup: 0, last: "", hint: 0 }
         };
@@ -101,6 +101,7 @@
         ["hear", "build", "buildv", "decode"].forEach(function (k) {
             if (!Array.isArray(r.act[k]) || r.act[k].length !== 2) r.act[k] = [0, 0];
         });
+        if (!Array.isArray(r.ev)) r.ev = [];
         if (!r.read || typeof r.read !== "object") r.read = b.read;
         Object.keys(b.read).forEach(function (k) { if (typeof r.read[k] !== typeof b.read[k]) r.read[k] = b.read[k]; });
         return r;
@@ -154,6 +155,7 @@
     }
     var STATE_LABEL = { "new": "جديد", learning: "أتدرّب", review: "أراجع", mastered: "أتقنت" };
 
+    var EVID_TYPES = { hear: "hear", build: "build", buildv: "build", decode: "decode" };
     /* النجمة: مرة لكل مقطع فريد عند أول نجاح لا يكشف الحل (أو تأكيد المعلم)؛ تُمرَّر لمجموع التطبيق */
     function giveStar(p, id) {
         if (p.starred[id] || p.stars >= MAX_STARS) return false;
@@ -172,8 +174,15 @@
         if (res === "f" || res === "s") a[0]++;
         if (info && info.wrongs) r.w += info.wrongs;
         if (info && info.replays) r.rp += info.replays;
+        /* نجمة الإتقان: لا تُمنح من إجابة واحدة. الدليل = نجاح مستقل تمامًا (من أول مرة، بلا تلميح ولا كشف حل)
+           في نشاط مختلف لكل دليل؛ نجاحان في نشاطين مختلفين = نجمة. التصحيح الذاتي بعد خطأ (s) تقدّم لا دليل.
+           «أبني بنموذج بصري» يُحسب نشاط البناء. (قراءة المعلم المؤكدة تمنح النجمة في applyRead) */
         var star = false;
-        if (res !== "r") star = giveStar(p, id);
+        if (res === "f") {
+            var et = EVID_TYPES[type];
+            if (et && r.ev.indexOf(et) < 0) r.ev.push(et);
+            if (r.ev.length >= CFG.star.independentActivities) star = giveStar(p, id);
+        }
         return star;
     }
     function groupOf(id) { for (var g = 0; g < GROUPS.length; g++) if (GROUPS[g].indexOf(id) >= 0) return g; return 0; }
@@ -523,11 +532,12 @@
             c.type = "button"; c.setAttribute("data-id", id); c.setAttribute("data-cell", String(ci + 1));
             var dup = (ci + 1) === 19;
             if (dup) c.classList.add("dup");
-            c.setAttribute("aria-label", "الخلية " + (ci + 1) + ": المقطع " + s.key + "، " + STATE_LABEL[stt] + (p.starred[id] ? "، له نجمة" : "") + (dup ? "، تكرار لمقطع في الخلية ١٥" : "") + (s.approved ? "" : "، تسجيله قيد الإعداد"));
+            c.setAttribute("aria-label", "الخلية " + (ci + 1) + ": المقطع " + s.key + "، " + STATE_LABEL[stt] + (p.starred[id] ? "، له نجمة إتقان" : ((p.syl[id] && p.syl[id].ev && p.syl[id].ev.length === 1) ? "، نجاح مستقل واحد" : "")) + (dup ? "، تكرار لمقطع في الخلية ١٥" : "") + (s.approved ? "" : "، تسجيله قيد الإعداد"));
             c.appendChild(synEl(s, "cellsyl"));
             var meta = el("span", "wb2-cellm");
             meta.appendChild(el("i", "g", GLYPH[stt]));
             if (p.starred[id]) { var si = el("i", "s"); si.innerHTML = ICONS.star; meta.appendChild(si); }
+            else if (p.syl[id] && p.syl[id].ev && p.syl[id].ev.length === 1) { var hi = el("i", "h", "☆"); hi.title = "نجاح مستقل واحد"; meta.appendChild(hi); }
             if (dup) meta.appendChild(el("i", "d", "="));
             c.appendChild(meta);
             c.addEventListener("click", function () { startDiscover([id]); });
@@ -725,7 +735,7 @@
         function go() { if (adv || tok !== R.tok) return; adv = true; R.i++; nextQ(); }
         var ok = (res === "f" || res === "s");
         if (F.box) F.box.classList.add(ok ? "good" : "soft");
-        if (F.msg) setMsg(F, ok ? (res === "f" ? "أحسنت! قرأتَه من أول مرة." : "أحسنت! صحّحتَ بنفسك.") + (star ? " ★ نجمة جديدة" : "") : (res === "a" ? "جيد، أخذتَ تلميحًا. سنراه مرة أخرى." : "تعرّفنا على المقطع. سنراه مرة أخرى للتثبيت."));
+        if (F.msg) setMsg(F, ok ? (res === "f" ? "أحسنت! قرأتَه من أول مرة." : "أحسنت! صحّحتَ بنفسك.") + (star ? " ★ نجمة إتقان لهذا المقطع" : "") : (res === "a" ? "جيد، أخذتَ تلميحًا. سنراه مرة أخرى." : "تعرّفنا على المقطع. سنراه مرة أخرى للتثبيت."));
         if (res === "f") praise(); else if (res === "s") playKey("صحيح");
         if (F.acts) {
             F.acts.innerHTML = "";
@@ -996,7 +1006,7 @@
             var li = el("li"); li.appendChild(el("b", "", ar(x[1]))); li.appendChild(el("span", "", x[0])); ul.appendChild(li);
         });
         bx.appendChild(ul);
-        bx.appendChild(el("p", "wb2-note", R.stars ? "حصلتَ على " + ar(R.stars) + (R.stars === 1 ? " نجمة جديدة" : " نجوم جديدة") + " لمقاطع نجحت فيها دون كشف الحل." : "النجوم تُمنح لكل مقطع مرة واحدة عند أول نجاح دون كشف الحل."));
+        bx.appendChild(el("p", "wb2-note", R.stars ? "حصلتَ على " + ar(R.stars) + (R.stars === 1 ? " نجمة إتقان جديدة" : " نجوم إتقان جديدة") + "." : "نجمة الإتقان لكل مقطع: نجاحان من أول مرة في نشاطين مختلفين، أو قراءة يؤكدها المعلم."));
         if (R.note) bx.appendChild(el("p", "wb2-note", R.note));
         if (T.skip) bx.appendChild(el("p", "wb2-note", "تخطّيتَ " + ar(T.skip) + " بسبب تعذّر تشغيل الصوت."));
         var row = el("div", "wb2-row center");
@@ -1088,7 +1098,7 @@
             var li = el("li"); li.appendChild(el("b", "", ar(x[1]))); li.appendChild(el("span", "", x[0])); ul.appendChild(li);
         });
         bx.appendChild(ul);
-        if (R.stars) bx.appendChild(el("p", "wb2-note", "نجوم جديدة: " + ar(R.stars)));
+        if (R.stars) bx.appendChild(el("p", "wb2-note", "نجوم إتقان جديدة: " + ar(R.stars)));
         var row = el("div", "wb2-row center");
         row.appendChild(btn("main", "جولة جديدة", function () { startRead(); }));
         row.appendChild(btn("ghost", "الرئيسية", renderHome));
@@ -1266,13 +1276,13 @@
         var tb = el("div", "wb2-tbox");
         tb.appendChild(el("h3", "", "المقاطع"));
         var tbl = el("table", "wb2-table"); tbl.id = "wb2Table";
-        tbl.innerHTML = "<thead><tr><th>المقطع</th><th>الحالة</th><th>أول مرة</th><th>تصحيح</th><th>تلميح</th><th>كشف</th><th>أخطاء</th><th>القراءة</th></tr></thead>";
+        tbl.innerHTML = "<thead><tr><th>المقطع</th><th>الحالة</th><th>أول مرة</th><th>تصحيح</th><th>تلميح</th><th>كشف</th><th>أخطاء</th><th>أدلة النجمة</th><th>القراءة</th></tr></thead>";
         var tbody = el("tbody");
         SYL.forEach(function (s) {
             var r = p.syl[s.id] || newRec(), st = stateOf(p, s.id);
             var tr = el("tr"); tr.setAttribute("data-id", s.id);
             var td = el("td"); td.appendChild(synEl(s, "tiny", false)); tr.appendChild(td);
-            [STATE_LABEL[st] + (p.starred[s.id] ? " ★" : ""), ar(r.f), ar(r.s), ar(r.a), ar(r.r), ar(r.w), r.read.att ? (r.read.last === "ok" ? "مؤكدة" : "تحتاج تدريبًا") + " (" + ar(r.read.ok) + "/" + ar(r.read.att) + ")" : "—"].forEach(function (t) { tr.appendChild(el("td", "", t)); });
+            [STATE_LABEL[st] + (p.starred[s.id] ? " ★" : ""), ar(r.f), ar(r.s), ar(r.a), ar(r.r), ar(r.w), (r.ev.length ? r.ev.map(function (k) { return ({ hear: "سمع", build: "بناء", decode: "قراءة بصرية" })[k]; }).join("+") : "—"), r.read.att ? (r.read.last === "ok" ? "مؤكدة" : "تحتاج تدريبًا") + " (" + ar(r.read.ok) + "/" + ar(r.read.att) + ")" : "—"].forEach(function (t) { tr.appendChild(el("td", "", t)); });
             tbody.appendChild(tr);
         });
         tbl.appendChild(tbody);

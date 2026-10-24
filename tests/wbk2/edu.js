@@ -80,19 +80,49 @@ const nextBtn=async p=>{const n=await p.$('#wb2QActs .main');if(n)await n.click(
   ok(errs.length===0,'D errs '+errs);await br.close();}
  /* هـ) إعادة النشاط لاستخراج نجوم */
  {const {br,p,errs}=await fresh();const appStars=()=>p.evaluate(()=>+localStorage.getItem('taha_app_stars')||0);
-  const a0=await appStars();let rounds=0;
-  for(let r=0;r<10;r++){await p.evaluate(()=>wbk2Internals.renderHome());await p.click('[data-stage=decode]');
-   for(let i=0;i<6;i++){await p.waitForTimeout(180);const it=await cur(p);await p.click(`#wb2Opts [data-id=${it.id}]`);await p.waitForTimeout(180);await nextBtn(p);}rounds++;}
-  let s=await st(p);const uniqStarred=Object.keys(s.starred).length;const a1=await appStars();
-  log('هـ) إعادة لاستخراج نجوم',{rounds,questions:rounds*6,starsInLesson:s.stars,uniqueStarred:uniqStarred,appStarsDelta:a1-a0});
-  ok(s.stars===uniqStarred&&a1-a0===s.stars,'E: lesson stars == unique syllables == app-total delta (no inflation)');
-  ok(s.stars<=24,'E: cap at unique syllables');
-  // إعادة التدريب لا تعيد النجوم
+  const a0=await appStars();
+  const run=async(stage,n)=>{for(let r=0;r<n;r++){await p.evaluate(()=>wbk2Internals.renderHome());await p.click(`[data-stage=${stage}]`);
+    for(let i=0;i<6;i++){await p.waitForTimeout(150);const it=await cur(p);
+     if(it.type==='build'){const sy=await p.evaluate(id=>WBK2_DATA.SYLLABLES.find(s=>s.id===id),it.id);await p.click(`#wb2Tray [data-letter="${sy.a.base}"]`);await p.click(`#wb2Tray [data-letter="${sy.b.base}"]`);await p.waitForSelector('#wb2QActs .main',{timeout:8000});}
+     else await p.click(`#wb2Opts [data-id=${it.id}]`);
+     await p.waitForTimeout(150);await nextBtn(p);}}};
+  await run('decode',10);
+  let s=await st(p);let a1=await appStars();
+  log('هـ1) ١٠ جولات من نشاط واحد فقط',{questions:60,starsInLesson:s.stars,appStarsDelta:a1-a0});
+  ok(s.stars===0&&a1===a0,'E1: repeating ONE activity never yields a star');
+  await run('build',8);await run('hear',8);
+  s=await st(p);a1=await appStars();const uniq=Object.keys(s.starred).length;
+  log('هـ2) + ٨ جولات بناء + ٨ جولات استماع (إجابات صحيحة كلها)',{starsInLesson:s.stars,uniqueStarred:uniq,appStarsDelta:a1-a0});
+  ok(s.stars===uniq&&a1-a0===s.stars&&s.stars>0&&s.stars<=24,'E2: stars == unique syllables == app-total delta (no inflation)');
   await p.evaluate(()=>{wbk2State.gate=true});await p.click('#wb2Teacher');p.on('dialog',d=>d.accept());await p.click('#wb2Reset');await p.waitForTimeout(300);
-  const b0=await appStars();
-  for(let r=0;r<3;r++){await p.evaluate(()=>wbk2Internals.renderHome());await p.click('[data-stage=decode]');for(let i=0;i<6;i++){await p.waitForTimeout(180);const it=await cur(p);await p.click(`#wb2Opts [data-id=${it.id}]`);await p.waitForTimeout(180);await nextBtn(p)}}
+  const b0=await appStars();const sBefore=(await st(p)).stars;
+  await run('decode',3);await run('build',3);await run('hear',3);
   s=await st(p);const b1=await appStars();
-  log('هـ) بعد «إعادة التدريب» وإعادة اللعب',{starsLesson:s.stars,appStarsDelta:b1-b0});
-  ok(b1===b0,'E: replay after reset gives no extra app stars');ok(errs.length===0,'E errs');await br.close();}
+  log('هـ3) بعد «إعادة التدريب» وإعادة اللعب',{starsLesson:s.stars+'(قبل: '+sBefore+')',appStarsDelta:b1-b0});
+  ok(b1===b0&&s.stars===sBefore,'E3: replay after reset gives no extra stars; earned stars kept');ok(errs.length===0,'E errs '+errs);await br.close();}
+ /* و) قواعد النجمة المحددة */
+ {const {br,p,errs}=await fresh();
+  const r=await p.evaluate(()=>{const I=wbk2Internals,q=I.load();const out={};
+   // تلميح/كشف/تصحيح ذاتي لا تُحسب
+   I.logResult(q,'s02','decode','a',{});I.logResult(q,'s02','hear','r',{});I.logResult(q,'s02','build','s',{});out.helpNoEvidence=q.syl.s02.ev.length===0&&!q.starred.s02;
+   // نجاح مستقل واحد
+   I.logResult(q,'s02','hear','f',{});out.oneEvidence=q.syl.s02.ev.length===1&&!q.starred.s02;
+   // نشاط نفسه مرة ثانية
+   I.logResult(q,'s02','hear','f',{});out.sameActivityNoStar=!q.starred.s02;
+   // نشاط مختلف => نجمة
+   const st=I.logResult(q,'s02','decode','f',{});out.twoActivitiesStar=st===true&&q.starred.s02===1&&q.stars===1;
+   // لا تُسحب بعد فشل لاحق
+   I.logResult(q,'s02','decode','r',{});I.logResult(q,'s02','hear','r',{});out.keptAfterFailure=q.starred.s02===1&&q.stars===1;
+   // القراءة المؤكدة وحدها تمنح نجمة
+   const rs=I.applyRead(q,'s03',true);out.readAloneStar=rs===true&&q.starred.s03===1;
+   // قراءة «يحتاج تدريبًا» لا تمنح
+   const rn=I.applyRead(q,'s04',false);out.readNoNoStar=rn===false&&!q.starred.s04;
+   // لا تضاعف
+   I.applyRead(q,'s03',true);I.logResult(q,'s03','hear','f',{});I.logResult(q,'s03','decode','f',{});out.noDouble=q.stars===2;
+   // سجل قديم (بلا ev) يبقى كما هو ولا يُسحب
+   q.syl.s05={seen:1,f:3,s:0,a:0,r:0,w:0,hist:'fff',rp:0,last:1,act:{hear:[3,3],build:[0,0],buildv:[0,0],decode:[0,0]},read:{att:0,ok:0,sup:0,last:'',hint:0}};q.starred.s05=1;q.stars++;I.save(q);
+   const q2=I.load();out.legacyKept=q2.starred.s05===1&&Array.isArray(I.rec(q2,'s05').ev)&&q2.stars===q.stars;return out});
+  log('و) قواعد النجمة',r);Object.entries(r).forEach(([k,v])=>ok(v===true,'F: '+k));
+  ok(errs.length===0,'F errs');await br.close();}
  console.log('PASS',pass,'FAIL',fail);
 })();

@@ -258,3 +258,4 @@ body.dark-mode .wb2-steps li.on .wb2-sdn { color: #0d1b2c; }
 }
 .wb2-sdt { display: none; } .wb2-steps li.on .wb2-sdt { display: inline; }
 @media (max-width: 640px) { .wb2-steps li.on .wb2-sdt { display: none; } }
+.wb2-cellm .h { color: #c98e00; font-style: normal; }
