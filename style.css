@@ -15804,7 +15804,7 @@ body.dark-mode .teacher-letter-row .tl-note { color: #ffcc80; }
     .ltr-stage-card, .ltr-menu-main, .ltr-menu-short, .ltr-menu-suggest { transition: none; animation: none; }
 }
 /* WBK-BEGIN */
-/* نموذج تجريبي (V3): الدليل المبسط — الدرس ١. كل المحددات تبدأ بـ .wbk لعزلها عن بقية التطبيق.
+/* نموذج تجريبي (V5): الدليل المبسط — الدرس ١. كل المحددات تبدأ بـ .wbk لعزلها عن بقية التطبيق.
    تصميم أقرب للألعاب التعليمية: بطاقات «بلاط» ملوّنة لكل صف، أيقونات SVG، شريط تقدّم، وتخطيط عريض للسبورة.
    لا حركة مستمرة؛ الحركات القصيرة تُلغى كليًا في الوضع الهادئ وعند تقليل الحركة. */
 .wbk, .wbk-entry {
@@ -15873,7 +15873,7 @@ body.dark-mode .wbk .r6, body.dark-mode .wbk-scope.r6 { --rcs: #2d2650; }
 }
 body.dark-mode .wbk-top { color: #fff; }
 .wbk .wbk-back, .wbk .wbk-cmp-toggle {
-    flex: 0 0 auto; width: 52px; height: 52px; border-radius: 16px; border: 0;
+    flex: 0 0 auto; min-width: 52px; height: 52px; border-radius: 16px; border: 0;
     background: #fff; color: var(--wbk-main); font-size: 1.4rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
     box-shadow: 0 3px 0 rgba(0, 0, 0, .18);
 }
@@ -16152,7 +16152,262 @@ body.dark-mode .wbk-scope.warm { background: #3d2c14; color: #ffe0b8; }
 .wbk-nav .wbk-btn { flex: 1 1 0; }
 .wbk-nav .wbk-btn.soft { flex-basis: 100%; }
 @media (min-width: 760px) { .wbk-nav .wbk-btn.soft { flex-basis: 0; } .wbk-dot { min-height: 46px; font-size: 1.3rem; } .wbk-map { gap: 7px; } }
+/* ===== V5 ===== */
+.wbk .wbk-back { width: auto; padding: 0 14px; gap: 6px; font-weight: 700; font-size: 1rem; }
+.wbk-back .wbk-ic { width: 1.35rem; height: 1.35rem; }
+.wbk-ctl.three { display: grid; grid-template-columns: 1fr 1.5fr 1fr; align-items: stretch; gap: 8px; width: 100%; max-width: 540px; margin-inline: auto; }
+.wbk-ctl.three .wbk-btn { min-width: 0; padding-inline: 8px; }
+
+/* اختيار النشاط */
+.wbk-acts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-bottom: 12px; }
+.wbk-act {
+    position: relative; display: flex; align-items: center; gap: 12px; text-align: start; min-height: 76px; padding: 10px 14px;
+    border: 3px solid var(--wbk-line); border-bottom-width: 6px; border-radius: 20px; background: var(--wbk-card); cursor: pointer; font-size: 1rem;
+}
+.wbk-act:active { transform: translateY(2px); border-bottom-width: 4px; }
+.wbk-act-art { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; color: #fff; background: var(--wbk-main); }
+.wbk-act.a-drag .wbk-act-art { background: #8a5cd6; }
+.wbk-act.a-game .wbk-act-art { background: #e5584f; }
+.wbk-act-art .wbk-ic { width: 30px; height: 30px; }
+.wbk-act-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.wbk-act-tx strong { font-size: 1.15rem; }
+.wbk-act-how { font-size: .85rem; opacity: .85; line-height: 1.5; }
+.wbk-act.on { border-color: var(--wbk-main); background: var(--wbk-soft); box-shadow: 0 0 0 4px rgba(47, 111, 181, .22); }
+.wbk-act-tag { position: absolute; top: 8px; inset-inline-end: 12px; padding: 1px 10px; border-radius: 99px; background: var(--wbk-main); color: #fff; font-size: .78rem; font-weight: 700; }
+.wbk-tapopt { margin-bottom: 10px; }
+.wbk-actname { padding: 2px 12px; border-radius: 99px; background: var(--wbk-main); color: #fff; font-weight: 700; font-size: .82rem; }
+.wbk-actname.a-drag { background: #8a5cd6; }
+.wbk-actname.a-game { background: #d24a41; }
+
+/* اسحب الحرف: خانة الإفلات */
+.wbk-slot {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; width: min(260px, 70vw); min-height: 120px; padding: 10px;
+    border: 4px dashed var(--wbk-main); border-radius: 26px; background: var(--wbk-soft2); color: var(--wbk-main); font-weight: 700; text-align: center;
+}
+.wbk-slot .wbk-ic { width: 2rem; height: 2rem; }
+.wbk-slot.over { background: #fff3c4; border-color: #e5a420; border-style: solid; box-shadow: 0 0 0 6px rgba(240, 181, 43, .35); }
+body.dark-mode .wbk-slot.over { background: #4a3d10; }
+.wbk-slot.filled { border-style: solid; border-color: var(--rc, var(--wbk-ok)); background: var(--rcs, #dff5e8); color: var(--wbk-ink); }
+.wbk-slot-g { font-size: 5rem; line-height: 1.8; padding-top: .2em; direction: rtl; font-weight: 400; }
+.wbk-card.drag { touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.wbk-card.dragging { cursor: grabbing; opacity: .95; box-shadow: 0 14px 28px rgba(31, 63, 102, .3); transition: none; }
+.wbk-card.placed { opacity: .45; border-style: dashed; }
+
+/* لعبة قطار الحروف */
+.wbk-play.game { display: block; }
+.wbk-scene {
+    position: relative; overflow: hidden; border-radius: 26px; padding: 12px 10px 14px; border: 3px solid #86b7e6;
+    background: linear-gradient(180deg, #bfe3ff 0%, #e6f4ff 58%, #d9f0dc 100%);
+}
+body.dark-mode .wbk-scene { background: linear-gradient(180deg, #1b3558 0%, #254a73 58%, #1f4a3a 100%); border-color: #3a557c; }
+.wbk-sceneart { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.wbk-sceneart svg { width: 100%; height: 100%; display: block; }
+.wbk-scene > :not(.wbk-sceneart) { position: relative; z-index: 1; }
+.wbk-scene .wbk-ask { margin: 2px 0 6px; }
+.wbk-scene .wbk-pausebtn { display: flex; margin: 0 0 6px; margin-inline-end: auto; min-height: 48px; padding: 4px 14px; font-size: .95rem; }
+.wbk-balloons { --bw: clamp(104px, 27vw, 190px); display: flex; flex-wrap: nowrap; justify-content: center; align-items: flex-start; gap: clamp(6px, 3vw, 28px); margin: 0 auto; max-width: none; width: 100%; direction: rtl; }
+.wbk-choices.wbk-balloons.n2, .wbk-choices.wbk-balloons.n3 { display: flex; max-width: none; }
+.wbk-card.balloon { flex: 0 0 auto; width: var(--bw); height: calc(var(--bw) * 1.36); aspect-ratio: auto; background: transparent !important; border: 0 !important; border-radius: 50% 50% 46% 46%; box-shadow: none; padding: 0; animation: wbkBob 3.6s ease-in-out infinite; }
+.wbk-choices.wbk-balloons.n2 { --bw: clamp(124px, 38vw, 210px); }
+.wbk-card.balloon.b1 { margin-top: 20px; animation-delay: -1.2s; }
+.wbk-card.balloon.b2 { margin-top: 6px; animation-delay: -2.4s; }
+.wbk-card.balloon:active { transform: scale(.97); }
+.wbk-bl-art { position: absolute; inset: 0; pointer-events: none; }
+.wbk-bl-art svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.wbk-bl-body { fill: var(--rc, #3b82d6); stroke: rgba(0, 0, 0, .28); stroke-width: 2.200; }
+.wbk-bl-knot { fill: var(--rc, #3b82d6); stroke: rgba(0, 0, 0, .28); stroke-width: 1.500; }
+.wbk-card.balloon .wbk-bl-g {
+    position: absolute; left: 50%; top: 36%; width: 62%; aspect-ratio: 1; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: #fff; color: var(--wbk-ink); font-size: calc(var(--bw) * .38); line-height: 1; padding: 0; border: 3px solid rgba(0, 0, 0, .12);
+}
+.wbk-card.balloon .wbk-bl-g { padding-top: .12em; }
+.wbk-card.balloon.hint .wbk-bl-art { filter: drop-shadow(0 0 10px #f0b52b) drop-shadow(0 0 4px #f0b52b); }
+.wbk-card.balloon.hint .wbk-bl-g { border-color: #f0b52b; border-width: 5px; background: #fff3c4; }
+.wbk-card.balloon.dim { opacity: .3; }
+.wbk-card.balloon.out { opacity: .22; filter: grayscale(1); animation: none; }
+.wbk-card.balloon.out .wbk-bl-art { transform: scale(.8) translateY(14%); }
+.wbk-card.balloon.right { animation: none; }
+.wbk-card.balloon.right::after { top: 0; inset-inline-start: 0; }
+.wbk-card.balloon.popped .wbk-bl-art { opacity: 0; transform: scale(1.35); transition: opacity .35s, transform .35s; }
+.wbk-card.balloon.popped .wbk-bl-g { background: #dff5e8; border-color: var(--wbk-ok); border-width: 5px; top: 42%; }
+.wbk-card.balloon.wrong .wbk-bl-art { filter: grayscale(.5); }
+.wbk-card.balloon .wbk-finger { bottom: 2px; inset-inline-end: 8px; z-index: 3; }
+.wbk-train { display: flex; align-items: flex-end; justify-content: center; gap: 6px; margin: 14px auto 0; direction: rtl; padding-bottom: 12px; position: relative; max-width: 640px; }
+.wbk-train::after { content: ""; position: absolute; left: 4%; right: 4%; bottom: 4px; height: 6px; border-radius: 3px; background: #7a6a58; opacity: .55; }
+.wbk-wagon {
+    position: relative; flex: 1 1 0; min-width: 0; max-width: 118px; height: clamp(58px, 9vh, 92px); display: flex; align-items: center; justify-content: center;
+    border: 3px dashed #7f93ad; border-radius: 12px 12px 8px 8px; background: rgba(255, 255, 255, .55); color: #5d6e88; font-weight: 700;
+}
+.wbk-wagon.now { border-style: solid; border-color: var(--wbk-main); background: #fff; box-shadow: 0 0 0 3px rgba(47, 111, 181, .3); }
+.wbk-wagon.got { border-style: solid; border-color: var(--rc, var(--wbk-ok)); background: var(--rcs, #dff5e8); color: var(--wbk-ink); }
+.wbk-wagon.old { border-style: solid; border-color: var(--rc, #9fb6d3); background: var(--wbk-soft2); color: var(--wbk-ink); opacity: .8; }
+.wbk-wagon-g { font-size: clamp(2rem, 6.5vh, 3.2rem); line-height: 1.7; padding-top: .25em; font-weight: 400; direction: rtl; }
+.wbk-wagon-n { font-size: 1.2rem; }
+.wbk-wagon.got::before { content: "⭐"; position: absolute; top: -12px; inset-inline-end: -4px; font-size: 1.1rem; }
+.wbk-wheel { position: absolute; bottom: -10px; inset-inline-start: 18%; width: 16px; height: 16px; border-radius: 50%; background: #33415c; border: 2px solid #1f3f66; }
+.wbk-wheel.w2 { inset-inline-start: auto; inset-inline-end: 18%; }
+.wbk-loco { flex: 0 0 auto; width: clamp(70px, 14vw, 120px); margin-bottom: -4px; }
+.wbk-loco svg { width: 100%; display: block; }
+.wbk-train.go .wbk-loco { animation: wbkChug .9s ease-in-out 2; }
+.wbk-scene.paused .wbk-balloons, .wbk-scene.paused .wbk-ask, .wbk-scene.paused .wbk-train { visibility: hidden; }
+.wbk-pauseov { position: absolute; inset: 0; z-index: 5; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; border-radius: 22px; background: rgba(255, 255, 255, .88); }
+body.dark-mode .wbk-pauseov { background: rgba(15, 26, 46, .9); }
+.wbk-pause-title { font-size: 1.3rem; font-weight: 700; }
+.wbk-pauseov .wbk-btn { min-width: min(280px, 80%); }
+@keyframes wbkBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes wbkChug { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-10px); } }
+
+/* لوحة المعلم V5 */
+.wbk-tsum { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 18px; background: var(--wbk-card); border: 2px solid var(--wbk-line); }
+.wbk-tsum-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.wbk-tsum-top strong { font-size: 1.15rem; }
+.wbk-tsum-sub { font-size: .9rem; opacity: .9; }
+.wbk-bar { height: 14px; border-radius: 99px; background: var(--wbk-soft); overflow: hidden; border: 1.5px solid var(--wbk-line); }
+.wbk-bar i { display: block; height: 100%; background: var(--wbk-ok); border-radius: 99px; }
+.wbk-tsum .wbk-sum { justify-content: flex-start; padding: 8px 10px; }
+.wbk-tlay { display: block; margin-top: 12px; }
+.wbk-legend { text-align: center; font-size: .8rem; opacity: .85; margin: 0 0 8px; }
+.wbk-panel.empty { text-align: center; opacity: .8; border-style: dashed; padding: 18px 12px; }
+.wbk-panel-info { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 0; }
+.wbk-panel-last { font-size: .9rem; opacity: .9; }
+.wbk-panel-g { font-size: 3.4rem; line-height: 1.7; padding-top: .2em; font-weight: 400; color: var(--rc, var(--wbk-ink)); }
+.wbk-sec { margin-top: 10px; border: 1.5px solid var(--wbk-line); border-radius: 14px; padding: 4px 10px 10px; background: var(--wbk-soft2); }
+.wbk-sec > summary { min-height: 52px; display: flex; align-items: center; font-weight: 700; cursor: pointer; list-style: none; }
+.wbk-sec > summary::-webkit-details-marker { display: none; }
+.wbk-sec > summary::before { content: "◂"; display: inline-block; margin-inline-end: 8px; transition: transform .15s; }
+.wbk-sec[open] > summary::before { content: "▾"; }
+.wbk-sec .wbk-panel-stats { margin-top: 0; background: transparent; padding: 0; }
+.wbk-acts-log { margin-top: 8px; font-size: .88rem; }
+.wbk-actnote { margin-top: 6px; font-size: .82rem; opacity: .85; }
+.wbk-sec .wbk-ctl { justify-content: flex-start; margin: 8px 0 0; }
+
+@media (min-width: 760px) {
+    .wbk-acts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .wbk-act { flex-direction: column; text-align: center; min-height: 170px; justify-content: center; padding-top: 28px; }
+    .wbk-act-tx { align-items: center; }
+    .wbk-slot { width: 100%; min-height: 170px; }
+    .wbk-slot-g { font-size: 6.5rem; }
+    .wbk-play.drag .wbk-ask { gap: 14px; }
+    .wbk-balloons { --bw: clamp(130px, min(17vw, 27vh), 250px); gap: 3vw; }
+    .wbk-scene { padding: 16px 18px 18px; }
+    .wbk-scene .wbk-ask { margin-bottom: 10px; }
+}
+@media (min-width: 900px) {
+    .wbk-tlay { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+    .wbk-tcol-panel { position: sticky; top: 8px; }
+    .wbk-tcol-grid .wbk-grid { max-width: none; }
+    .wbk-panel { margin-top: 0; }
+}
+/* السبورة الذكية: تكبير العناصر الصغيرة */
+@media (min-width: 1100px) {
+    .wbk .wbk-back, .wbk .wbk-cmp-toggle { height: 64px; min-width: 64px; font-size: 1.2rem; }
+    .wbk-back .wbk-ic { width: 1.7rem; height: 1.7rem; }
+    .wbk-title strong { font-size: 1.9rem; }
+    .wbk-badge { font-size: 1.05rem; padding: 4px 16px 4px 12px; }
+    .wbk-mode { min-height: 70px; font-size: 1.45rem; }
+    .wbk-step { min-height: 62px; font-size: 1.3rem; }
+    .wbk-btn { min-height: 68px; font-size: 1.3rem; padding: 10px 26px; border-radius: 20px; }
+    .wbk-btn.big { min-height: 80px; font-size: 1.55rem; }
+    .wbk-ic { width: 1.4em; height: 1.4em; }
+    .wbk-map { max-width: 460px; gap: 9px; }
+    .wbk-dot { min-height: 62px; font-size: 1.8rem; border-radius: 14px; }
+    .wbk-count { font-size: 1.5rem; margin: 8px 0; }
+    .wbk-rowtag { font-size: 1.15rem; padding: 4px 20px; }
+    .wbk-hud { font-size: 1.3rem; margin-bottom: 10px; }
+    .wbk-tdot { width: 18px; height: 18px; }
+    .wbk-tdot.s { width: 20px; height: 20px; } .wbk-tdot.a { width: 20px; height: 18px; }
+    .wbk-trail { gap: 5px; }
+    .wbk-starpill { font-size: 1.3rem; padding: 6px 18px; }
+    .wbk-scope-name { font-size: 1.1rem; }
+    .wbk-tier, .wbk-actname { font-size: 1rem; padding: 3px 14px; }
+    .wbk-bulb { width: 32px; height: 32px; }
+    .wbk-msg { font-size: 1.3rem; padding: 14px 20px; }
+    .wbk-reschip { font-size: 1.25rem; min-height: 46px; }
+    .wbk-listen { min-width: 300px; }
+    .wbk-listen .wbk-ic { width: 2.4rem; height: 2.4rem; }
+    .wbk-lead { font-size: 1.4rem; }
+    .wbk-dchip { min-height: 56px; font-size: 1.15rem; padding: 4px 22px; }
+    .wbk-scope .wbk-btn { min-height: 62px; }
+    .wbk-scope-info strong { font-size: 1.2rem; } .wbk-scope-st { font-size: 1rem; }
+    .wbk-act { min-height: 200px; } .wbk-act-art { width: 70px; height: 70px; } .wbk-act-art .wbk-ic { width: 40px; height: 40px; }
+    .wbk-act-tx strong { font-size: 1.45rem; } .wbk-act-how { font-size: 1.05rem; } .wbk-act-tag { font-size: .95rem; }
+    .wbk-slot { font-size: 1.2rem; min-height: 200px; }
+    .wbk-wagon { height: clamp(80px, 12vh, 120px); } .wbk-wagon-g { font-size: clamp(2.6rem, 8vh, 4rem); }
+    .wbk-scene .wbk-pausebtn { min-height: 60px; font-size: 1.15rem; }
+    .wbk-tsum-top strong { font-size: 1.45rem; } .wbk-tsum-sub { font-size: 1.1rem; }
+    .wbk-sum { font-size: 1.15rem; }
+    .wbk-legend { font-size: 1rem; }
+    .wbk-stc { font-size: 1.05rem; padding: 5px 14px; }
+    .wbk-res-btn { min-height: 66px; font-size: 1.2rem; } .wbk-attbtn { width: 58px; height: 58px; font-size: 1.2rem; } .wbk-master { min-height: 58px; font-size: 1.2rem; }
+    .wbk-sec > summary { min-height: 62px; font-size: 1.25rem; }
+    .wbk-panel-info strong { font-size: 1.4rem; } .wbk-panel-last { font-size: 1.1rem; } .wbk-panel-g { font-size: 4.6rem; }
+    .wbk-grid.teach .wbk-card.cell { height: clamp(72px, 10vh, 108px); }
+    .wbk-tag { font-size: 1.15rem; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+    .wbk-balloons { --bw: clamp(80px, 24vh, 150px); }
+    .wbk-wagon { height: 48px; } .wbk-wagon-g { font-size: 1.8rem; }
+    .wbk-slot { min-height: 90px; } .wbk-slot-g { font-size: 3.4rem; }
+    .wbk-act { min-height: 120px; }
+}
+/* هاتف: في التدرّب يُضغط الشريط العلوي، وفي «اسحب الحرف» يجاور السماعُ الخانةَ كي تظهر البطاقات والخانة معًا */
+@media (max-width: 759px) {
+    .wbk[data-mode="practice"] .wbk-badge { display: none; }
+    .wbk[data-mode="practice"] .wbk-top { padding: 6px 10px; margin-bottom: 4px; }
+    .wbk[data-mode="practice"] .wbk-modes { margin: 4px 0 6px; }
+    .wbk-play.drag .wbk-ask { flex-direction: row; align-items: stretch; gap: 8px; margin: 2px 0 6px; flex-wrap: wrap; }
+    .wbk-play.drag .wbk-listen { min-width: 0; flex: 0 0 34%; border-radius: 22px; flex-direction: column; font-size: 1rem; }
+    .wbk-play.drag .wbk-slot { width: auto; flex: 1 1 auto; min-height: 96px; border-radius: 22px; }
+    .wbk-play.drag .wbk-slot-g { font-size: 3.6rem; line-height: 1.5; }
+    .wbk-play.drag .wbk-model { flex: 1 1 100%; order: 3; justify-content: center; }
+    .wbk-card.choice.drag { aspect-ratio: 1 / .92; }
+    .wbk-card.choice.drag .wbk-g { font-size: min(21vw, 15vh, 130px); line-height: 1.6; }
+}
+@media (min-width: 1100px) {
+    .wbk-balloons { --bw: clamp(190px, min(15.5vw, 35vh), 330px); gap: 4vw; }
+    .wbk-loco { width: clamp(110px, 10vw, 170px); }
+    .wbk-train { max-width: 940px; }
+    .wbk-wagon { max-width: 170px; }
+    .wbk-scene { padding: 22px 26px 24px; }
+}
+/* هاتف أفقي صغير (أقل من ٧٦٠px عرضًا): عمودان بدل التكديس، فلا تتداخل البطاقات */
+@media (max-height: 560px) and (orientation: landscape) and (max-width: 759px) {
+    .wbk-play { grid-template-columns: minmax(200px, 32%) minmax(0, 1fr); grid-template-rows: 1fr auto auto 1fr; grid-template-areas: ". choices" "ask choices" "tools choices" ". choices"; align-items: center; column-gap: 12px; }
+    .wbk-tools { flex-direction: column; margin: 0; }
+    .wbk-ask { margin: 0; }
+    .wbk-choices, .wbk-choices.n2, .wbk-choices.n3 { margin: 0; max-width: none; }
+    .wbk-play.drag .wbk-ask { flex-direction: column; align-items: center; }
+    .wbk-play.drag .wbk-listen { flex: 0 0 auto; width: 100%; flex-direction: row; }
+    .wbk-play.drag .wbk-slot { width: 100%; min-height: 84px; }
+    .wbk-play.game { display: block; }
+    .wbk-card.choice, .wbk-card.choice.drag { aspect-ratio: auto; }
+}
+@media (min-width: 760px) { .wbk-map { width: 100%; } }
 /* WBK-END */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
