@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v38";
+const CACHE_VERSION = "taha-app-v39";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -228,6 +228,58 @@ const LESSON_AUDIO = [
 ];
 
 /* =========================================================
+   🔊 أصوات الدرس: تحميل مسبق موثوق + علاج ذاتي
+   - دفعات صغيرة (٤ طلبات معًا) بدل ٣١ طلبًا دفعة واحدة
+   - إعادة محاولة لكل ملف (٣ مرات) مع انتظار متزايد
+   - لا يُحفظ إلا رد 200 كامل؛ ويُتحقق من حجمه
+   - ensureLessonAudio() تُكمل أي ملف ناقص (عند التفعيل أو برسالة من الصفحة
+     أو عند طلب صوت غير مخزَّن) فلا يبقى ملف مفقود حتى الإصدار التالي
+========================================================= */
+
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchAudioIntoCache(cache, url) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const response = await fetch(new Request(url, { cache: "reload" }));
+            if (response && response.status === 200) {
+                const buf = await response.clone().arrayBuffer();
+                if (buf.byteLength > 500) {
+                    await cache.put(url, response);
+                    return true;
+                }
+            }
+        } catch (e) { /* نعيد المحاولة */ }
+        await wait(400 * (attempt + 1));
+    }
+    return false;
+}
+
+async function precacheLessonAudio(cache, onlyMissing) {
+    const missing = [];
+    const queue = LESSON_AUDIO.slice();
+    async function worker() {
+        while (queue.length) {
+            const url = queue.shift();
+            if (onlyMissing && (await cache.match(url))) continue;
+            const ok = await fetchAudioIntoCache(cache, url);
+            if (!ok) missing.push(url);
+        }
+    }
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    return missing;
+}
+
+function ensureLessonAudio() {
+    return caches
+        .open(CACHE_NAME)
+        .then(cache => precacheLessonAudio(cache, true))
+        .catch(() => LESSON_AUDIO.slice());
+}
+
+/* =========================================================
    📦 التثبيت: تخزين ملفات التطبيق الأساسية
 ========================================================= */
 
@@ -254,16 +306,8 @@ self.addEventListener("install", event => {
                             fetch(url).then(response =>
                                 response && response.ok ? cache.put(url, response) : null
                             )
-                        ).concat(
-                            /* أصوات الدرس: cache: "reload" كي لا تُخزَّن نسخة قديمة من كاش المتصفح (HTTP)
-                               عند استبدال تسجيل بنفس اسم الملف */
-                            LESSON_AUDIO.map(url =>
-                                fetch(new Request(url, { cache: "reload" })).then(response =>
-                                    response && response.ok ? cache.put(url, response) : null
-                                )
-                            )
                         )
-                    )
+                    ).then(() => precacheLessonAudio(cache))
                 )
             )
             .catch(() => {})
@@ -290,7 +334,21 @@ self.addEventListener("activate", event => {
             )
     );
 
+    /* إكمال أي صوت ناقص إن فشل جزء من التحميل المسبق وقت التثبيت */
+    event.waitUntil(ensureLessonAudio().catch(() => {}));
+
     self.clients.claim();
+});
+
+/* الصفحة تطلب فحص أصوات الدرس وإكمال الناقص (يعمل فقط عند وجود اتصال) */
+self.addEventListener("message", event => {
+    if (!event.data || event.data.type !== "ENSURE_LESSON_AUDIO") return;
+    const port = event.ports && event.ports[0];
+    event.waitUntil(
+        ensureLessonAudio().then(missing => {
+            if (port) port.postMessage({ missing: missing });
+        })
+    );
 });
 
 /* =========================================================
@@ -338,6 +396,16 @@ self.addEventListener("fetch", event => {
 
                     return cachedResponse;
                 });
+
+            /* صوت تعليمي غير مخزَّن (طلب Range لا يُخزَّن): اجلب الملف كاملًا وخزّنه */
+            if (!cachedResponse && /\/assets\/audio\/educational\//.test(request.url)) {
+                event.waitUntil(
+                    caches
+                        .open(CACHE_NAME)
+                        .then(cache => fetchAudioIntoCache(cache, request.url))
+                        .catch(() => {})
+                );
+            }
 
             return cachedResponse || networkFetch;
         })

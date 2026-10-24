@@ -22733,6 +22733,17 @@ if ("serviceWorker" in navigator) {
             .register("service-worker.js")
             .catch(() => {});
     });
+
+    /* يطلب من Service Worker إكمال أي صوت درس ناقص في الكاش (بصمت، عند وجود اتصال فقط) */
+    window.taEnsureLessonAudio = function () {
+        try {
+            if (!navigator.onLine || !navigator.serviceWorker.controller) return;
+            const ch = new MessageChannel();
+            navigator.serviceWorker.controller.postMessage({ type: "ENSURE_LESSON_AUDIO" }, [ch.port2]);
+        } catch (e) {}
+    };
+    window.addEventListener("load", () => setTimeout(window.taEnsureLessonAudio, 4000));
+    window.addEventListener("online", () => window.taEnsureLessonAudio());
 }
 
 /* =========================================================
@@ -40698,6 +40709,7 @@ function openAdditionRace(lv) {
     /* ---------- الدخول والخروج ---------- */
     function open() {
         if (!build()) return;
+        try { if (window.taEnsureLessonAudio) window.taEnsureLessonAudio(); } catch (e) { /* بصمت */ }
         S.session++; clearTimers();
         S.act = load().prefs.act; S.paused = false;
         S.mode = "learn"; S.stage = "one"; S.idx = 0; S.row = 0; S.pointer = false; S.spot = -1; S.sel = -1;
