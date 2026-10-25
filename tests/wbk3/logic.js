@@ -247,6 +247,7 @@ const NOSYL=['w01','w17','w20','w21','w23'];
  console.log('  audio calls seen in last block:',allAud.length);
  // ===== J2. reset keeps stars; mastery only via confirmed read =====
  p.on('dialog',d=>d.accept());
+ await reset();await p.evaluate(()=>{wbk3State.gate=true});/* حالة نظيفة: كلمات الاختبار السابق عشوائية وقد تتضمن w15 بقراءة مؤكدة (فتكون «متقنة» عن حق) */
  await p.evaluate(()=>{const I=wbk3Internals;const q=I.load();I.logResult(q,'w15','hear','f',{});I.logResult(q,'w15','build','f',{});I.save(q)});
  const pre=await st();ok(!!pre.starred.w15,'precondition: w15 starred via hear+build');
  ok(await p.evaluate(()=>wbk3Internals.stateOf(wbk3Internals.load(),'w15'))!=='mastered','star without read: NOT mastered ✔');
