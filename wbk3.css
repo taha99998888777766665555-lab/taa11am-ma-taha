@@ -335,3 +335,18 @@ body.dark-mode .wb3 { --wb3-third: #6fd3c0; }
     .wb3-board { min-height: 0; }
     .wb3-opt.letter { min-height: clamp(88px, 14vh, 120px); }
 }
+
+/* ===== أبني الكلمة: بطاقات الحروف بأشكالها الإملائية (أول كَـ / وسط ـتَـ / آخر ـبَ) ===== */
+#wb3Tray .wb3-tile { overflow: visible; line-height: 1.35; padding: .12em 0 0; height: clamp(92px, 15vh, 124px); font-size: min(clamp(2.7rem, 7.4vh, 3.9rem), 11.5vw); }
+.wb3-board:not(.wb3-gap) .wb3-slot { height: clamp(124px, 21vh, 168px); }
+.wb3-board:not(.wb3-gap) .wb3-slotl { line-height: 1.25; margin-top: 30px; font-size: clamp(2.8rem, 8vh, 4.2rem); }
+@media (max-width: 520px) {
+  #wb3Tray .wb3-tile { height: 88px; font-size: min(2.7rem, 11vw); }
+  .wb3-board:not(.wb3-gap) .wb3-slot { height: 118px; }
+  .wb3-board:not(.wb3-gap) .wb3-slotl { margin-top: 24px; font-size: clamp(2.5rem, 10.5vw, 3.4rem); }
+}
+@media (max-height: 800px) and (min-width: 521px) {
+  #wb3Tray .wb3-tile { height: 94px; font-size: 3.5rem; }
+  .wb3-board:not(.wb3-gap) .wb3-slot { height: 126px; }
+  .wb3-board:not(.wb3-gap) .wb3-slotl { margin-top: 26px; font-size: 3.6rem; }
+}

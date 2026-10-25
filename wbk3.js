@@ -934,6 +934,13 @@
         }
         return cands.slice(0, n);
     }
+    /* الشكل الإملائي لحرف في موضع من كلمة ثلاثية: وصل من اليمين إن كان السابق يتصل بما بعده، ووصل من اليسار إن كان الحرف نفسه يتصل (وليس الأخير) */
+    function formOf(c, pos, word) {
+        var conn = D.CONNECTS || "";
+        var joinPrev = pos > 0 && conn.indexOf(word[pos - 1]) >= 0;
+        var joinNext = pos < 2 && conn.indexOf(c) >= 0;
+        return (joinPrev ? D.TATWEEL : "") + c + D.FATHA + (joinNext ? D.TATWEEL : "");
+    }
     function buildQ(it, p, ctx) {
         var R = S.run, s = BYID[it.id], test = ctx.test;
         var lv = test ? 2 : (p.lv.build || 1);
@@ -945,10 +952,15 @@
         if (test) F.box.classList.add("test");
         var wrongs = 0, hinted = false, revealed = false, locked = false, replays = 0;
         var letters = [s.a.base, s.b.base, s.c.base].concat(distractLetters(s, lv <= 1 ? 1 : 2, lv));
-        var tiles = shuffle(letters).map(function (c, i) {
-            return { base: c, ch: c + D.FATHA, uid: "t" + i, slot: -1, el: null };
-        });
         var want = [s.a.base, s.b.base, s.c.base];
+        /* بطاقات الحروف بشكلها الإملائي حسب موضعها في الكلمة: أول (كَـ) · وسط (ـتَـ) · آخر (ـبَ).
+           الحرف الذي لا يتصل بما بعده (ا أ د ذ ر ز و) لا يُوصَل من يساره، ولا يُوصَل بعد حرف لا يتصل. المشتّت يأخذ شكل موضع عشوائي */
+        var posOf = {};
+        want.forEach(function (c, i) { posOf[c] = i; });
+        var tiles = shuffle(letters).map(function (c, i) {
+            var pos = posOf.hasOwnProperty(c) ? posOf[c] : Math.floor(Math.random() * 3);
+            return { base: c, pos: pos, ch: formOf(c, pos, want), uid: "t" + i, slot: -1, el: null };
+        });
         var slots = [null, null, null];
         if (withAudio) {
             var sp = iconBtn("listen", ICONS.speaker, "اسمع الكلمة", function () { replays++; playWord(s); });
@@ -1502,5 +1514,5 @@
 
     window.wbk3Open = open;
     window.wbk3State = S; /* للاختبار */
-    window.wbk3Internals = { load: load, save: save, rec: rec, logResult: logResult, stateOf: stateOf, giveStar: giveStar, suggest: suggest, playWord: playWord, playSyl: playSyl, playKey: playKey, needsReview: needsReview, mastered: mastered, applyRead: applyRead, confirmTest: confirmTest, poolFor: poolFor, pickDistractors: pickDistractors, simScore: simScore, KEY: KEY, MAX_STARS: MAX_STARS, renderHome: renderHome, renderLibrary: renderLibrary, startTest: startTest };
+    window.wbk3Internals = { load: load, save: save, rec: rec, logResult: logResult, stateOf: stateOf, giveStar: giveStar, suggest: suggest, playWord: playWord, playSyl: playSyl, playKey: playKey, needsReview: needsReview, mastered: mastered, applyRead: applyRead, confirmTest: confirmTest, poolFor: poolFor, pickDistractors: pickDistractors, simScore: simScore, KEY: KEY, MAX_STARS: MAX_STARS, renderHome: renderHome, renderLibrary: renderLibrary, startTest: startTest, startActivity: startActivity };
 })();

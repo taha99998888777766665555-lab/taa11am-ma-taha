@@ -110,6 +110,7 @@
     root.WBK3_DATA = {
         FATHA: FATHA,
         TATWEEL: TATWEEL,
+        CONNECTS: CONNECTS,
         WORDS: WORDS,
         CELLS: CELLS,
         GROUPS: GROUPS,
