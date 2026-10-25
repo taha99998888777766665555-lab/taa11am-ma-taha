@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v41";
+const CACHE_VERSION = "taha-app-v42";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -14,6 +14,9 @@ const APP_SHELL = [
     "./wbk2-data.js",
     "./wbk2.js",
     "./wbk2.css",
+    "./wbk3-data.js",
+    "./wbk3.js",
+    "./wbk3.css",
     "./assets/fonts/readex-pro/readex-pro-arabic-400-normal.woff2",
     "./assets/fonts/readex-pro/readex-pro-arabic-600-normal.woff2",
     "./manifest.json",
@@ -238,6 +241,15 @@ try {
     importScripts("wbk2-data.js");
     if (self.WBK2_DATA && typeof self.WBK2_DATA.approvedAudioFiles === "function") {
         self.WBK2_DATA.approvedAudioFiles().forEach(f => { LESSON_AUDIO.push("./" + f); });
+    }
+} catch (e) { /* بصمت */ }
+
+/* الدرس الثالث: تسجيلات الكلمات المعتمدة (من wbk3-data.js — مصدر واحد للحقيقة). يُستورد بعد wbk2-data.js
+   لأنه يقرأ حالة اعتماد مقاطع الدرس الثاني. فشل الاستيراد لا يُفشل التثبيت. */
+try {
+    importScripts("wbk3-data.js");
+    if (self.WBK3_DATA && typeof self.WBK3_DATA.approvedAudioFiles === "function") {
+        self.WBK3_DATA.approvedAudioFiles().forEach(f => { LESSON_AUDIO.push("./" + f); });
     }
 } catch (e) { /* بصمت */ }
 

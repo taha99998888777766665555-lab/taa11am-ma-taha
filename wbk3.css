@@ -1,0 +1,337 @@
+/* الدرس الثالث «أقرأ كلمات جميع حروفها مفتوحة» — تنسيق معزول (بادئة wb3-). لا يمسّ style.css */
+@font-face { font-family: "Readex Pro"; font-weight: 400; font-style: normal; font-display: swap;
+  src: url("assets/fonts/readex-pro/readex-pro-arabic-400-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: "Readex Pro"; font-weight: 600; font-style: normal; font-display: swap;
+  src: url("assets/fonts/readex-pro/readex-pro-arabic-600-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+
+.wb3 {
+  --wb3-ink: #1b2a3a; --wb3-mute: #56677b; --wb3-primary: #245e8f; --wb3-primary-d: #1b4a73; --wb3-tint: #e8f0f7;
+  --wb3-second: #a8510c; --wb3-bg: #f5f3ee; --wb3-card: #ffffff; --wb3-line: #dde2e8; --wb3-line2: #c3ccd7;
+  --wb3-good: #1a6e43; --wb3-soft: #7a5a00; --wb3-bad: #8a2f2f; --wb3-focus: #0b3d91; --wb3-r: 18px;
+  font-family: "Readex Pro", "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif;
+  color: var(--wb3-ink); direction: rtl; text-align: right; box-sizing: border-box;
+}
+body.dark-mode .wb3 {
+  --wb3-ink: #eaf0f7; --wb3-mute: #aab8c9; --wb3-primary: #8cbbe8; --wb3-primary-d: #b0d2f2; --wb3-tint: #1f3045;
+  --wb3-second: #f0a766; --wb3-bg: #121c28; --wb3-card: #1a2736; --wb3-line: #31425a; --wb3-line2: #46597a;
+  --wb3-good: #74d6a0; --wb3-soft: #e5c466; --wb3-bad: #f0a0a0; --wb3-focus: #9cc7ff;
+}
+.wb3 *, .wb3 *::before, .wb3 *::after { box-sizing: border-box; }
+.wb3.screen.active { background: var(--wb3-bg); min-height: 100vh; display: flex; flex-direction: column; padding: 0; }
+.wb3 button { font-family: inherit; cursor: pointer; }
+.wb3 :focus-visible { outline: 4px solid var(--wb3-focus); outline-offset: 2px; }
+
+/* الرأس: عادي (غير ثابت) فلا يغطي أي محتوى على أي ارتفاع */
+.wb3-head { position: static; box-shadow: none; border-radius: 0; margin: 0; width: 100%; max-width: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px clamp(12px, 3vw, 24px); background: var(--wb3-card); border-bottom: 1px solid var(--wb3-line); }
+.wb3-back, .wb3-teach { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; border: 1.5px solid var(--wb3-line2); border-radius: 14px; background: transparent; color: var(--wb3-ink); font-size: 1rem; font-weight: 600; }
+.wb3-title { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; }
+.wb3-title strong { font-size: clamp(1rem, 2.2vw, 1.25rem); line-height: 1.5; }
+.wb3-sub { font-size: .9rem; color: var(--wb3-mute); }
+.wb3-starbox { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; min-height: 40px; border-radius: 999px; background: var(--wb3-tint); font-weight: 600; white-space: nowrap; }
+.wb3-starbox svg { color: #c98e00; }
+.wb3-starbox span { color: var(--wb3-mute); font-size: .85rem; font-weight: 400; }
+
+.wb3-body { flex: 1; width: 100%; max-width: 760px; margin: 0 auto; padding: clamp(14px, 2.4vw, 28px); display: flex; flex-direction: column; gap: 18px; }
+.wb3-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* أزرار */
+.wb3-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 58px; min-width: 120px; padding: 0 24px; border-radius: 16px; border: 1.5px solid var(--wb3-primary); background: var(--wb3-card); color: var(--wb3-primary); font-size: 1.1rem; font-weight: 600; transition: background .2s; }
+.wb3-btn.main { background: var(--wb3-primary); color: #fff; }
+body.dark-mode .wb3-btn.main { color: #0d1b2c; }
+.wb3-btn.main:hover { background: var(--wb3-primary-d); }
+.wb3-btn.ghost { border-color: var(--wb3-line2); color: var(--wb3-ink); }
+.wb3-btn.big { min-height: 68px; font-size: 1.3rem; padding: 0 36px; }
+.wb3-btn.sm { min-height: 48px; font-size: 1rem; }
+.wb3-btn:disabled { opacity: .55; cursor: not-allowed; }
+.wb3-btn.listen { min-height: 64px; }
+.wb3-btn.listen.xl { flex-direction: column; gap: 6px; width: 132px; height: 132px; min-width: 0; padding: 0; border-radius: 50%; font-size: 1rem; background: var(--wb3-tint); border-width: 2px; }
+.wb3-btn.listen.xl svg { width: 44px; height: 44px; }
+.wb3-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.wb3-row.center { justify-content: center; }
+
+/* الرئيسية: موجز هادئ ثم الرحلة */
+.wb3-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.wb3-ring svg { width: 76px; height: 76px; display: block; }
+.wb3-top-tx { flex: 1 1 200px; } .wb3-top-tx h2 { margin: 0; font-size: clamp(1.25rem, 3vw, 1.7rem); } .wb3-top-tx p { margin: 2px 0 0; color: var(--wb3-mute); }
+.wb3-tag { display: inline-block; padding: 1px 12px; border-radius: 999px; background: var(--wb3-primary); color: #fff; font-size: .82rem; font-weight: 600; }
+body.dark-mode .wb3-tag { color: #0d1b2c; }
+.wb3-tag.ok { background: var(--wb3-good); } .wb3-tag.no { background: var(--wb3-soft); }
+
+.wb3-journey { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; position: relative; }
+.wb3-journey::before { content: ""; position: absolute; top: 28px; bottom: 28px; right: 27px; width: 3px; background: var(--wb3-line); border-radius: 3px; }
+.wb3-step { display: flex; align-items: stretch; gap: 14px; position: relative; }
+.wb3-num { flex: 0 0 auto; align-self: flex-start; margin-top: 14px; width: 56px; height: 56px; border-radius: 50%; background: var(--wb3-card); color: var(--wb3-primary); border: 3px solid var(--wb3-line2); display: grid; place-items: center; font-weight: 700; font-size: 1.35rem; position: relative; z-index: 1; }
+.wb3-step.sug .wb3-num { background: var(--wb3-primary); color: #fff; border-color: var(--wb3-primary); }
+body.dark-mode .wb3-step.sug .wb3-num { color: #0d1b2c; }
+.wb3-stepbtn { flex: 1; min-height: 84px; display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-radius: var(--wb3-r); border: 1.5px solid var(--wb3-line); background: var(--wb3-card); color: var(--wb3-ink); text-align: right; transition: border-color .2s, background .2s; }
+.wb3-stepbtn:hover { border-color: var(--wb3-primary); }
+.wb3-step.sug .wb3-stepbtn { border: 2px solid var(--wb3-primary); background: var(--wb3-tint); }
+.wb3-stx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.wb3-stx b { font-size: 1.15rem; } .wb3-stx small { color: var(--wb3-mute); font-size: .92rem; line-height: 1.5; }
+.wb3-st { font-style: normal; font-size: .88rem; color: var(--wb3-mute); }
+.wb3-stepbtn[data-pending] .wb3-st { color: var(--wb3-second); }
+.wb3-sugwhy { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin-top: 4px; font-size: .92rem; color: var(--wb3-ink); }
+.wb3-gobtn { flex: 0 0 auto; display: inline-grid; place-items: center; min-width: 96px; min-height: 52px; padding: 0 22px; border-radius: 14px; background: var(--wb3-primary); color: #fff; font-weight: 700; font-size: 1.1rem; }
+body.dark-mode .wb3-gobtn { color: #0d1b2c; }
+.wb3-chev { color: var(--wb3-line2); font-size: 1.8rem; }
+.wb3-scopebox { border: 1px solid var(--wb3-line); border-radius: var(--wb3-r); background: var(--wb3-card); padding: 4px 16px; }
+.wb3-scopebox summary { min-height: 48px; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
+.wb3-scope { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 14px; }
+.wb3-chip { min-height: 46px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--wb3-line2); background: transparent; color: var(--wb3-ink); font-size: .95rem; }
+.wb3-chip.on { border-color: var(--wb3-primary); background: var(--wb3-primary); color: #fff; font-weight: 600; }
+body.dark-mode .wb3-chip.on { color: #0d1b2c; }
+
+/* المكتبة */
+.wb3-mapw { background: var(--wb3-card); border: 1px solid var(--wb3-line); border-radius: var(--wb3-r); padding: clamp(14px, 2vw, 22px); }
+.wb3-maph { display: flex; flex-direction: column; gap: 4px; } .wb3-maph h2 { margin: 0; font-size: 1.25rem; } .wb3-legend { color: var(--wb3-mute); font-size: .9rem; }
+.wb3-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 14px; direction: rtl; }
+.wb3-cell { min-height: 92px; border-radius: 16px; border: 1.5px solid var(--wb3-line); background: var(--wb3-bg); color: var(--wb3-ink); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px 4px; }
+.wb3-cell.st-mastered { border-color: var(--wb3-good); } .wb3-cell.st-review { border-color: var(--wb3-second); border-style: dashed; } .wb3-cell.st-learning { border-color: var(--wb3-primary); }
+.wb3-cell.dup { background: repeating-linear-gradient(135deg, var(--wb3-bg), var(--wb3-bg) 8px, var(--wb3-line) 8px, var(--wb3-line) 10px); }
+.wb3-syl.cellsyl { font-size: clamp(2.2rem, 5vw, 3rem); line-height: 1.7; }
+.wb3-cellm { display: flex; gap: 6px; align-items: center; font-size: .9rem; color: var(--wb3-mute); line-height: 1; margin-bottom: 4px; }
+.wb3-cellm .s { color: #c98e00; display: inline-flex; } .wb3-cellm .s svg { width: 16px; height: 16px; }
+.wb3-note { color: var(--wb3-mute); font-size: .95rem; line-height: 1.8; margin: 4px 0 0; }
+
+/* المقطع: لون واحد في نص واحد، فالاتصال والتشكيل سليمان */
+.wb3-syl { direction: rtl; unicode-bidi: isolate; display: inline-block; line-height: 1.9; white-space: nowrap; color: var(--wb3-ink); font-weight: 400; }
+.wb3-syl.huge { font-size: clamp(5rem, 22vh, 11rem); }
+.wb3-syl.small { font-size: 2.4rem; } .wb3-syl.tiny { font-size: 1.5rem; line-height: 1.6; }
+.wb3-syl.optsyl { font-size: min(clamp(3.2rem, 11vh, 5.5rem), 13.5vw); } .wb3-syl.modelsyl { font-size: 2.6rem; color: var(--wb3-mute); }
+.wb3-letter { font-size: 3rem; line-height: 1.7; font-weight: 600; direction: rtl; display: inline-block; }
+.wb3-letter.l1 { color: var(--wb3-primary); } .wb3-letter.l2 { color: var(--wb3-second); }
+.wb3-letter.big { font-size: clamp(6rem, 24vh, 11rem); } .wb3-letter.mid { font-size: clamp(3.4rem, 12vh, 6rem); } .wb3-letter.hintl { font-size: 3rem; }
+.wb3-badge { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid var(--wb3-ink); font-weight: 700; font-size: 1.2rem; }
+
+/* بطاقات الأنشطة */
+.wb3-disc, .wb3-q, .wb3-end, .wb3-tp { background: var(--wb3-card); border: 1px solid var(--wb3-line); border-radius: 22px; padding: clamp(16px, 3vw, 32px); display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.wb3-steps { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; justify-content: center; counter-reset: s; }
+.wb3-steps li { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--wb3-line); color: var(--wb3-mute); font-size: .9rem; }
+.wb3-steps li.on { border-color: var(--wb3-primary); color: var(--wb3-ink); font-weight: 700; background: var(--wb3-tint); }
+.wb3-steps li.done { border-style: dashed; }
+.wb3-stage { min-height: clamp(170px, 32vh, 320px); display: flex; align-items: center; justify-content: center; gap: 18px; width: 100%; }
+.wb3-cap, .wb3-msg { margin: 0; text-align: center; font-size: 1.15rem; line-height: 1.9; min-height: 2em; max-width: 34em; }
+.wb3-pair { display: flex; gap: 2.2em; align-items: center; justify-content: center; font-size: 1rem; transition: gap .6s ease; }
+.wb3-pair.joined { gap: 0; } .wb3-pair.static { gap: .6em; }
+.wb3-plus { font-size: 2rem; color: var(--wb3-mute); }
+.wb3-pop { animation: wb3pop .45s ease-out; }
+@keyframes wb3pop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+
+.wb3-q { width: 100%; gap: 18px; }
+.wb3-qtop { width: 100%; display: flex; align-items: center; gap: 14px; }
+.wb3-qn { font-weight: 600; white-space: nowrap; color: var(--wb3-mute); font-size: .95rem; }
+.wb3-bar { flex: 1; height: 10px; border-radius: 999px; background: var(--wb3-line); overflow: hidden; }
+.wb3-bar i { display: block; height: 100%; background: var(--wb3-primary); transition: width .4s; }
+.wb3-inst { margin: 0; font-size: clamp(1.2rem, 2.8vw, 1.6rem); text-align: center; font-weight: 600; }
+.wb3-area { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 22px; min-height: 120px; }
+.wb3-opts { display: grid; gap: 16px; width: 100%; }
+.wb3-opts.n2 { grid-template-columns: repeat(2, 1fr); } .wb3-opts.n3 { grid-template-columns: repeat(3, 1fr); } .wb3-opts.n4 { grid-template-columns: repeat(2, 1fr); }
+.wb3-opt { position: relative; min-height: clamp(120px, 22vh, 190px); border-radius: 20px; border: 2px solid var(--wb3-line2); background: var(--wb3-card); color: var(--wb3-ink); display: grid; place-items: center; transition: opacity .3s, border-color .2s, background .2s; }
+.wb3-opt:hover:not(:disabled) { border-color: var(--wb3-primary); background: var(--wb3-tint); }
+.wb3-opt.fade { opacity: .28; }
+.wb3-opt.right { border-color: var(--wb3-good); border-width: 3px; background: color-mix(in srgb, var(--wb3-good) 10%, var(--wb3-card)); }
+.wb3-opt.right::after, .wb3-opt.reveal::after { content: "✔"; position: absolute; bottom: 8px; right: 12px; font-size: 1.2rem; color: var(--wb3-good); }
+.wb3-opt.reveal { border-color: var(--wb3-primary); border-width: 4px; animation: wb3glow 1.4s ease-in-out 2; }
+@keyframes wb3glow { 50% { background: var(--wb3-tint); } }
+.wb3-q.good .wb3-msg { color: var(--wb3-good); font-weight: 600; } .wb3-q.soft .wb3-msg { color: var(--wb3-soft); font-weight: 600; }
+.wb3-qacts { min-height: 60px; }
+
+/* البناء */
+.wb3-board { display: flex; gap: 14px; justify-content: center; align-items: center; direction: rtl; min-height: 140px; }
+.wb3-slot { width: clamp(100px, 20vw, 150px); height: clamp(110px, 19vh, 160px); border-radius: 20px; border: 2.5px dashed var(--wb3-primary); background: var(--wb3-tint); color: var(--wb3-ink); display: grid; place-items: center; position: relative; transition: background .2s; }
+.wb3-slot:nth-child(2) { border-style: solid; border-color: var(--wb3-second); background: color-mix(in srgb, var(--wb3-second) 8%, var(--wb3-card)); }
+.wb3-slot.over { background: color-mix(in srgb, var(--wb3-primary) 20%, var(--wb3-card)); }
+.wb3-slot.bad { border-color: var(--wb3-bad); opacity: .65; }
+.wb3-slotn { position: absolute; top: 6px; right: 10px; font-weight: 700; color: var(--wb3-mute); }
+.wb3-slotl { font-size: clamp(3rem, 9vh, 4.5rem); line-height: 1.7; font-weight: 600; } .wb3-slotl.l1 { color: var(--wb3-primary); } .wb3-slotl.l2 { color: var(--wb3-second); }
+.wb3-board.joined .wb3-slot { border-color: var(--wb3-good); } .wb3-board.done { border: none; }
+.wb3-tray { display: flex; gap: 10px; justify-content: center; flex-wrap: nowrap; }
+.wb3-tray.gone { display: none; }
+.wb3-tile { width: clamp(64px, 20vw, 112px); height: clamp(80px, 13vh, 112px); overflow: hidden; border-radius: 16px; border: 2px solid var(--wb3-ink); background: var(--wb3-card); color: var(--wb3-ink); font-size: min(clamp(2.2rem, 6.5vh, 3.4rem), 10.5vw); line-height: 1.6; font-weight: 600; touch-action: none; user-select: none; -webkit-user-select: none; padding: 0; }
+.wb3-tile.used { opacity: .25; } .wb3-tile.lifted { opacity: .4; }
+.wb3-tile.hint { border-color: var(--wb3-primary); border-width: 5px; }
+.wb3-ghost { position: fixed; z-index: 9999; pointer-events: none; transform: translate(-50%, -50%); box-shadow: 0 8px 22px rgba(0,0,0,.25); }
+
+/* القراءة والمعلم والنوافذ */
+.wb3-tconf { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; padding: 10px 14px; border: 1.5px dashed var(--wb3-line2); border-radius: 16px; }
+.wb3-tconf-l { font-weight: 600; color: var(--wb3-mute); }
+.wb3-end h2 { margin: 0; text-align: center; } .wb3-end p { margin: 0; text-align: center; }
+.wb3-big { font-size: 1.25rem; }
+.wb3-stats { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.wb3-stats li { display: flex; flex-direction: column; align-items: center; min-width: 110px; padding: 10px 14px; border: 1.5px solid var(--wb3-line); border-radius: 16px; }
+.wb3-stats b { font-size: 1.8rem; }
+.wb3-reads { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 640px; }
+.wb3-readrow { display: flex; gap: 12px; align-items: center; justify-content: space-between; border: 1.5px solid var(--wb3-line); border-radius: 16px; padding: 6px 14px; flex-wrap: wrap; }
+.wb3-tp { align-items: stretch; }
+.wb3-tsum { display: flex; flex-wrap: wrap; gap: 14px; font-size: 1.05rem; }
+.wb3-tbox { border: 1px solid var(--wb3-line); border-radius: 16px; padding: 12px 16px; } .wb3-tbox h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.wb3-miss { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.wb3-acts { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; } .wb3-acts li { display: flex; justify-content: space-between; gap: 12px; }
+.wb3-tablew { overflow-x: auto; }
+.wb3-table { width: 100%; border-collapse: collapse; font-size: .95rem; } .wb3-table th, .wb3-table td { padding: 6px 8px; border-bottom: 1px solid var(--wb3-line); text-align: center; white-space: nowrap; }
+.wb3-testrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 4px 0; flex-wrap: wrap; }
+.wb3-modal { position: fixed; inset: 0; background: rgba(10, 20, 35, .6); display: grid; place-items: center; z-index: 10000; padding: 16px; }
+.wb3-modal-box { background: var(--wb3-card); border-radius: 20px; padding: 24px; width: min(420px, 100%); display: flex; flex-direction: column; gap: 12px; text-align: center; color: var(--wb3-ink); }
+.wb3-modal-box h3, .wb3-modal-box p { margin: 0; }
+.wb3-input { min-height: 60px; font-size: 1.6rem; text-align: center; border: 2px solid var(--wb3-line2); border-radius: 14px; background: var(--wb3-bg); color: var(--wb3-ink); }
+.wb3-err { min-height: 1.5em; color: var(--wb3-bad); }
+.wbk3-entry { margin-top: 10px; }
+
+/* ارتفاعات منخفضة (سبورة 1366×768 وهواتف أفقية) */
+@media (max-height: 800px) {
+  .wb3-body { gap: 12px; padding-block: 12px; }
+  .wb3-stage { min-height: 150px; } .wb3-syl.huge { font-size: clamp(4.2rem, 20vh, 8rem); }
+  .wb3-btn { min-height: 54px; } .wb3-btn.listen.xl { width: 112px; height: 112px; }
+  .wb3-area { gap: 22px; } .wb3-q, .wb3-disc { gap: 12px; padding-block: 14px; }
+  .wb3-opt { min-height: clamp(104px, 20vh, 150px); }
+  .wb3-stepbtn { min-height: 72px; padding-block: 8px; } .wb3-num { margin-top: 8px; }
+  .wb3-journey::before { top: 20px; bottom: 20px; }
+}
+@media (max-height: 620px) {
+  .wb3-syl.huge { font-size: 4rem; } .wb3-letter.big { font-size: 5rem; } .wb3-stage { min-height: 110px; }
+  .wb3-slot { height: 92px; } .wb3-tile { height: 68px; } .wb3-opt { min-height: 88px; }
+  .wb3-btn.listen.xl { width: 88px; height: 88px; } .wb3-btn.listen.xl svg { width: 32px; height: 32px; }
+  .wb3-head { padding-block: 6px; } .wb3-back, .wb3-teach { min-height: 44px; }
+}
+/* الجوال */
+@media (max-width: 640px) {
+  .wb3-head { gap: 8px; padding: 8px 12px; }
+  .wb3-back { padding: 0 12px; } .wb3-teach { padding: 0 14px; } .wb3-teach span, .wb3-starbox span { display: none; }
+  .wb3-title { order: 5; flex-basis: 100%; } .wb3-title strong { font-size: .98rem; }
+  .wb3-starbox { margin-inline-start: auto; }
+  .wb3-body { padding: 12px; }
+  .wb3-journey::before { right: 23px; } .wb3-num { width: 46px; height: 46px; font-size: 1.15rem; }
+  .wb3-step { gap: 10px; } .wb3-stepbtn { padding: 10px 12px; }
+  .wb3-gobtn { min-width: 72px; padding: 0 14px; }
+  .wb3-grid { gap: 6px; } .wb3-cell { min-height: 80px; } .wb3-syl.cellsyl { font-size: clamp(1.8rem, 8vw, 2.3rem); }
+  .wb3-opts.n3 { grid-template-columns: 1fr; } .wb3-opt { min-height: 96px; }
+  .wb3-syl.huge { font-size: clamp(4rem, 22vw, 6.4rem); } .wb3-letter.big { font-size: 6rem; }
+  .wb3-btn { min-width: 0; padding: 0 16px; }
+  .wb3-board { gap: 10px; } .wb3-slot { width: 40vw; max-width: 150px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wb3 *, .wb3 *::before, .wb3 *::after { animation: none !important; transition: none !important; }
+}
+
+/* توازن عمودي: البطاقة تملأ الارتفاع المتاح والمحتوى في وسطها */
+.wb3-q, .wb3-disc { min-height: clamp(380px, calc(100vh - 270px), 680px); justify-content: space-between; }
+.wb3-area { flex: 1; justify-content: center; }
+.wb3-stage { flex: 1; }
+.wb3-btn.listen.xl { width: 128px; height: 128px; }
+@media (max-height: 800px) { .wb3-btn.listen.xl { width: 112px; height: 112px; } .wb3-q, .wb3-disc { min-height: 0; } }
+
+/* مراجعة تربوية/UX نهائية */
+/* بطاقة الخطوة: تعليمات أساسية فقط (التفاصيل في لوحة المعلم) */
+.wb3-stx .wb3-tag { align-self: flex-start; margin-bottom: 2px; }
+/* أزرار خطوات الاكتشاف: ٥ نقاط مرقّمة قابلة للمس */
+.wb3-steps li { padding: 0; border: 0; background: none; }
+.wb3-stepdot { display: inline-flex; align-items: center; gap: 8px; min-height: 52px; min-width: 52px; padding: 0 14px 0 6px; border-radius: 999px; border: 2px solid var(--wb3-line2); background: var(--wb3-card); color: var(--wb3-mute); font-size: .95rem; }
+.wb3-sdn { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--wb3-tint); color: var(--wb3-ink); font-weight: 700; font-size: 1.1rem; }
+.wb3-steps li.on .wb3-stepdot { border-color: var(--wb3-primary); color: var(--wb3-ink); font-weight: 700; background: var(--wb3-tint); }
+.wb3-steps li.on .wb3-sdn { background: var(--wb3-primary); color: #fff; }
+body.dark-mode .wb3-steps li.on .wb3-sdn { color: #0d1b2c; }
+.wb3-steps li.done .wb3-sdn { background: var(--wb3-good); color: #fff; }
+.wb3-steps li.done .wb3-stepdot { border-style: solid; }
+.wb3-steps { gap: 10px; }
+/* البناء: تسمية واضحة لموضع الحرف الأول والثاني */
+.wb3-slotn { top: 8px; right: 12px; font-size: 1rem; background: var(--wb3-card); padding: 1px 10px; border-radius: 999px; border: 1.5px solid var(--wb3-line2); }
+.wb3-dirnote { margin: 0; color: var(--wb3-mute); font-size: 1rem; }
+.wb3-board.done + .wb3-dirnote { display: none; }
+/* المكتبة: مقاطع أكبر (سبورة ذكية) */
+.wb3-cell { min-height: 112px; }
+.wb3-syl.cellsyl { font-size: clamp(2.8rem, 6.4vw, 4.2rem); line-height: 1.6; }
+@media (min-width: 1000px) { .wb3-syl.cellsyl { font-size: 4.4rem; } .wb3-cell { min-height: 128px; } .wb3-grid { gap: 14px; } }
+@media (max-width: 640px) {
+  .wb3-cell { min-height: 92px; } .wb3-syl.cellsyl { font-size: clamp(2.1rem, 9.5vw, 2.7rem); }
+  .wb3-stepdot { padding: 0 6px; } .wb3-sdt { display: none; } .wb3-steps li.on .wb3-sdt { display: none; }
+  .wb3-steps { gap: 8px; }
+  .wb3-stx small { display: none; } .wb3-step.sug .wb3-stx small { display: block; }
+  .wb3-slotn { font-size: .9rem; padding: 0 8px; }
+}
+@media (max-width: 640px) {
+  .wb3-steps { flex-wrap: nowrap; gap: 6px; }
+  .wb3-stepdot { min-width: 48px; min-height: 48px; padding: 0 5px; } .wb3-sdn { width: 36px; height: 36px; }
+  .wb3-syl.cellsyl { font-size: clamp(1.8rem, 8.2vw, 2.3rem); }
+  .wb3-cell { padding: 2px 0; }
+}
+.wb3-sdt { display: none; } .wb3-steps li.on .wb3-sdt { display: inline; }
+@media (max-width: 640px) { .wb3-steps li.on .wb3-sdt { display: none; } }
+.wb3-cellm .h { color: #c98e00; font-style: normal; }
+
+/* ===== خاص بالدرس الثالث: كلمات من ثلاثة أحرف ===== */
+.wb3 { --wb3-third: #1d7a6a; }
+body.dark-mode .wb3 { --wb3-third: #6fd3c0; }
+.wb3-letter.l3 { color: var(--wb3-third); }
+/* الكلمة: أعرض من المقطع، فنقلّص الأحجام لتتسع بثلاثة أحرف */
+.wb3-syl.huge { font-size: clamp(4.4rem, 17vh, 8.6rem); }
+.wb3-syl.optsyl { font-size: min(clamp(2.8rem, 9vh, 4.4rem), 11.5vw); }
+.wb3-syl.modelsyl { font-size: 2.4rem; }
+.wb3-syl.pairsyl { font-size: clamp(3.4rem, 12vh, 6rem); color: var(--wb3-ink); }
+.wb3-syl.small { font-size: 2rem; }
+.wb3-syl.tiny { font-size: 1.4rem; }
+/* المكتبة: ٥ في السطر كما في الكتاب على كل الشاشات */
+.wb3-syl.cellsyl { font-size: clamp(2rem, 4.6vw, 3.1rem); line-height: 1.6; }
+.wb3-cell { min-height: 112px; }
+@media (min-width: 1000px) { .wb3-syl.cellsyl { font-size: 3.4rem; } .wb3-cell { min-height: 124px; } }
+@media (max-width: 640px) {
+    .wb3-grid { gap: 5px; }
+    .wb3-cell { min-height: 84px; padding: 2px 0; }
+    .wb3-syl.cellsyl { font-size: clamp(1.25rem, 5.6vw, 1.75rem); line-height: 1.7; }
+}
+/* البناء: ثلاث خانات */
+.wb3-board { gap: 12px; flex-wrap: nowrap; }
+.wb3-slot { width: clamp(84px, 17vw, 140px); }
+.wb3-slot:nth-child(2) { border-style: solid; border-color: var(--wb3-second); background: color-mix(in srgb, var(--wb3-second) 8%, var(--wb3-card)); }
+.wb3-slot:nth-child(3) { border-style: dotted; border-width: 3px; border-color: var(--wb3-third); background: color-mix(in srgb, var(--wb3-third) 9%, var(--wb3-card)); }
+.wb3-slotl.l3 { color: var(--wb3-third); }
+.wb3-board.stepjoin { gap: 6px; align-items: center; }
+.wb3-board.stepjoin .wb3-letter { font-size: clamp(3.2rem, 11vh, 5.4rem); }
+.wb3-tray { flex-wrap: wrap; gap: 10px; }
+.wb3-tile { width: clamp(52px, 15vw, 104px); }
+@media (max-width: 640px) {
+    .wb3-board { gap: 8px; }
+    .wb3-slot { width: 27vw; max-width: 120px; height: 104px; }
+    .wb3-slotl { font-size: clamp(2.6rem, 11vw, 3.6rem); }
+    .wb3-slotn { font-size: .78rem; padding: 0 6px; right: 6px; }
+    .wb3-tile { width: 15.5vw; max-width: 72px; height: 76px; }
+    .wb3-tray { gap: 6px; }
+}
+/* أي حرف ينقص؟ */
+.wb3-slot.given { cursor: default; border-style: solid; border-color: var(--wb3-line2); background: var(--wb3-card); }
+.wb3-slot.given:nth-child(1) { border-color: var(--wb3-primary); }
+.wb3-slot.given:nth-child(2) { border-color: var(--wb3-second); }
+.wb3-slot.given:nth-child(3) { border-color: var(--wb3-third); }
+.wb3-slot.gap { border-style: dashed; background: var(--wb3-tint); }
+.wb3-q-mark { font-size: clamp(3rem, 9vh, 4.5rem); font-weight: 700; color: var(--wb3-mute); line-height: 1.6; }
+.wb3-slot.filled-ok { border-style: solid; border-color: var(--wb3-good); }
+.wb3-opts.letters { max-width: 520px; margin-inline: auto; }
+.wb3-opt.letter { min-height: clamp(96px, 16vh, 140px); }
+.wb3-opt-l { font-size: clamp(3.2rem, 9vh, 4.6rem); font-weight: 600; line-height: 1.6; }
+.wb3-opts.gone { display: none; }
+.wb3-board.wb3-gap .wb3-slot { cursor: default; }
+.wb3-readshow { width: 100%; display: flex; justify-content: center; align-items: center; min-height: clamp(130px, 22vh, 220px); }
+@media (max-width: 640px) {
+    .wb3-opts.n3 { grid-template-columns: 1fr; }
+    .wb3-opts.letters.n3 { grid-template-columns: repeat(3, 1fr); }
+    .wb3-opts.letters.n2 { grid-template-columns: repeat(2, 1fr); }
+    .wb3-opt.letter { min-height: 88px; }
+    .wb3-syl.huge { font-size: clamp(3.6rem, 21vw, 6rem); }
+    .wb3-syl.pairsyl { font-size: clamp(3rem, 16vw, 4.4rem); }
+}
+@media (max-height: 620px) {
+    .wb3-syl.huge { font-size: 3.8rem; } .wb3-syl.pairsyl { font-size: 3rem; }
+    .wb3-slot { height: 88px; } .wb3-tile { height: 64px; }
+}
+
+/* سبورة ١٣٦٦×٧٦٨ وما يشبهها: كل أدوات البناء ظاهرة دون تمرير */
+@media (max-height: 800px) {
+    .wb3-area { gap: 12px; }
+    .wb3-slot { height: clamp(96px, 15vh, 120px); }
+    .wb3-slotl { font-size: clamp(2.8rem, 8vh, 4rem); }
+    .wb3-model .wb3-syl { line-height: 1.4; font-size: 2.1rem; }
+    .wb3-tile { height: clamp(64px, 10vh, 84px); }
+    .wb3-board { min-height: 0; }
+    .wb3-opt.letter { min-height: clamp(88px, 14vh, 120px); }
+}
