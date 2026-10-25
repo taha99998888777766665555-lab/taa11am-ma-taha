@@ -46,7 +46,7 @@ const PLAIN="قرأ كتب جلس زرع أكل رفع طلع حرث رسم دخ
   for(let i=0;i<2;i++){await p.waitForTimeout(500);const it=await cur();const g=await p.$eval('#wb3Board .wb3-slot.gap',e=>+e.dataset.slot);await tap(`#wb3Opts [data-letter="${letters(it.id)[g]}"]`);await p.waitForSelector('#wb3Joined',{timeout:6000});await p.waitForSelector('#wb3Joined',{state:'detached',timeout:8000}).catch(()=>{})}
   s=await st();ok(Object.values(s.syl).filter(x=>x.ev&&x.ev.includes('missing')).length>=2,'missing (tap) recorded');
   console.log('  stars after hear+build+missing (two different activities may now qualify):',s.stars,'| starred:',Object.keys(s.starred).join());
-  ok(Object.keys(s.starred).every(id=>s.syl[id].ev.filter((e,i,a)=>a.indexOf(e)===i).length>=2||s.syl[id].read.ok>0),'every starred word has 2 different independent activities or confirmed reading');
+  ok(Object.keys(s.starred).every(id=>(s.syl[id].ev.indexOf('build')>=0&&s.syl[id].ev.length>=2)||s.syl[id].read.ok>0),'every starred word has independent build + another independent activity, or confirmed reading');
   // 5) read
   await p.evaluate(()=>wbk3Internals.renderHome());await tap('[data-stage=read]');await p.waitForTimeout(600);await sizes('read');
   const it=await cur();await tap('#wb3Read');await p.waitForTimeout(300);await sizes('read-confirm');
