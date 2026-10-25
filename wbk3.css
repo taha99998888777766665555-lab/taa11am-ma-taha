@@ -79,7 +79,7 @@ body.dark-mode .wb3-gobtn { color: #0d1b2c; }
 .wb3-scopebox { border: 1px solid var(--wb3-line); border-radius: var(--wb3-r); background: var(--wb3-card); padding: 4px 16px; }
 .wb3-scopebox summary { min-height: 48px; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
 .wb3-scope { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 14px; }
-.wb3-chip { min-height: 46px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--wb3-line2); background: transparent; color: var(--wb3-ink); font-size: .95rem; }
+.wb3-chip { min-height: 46px; min-width: 48px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--wb3-line2); background: transparent; color: var(--wb3-ink); font-size: .95rem; }
 .wb3-chip.on { border-color: var(--wb3-primary); background: var(--wb3-primary); color: #fff; font-weight: 600; }
 body.dark-mode .wb3-chip.on { color: #0d1b2c; }
 
@@ -307,7 +307,7 @@ body.dark-mode .wb3 { --wb3-third: #6fd3c0; }
 .wb3-q-mark { font-size: clamp(3rem, 9vh, 4.5rem); font-weight: 700; color: var(--wb3-mute); line-height: 1.6; }
 .wb3-slot.filled-ok { border-style: solid; border-color: var(--wb3-good); }
 .wb3-opts.letters { max-width: 520px; margin-inline: auto; }
-.wb3-opt.letter { min-height: clamp(96px, 16vh, 140px); }
+.wb3-opt.letter { min-width: 56px; min-height: clamp(96px, 16vh, 140px); }
 .wb3-opt-l { font-size: clamp(3.2rem, 9vh, 4.6rem); font-weight: 600; line-height: 1.6; }
 .wb3-opts.gone { display: none; }
 .wb3-board.wb3-gap .wb3-slot { cursor: default; }
