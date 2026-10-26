@@ -1,9 +1,9 @@
-/* فحص المرحلة الثانية: مقاسات، لمس، تباين، تداخل، تمرير، وسلامة المنطق — لكل وضع (calm|play|off) وكل مقاس.
-   PORT=8992 MODES=calm,play,off VPS=m360,... node tests/ui/check.js */
+/* فحص المرحلة الثانية: مقاسات، لمس، تباين، تداخل، تمرير، وسلامة المنطق — لكل وضع (v2|off) وكل مقاس.
+   PORT=8992 MODES=v2,off VPS=m360,... node tests/ui/check.js */
 const {chromium}=require('/opt/npm-tools/node_modules/playwright');
 const VPS={m360:[360,640,2,1,1],m390:[390,844,2,1,1],tablet:[820,1180,2,1,0],desktop:[1366,768,1,0,0],board:[1920,1080,1,1,0]};
 const PORT=process.env.PORT||8992;
-const MODES=(process.env.MODES||'calm,play').split(','),only=(process.env.VPS||Object.keys(VPS).join(',')).split(',');
+const MODES=(process.env.MODES||'v2,off').split(','),only=(process.env.VPS||Object.keys(VPS).join(',')).split(',');
 let pass=0,fail=0,warn=0;const ok=(c,m,d)=>{if(c)pass++;else{fail++;console.log('  ✗',m,d!==undefined?JSON.stringify(d):'')}};
 const rows=[];
 const CONTRAST=`(sel)=>{

@@ -27125,19 +27125,24 @@ function renderWordsLevelsHub() {
     const grid = $("wordsLevelsGrid");
     if (!grid) return;
 
-    const unlocked = StudentStore.eff(loadWordsUnlockedLevel());
+    /* كل المستويات متاحة للاختيار دائمًا (قدرات الطلاب مختلفة). الرقم المحفوظ للتقدم يبقى كما هو
+       ويُستعمل فقط لتمييز المستوى «المقترح» بصريًا، ولا يمنع فتح أي مستوى. */
+    const suggested = Math.min(
+        Math.max(StudentStore.eff(loadWordsUnlockedLevel()), 1),
+        WORDS_LEVELS.length
+    );
     const bestScores = loadWordsLevelBest();
 
     grid.innerHTML = WORDS_LEVELS.map(level => {
 
-        const isUnlocked = level.id <= unlocked;
         const isCompleted = (bestScores[level.id] || 0) >= 8;
+        const isSuggested = level.id === suggested && !isCompleted;
 
         const classes = ["words-level-card-btn"];
-        if (!isUnlocked) classes.push("locked");
         if (isCompleted) classes.push("completed");
+        if (isSuggested) classes.push("suggested");
 
-        const lockIcon = isCompleted ? "✅" : (isUnlocked ? "🔓" : "🔒");
+        const lockIcon = isCompleted ? "✅" : "";
         const bestText = bestScores[level.id]
             ? `أفضل نتيجة: ${arabicNumber(bestScores[level.id])}/١٠`
             : "";
@@ -27146,10 +27151,9 @@ function renderWordsLevelsHub() {
             <button
                 class="${classes.join(" ")}"
                 type="button"
-                ${isUnlocked
-                    ? `onclick="openWordsLevel(${level.id})"`
-                    : `onclick="showWordsLockedMessage()"`}
+                onclick="openWordsLevel(${level.id})"
             >
+                ${isSuggested ? `<span class="words-level-sug">المقترح</span>` : ""}
                 <span class="words-level-lock-icon">${lockIcon}</span>
                 <span class="words-level-icon">${level.icon}</span>
                 <span class="words-level-name">
@@ -27171,13 +27175,7 @@ function showWordsLockedMessage() {
 
 function openWordsLevel(levelId) {
 
-    const unlocked = StudentStore.eff(loadWordsUnlockedLevel());
-
-    if (levelId > unlocked) {
-        showWordsLockedMessage();
-        return;
-    }
-
+    /* لا قفل: أي مستوى يُفتح مباشرة (لا قراءة ولا كتابة لأي بيانات هنا) */
     const level = WORDS_LEVELS[levelId - 1];
     if (!level) return;
 

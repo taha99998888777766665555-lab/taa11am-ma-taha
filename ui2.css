@@ -1,361 +1,313 @@
 /* =========================================================
-   🎨 ui2.css — نموذج المرحلة الثانية (طبقة عرض فقط)
+   🎨 ui2.css — التصميم الموحّد المنقّح (طبقة عرض فقط)
    ---------------------------------------------------------
-   - لا يغيّر منطقًا ولا محتوى ولا تخزينًا. كل القواعد مشروطة بـ body[data-ui].
-   - الوضعان: data-ui="calm" (هادئ) و data-ui="play" (تفاعلي). يُختاران بـ ?ui=calm|play.
+   - تصميم واحد: جاذبية الوضع التفاعلي أساسًا، بزخرفة وظلال وحركة أقل.
+   - لا يغيّر منطقًا ولا محتوى ولا تخزينًا. كل القواعد مشروطة بـ body[data-ui="v2"].
+   - ?ui=off يعرض التصميم الحالي للمقارنة.
    - للتراجع الكامل: احذف ui2.css وui2.js وسطرَي تحميلهما من index.html.
-   - لا وميض ولا حركة مستمرة. أقصى حركة: ضغطة ١٢٠ms وظهور نجمة مرة واحدة.
+   - لا وميض ولا حركة مستمرة. أقصى حركة: ضغطة ١٢٠ms وظهور هادئ مرة واحدة لنجمة الإتقان.
    - لا يمسّ الوضع الليلي (body.dark-mode).
    ========================================================= */
 
 /* ---------- ١) الرموز المشتركة ---------- */
-body[data-ui]:not(.dark-mode) {
-    --u-ink: #1b2347;          /* ٩٫٨:١ على الأبيض */
+body[data-ui="v2"]:not(.dark-mode) {
+    --u-ink: #1b2347;          /* ١٤:١ على الأبيض */
     --u-ink2: #444d69;         /* ٨٫٣:١ */
     --u-line: #ddd5c6;
     --u-bg: #f5f2eb;
-    --u-r: 22px;
+    --u-card: #ffffff;
+    --u-r-btn: 16px;           /* الأزرار */
+    --u-r-card: 22px;          /* البطاقات */
+    --u-gap: 12px;             /* سلّم المسافات: ٨ / ١٢ / ١٦ / ٢٤ */
+    --u-edge: 0 3px 0 rgba(27, 35, 71, 0.10);   /* حافة سفلية وحيدة بدل الظلال الناعمة */
     --u-focus: #0b3d91;
-    --hm-ink: var(--u-ink);
-    --hm-ink-2: var(--u-ink2);
-    --hm-line: var(--u-line);
-    --hm-bg: var(--u-bg);
-}
 
-body[data-ui]:not(.dark-mode) :focus-visible {
-    outline: 4px solid var(--u-focus);
-    outline-offset: 3px;
-}
-
-/* ---------- ٢) الوضع الهادئ: ألوان مكتومة، بلا ظلال ثقيلة، بلا حركة ---------- */
-body[data-ui="calm"]:not(.dark-mode) {
-    --u-acc-lang: #a14a14;     /* ٥٫٨:١ */
-    --u-acc-math: #2f559f;
-    --u-acc-deen: #1d6a52;
-    --u-acc-play: #5a4694;
-    --u-acc-tools: #46506e;
-    --u-tint-lang: #f8ece3;
-    --u-tint-math: #e9eff9;
-    --u-tint-deen: #e4f1ea;
-    --u-tint-play: #efecf8;
-    --u-tint-tools: #edeff4;
-    --u-stripe: none;
-    --u-shadow: none;
-    --u-head-a: #26325f;
-    --u-head-b: #2f3e72;
-}
-
-/* ---------- ٣) الوضع التفاعلي: ألوان أحيّ، تشجيع معتدل ---------- */
-body[data-ui="play"]:not(.dark-mode) {
-    --u-acc-lang: #c2410c;     /* ٥٫٢:١ */
+    /* ألوان المجموعات */
+    --u-acc-lang: #c2410c;
     --u-acc-math: #1d5bd6;
     --u-acc-deen: #0d7656;
     --u-acc-play: #6a3dd6;
     --u-acc-tools: #3f4a6e;
-    --u-tint-lang: #ffe9dc;
-    --u-tint-math: #dfeaff;
-    --u-tint-deen: #d5f1e5;
-    --u-tint-play: #e9e0ff;
-    --u-tint-tools: #e6e9f3;
-    --u-stripe: linear-gradient(to left, #e8642f 0 25%, #2f74e6 25% 50%, #14966c 50% 75%, #7b52e6 75% 100%);
-    --u-shadow: 0 1px 0 rgba(24, 33, 77, 0.05), 0 10px 20px -14px rgba(24, 33, 77, 0.35);
-    --u-head-a: #1b2559;
-    --u-head-b: #263683;
+    /* ألوان الدروس الثلاثة: تمييز لمن لا يقرأ بعد (كما كانت الكتب الزرقاء/الخضراء/البرتقالية) */
+    --u-l1: #1d5bd6;
+    --u-l2: #0d7656;
+    --u-l3: #c2410c;
+
+    --hm-ink: var(--u-ink);
+    --hm-ink-2: var(--u-ink2);
+    --hm-line: var(--u-line);
+    --hm-bg: var(--u-bg);
+    --hm-shadow: none;
 }
 
-/* ---------- ٤) الشريط العلوي: الرئيسية في مكان ثابت وبحجم ٥٦ ---------- */
-body[data-ui]:not(.dark-mode) header.hm-header {
-    background: linear-gradient(160deg, var(--u-head-a) 0%, var(--u-head-b) 100%);
+body[data-ui="v2"]:not(.dark-mode) :focus-visible {
+    outline: 4px solid var(--u-focus);
+    outline-offset: 3px;
 }
 
-body[data-ui]:not(.dark-mode) header.hm-header::after {
-    background: var(--u-stripe);
-    height: 4px;
+/* ---------- ٢) الشريط العلوي: بلا ظل ثقيل، الرئيسية ٥٦ في مكان ثابت ---------- */
+body[data-ui="v2"]:not(.dark-mode) header.hm-header {
+    background: linear-gradient(160deg, #1d2860 0%, #2a3a82 100%);
+    box-shadow: none;
 }
-body[data-ui="calm"]:not(.dark-mode) header.hm-header::after { display: none; }
+body[data-ui="v2"]:not(.dark-mode) header.hm-header::after { height: 4px; }
 
-body[data-ui] .hm-header .hm-homebtn {
+body[data-ui="v2"] .hm-header .hm-homebtn {
     min-height: 56px;
     min-width: 56px;
     padding-inline: 18px 20px;
     font-size: 18px;
     font-weight: 800;
     color: #18214d;
+    border-radius: var(--u-r-btn);
+    box-shadow: var(--u-edge);
 }
+body[data-ui="v2"] .hm-header .profile-chip,
+body[data-ui="v2"] .hm-header .stats .hm-stat { min-height: 52px; }
+body[data-ui="v2"] .hm-header .stats .hm-stat b { font-size: 21px; }
 
-body[data-ui] .hm-header .profile-chip,
-body[data-ui] .hm-header .stats .hm-stat {
-    min-height: 52px;
-}
+/* ---------- ٣) الشاشة الرئيسية ---------- */
+body[data-ui="v2"]:not(.dark-mode) .hm-group--lang  { --hm-accent: var(--u-acc-lang);  --hm-tint: #ffe9dc; --hm-soft: #ffe9dc; }
+body[data-ui="v2"]:not(.dark-mode) .hm-group--math  { --hm-accent: var(--u-acc-math);  --hm-tint: #dfeaff; --hm-soft: #dfeaff; }
+body[data-ui="v2"]:not(.dark-mode) .hm-group--deen  { --hm-accent: var(--u-acc-deen);  --hm-tint: #d5f1e5; --hm-soft: #d5f1e5; }
+body[data-ui="v2"]:not(.dark-mode) .hm-group--play  { --hm-accent: var(--u-acc-play);  --hm-tint: #e9e0ff; --hm-soft: #e9e0ff; }
+body[data-ui="v2"]:not(.dark-mode) .hm-group--tools { --hm-accent: var(--u-acc-tools); --hm-tint: #e6e9f3; --hm-soft: #e6e9f3; }
 
-body[data-ui] .hm-header .stats .hm-stat b {
-    font-size: 21px;
-}
-
-/* ---------- ٥) الشاشة الرئيسية ---------- */
-body[data-ui]:not(.dark-mode) .hm-group--lang  { --hm-accent: var(--u-acc-lang);  --hm-tint: var(--u-tint-lang);  --hm-soft: var(--u-tint-lang); }
-body[data-ui]:not(.dark-mode) .hm-group--math  { --hm-accent: var(--u-acc-math);  --hm-tint: var(--u-tint-math);  --hm-soft: var(--u-tint-math); }
-body[data-ui]:not(.dark-mode) .hm-group--deen  { --hm-accent: var(--u-acc-deen);  --hm-tint: var(--u-tint-deen);  --hm-soft: var(--u-tint-deen); }
-body[data-ui]:not(.dark-mode) .hm-group--play  { --hm-accent: var(--u-acc-play);  --hm-tint: var(--u-tint-play);  --hm-soft: var(--u-tint-play); }
-body[data-ui]:not(.dark-mode) .hm-group--tools { --hm-accent: var(--u-acc-tools); --hm-tint: var(--u-tint-tools); --hm-soft: var(--u-tint-tools); }
-
-body[data-ui]:not(.dark-mode) .hm-title {
-    font-size: clamp(24px, 2.6vw, 34px);
-    color: var(--u-ink);
-}
-
-body[data-ui]:not(.dark-mode) .hm-group__head {
+body[data-ui="v2"]:not(.dark-mode) .hm-title { font-size: clamp(24px, 2.6vw, 34px); color: var(--u-ink); }
+body[data-ui="v2"]:not(.dark-mode) .hm-group__head {
     font-size: 19px;
     padding: 9px 18px 9px 16px;
     border-color: var(--u-line);
 }
 
-body[data-ui]:not(.dark-mode) #home .hm-tile {
-    border-width: 2px;
-    border-color: var(--u-line);
-    border-radius: var(--u-r);
-    box-shadow: var(--u-shadow);
+body[data-ui="v2"]:not(.dark-mode) #home .hm-tile {
     min-height: 168px;
-}
-
-body[data-ui]:not(.dark-mode) #home .hm-tile .hm-tile__title {
-    font-size: 21px;
-    font-weight: 800;
-    color: var(--u-ink);
-}
-
-/* هادئ: لوح الأيقونة فاتح، وحدّ البطاقة يتلوّن عند اللمس فقط */
-body[data-ui="calm"]:not(.dark-mode) #home .hm-tile { transition: none; }
-body[data-ui="calm"]:not(.dark-mode) #home .hm-tile:active { border-color: var(--hm-accent); background: var(--hm-tint); }
-
-/* تفاعلي: حدّ البطاقة بلون المجموعة، ولوح الأيقونة أغمق قليلًا (الأيقونة نفسها لا تُلوَّن)، وضغطة لطيفة */
-body[data-ui="play"]:not(.dark-mode) #home .hm-tile {
-    border-color: color-mix(in srgb, var(--hm-accent) 45%, #ffffff);
+    border: 2px solid color-mix(in srgb, var(--hm-accent) 45%, #ffffff);
+    border-radius: var(--u-r-card);
+    box-shadow: var(--u-edge);
     transition: transform 0.12s ease, background-color 0.12s ease;
 }
-body[data-ui="play"]:not(.dark-mode) #home .hm-tile .hm-plate { background: color-mix(in srgb, var(--hm-accent) 18%, #ffffff); }
-body[data-ui="play"]:not(.dark-mode) #home .hm-tile:active { transform: scale(0.97); background: var(--hm-tint); }
+body[data-ui="v2"]:not(.dark-mode) #home .hm-tile .hm-tile__title { font-size: 21px; font-weight: 800; color: var(--u-ink); }
+body[data-ui="v2"]:not(.dark-mode) #home .hm-tile .hm-plate { background: color-mix(in srgb, var(--hm-accent) 18%, #ffffff); }
+body[data-ui="v2"]:not(.dark-mode) #home .hm-tile:hover { transform: none; }
+body[data-ui="v2"]:not(.dark-mode) #home .hm-tile:active { transform: scale(0.97); background: var(--hm-tint); }
 
-/* ---------- ٦) مدخل الكلمات ---------- */
-body[data-ui]:not(.dark-mode) #wordsLevelsHub {
+/* ---------- ٤) مدخل الكلمات ---------- */
+body[data-ui="v2"]:not(.dark-mode) #wordsLevelsHub {
     border-radius: 26px;
     padding: clamp(16px, 4vw, 30px);
+    box-shadow: none;
+    border: 2px solid var(--u-line);
     font-family: var(--hm-font, system-ui, "Noto Sans Arabic", Tahoma, Arial, sans-serif);
 }
-
-body[data-ui]:not(.dark-mode) #wordsLevelsHub > h2 {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
+body[data-ui="v2"]:not(.dark-mode) #wordsLevelsHub > h2 {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
     margin: 0 0 6px;
     font-size: clamp(26px, 5vw, 34px);
     font-weight: 800;
     color: var(--u-ink);
 }
+body[data-ui="v2"] #wordsLevelsHub > h2 svg { flex: none; width: 36px; height: 36px; color: var(--u-acc-lang); }
+body[data-ui="v2"]:not(.dark-mode) .words-hub-subtitle { margin: 0 0 18px; text-align: center; font-size: 18px; color: var(--u-ink2); }
 
-body[data-ui] #wordsLevelsHub > h2 svg { flex: none; width: 36px; height: 36px; color: var(--u-acc-lang); }
-
-body[data-ui]:not(.dark-mode) .words-hub-subtitle {
-    margin: 0 0 18px;
-    text-align: center;
-    font-size: 18px;
-    color: var(--u-ink2);
-}
-
-/* بطاقات الدروس الثلاثة: موحّدة، رقم كبير بدل الإيموجي، ارتفاع ≥٨٨ */
-body[data-ui]:not(.dark-mode) .wbk-entry {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    width: 100%;
-    min-height: 92px;
-    margin: 0 0 14px;
+/* بطاقات الدروس: لون الدرس يحدّد الحدّ والشارة */
+body[data-ui="v2"]:not(.dark-mode) .wbk-entry {
+    --u-lesson: var(--u-acc-lang);
+    display: flex; align-items: center; gap: 16px;
+    width: 100%; min-height: 92px;
+    margin: 0 0 var(--u-gap);
     padding: 14px 18px;
     text-align: start;
     color: var(--u-ink);
-    background: var(--u-surface, #fff);
-    border: 2px solid var(--u-line);
-    border-radius: var(--u-r);
-    box-shadow: var(--u-shadow);
+    background: var(--u-card);
+    border: 2px solid color-mix(in srgb, var(--u-lesson) 45%, #ffffff);
+    border-radius: var(--u-r-card);
+    box-shadow: var(--u-edge);
+    transition: transform 0.12s ease, background-color 0.12s ease;
 }
+body[data-ui="v2"]:not(.dark-mode) #wbkEntry  { --u-lesson: var(--u-l1); }
+body[data-ui="v2"]:not(.dark-mode) #wbk2Entry { --u-lesson: var(--u-l2); }
+body[data-ui="v2"]:not(.dark-mode) #wbk3Entry { --u-lesson: var(--u-l3); }
+body[data-ui="v2"]:not(.dark-mode) .wbk-entry:active { transform: scale(0.98); background: color-mix(in srgb, var(--u-lesson) 10%, #ffffff); }
 
-body[data-ui]:not(.dark-mode) .wbk-entry:active { background: var(--u-tint-lang); }
-body[data-ui="play"]:not(.dark-mode) .wbk-entry { transition: transform 0.12s ease; }
-body[data-ui="play"]:not(.dark-mode) .wbk-entry:active { transform: scale(0.98); }
-
-body[data-ui] .wbk-entry-ic {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 60px;
-    height: 60px;
-    border-radius: 18px;
-    background: var(--u-tint-lang);
-    color: var(--u-acc-lang);
+body[data-ui="v2"] .wbk-entry-ic {
+    flex: none; display: grid; place-items: center;
+    width: 60px; height: 60px; border-radius: var(--u-r-btn);
+    background: var(--u-lesson, var(--u-acc-lang));
+    color: #ffffff;
 }
+body[data-ui="v2"] .wbk-entry-ic b { font-size: 30px; font-weight: 800; line-height: 1; }
+body[data-ui="v2"]:not(.dark-mode) .wbk-entry-tx strong { font-size: 20px; line-height: 1.5; color: var(--u-ink); }
+body[data-ui="v2"]:not(.dark-mode) .wbk-entry-tx small { font-size: 16px; opacity: 1; color: var(--u-ink2); }
 
-body[data-ui="play"]:not(.dark-mode) .wbk-entry-ic { background: var(--u-acc-lang); color: #fff; }
-/* تفاعلي: يُحتفظ بتمييز الدروس بالألوان (أزرق/أخضر/برتقالي كما في الكتب القديمة) لمن لا يقرأ بعد */
-body[data-ui="play"]:not(.dark-mode) #wbkEntry .wbk-entry-ic { background: #1d5bd6; }
-body[data-ui="play"]:not(.dark-mode) #wbk2Entry .wbk-entry-ic { background: #0d7656; }
-body[data-ui="play"]:not(.dark-mode) #wbk3Entry .wbk-entry-ic { background: #c2410c; }
-body[data-ui] .wbk-entry-ic svg { width: 36px; height: 36px; }
-body[data-ui] .wbk-entry-ic b { font-size: 30px; font-weight: 800; line-height: 1; }
-
-body[data-ui]:not(.dark-mode) .wbk-entry-tx strong { font-size: 20px; line-height: 1.5; color: var(--u-ink); }
-body[data-ui]:not(.dark-mode) .wbk-entry-tx small { font-size: 16px; opacity: 1; color: var(--u-ink2); }
-
-/* المستويات الأقدم: تبقى كلها، لكنها أخفّ وزنًا وتحت عنوان واضح. الأقفال تبقى كما هي (منطق التقدم لم يُمسّ) */
-body[data-ui]:not(.dark-mode) #wordsLevelsGrid::before {
-    content: "مستويات التدريب";
+/* المستويات التسعة: كلها مفتوحة، والمقترح مميَّز بشارة لا بقفل */
+body[data-ui="v2"]:not(.dark-mode) #wordsLevelsGrid::before {
+    content: "مستويات التدريب — اختر أي مستوى";
     grid-column: 1 / -1;
     margin: 10px 0 0;
-    font-size: 19px;
-    font-weight: 800;
-    color: var(--u-ink2);
+    font-size: 19px; font-weight: 800; color: var(--u-ink2);
 }
+body[data-ui="v2"]:not(.dark-mode) .words-level-card-btn {
+    position: relative;
+    min-height: 96px;
+    padding: 14px 10px 12px;
+    background: var(--u-card);
+    color: var(--u-ink);
+    border: 2px solid var(--u-line);
+    border-radius: var(--u-r-card);
+    box-shadow: var(--u-edge);
+    opacity: 1; filter: none;
+    transition: transform 0.12s ease;
+}
+body[data-ui="v2"]:not(.dark-mode) .words-level-card-btn:hover { transform: none; }
+body[data-ui="v2"]:not(.dark-mode) .words-level-card-btn:active { transform: scale(0.97); }
+body[data-ui="v2"]:not(.dark-mode) .words-level-card-btn .words-level-name { font-size: 16px; font-weight: 700; color: var(--u-ink); }
+body[data-ui="v2"]:not(.dark-mode) .words-level-card-btn .words-level-icon { color: var(--u-acc-lang); }
+body[data-ui="v2"]:not(.dark-mode) .words-level-card-btn.suggested { border-color: var(--u-acc-lang); background: #fff4ec; }
+body[data-ui="v2"]:not(.dark-mode) .words-level-card-btn.completed { border-color: var(--u-acc-deen); background: #eaf7f0; }
+body[data-ui="v2"]:not(.dark-mode) .words-level-sug {
+    position: absolute; inset-block-start: -11px; inset-inline-start: 10px;
+    padding: 2px 12px;
+    font-size: 14px; font-weight: 800;
+    color: #ffffff; background: var(--u-acc-lang);
+    border-radius: 999px;
+}
+/* لا أقفال: الشارة تظهر فقط للمستوى المكتمل */
+body[data-ui="v2"] .words-level-lock-icon:empty { display: none; }
+body[data-ui="v2"]:not(.dark-mode) .words-level-icon { font-size: 40px; line-height: 1.25; }
+body[data-ui="v2"]:not(.dark-mode) .words-level-card-btn.completed .words-level-lock-icon { background: var(--u-acc-deen); box-shadow: none; width: 30px; height: 30px; }
+body[data-ui="v2"] .words-level-lock-icon svg { width: 20px; height: 20px; color: #ffffff; }
+body[data-ui="v2"] .words-level-icon svg { width: 34px; height: 34px; }
 
-body[data-ui]:not(.dark-mode) .words-level-card-btn { min-height: 92px; }
-body[data-ui]:not(.dark-mode) .words-level-card-btn .words-level-name { font-size: 16px; font-weight: 700; color: var(--u-ink); }
-body[data-ui]:not(.dark-mode) .words-level-card-btn.locked { opacity: 1; filter: none; background: #efece4; border: 2px dashed var(--u-line); }
-body[data-ui]:not(.dark-mode) .words-level-card-btn.locked .words-level-name { color: var(--u-ink2); }
-
-/* ---------- ٧) أزرار الدروس: رجوع بحجم ٥٦ وموضع ثابت ---------- */
-body[data-ui]:not(.dark-mode) .wb3 {
+/* ---------- ٥) رئيسية الدرس الثالث: لون الدرس + ثبات الأزرار ---------- */
+body[data-ui="v2"]:not(.dark-mode) .wb3 {
     --wb3-primary: #1f5a8c;
     --wb3-ink: var(--u-ink);
     --wb3-mute: #4a5a6e;
+    --u-lesson: var(--u-l3);
 }
-
 /* عيب في التصميم الحالي: عنوان الدرس أبيض على أبيض (تباين ١:١) */
-body[data-ui]:not(.dark-mode) .wb3-head .wb3-title strong { color: var(--wb3-ink); }
-body[data-ui]:not(.dark-mode) .wb3-head .wb3-sub { color: var(--wb3-mute); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-head .wb3-title strong { color: var(--wb3-ink); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-head .wb3-sub { color: var(--wb3-mute); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-head { border-bottom: 4px solid var(--u-lesson); }
 
-body[data-ui]:not(.dark-mode) .wb3-back,
-body[data-ui]:not(.dark-mode) .wb3-teach {
-    min-height: 56px;
-    min-width: 56px;
-    border-width: 2px;
-    border-radius: 16px;
-    font-size: 1.05rem;
-    font-weight: 700;
+body[data-ui="v2"]:not(.dark-mode) .wb3-back,
+body[data-ui="v2"]:not(.dark-mode) .wb3-teach {
+    min-height: 56px; min-width: 56px;
+    border-width: 2px; border-radius: var(--u-r-btn);
+    font-size: 1.05rem; font-weight: 700;
 }
+body[data-ui="v2"]:not(.dark-mode) .wb3-btn { min-height: 60px; border-radius: var(--u-r-btn); box-shadow: var(--u-edge); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-btn.main { background: var(--u-lesson); border-color: var(--u-lesson); color: #ffffff; }
+body[data-ui="v2"]:not(.dark-mode) .wb3-step.sug .wb3-num { background: var(--u-lesson); border-color: var(--u-lesson); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-step.sug .wb3-stepbtn { border-color: var(--u-lesson); background: color-mix(in srgb, var(--u-lesson) 9%, #ffffff); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-stepbtn { border-width: 2px; border-radius: var(--u-r-card); box-shadow: var(--u-edge); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-gobtn { background: var(--u-lesson); color: #ffffff; border-radius: var(--u-r-btn); min-height: 56px; }
+body[data-ui="v2"]:not(.dark-mode) .wb3-num { width: 56px; height: 56px; }
 
-body[data-ui]:not(.dark-mode) .wb3-head { padding-block: 10px; }
+/* ---------- ٦) أبني الكلمة ---------- */
+body[data-ui="v2"]:not(.dark-mode) .wb3-q { border-radius: 26px; border-width: 2px; transition: border-color 0.3s ease, background-color 0.3s ease; }
+body[data-ui="v2"]:not(.dark-mode) .wb3-inst { color: var(--u-ink); font-weight: 800; }
 
-/* ركّز على المهمة: أثناء النشاط تُخفى النجوم من الشريط في الوضع الهادئ (تبقى في الوضع التفاعلي) */
-body[data-ui="calm"]:not(.dark-mode).u2-build #wbkL3 .wb3-starbox { display: none; }
-
-/* ---------- ٨) أبني الكلمة ---------- */
-body[data-ui]:not(.dark-mode) .wb3-q { border-radius: 26px; }
-body[data-ui]:not(.dark-mode) .wb3-inst { color: var(--u-ink); font-weight: 700; }
-body[data-ui]:not(.dark-mode) .wb3-btn { min-height: 60px; }
+/* مؤشر التقدم «السؤال ٢ من ٥»: أكبر وأوضح */
+body[data-ui="v2"]:not(.dark-mode) .wb3-qn { font-size: 1.1rem; font-weight: 800; color: var(--u-ink); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-bar { height: 16px; border-radius: 16px; background: #e4e0d6; }
+body[data-ui="v2"]:not(.dark-mode) .wb3-bar i { background: var(--u-lesson); }
 
 /* النموذج المرئي (دعم): كان رماديًا باهتًا */
-body[data-ui]:not(.dark-mode) .wb3-model,
-body[data-ui]:not(.dark-mode) .wb3-model * { color: #3b4a5e; }
+body[data-ui="v2"]:not(.dark-mode) .wb3-model,
+body[data-ui="v2"]:not(.dark-mode) .wb3-model * { color: #3b4a5e; }
 
-body[data-ui]:not(.dark-mode) .wb3-slotn { color: var(--u-ink2); font-weight: 700; }
-body[data-ui]:not(.dark-mode) .wb3-tile { border-color: var(--u-ink); box-shadow: 0 3px 0 rgba(27, 35, 71, 0.18); }
-body[data-ui="play"]:not(.dark-mode) .wb3-tile { transition: transform 0.12s ease; }
-body[data-ui="play"]:not(.dark-mode) .wb3-tile:active { transform: scale(0.95); }
+/* الخانات: مواضع مميّزة بلون الحدّ وبخلفية فاتحة موحّدة */
+body[data-ui="v2"]:not(.dark-mode) .wb3-slot { border-style: solid; border-width: 3px; border-radius: var(--u-r-card); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-slot:nth-child(1) { background: color-mix(in srgb, var(--wb3-primary) 12%, #ffffff); border-color: var(--wb3-primary); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-slot:nth-child(2) { background: color-mix(in srgb, var(--wb3-second) 13%, #ffffff); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-slot:nth-child(3) { background: color-mix(in srgb, var(--wb3-good) 12%, #ffffff); border-color: var(--wb3-good); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-slotn { color: var(--u-ink2); font-weight: 700; }
+body[data-ui="v2"]:not(.dark-mode) .wb3-tile {
+    border-color: var(--u-ink); border-radius: var(--u-r-btn);
+    box-shadow: var(--u-edge);
+    transition: transform 0.12s ease;
+}
+body[data-ui="v2"]:not(.dark-mode) .wb3-tile:active { transform: scale(0.95); }
 
-/* الخانات الثلاث: هادئ = نمط حدّ واحد متّسق (الموضع يبقى مميّزًا بلون الحدّ)، تفاعلي = تلوين أوضح */
-body[data-ui="calm"]:not(.dark-mode) .wb3-slot { border-style: solid; border-width: 3px; background: #faf8f3; }
-body[data-ui="calm"]:not(.dark-mode) .wb3-slot:nth-child(1) { border-color: var(--wb3-primary); }
-body[data-ui="calm"]:not(.dark-mode) .wb3-slot:nth-child(3) { border-color: var(--wb3-good); }
-body[data-ui="play"]:not(.dark-mode) .wb3-slot:nth-child(1) { background: color-mix(in srgb, var(--wb3-primary) 14%, #ffffff); }
-body[data-ui="play"]:not(.dark-mode) .wb3-slot:nth-child(2) { background: color-mix(in srgb, var(--wb3-second) 16%, #ffffff); }
-body[data-ui="play"]:not(.dark-mode) .wb3-slot:nth-child(3) { background: color-mix(in srgb, var(--wb3-good) 14%, #ffffff); }
-body[data-ui="play"]:not(.dark-mode) .wb3-btn.listen { background: var(--wb3-tint); border-width: 2.5px; }
+/* تغذية راجعة هادئة: إجابة صحيحة = حدّ أخضر، بمساعدة = حدّ كهرماني (بلا وميض) */
+body[data-ui="v2"]:not(.dark-mode) .wb3-q.good { border-color: var(--wb3-good); background: color-mix(in srgb, var(--wb3-good) 5%, #ffffff); }
+body[data-ui="v2"]:not(.dark-mode) .wb3-q.soft { border-color: #b8860b; }
 
-/* التقدم: شريط أعرض وأوضح */
-body[data-ui]:not(.dark-mode) .wb3-bar { height: 14px; border-radius: 14px; }
+/* نجمة الإتقان (الصنف u2-star يضيفه ui2.js فقط حين تظهر رسالة النجمة الفعلية): هالة ذهبية ثابتة تظهر مرة واحدة */
+body[data-ui="v2"]:not(.dark-mode) .wb3-q.u2-star {
+    border-color: #d99a00;
+    background: color-mix(in srgb, #ffcb4f 14%, #ffffff);
+    box-shadow: 0 0 0 5px rgba(255, 203, 79, 0.45);
+    animation: u2Glow 0.5s ease-out 1;
+}
+@keyframes u2Glow { from { box-shadow: 0 0 0 0 rgba(255, 203, 79, 0); } to { box-shadow: 0 0 0 5px rgba(255, 203, 79, 0.45); } }
 
-/* وضع التركيز أثناء «أبني الكلمة»: الشريط العلوي يتقلّص إلى صف واحد (الرئيسية فقط في مكانها الثابت)
-   ليظهر الحرف والخانات والصينية دون تمرير على الجوال. يعود كاملًا بمجرد الخروج من النشاط. */
+/* عدّاد النجوم: كان الرقم أبيض على خلفية فاتحة (الوراثة من الرأس) */
+body[data-ui="v2"]:not(.dark-mode) .wb3-starbox,
+body[data-ui="v2"]:not(.dark-mode) .wb3-starbox b { color: var(--u-ink); font-weight: 800; }
+body[data-ui="v2"]:not(.dark-mode) .wb3-starbox svg { color: #c98e00; }
+
+/* وضع التركيز على الجوال أثناء «أبني الكلمة»: شريط واحد ثابت = الرئيسية + القائمة + النجوم.
+   الرأس ينكمش إلى صف واحد، فيظهر الحرف والخانات والصينية دون تمرير. يعود كاملًا عند الخروج. */
 @media (max-width: 599px) {
-    body[data-ui]:not(.dark-mode).u2-build header.hm-header { position: sticky; top: 0; z-index: 60; padding: 5px 12px 5px; border-radius: 0 0 18px 18px; }
-    body[data-ui]:not(.dark-mode).u2-build header.hm-header .hm-brand,
-    body[data-ui]:not(.dark-mode).u2-build header.hm-header .profile-chip,
-    body[data-ui]:not(.dark-mode).u2-build header.hm-header .stats { display: none; }
-    body[data-ui]:not(.dark-mode).u2-build .hm-header__inner { display: flex; justify-content: flex-start; }
-    /* الرئيسية والرجوع ثابتان في مكانهما مهما مُرِّر النشاط: شريط واحد بارتفاع الشريط العلوي.
-       شريط الدرس يتراكب فوق الشريط العلوي (الرئيسية يمينًا ثم «قائمة الدرس» بجانبها). */
-    body[data-ui]:not(.dark-mode).u2-build #wbkL3 .wb3-head {
+    body[data-ui="v2"]:not(.dark-mode).u2-build header.hm-header { position: sticky; top: 0; z-index: 60; padding: 5px 12px 5px; border-radius: 0 0 18px 18px; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build header.hm-header::after { display: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build header.hm-header .hm-brand,
+    body[data-ui="v2"]:not(.dark-mode).u2-build header.hm-header .profile-chip,
+    body[data-ui="v2"]:not(.dark-mode).u2-build header.hm-header .stats { display: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build .hm-header__inner { display: flex; justify-content: flex-start; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head {
         position: fixed; top: 0; left: 0; right: 0; z-index: 61; width: auto;
-        height: var(--u-hh, 74px); margin: 0;
-        padding: 0 calc(var(--u-homew, 150px) + 24px) 0 12px;
+        height: var(--u-hh, 66px); margin: 0;
+        padding: 0 calc(var(--u-homew, 138px) + 24px) 0 12px;
         background: transparent; border: 0; box-shadow: none;
-        pointer-events: none; flex-wrap: nowrap; align-items: center; align-content: center; justify-content: flex-start; gap: 0;
+        pointer-events: none; flex-wrap: nowrap; align-items: center; align-content: center; justify-content: flex-start; gap: 8px;
     }
-    body[data-ui]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-back { pointer-events: auto; background: #ffffff; white-space: nowrap; flex: none; }
-    body[data-ui]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-starbox,
-    body[data-ui]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-teach { display: none; }
-    body[data-ui]:not(.dark-mode).u2-build #wbkL3 .wb3-title { display: none; }
-    /* نستعيد فراغ الحاوية العلوي (٢٠px) ليبقى الحرف والخانات والصينية داخل الشاشة ٣٦٠×٦٤٠ */
-    body[data-ui]:not(.dark-mode).u2-build #wbkL3 { margin-top: -14px; }
-    body[data-ui]:not(.dark-mode).u2-build #wbkL3 .wb3-body { padding-top: 0; }
-    body[data-ui]:not(.dark-mode).u2-build #wbkL3 .wb3-q { padding-block: 10px; gap: 10px; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-back { pointer-events: auto; background: #ffffff; white-space: nowrap; flex: none; }
+    /* تقدم الطالب لا يختفي: عدّاد النجوم يبقى في الشريط الثابت */
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-starbox { display: inline-flex; flex: none; margin: 0; min-height: 48px; padding: 4px 12px; background: #ffffff; border: 2px solid var(--u-line); }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-starbox span { display: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-teach { display: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-title { display: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 { margin-top: -14px; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-body { padding-top: 0; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-q { padding-block: 10px; gap: 10px; }
 }
 
-/* ---------- ٩) نشاط الحروف على الجوال: لا تتداخل همزة «أَ» مع صف الأزرار ---------- */
-body[data-ui] .ltr-big-letter {
+/* ---------- ٧) نشاط الحروف على الجوال: لا تتداخل همزة «أَ» مع صف الأزرار ---------- */
+body[data-ui="v2"] .ltr-big-letter {
     line-height: 1.7;          /* كان ١: الهمزة والفتحة تخرجان فوق صندوق الحرف */
     margin: 4px 0 2px;
     padding-top: 0.12em;
     overflow: visible;
 }
+body[data-ui="v2"] .ltr-toolbar { margin-bottom: 14px; }
+@media (max-width: 420px) { body[data-ui="v2"] .ltr-toolbar { gap: 6px; } }
 
-body[data-ui] .ltr-toolbar { margin-bottom: 14px; }
-
-@media (max-width: 420px) {
-    body[data-ui] .ltr-toolbar { gap: 6px; }
-}
-
-/* ---------- ١٠) تقليل الحركة ---------- */
+/* ---------- ٨) تقليل الحركة ---------- */
 @media (prefers-reduced-motion: reduce) {
-    body[data-ui] *,
-    body[data-ui] *::before,
-    body[data-ui] *::after {
+    body[data-ui="v2"] *, body[data-ui="v2"] *::before, body[data-ui="v2"] *::after {
         transition: none !important;
-        animation-duration: 0.01ms !important;
+        animation: none !important;
     }
 }
 
-/* ---------- ١١) مبدّل المعاينة (للمراجعة فقط؛ يُحذف عند الاعتماد) ---------- */
+/* ---------- ٩) مبدّل المعاينة (للمراجعة فقط؛ يُحذف عند الاعتماد) ---------- */
 .u2-switch {
-    position: fixed;
-    inset-block-end: 10px;
-    inset-inline-start: 10px;
-    z-index: 2000;
-    display: flex;
-    gap: 4px;
-    padding: 4px;
+    position: fixed; inset-block-end: 10px; inset-inline-start: 10px; z-index: 2000;
+    display: flex; gap: 4px; padding: 4px;
     font-family: system-ui, "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    background: #ffffff;
-    border: 2px solid #1b2347;
-    border-radius: 999px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    background: #ffffff; border: 2px solid #1b2347; border-radius: 999px;
 }
-
 .u2-switch button {
-    min-height: 44px;
-    min-width: 72px;
-    padding: 0 14px;
-    font: inherit;
-    font-size: 15px;
-    font-weight: 800;
-    color: #1b2347;
-    background: transparent;
-    border: 0;
-    border-radius: 999px;
-    cursor: pointer;
+    min-height: 44px; min-width: 72px; padding: 0 14px;
+    font: inherit; font-size: 15px; font-weight: 800; color: #1b2347;
+    background: transparent; border: 0; border-radius: 999px; cursor: pointer;
 }
-
 .u2-switch button[aria-pressed="true"] { color: #fff; background: #1b2347; }
 body.u2-shots .u2-switch { display: none; }
-/* لا يغطّي محتوى النشاط: يختفي أثناء «أبني الكلمة» وتشغيل نشاط الحروف (يبقى في الرئيسية والكلمات وقائمة الدرس) */
+/* لا يغطّي محتوى النشاط: يختفي أثناء «أبني الكلمة» وتشغيل نشاط الحروف */
 body.u2-build .u2-switch,
-body:has(#letters.active #letterDetailCard[data-ltr-mode="run"]) .u2-switch { display: none; }
+body.u2-run .u2-switch { display: none; }

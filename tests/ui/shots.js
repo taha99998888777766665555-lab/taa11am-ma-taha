@@ -13,6 +13,7 @@ const only=(process.env.VPS||Object.keys(VPS).join(',')).split(',');
   const shot=async n=>{await p.evaluate(()=>window.scrollTo(0,0));await p.waitForTimeout(500);await p.screenshot({path:`${OUT}/${tag}_${n}.png`})};
   await shot('1home');
   await p.evaluate(()=>showScreen('words'));await shot('2words');
+  await p.evaluate(()=>document.getElementById('wordsLevelsGrid').scrollIntoView({block:'start'}));await p.waitForTimeout(500);await p.screenshot({path:`${OUT}/${tag}_2bLevels.png`});
   await p.evaluate(()=>wbk3Open());await shot('3lesson3');
   await p.evaluate(()=>{wbk3State.scope='all';const q=wbk3Internals.load();q.lv={hear:1,build:1,missing:1};wbk3Internals.save(q);wbk3Internals.startActivity('build',{items:[{id:'w01',type:'build'}]})});
   await p.waitForSelector('#wb3Tray .wb3-tile').catch(()=>{});await shot('4build');
