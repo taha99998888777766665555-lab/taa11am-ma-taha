@@ -22012,7 +22012,7 @@ function renderProfileStudentCard() {
             <div class="teacher-progress-row">
                 <span>📖 الكلمات</span>
                 <b>${arabicNumber(profile.counters.words)}</b>
-                <small class="teacher-progress-sub">مستوى مفتوح ${arabicNumber(profile.unlockedLevels.words)}/٩</small>
+                <small class="teacher-progress-sub">المستوى المقترح ${arabicNumber(Math.min(Math.max(profile.unlockedLevels.words, 1), 9))}/٩ — كل المستويات مفتوحة</small>
             </div>
             <div class="teacher-progress-row">
                 <span>🔢 الأرقام</span>
@@ -22303,7 +22303,7 @@ function renderTeacherStats() {
 
     const wordsSub = $("teacherWordsSub");
     if (wordsSub) {
-        wordsSub.textContent = "مستوى مفتوح " + arabicNumber(profile.unlockedLevels.words) + "/٩";
+        wordsSub.textContent = "المستوى المقترح " + arabicNumber(Math.min(Math.max(profile.unlockedLevels.words, 1), 9)) + "/٩ — كل المستويات مفتوحة";
     }
 
     const numbersSub = $("teacherNumbersSub");
