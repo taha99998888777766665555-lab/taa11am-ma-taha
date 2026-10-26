@@ -34,7 +34,16 @@
         var a = document.querySelector(".screen.active");
         return a ? a.id : "home";
     }
-    function mk(i, screen) { return { taNav: 1, sid: SID, idx: i, screen: screen }; }
+    /* شاشات تُعرَض كاملة بمجرد showScreen (قوائم الأقسام). غيرها (دروس، ألعاب، لعب) تحتاج دالة بدء */
+    var SAFE = { home: 1, letters: 1, words: 1, writing: 1, numbers: 1, addition: 1, subtraction: 1, quran: 1, hadith: 1, duas: 1, games: 1, matchingModes: 1, rewards: 1, dailyQuest: 1, teacher: 1, profile: 1, settings: 1 };
+    function mk(i, screen) { return { taNav: 1, sid: SID, idx: i, screen: screen, path: S.slice(0, i).concat(screen) }; }
+    /* أقرب شاشة آمنة في مسار الإدخال (الأمام/الرجوع إلى إدخال نشاط لا يمكن إعادة بنائه) */
+    function safeFor(st) {
+        if (SAFE[st.screen]) return st.screen;
+        var p = st.path || [];
+        for (var k = p.length - 1; k >= 0; k--) if (SAFE[p[k]]) return p[k];
+        return "home";
+    }
     function sync() {
         try { document.body.classList.toggle("ta-inner", cur() !== "home"); } catch (e) { /* لا شيء */ }
     }
@@ -168,8 +177,15 @@
                     return;
                 }
             }
-            /* رجوع عادي (أو قفز عدة خطوات): نعرض الشاشة المقصودة */
-            var T = st.screen;
+            /* رجوع عادي (أو أمام / قفز عدة خطوات): نعرض الشاشة المقصودة، أو أقرب شاشة قائمة إن كانت نشاطًا لا يُعاد بناؤه */
+            var T = safeFor(st);
+            if (T !== st.screen && T === C && step < 0) {   /* أمام إلى نشاط قديم لا أثر مرئي له: نلغيه */
+                busy = true; clearTimeout(busyTimer);
+                busyTimer = setTimeout(function () { if (busy) finishBusy(history.state); }, 900);
+                log("cancel forward to " + st.screen);
+                try { history.go(-1); } catch (e) { busy = false; }
+                return;
+            }
             idx = st.idx; S.length = idx + 1;
             orig(T);
             setHere(cur());
