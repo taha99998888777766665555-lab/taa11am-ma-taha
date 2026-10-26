@@ -608,6 +608,46 @@ body.calm-mode #home .hm-tile:active {
 body.theme-space .hm-title { color: #ffffff; }
 
 /* ========== نهاية كتلة الهوية الجديدة ========== */
+
+/* ===== زر «الرئيسية» الثابت في الشريط العلوي (الشاشات الداخلية فقط) ===== */
+.hm-header .hm-homebtn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 50px;
+    min-width: 50px;
+    margin: 0;
+    padding: 6px 18px 6px 14px;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #18214d;
+    background: #ffffff;
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+}
+.hm-header .hm-homebtn svg { flex: none; width: 26px; height: 26px; }
+.hm-header .hm-homebtn:hover { background: #eef1fb; }
+.hm-header .hm-homebtn:active { transform: translateY(1px); box-shadow: none; }
+.hm-header .hm-homebtn:focus-visible { outline: 3px solid #ffd54a; outline-offset: 2px; }
+body.ta-inner .hm-header .hm-homebtn { display: inline-flex; }
+body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
+
+@media (max-width: 599px) {
+    body.ta-inner .hm-header__inner {
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "chip stats"
+            "home brand";
+    }
+    .hm-header .hm-homebtn { grid-area: home; justify-self: start; }
+}
 </style>
 
 </head>
@@ -714,6 +754,10 @@ body.theme-space .hm-title { color: #ffffff; }
         <rect x="9.75" y="8.5" width="4.5" height="12" rx="1.4" fill="currentColor" opacity=".8"/>
         <rect x="16" y="3.5" width="4.5" height="17" rx="1.4" fill="currentColor"/>
     </symbol>
+    <symbol id="hm-i-home" viewBox="0 0 24 24">
+        <path d="M3.5 11.2L12 4l8.5 7.2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 10v9.2h4.2v-5.4h3.6v5.4H18V10" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
     <symbol id="hm-i-go" viewBox="0 0 24 24">
         <path d="M14.5 6.5L9 12l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
@@ -736,6 +780,11 @@ body.theme-space .hm-title { color: #ffffff; }
 >
     <span id="headerAvatarDisplay">🦁</span>
     <span id="headerNameDisplay">أهلًا بك!</span>
+</button>
+
+<button class="hm-homebtn" id="hmHomeBtn" type="button" onclick="showScreen('home')" aria-label="الرئيسية">
+    <svg width="26" height="26" aria-hidden="true" focusable="false"><use href="#hm-i-home"/></svg>
+    <span>الرئيسية</span>
 </button>
 
 <div class="hm-brand">
@@ -4979,6 +5028,7 @@ body.theme-space .hm-title { color: #ffffff; }
 <script src="wbk2.js"></script>
 <script src="wbk3-data.js"></script>
 <script src="wbk3.js"></script>
+<script src="nav.js"></script>
 
 </body>
 
