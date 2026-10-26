@@ -1001,7 +1001,7 @@
         });
         F.area.appendChild(tray);
         /* شاشة قصيرة (جوال صغير): نُظهر بطاقة السؤال كاملة (الخانات والبطاقات) دون أن يبحث الطفل عنها بالتمرير */
-        try { if (window.innerHeight <= 720 && !test) { var y0 = F.box.getBoundingClientRect().top + (window.pageYOffset || 0) - 6; if (y0 > 0) window.scrollTo(0, y0); } } catch (e) { /* لا شيء */ }
+        try { if (window.innerHeight <= 720 && !test) { var y0 = -(window.__taStickyTop || 0) + F.box.getBoundingClientRect().top + (window.pageYOffset || 0) - 6; if (y0 > 0) window.scrollTo(0, y0); } } catch (e) { /* لا شيء */ }
 
         function paint() {
             slotEls.forEach(function (se, i) {

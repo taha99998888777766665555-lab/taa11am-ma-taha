@@ -24,7 +24,7 @@ const PORT=8975;
  execSync(`fuser -k ${PORT}/tcp || true`);await p.waitForTimeout(600);
  sv=spawn('python3',['-m','http.server',PORT,'--bind','127.0.0.1'],{cwd:process.cwd(),stdio:'ignore'});await p.waitForTimeout(1200);
  await p.reload();await p.waitForTimeout(4500);await p.reload();await p.waitForTimeout(4500);
- ks=await p.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v43','updated: old v41 cache removed, only v43',ks.join());
+ ks=await p.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v44','updated: old v41 cache removed, only v44',ks.join());
  ok(await p.evaluate(()=>!!document.getElementById('wbk3Entry')&&!!document.getElementById('wbk2Entry')),'lesson 3 entry present after update');
  const after=await snap();
  ok(Object.keys(before).filter(k=>/app_stars/.test(k)).every(k=>before[k]===after[k]),'each student app-stars value identical before/after');

@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v43";
+const CACHE_VERSION = "taha-app-v44";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -18,6 +18,8 @@ const APP_SHELL = [
     "./wbk3.js",
     "./wbk3.css",
     "./nav.js",
+    "./ui2.css",
+    "./ui2.js",
     "./assets/fonts/readex-pro/readex-pro-arabic-400-normal.woff2",
     "./assets/fonts/readex-pro/readex-pro-arabic-600-normal.woff2",
     "./manifest.json",
