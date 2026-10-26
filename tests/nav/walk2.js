@@ -55,7 +55,7 @@ const PATHS={
    const vis=await p.evaluate(()=>{const b=document.getElementById('hmHomeBtn');const r=b.getBoundingClientRect();const h=getComputedStyle(document.querySelector('header')).display;return {w:Math.round(r.width),h:Math.round(r.height),shown:r.width>0,hdr:h}});
    if(vis.hdr!=='none'){
      L.ok(vis.shown&&vis.w>=44&&vis.h>=44,`${name}@${vp}: زر الرئيسية ظاهر وحجمه ≥٤٤`,vis);
-     await p.locator('#hmHomeBtn').tap({timeout:3000}).catch(async()=>{L.ok(false,`${name}@${vp}: تعذّر لمس زر الرئيسية`)});
+     await p.locator('#hmHomeBtn')[L.VPS[vp].touch?'tap':'click']({timeout:3000}).catch(async()=>{L.ok(false,`${name}@${vp}: تعذّر لمس زر الرئيسية`)});
      await p.waitForTimeout(500);
      const s2=await L.st(p);
      L.ok(s2.scr==='home'&&s2.stack.length===1,`${name}@${vp}: الرئيسية تطوي المسار`,s2);

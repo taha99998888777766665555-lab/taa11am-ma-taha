@@ -172,7 +172,7 @@
             var T = st.screen;
             idx = st.idx; S.length = idx + 1;
             orig(T);
-            if (cur() !== T) setHere(cur());
+            setHere(cur());
             log("pop " + C + "→" + cur());
         } finally {
             popping = false;
