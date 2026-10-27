@@ -132,6 +132,12 @@
                 if (!Array.isArray(o.tests)) o.tests = [];
                 if (typeof o.sessions !== "number") o.sessions = 0;
                 o.testStar = !!o.testStar;
+                /* الجملتان المحذوفتان (s01, s02): تُزال من بيانات الدرس تمامًا؛ عدّاد نجوم الدرس يُعاد من الجمل المتبقية فقط.
+                   نجوم التطبيق العامة (addStars) لا تُمسّ */
+                var dirty = false;
+                Object.keys(o.syl).forEach(function (k) { if (!BYID[k]) { delete o.syl[k]; dirty = true; } });
+                Object.keys(o.starred).forEach(function (k) { if (!BYID[k]) { delete o.starred[k]; dirty = true; } });
+                if (dirty) { o.stars = Object.keys(o.starred).length + (o.testStar ? 1 : 0); try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { /* لا شيء */ } }
                 return o;
             }
         } catch (e) { /* لا شيء */ }
@@ -559,7 +565,8 @@
         if (F.box) F.box.classList.add(ok ? "good" : "soft");
         var supported = (key === "buildm");
         if (F.msg) setMsg(F, ok ? (res === "f" ? (supported ? "أحسنت! رتّبتَ الجملة بمساعدة النموذج." : "أحسنت! أصبتَ من أول مرة.") : "أحسنت! صحّحتَ بنفسك.") + (star ? " ★ نجمة إتقان جديدة!" : "") : "لا بأس، هذه هي الجملة. سنراها مرة أخرى.");
-        if (res === "f") praise(); else if (res === "s") playKey("صحيح");
+        /* «أستمع وأختار»: تعزيز بصري فقط بلا أي صوت تلقائي بعد الإجابة */
+        if (R.type !== "hear") { if (res === "f") praise(); else if (res === "s") playKey("صحيح"); }
         if (F.acts) {
             F.acts.innerHTML = "";
             F.acts.appendChild(btn("main", R.i + 1 < R.items.length ? "التالي" : "النتيجة", go));
@@ -758,7 +765,7 @@
             if (oid === id) {
                 locked = true; ob.classList.add("right");
                 if (test) { ctx.done("ok", {}); return; }
-                later(function () { playSentence(s, null, NORMAL); }, 150);
+                /* لا إعادة نطق تلقائية بعد الإجابة: تعزيز بصري فقط، وزر الاستماع اختياري */
                 var res = revealed ? "r" : (hinted ? "a" : (wrongs ? "s" : "f"));
                 ctx.done(res, { wrongs: wrongs, replays: replays });
                 return;
@@ -767,13 +774,11 @@
             ob.classList.add("fade"); ob.disabled = true; ob.setAttribute("aria-disabled", "true");
             if (test) { locked = true; ctx.done("no", {}); return; }
             if (wrongs === 1) {
-                setMsg(F, "اسمع مرة أخرى، وانظر إلى الكلمتين بالترتيب من اليمين.");
-                later(function () { playSentence(s, null, SLOW); }, 250);
+                setMsg(F, "حاول مرة أخرى. اضغط «اسمع الجملة» إن أردت، وانظر إلى الكلمتين بالترتيب من اليمين.");
             } else if (!hinted) {
                 hinted = true;
                 setMsg(F, "تلميح: تبدأ الجملة بهذه الكلمة.");
                 var hl = unitEl({ text: s.u1.word }, "hintl"); hl.id = "wb4Hint"; F.area.insertBefore(hl, box);
-                playUnit(s.u1);
             }
             if (!helpB) {
                 helpB = btn("ghost", "ساعدني", function () {

@@ -21,7 +21,7 @@ const ok=L.ok;
  execSync(`fuser -k ${PORT}/tcp || true`);await p.waitForTimeout(600);
  sv=spawn('python3',['-m','http.server',PORT,'--bind','127.0.0.1'],{cwd:NEW,stdio:'ignore'});await p.waitForTimeout(1200);
  await p.reload();await p.waitForTimeout(4500);await p.reload();await p.waitForTimeout(4500);
- ks=await p.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v46','بعد الترقية v44 فقط',ks.join());
+ ks=await p.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v47','بعد الترقية v44 فقط',ks.join());
  ok(await p.evaluate(()=>!!window.taNav&&!!document.getElementById('hmHomeBtn')&&!!document.querySelector('.u2-switch')),'nav.js وزر الرئيسية وui2 موجودة');
  const after=await snap();const diff=Object.keys(before).filter(k=>after[k]!==before[k]);
  ok(diff.length===0,'لا تغيّر في أي مفتاح تخزين قديم ('+Object.keys(before).length+' مفتاحًا)',diff.join());

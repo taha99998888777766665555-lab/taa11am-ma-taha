@@ -43,27 +43,27 @@ async function runSession(p,startIdx,stage,opts={}){
  ok(await p.evaluate(()=>!document.querySelector('#wb4Path [disabled], #wb4Path .locked')),'no locks');
  // library: ten sentences, book order
  await p.click('#wb4LibBtn');
- ok(await p.evaluate(()=>document.querySelectorAll('.wb4-cell').length)===10,'library has 10');
+ ok(await p.evaluate(()=>document.querySelectorAll('.wb4-cell').length)===8,'library has 8');
  // ---- build: only two units, و attached ----
  let seen=await runSession(p,0,'build');
  ok(seen.every(i=>i&&i.slots===2&&i.tiles.length===2),'build has exactly 2 slots and 2 tiles');
  ok(seen.every(i=>i.tiles.some(t=>t.startsWith('وَ')&&t.length>3)&&!i.tiles.some(t=>t.replace(/\s/g,'')==='وَ')),'و attached to second word, never a separate tile',JSON.stringify(seen));
  let st=await stars(p);ok(st===0,'first model-assisted build gives no star (support, not evidence)',String(st));
  ok(await p.evaluate(()=>wbk4Internals.load().lv.build)===2,'build promoted to unassisted level');
- seen=await runSession(p,5,'build');
+ seen=await runSession(p,3,'build');
  ok(seen.every(i=>i.slots===2&&i.tiles.length===2),'build lv2 2 units');
  st=await stars(p);ok(st===0,'one independent evidence is not enough for a star',String(st));
- // hear s06-s10 (independent) -> star each
- await runSession(p,5,'hear');
- st=await stars(p);ok(st===5,'five stars after 2 independent activities on s06-s10',String(st));
- await runSession(p,5,'hear');await runSession(p,5,'build');
+ // hear last five sentences (independent) -> star each
+ await runSession(p,3,'hear');
+ st=await stars(p);ok(st===5,'five stars after 2 independent activities on last five sentences',String(st));
+ await runSession(p,3,'hear');await runSession(p,3,'build');
  ok(await stars(p)===5,'no repeated reward for same sentences');
  // hear/missing for s01-s05: no star (no unassisted build)
  await runSession(p,0,'hear');await runSession(p,0,'missing');
  ok(await stars(p)===5,'hear+missing without independent build give no star');
  // wrong answers: no lock, retry possible, no penalty
  const before=await p.evaluate(()=>JSON.stringify(wbk4Internals.load().starred));
- await runSession(p,0,'hear',{wrong:true});await runSession(p,0,'missing',{wrong:true});await runSession(p,5,'build',{wrong:true});
+ await runSession(p,0,'hear',{wrong:true});await runSession(p,0,'missing',{wrong:true});await runSession(p,3,'build',{wrong:true});
  ok(await p.evaluate(()=>JSON.stringify(wbk4Internals.load().starred))===before&&await stars(p)===5,'mistakes remove nothing and add nothing wrongly');
  // ---- read: teacher confirmation ----
  await p.evaluate(()=>wbk4Internals.renderLibrary());await p.click('.wb4-cell:nth-child(1)');await p.click('#wb4StageRow [data-stage="read"]');
@@ -78,7 +78,7 @@ async function runSession(p,startIdx,stage,opts={}){
  ok(await stars(p)===6,'teacher-confirmed independent read gives star');
  for(let i=1;i<5;i++){await p.waitForSelector('#wb4Read');await p.click('#wb4Read');await p.click('#wb4ReadOk');await p.waitForTimeout(150);}
  await p.waitForSelector('#wb4Summary');
- ok(await stars(p)===10,'five reads confirmed -> 10 stars total',String(await stars(p)));
+ ok(await stars(p)===8,'five reads confirmed -> 8 stars (all 8 sentences)',String(await stars(p)));
  // helped read cannot be independent
  await p.evaluate(()=>wbk4Internals.renderLibrary());await p.click('.wb4-cell:nth-child(1)');await p.click('#wb4StageRow [data-stage="read"]');
  await p.click('#wb4ReadHelp');await p.click('#wb4Read');
@@ -94,18 +94,18 @@ async function runSession(p,startIdx,stage,opts={}){
  ok(types.join()==='build,hear,missing,build,read','test has 5 varied questions',types.join());
  await p.waitForSelector('#wb4TestResult');
  ok(await p.evaluate(()=>/بانتظار/.test(document.querySelector('#wb4TestResult h2').textContent)),'test waits for teacher confirmation');
- ok(await stars(p)===10,'no test star before confirmation');
+ ok(await stars(p)===8,'no test star before confirmation');
  await p.click('.rok');await p.waitForTimeout(300);
- ok(await stars(p)===11&&await p.evaluate(()=>wbk4Internals.load().testStar),'test star once after confirm',String(await stars(p)));
+ ok(await stars(p)===9&&await p.evaluate(()=>wbk4Internals.load().testStar),'test star once after confirm',String(await stars(p)));
  // second test: no extra star
  await p.click('#wb4TestResult .wb3-btn.main');
  for(let i=0;i<5;i++){await p.waitForTimeout(300);const t=await qtype(p);if(t==='read')await p.click('#wb4Read');else await solve(p,t);}
  await p.waitForSelector('#wb4TestResult');await p.click('.rok').catch(()=>{});await p.waitForTimeout(300);
- ok(await stars(p)===11,'second test passes without extra star',String(await stars(p)));
+ ok(await stars(p)===9,'second test passes without extra star',String(await stars(p)));
  // teacher panel
  await p.evaluate(()=>wbk4Internals.renderHome());await p.click('#wb4Teacher');await p.waitForTimeout(200);
  if(await p.$('#wb4GateInput')){await p.fill('#wb4GateInput','1234');await p.keyboard.press('Enter');}
- await p.waitForSelector('#wb4Table');ok(await p.evaluate(()=>document.querySelectorAll('#wb4Table tr').length)===11,'teacher table has 10 rows');
+ await p.waitForSelector('#wb4Table');ok(await p.evaluate(()=>document.querySelectorAll('#wb4Table tr').length)===9,'teacher table has 8 rows');
  // ---- navigation ----
  await p.evaluate(()=>wbk4Internals.renderHome());
  await p.click('#wb4Back');await p.waitForTimeout(300);
