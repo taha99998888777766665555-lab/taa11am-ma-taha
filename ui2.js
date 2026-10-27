@@ -29,7 +29,7 @@
 
     var BOOK = '<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v15h5.5a1.5 1.5 0 0 1 1.5 1.5z"/></svg>';
     var CHECK = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.4l2.7 2.7L16 9.6"/></svg>';
-    var NUM = { wbkEntry: "١", wbk2Entry: "٢", wbk3Entry: "٣" };
+    var NUM = { wbkEntry: "١", wbk2Entry: "٢", wbk3Entry: "٣", wbk4Entry: "٤" };
     var EMOJI_ICON = /^[\u{1F300}-\u{1FAFF}☀-➿]/u;   /* الأيقونات الإيموجي فقط؛ رموز الحروف والمقاطع محتوى فلا تُمسّ */
 
     function decorate() {
@@ -92,7 +92,7 @@
         Object.defineProperty(window, "__taStickyTop", {
             configurable: true,
             get: function () {
-                if (mode === "off" || innerWidth > 599 || !document.querySelector("#wbkL3.active #wb3Q")) return 0;
+                if (mode === "off" || innerWidth > 599 || !document.querySelector("#wbkL3.active #wb3Q, #wbkL4.active #wb4Q")) return 0;
                 body.classList.add("u2-build");   /* تطبيق وضع التركيز الآن (قبل قياس الموضع) كي لا يتأخر إلى المراقِب */
                 var hb = document.getElementById("hmHomeBtn");
                 return (hb ? hb.offsetHeight : 56) + 10;
@@ -129,14 +129,14 @@
 
     /* أصناف حالة على body بدل محدّدات :has الثقيلة: u2-build أثناء «أبني الكلمة»، u2-run أثناء تشغيل نشاط الحروف */
     function syncState() {
-        body.classList.toggle("u2-build", !!document.querySelector("#wbkL3.active #wb3Q"));
+        body.classList.toggle("u2-build", !!document.querySelector("#wbkL3.active #wb3Q, #wbkL4.active #wb4Q"));
         body.classList.toggle("u2-run", !!document.querySelector('#letters.active #letterDetailCard[data-ltr-mode="run"]'));
     }
 
     buildSwitch();
     apply(mode);
     /* مراقبة محصورة في حاويات محددة فقط (لا مراقبة عامة للصفحة، حفاظًا على الأداء) */
-    ["wbkL2", "wbkL3"].forEach(function (id) {
+    ["wbkL2", "wbkL3", "wbkL4"].forEach(function (id) {
         var c = document.getElementById(id);
         if (c) new MutationObserver(function () { watchBacks(); watchStar(); syncState(); }).observe(c, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
     });

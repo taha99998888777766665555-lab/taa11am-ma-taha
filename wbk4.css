@@ -1,0 +1,98 @@
+/* الدرس الرابع «أقرأ جملًا من كلمتين» — تنسيق إضافي فوق wbk3.css (يعيد استعمال أصناف wb3-*) ويقتصر على #wbkL4 وأصناف wb4-.
+   لا يمسّ الدروس الأخرى. */
+#wbkL4 { --wb3-third: #1d7a6a; --wb4-w2: var(--wb3-second); }
+
+/* الجملة: وحدتان بلونين، تلتفّان في سطرين إن ضاق العرض (الأولى أولًا من اليمين) */
+.wb3-syl.wb4-sent { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .35em; white-space: normal; line-height: 1.7; }
+.wb4-sent .wb4-u1, .wb4-sent .wb4-u2 { white-space: nowrap; }
+.wb4-sent .wb4-u1 { color: var(--wb3-primary); }
+.wb4-sent .wb4-u2 { color: var(--wb4-w2); }
+.wb4-sent > br, .wb4-sent > :is(text) { display: none; }
+.wb3-syl.wb4-sent.huge { font-size: clamp(3rem, 12vh, 6.2rem); }
+.wb3-syl.wb4-sent.optsyl { font-size: min(clamp(2.2rem, 7vh, 3.4rem), 9.5vw); }
+.wb3-syl.wb4-sent.cellsyl { font-size: clamp(1.5rem, 5.4vw, 2.3rem); line-height: 1.6; }
+.wb3-syl.wb4-sent.modelsyl { font-size: 2.2rem; color: var(--wb3-mute); }
+.wb3-syl.wb4-sent.small { font-size: 1.9rem; }
+.wb3-syl.wb4-unit { white-space: nowrap; }
+.wb3-syl.wb4-unit.optsyl { font-size: min(clamp(3rem, 10vh, 4.6rem), 13vw); }
+.wb3-syl.wb4-unit.given { font-size: clamp(3rem, 10vh, 4.6rem); color: var(--wb3-ink); }
+.wb3-syl.wb4-unit.hintl { font-size: 2.4rem; color: var(--wb3-primary); display: block; text-align: center; }
+.wb3-syl.wb4-unit.step1 { color: var(--wb3-primary); } .wb3-syl.wb4-unit.step2 { color: var(--wb4-w2); }
+.wb3-syl.wb4-unit.slotl { font-size: clamp(3rem, 10vh, 4.6rem); color: var(--wb4-w2); }
+.wb4-steps { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; align-items: center; direction: rtl; }
+.wb4-steps .wb3-syl { font-size: clamp(2.8rem, 10vh, 4.4rem); }
+
+/* الصوت: زرّان (عادي / ببطء) */
+.wb4-listen { gap: 12px; flex-wrap: wrap; }
+.wb4-listen .wb3-btn { min-height: 64px; min-width: 150px; }
+.wb4-listen .listen.slow { background: var(--wb3-tint); color: var(--wb3-primary-d); border: 2px solid var(--wb3-primary); }
+.wb4-words { gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.wb4-wordbtn { min-height: 64px; min-width: 150px; gap: 10px; }
+.wb4-wordtxt { font-size: 2rem; line-height: 1.6; }
+
+/* ترتيب الوحدتين: خانتان عريضتان، البطاقات بعرض النص */
+.wb4-board { gap: 12px; flex-wrap: wrap; }
+.wb4-board .wb3-slot { width: clamp(140px, 42vw, 300px); height: clamp(110px, 17vh, 150px); }
+.wb4-board:not(.wb3-gap) .wb3-slotl { margin-top: 24px; font-size: clamp(2.4rem, 8vh, 3.8rem); line-height: 1.3; white-space: nowrap; }
+.wb4-board:not(.wb3-gap) .wb3-slotl.l2 { color: var(--wb4-w2); }
+.wb4-board.done { width: 100%; }
+.wb4-board.done .wb3-slot { display: none; }
+.wb4-tray { flex-wrap: wrap; }
+#wb4Tray .wb3-tile { width: auto; min-width: clamp(110px, 30vw, 220px); overflow: visible; line-height: 1.35; padding: .12em 14px 0; height: clamp(84px, 13vh, 116px); font-size: min(clamp(2.4rem, 7vh, 3.6rem), 11vw); white-space: nowrap; }
+.wb4-board.wb3-gap .wb3-slot.gap { border-style: dashed; }
+.wb4-board.wb3-gap .wb3-slot.filled-ok { border-style: solid; border-color: var(--wb3-good); }
+
+/* الخيارات */
+.wb4-opts.n2 { grid-template-columns: repeat(2, 1fr); }
+.wb4-opts.n3 { grid-template-columns: repeat(3, 1fr); }
+.wb4-opts .wb3-opt { padding: 8px 6px; }
+
+/* مكتبة الجمل: بطاقات أعرض (٢ في كل صف على الجوال) */
+.wb4-grid { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 700px) { .wb4-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1100px) { .wb4-grid { grid-template-columns: repeat(5, 1fr); } .wb3-syl.wb4-sent.cellsyl { font-size: 2.2rem; } }
+.wb4-cell { min-height: 110px; }
+.wb4-stagerow { flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+@media (max-width: 520px) {
+  .wb4-opts.n3 { grid-template-columns: 1fr; }
+  .wb4-opts.n2 { grid-template-columns: 1fr; }
+  .wb3-syl.wb4-sent.optsyl { font-size: clamp(2.2rem, 10vw, 2.8rem); }
+  .wb3-syl.wb4-sent.huge { font-size: clamp(2.8rem, 14vw, 4.4rem); }
+  .wb4-board .wb3-slot { width: 44vw; height: 98px; }
+  #wb4Tray .wb3-tile { min-width: 40vw; height: 82px; font-size: min(2.3rem, 9.5vw); padding-inline: 8px; }
+  .wb4-listen .wb3-btn { min-width: 44vw; padding-inline: 8px; }
+  .wb4-grid { gap: 8px; }
+}
+@media (max-height: 720px) and (max-width: 520px) {
+  .wb4-opts.n2, .wb4-opts.n3 { gap: 8px; }
+  .wb4-opts .wb3-opt { min-height: 78px; }
+}
+@media (prefers-reduced-motion: reduce) { #wbkL4 * { transition: none !important; animation: none !important; } }
+/* زرّا الاستماع جنبًا إلى جنب دائمًا (توفيرًا للارتفاع على الجوال) */
+.wb4-listen { flex-wrap: nowrap; }
+.wb4-listen .wb3-btn { min-width: 0; flex: 1 1 0; max-width: 220px; min-height: 60px; flex-direction: row; gap: 8px; padding-inline: 10px; font-size: 1rem; }
+.wb4-listen .wb3-btn svg { flex: none; width: 26px; height: 26px; }
+@media (max-width: 520px) { .wb4-listen .wb3-btn { min-width: 0; } }
+@media (max-height: 760px) and (max-width: 520px) {
+  #wb4Q .wb3-dirnote { display: none; }
+  #wb4Q .wb3-inst { font-size: 1.05rem; margin: 0; }
+  .wb4-listen .wb3-btn { min-height: 52px; }
+  .wb4-listen .wb3-btn span { font-size: .9rem; line-height: 1.2; }
+  .wb4-board .wb3-slot { height: 78px; }
+  .wb4-board { min-height: 0; }
+  #wb4Tray .wb3-tile { height: 72px; }
+  .wb3-syl.wb4-sent.modelsyl { font-size: 1.7rem; line-height: 1.3; }
+  #wb4Q .wb3-model { margin: 0; }
+  .wb3-syl.wb4-unit.given, .wb3-syl.wb4-unit.slotl { font-size: 3rem; }
+  #wb4Q .wb3-msg { font-size: .95rem; margin: 0; }
+}
+@media (max-height: 820px) and (min-width: 521px) {
+  #wb4Q .wb3-dirnote { display: none; }
+  .wb4-board .wb3-slot { height: 96px; }
+  .wb4-board { min-height: 0; }
+  #wb4Tray .wb3-tile { height: 80px; }
+  .wb3-syl.wb4-sent.modelsyl { font-size: 1.8rem; line-height: 1.3; }
+  #wb4Q .wb3-inst { margin: 0; }
+  .wb4-listen .wb3-btn { min-height: 54px; }
+}

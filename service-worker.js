@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v45";
+const CACHE_VERSION = "taha-app-v46";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -17,6 +17,9 @@ const APP_SHELL = [
     "./wbk3-data.js",
     "./wbk3.js",
     "./wbk3.css",
+    "./wbk4-data.js",
+    "./wbk4.js",
+    "./wbk4.css",
     "./nav.js",
     "./ui2.css",
     "./ui2.js",
@@ -253,6 +256,14 @@ try {
     importScripts("wbk3-data.js");
     if (self.WBK3_DATA && typeof self.WBK3_DATA.approvedAudioFiles === "function") {
         self.WBK3_DATA.approvedAudioFiles().forEach(f => { LESSON_AUDIO.push("./" + f); });
+    }
+} catch (e) { /* بصمت */ }
+
+/* الدرس الرابع: تسجيلات الجمل (١٠) والكلمات الجديدة (١٢) من wbk4-data.js. فشل الاستيراد لا يُفشل التثبيت. */
+try {
+    importScripts("wbk4-data.js");
+    if (self.WBK4_DATA && typeof self.WBK4_DATA.approvedAudioFiles === "function") {
+        self.WBK4_DATA.approvedAudioFiles().forEach(f => { LESSON_AUDIO.push("./" + f); });
     }
 } catch (e) { /* بصمت */ }
 

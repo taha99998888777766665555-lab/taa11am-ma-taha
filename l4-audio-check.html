@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مراجعة تسجيلات الدرس الرابع</title>
+<style>
+body{font-family:"Noto Naskh Arabic","Segoe UI",Tahoma,sans-serif;margin:0;background:#f5f3ee;color:#1b2a3a}
+header{padding:16px;background:#1b4a73;color:#fff}h1{margin:0;font-size:1.3rem}p.n{margin:6px 0 0;font-size:.95rem}
+main{padding:12px;max-width:760px;margin:auto}h2{font-size:1.1rem;margin:18px 0 6px}
+.r{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #c3ccd7;border-radius:14px;padding:10px 12px;margin:8px 0;flex-wrap:wrap}
+.r .t{flex:1 1 200px;font-size:2rem;line-height:1.7}.r small{color:#56677b;display:block;font-size:.8rem}
+button{min-height:48px;padding:0 14px;border-radius:12px;border:2px solid #245e8f;background:#e8f0f7;font:inherit;font-size:1rem;cursor:pointer}
+label{display:inline-flex;gap:6px;align-items:center;font-size:.95rem}
+.ok{background:#d9f2e3}.no{background:#f9dcdc}
+#sum{position:sticky;bottom:0;background:#fff;border-top:2px solid #c3ccd7;padding:10px 14px;font-weight:700}
+</style></head><body>
+<header><h1>مراجعة تسجيلات الدرس الرابع (٢٢ تسجيلًا)</h1>
+<p class="n">استمع إلى كل تسجيل وقارنه بالنص المكتوب، ثم اضغط «يطابق» أو «لا يطابق». هذه الصفحة للمراجعة فقط ولا تغيّر شيئًا في التطبيق.</p></header>
+<main><div id="list"></div></main>
+<div id="sum">لم تُراجَع أي تسجيلات بعد</div>
+<script src="wbk3-data.js"></script><script src="wbk4-data.js"></script>
+<script>
+(function(){
+var D=WBK4_DATA,all=D.allAudio(),mark={},cur=null;
+var box=document.getElementById("list");
+function play(f,rate){if(cur){cur.pause()}var a=new Audio(f);cur=a;try{a.preservesPitch=true;a.mozPreservesPitch=true;a.webkitPreservesPitch=true}catch(e){}a.playbackRate=rate;a.play()}
+function sum(){var ok=0,no=0;Object.keys(mark).forEach(function(k){mark[k]?ok++:no++});
+ var out="طابق: "+ok+" · لا يطابق: "+no+" · متبقٍ: "+(all.length-ok-no);
+ document.getElementById("sum").textContent=out;}
+[["الجمل الكاملة (١٠)","sentence"],["الكلمات المنفردة الجديدة (١٢)","word"]].forEach(function(g){
+ var h=document.createElement("h2");h.textContent=g[0];box.appendChild(h);
+ all.filter(function(a){return a.kind===g[1]}).forEach(function(a){
+  var r=document.createElement("div");r.className="r";
+  var t=document.createElement("div");t.className="t";t.textContent=a.text;var s=document.createElement("small");s.textContent=(g[1]==="sentence"?"جملة ":"كلمة ")+a.n+" — "+a.file.split("/").pop();t.appendChild(s);
+  var b1=document.createElement("button");b1.textContent="▶ عادي";b1.onclick=function(){play(a.file,1)};
+  var b2=document.createElement("button");b2.textContent="▶ ببطء ٠٫٨٥";b2.onclick=function(){play(a.file,.85)};
+  var y=document.createElement("button");y.textContent="يطابق";y.onclick=function(){mark[a.file]=true;r.className="r ok";sum()};
+  var n=document.createElement("button");n.textContent="لا يطابق";n.onclick=function(){mark[a.file]=false;r.className="r no";sum()};
+  [t,b1,b2,y,n].forEach(function(x){r.appendChild(x)});box.appendChild(r)})});
+sum();
+})();
+</script></body></html>

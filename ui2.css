@@ -128,6 +128,7 @@ body[data-ui="v2"]:not(.dark-mode) .wbk-entry {
 body[data-ui="v2"]:not(.dark-mode) #wbkEntry  { --u-lesson: var(--u-l1); }
 body[data-ui="v2"]:not(.dark-mode) #wbk2Entry { --u-lesson: var(--u-l2); }
 body[data-ui="v2"]:not(.dark-mode) #wbk3Entry { --u-lesson: var(--u-l3); }
+body[data-ui="v2"]:not(.dark-mode) #wbk4Entry { --u-lesson: var(--u-l3); }
 body[data-ui="v2"]:not(.dark-mode) .wbk-entry:active { transform: scale(0.98); background: color-mix(in srgb, var(--u-lesson) 10%, #ffffff); }
 
 body[data-ui="v2"] .wbk-entry-ic {
@@ -258,7 +259,8 @@ body[data-ui="v2"]:not(.dark-mode) .wb3-starbox svg { color: #c98e00; }
     body[data-ui="v2"]:not(.dark-mode).u2-build header.hm-header .profile-chip,
     body[data-ui="v2"]:not(.dark-mode).u2-build header.hm-header .stats { display: none; }
     body[data-ui="v2"]:not(.dark-mode).u2-build .hm-header__inner { display: flex; justify-content: flex-start; }
-    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head {
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head,
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 .wb3-head {
         position: fixed; top: 0; left: 0; right: 0; z-index: 61; width: auto;
         height: var(--u-hh, 66px); margin: 0;
         padding: 0 calc(var(--u-homew, 138px) + 24px) 0 12px;
@@ -266,14 +268,22 @@ body[data-ui="v2"]:not(.dark-mode) .wb3-starbox svg { color: #c98e00; }
         pointer-events: none; flex-wrap: nowrap; align-items: center; align-content: center; justify-content: flex-start; gap: 8px;
     }
     body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-back { pointer-events: auto; background: #ffffff; white-space: nowrap; flex: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 .wb3-head .wb3-back { pointer-events: auto; background: #ffffff; white-space: nowrap; flex: none; }
     /* تقدم الطالب لا يختفي: عدّاد النجوم يبقى في الشريط الثابت */
     body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-starbox { display: inline-flex; flex: none; margin: 0; min-height: 48px; padding: 4px 12px; background: #ffffff; border: 2px solid var(--u-line); }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 .wb3-head .wb3-starbox { display: inline-flex; flex: none; margin: 0; min-height: 48px; padding: 4px 12px; background: #ffffff; border: 2px solid var(--u-line); }
     body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-starbox span { display: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 .wb3-head .wb3-starbox span { display: none; }
     body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-head .wb3-teach { display: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 .wb3-head .wb3-teach { display: none; }
     body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-title { display: none; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 .wb3-title { display: none; }
     body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 { margin-top: -14px; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 { margin-top: -14px; }
     body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-body { padding-top: 0; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 .wb3-body { padding-top: 0; }
     body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL3 .wb3-q { padding-block: 10px; gap: 10px; }
+    body[data-ui="v2"]:not(.dark-mode).u2-build #wbkL4 .wb3-q { padding-block: 10px; gap: 10px; }
 }
 
 /* ---------- ٧) نشاط الحروف على الجوال: لا تتداخل همزة «أَ» مع صف الأزرار ---------- */
