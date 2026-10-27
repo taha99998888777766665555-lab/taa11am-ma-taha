@@ -16600,11 +16600,11 @@ function ajNumberComplete(n) {
     return c.done + c.skipped >= c.total;
 }
 
-/* فتح تدريجي: الرقم ١ مفتوح، وكل رقم يُفتح بإكمال الذي قبله
-   (وبهذا يُفتح ١١ بعد إكمال ١٠ — نفس تدرّج الكتابين) */
+/* لا أقفال: كل الأرقام (١–٢٠ في الكتابين) متاحة للاختيار المباشر لكل طالب، فالقدرات مختلفة.
+   الترتيب إرشاد فقط («الرقم المقترح» = أول رقم لم يكتمل)، ولا يقرأ هذا الشرط أي تقدّم محفوظ ولا يكتب شيئًا. */
 
 function ajNumberUnlocked(n) {
-    return n === 1 || StudentStore.isOverride() || ajNumberComplete(n - 1);
+    return n >= 1 && n <= 20;
 }
 
 function ajFirstOpenIndex(n) {
@@ -17397,19 +17397,17 @@ function renderAJHome() {
     for (let n = from; n <= to; n++) {
 
         const counts = ajNumberCounts(n);
-        const unlocked = ajNumberUnlocked(n);
         const complete = ajNumberComplete(n);
 
         doneCount += counts.done + counts.skipped;
         totalCount += counts.total;
 
         const btn = ajEl("button", "aj-num-btn" +
-            (complete ? " aj-complete" : "") +
-            (!unlocked ? " aj-locked" : ""));
+            (complete ? " aj-complete" : ""));
 
         btn.type = "button";
 
-        if (unlocked && !complete && !currentMarked) {
+        if (!complete && !currentMarked) {
             btn.classList.add("aj-current");
             currentMarked = true;
         }
@@ -17422,18 +17420,14 @@ function renderAJHome() {
 
         btn.setAttribute("aria-label",
             "الرقم " + numWord + "، " +
-            (unlocked
-                ? (complete ? "مكتمل" : "أنجزت " + ajNum(counts.done + counts.skipped) + " من " + ajNum(counts.total) + " أنشطة")
-                : "مقفل، أكمل الرقم السابق أولًا"));
-
-        if (!unlocked) btn.setAttribute("aria-disabled", "true");
+            (complete ? "مكتمل" : "أنجزت " + ajNum(counts.done + counts.skipped) + " من " + ajNum(counts.total) + " أنشطة") +
+            (btn.classList.contains("aj-current") ? "، الرقم المقترح" : ""));
 
         const num = ajEl("span", "aj-num-glyph", ajNum(n));
         btn.appendChild(num);
 
         const meta = ajEl("span", "aj-num-meta");
-        if (!unlocked) meta.textContent = "🔒";
-        else if (complete) meta.textContent = "✓";
+        if (complete) meta.textContent = "✓";
         else meta.textContent = ajNum(counts.done + counts.skipped) + "/" + ajNum(counts.total);
         btn.appendChild(meta);
 
@@ -17467,13 +17461,8 @@ function renderAJHome() {
 
 function startAJNumber(n) {
 
-    if (!ajNumberUnlocked(n)) {
-        const hint = $("ajHomeHint");
-        if (hint) {
-            hint.textContent = "🔒 أكمل الرقم " + ajNum(n - 1) + " أولًا لتفتح هذا الرقم";
-        }
-        return;
-    }
+    /* لا قفل: أي رقم من ١ إلى ٢٠ يُفتح مباشرة */
+    if (!(n >= 1 && n <= 20)) return;
 
     ajTeardownCurrent();
 
@@ -17751,7 +17740,7 @@ function ajFinishNumber() {
     ajUpdateStars();
 
     const hasNext = n < 20;
-    const nextUnlocked = hasNext && ajNumberUnlocked(n + 1);
+    const nextUnlocked = hasNext;
 
     const word = (typeof numberWords !== "undefined" && numberWords[n]) || ajNum(n);
 
