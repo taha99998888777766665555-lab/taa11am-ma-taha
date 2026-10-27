@@ -30,8 +30,8 @@ let pass=0,fail=0;const ok=(c,m,d='')=>{if(c)pass++;else{fail++;console.log('FAI
  await p.goto('http://127.0.0.1:8971/index.html');await p.waitForTimeout(3500);
  await p.evaluate(()=>navigator.serviceWorker.ready.then(()=>1));await p.waitForTimeout(3500);
  const c=await p.evaluate(async()=>{const o={};for(const k of await caches.keys()){const c=await caches.open(k);o[k]=(await c.keys()).map(x=>x.url.replace(location.origin,''))}return o});
- const k=Object.keys(c);ok(k.length===1&&k[0]==='taha-app-v44','only v44 cache',k.join());
- const u=c['taha-app-v44']||[];
+ const k=Object.keys(c);ok(k.length===1&&k[0]==='taha-app-v45','only v45 cache',k.join());
+ const u=c['taha-app-v45']||[];
  ['/wbk3.js','/wbk3-data.js','/wbk3.css','/wbk2.js','/wbk2-data.js'].forEach(f=>ok(u.includes(f),'cached '+f));
  const w3=u.filter(x=>/words\/wbk3_/.test(x));ok(w3.length===12,'12 new word recordings cached',String(w3.length));
  const allW=await p.evaluate(()=>WBK3_DATA.approvedAudioFiles().map(x=>'/'+x));
