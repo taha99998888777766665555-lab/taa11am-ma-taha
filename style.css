@@ -16502,3 +16502,14 @@ body.dark-mode .wbk-pauseov { background: rgba(15, 26, 46, .9); }
 
 
 
+
+
+/* =========================================================
+   🏎️ تحدي أبطال الجمع — شاشة كاملة تحوي الإطار (معزولة بالمعرّف)
+========================================================= */
+.heroes-game-card { background: linear-gradient(135deg, #fff3e6, #eaf3fd); border: 3px solid #f0a35a; }
+#additionHeroes.screen.active { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 5000; display: flex; flex-direction: column; background: #0f1a26; animation: none; }
+#additionHeroes .heroes-bar { flex: none; height: 54px; display: flex; align-items: center; gap: 12px; padding: 0 10px; background: #1b2a3a; direction: rtl; }
+#additionHeroes .heroes-back { width: 46px; height: 46px; flex: 0 0 46px; }
+#additionHeroes .heroes-bar-title { color: #fff; font-weight: 700; font-size: 18px; }
+#additionHeroes .heroes-frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 0; background: #0f1a26; display: block; }

@@ -2446,6 +2446,34 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
 
             </button>
 
+            <!-- =====================================
+                 🚗 تحدي أبطال الجمع
+            ====================================== -->
+
+            <button
+                class="game-launch-card heroes-game-card"
+                onclick="startAdditionHeroes()"
+            >
+
+                <div class="game-card-icon">
+                    🚗
+                </div>
+
+                <h3>
+                    تحدي أبطال الجمع
+                </h3>
+
+                <p>
+                    ثلاثة طلاب، ثلاث سيارات: اجمع صح وتقدّم نحو خط النهاية
+                </p>
+
+                <span>
+                    هيا نلعب ▶
+                </span>
+
+            </button>
+
+
 
 
         </div>
@@ -3173,6 +3201,18 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
 <!-- =========================================================
      🧩 لعبة المطابقة - سير اللعب
 ========================================================= -->
+
+<!-- =========================================================
+     🏎️ تحدي أبطال الجمع — لعبة مستقلة تُعرض داخل إطار (addition-heroes/)
+     لا تقرأ ولا تكتب بيانات الطلاب أو النجوم؛ الإطار يُفرَّغ عند مغادرة الشاشة
+========================================================= -->
+<section id="additionHeroes" class="screen" aria-label="تحدي أبطال الجمع">
+    <div class="heroes-bar">
+        <button type="button" class="race-top-btn heroes-back" onclick="exitAdditionHeroes()" aria-label="العودة للألعاب">⬅️</button>
+        <span class="heroes-bar-title">🚗 تحدي أبطال الجمع</span>
+    </div>
+    <iframe id="heroesFrame" class="heroes-frame" title="تحدي أبطال الجمع" allow="autoplay" data-src="addition-heroes/index.html"></iframe>
+</section>
 
 <section
     id="matchingGame"
@@ -5065,6 +5105,7 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
 <script src="wbk4-data.js"></script>
 <script src="wbk4.js"></script>
 <script src="nav.js"></script>
+<script src="heroes-app.js"></script>
 <script src="ui2.js"></script>
 
 </body>

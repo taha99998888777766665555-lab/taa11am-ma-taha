@@ -1,0 +1,117 @@
+/* تحدي أبطال الجمع — نموذج تجريبي مستقل. كل الأحجام بوحدة --u (١٪ من عرض المسرح 16:9) فلا تمرير على أي شاشة.
+   التصميم: ثلاثة مشاهد سباق هادئة (سماء + تلال + طريق + خط نهاية) فوق لوحة سؤال كبيرة وأزرار إجابة عريضة.
+   السيارات والزخارف تبقى داخل شريط المشهد فقط فلا تغطي السؤال ولا الإجابات. الحركة بطيئة وتعمل عند الإجابة الصحيحة فقط. */
+@font-face { font-family: "HeroesReadex"; font-weight: 400 500; src: url("../assets/fonts/readex-pro/readex-pro-arabic-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "HeroesReadex"; font-weight: 600 800; src: url("../assets/fonts/readex-pro/readex-pro-arabic-600-normal.woff2") format("woff2"); font-display: swap; }
+:root { --ink: #16222f; --mute: #4a5b6d; --card: #ffffff; --line: #c9d1da; --good: #1a6e43; --u: 10px; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #0f1a26; overscroll-behavior: none; }
+body { display: flex; align-items: center; justify-content: center; font-family: "Baloo Bhaijaan 2", "HeroesReadex", "Noto Naskh Arabic", "Droid Arabic Naskh", "Segoe UI", Tahoma, sans-serif; color: var(--ink); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+button { font-family: inherit; color: inherit; touch-action: manipulation; cursor: pointer; }
+
+#stage { position: relative; width: calc(var(--u) * 100); height: calc(var(--u) * 56.25); background: #eef3f6; overflow: hidden; touch-action: none; }
+#lanes { position: absolute; top: 0; right: 0; left: 0; bottom: calc(var(--u) * 4); display: grid; grid-template-columns: repeat(3, 1fr); direction: rtl; }
+
+/* ===== المسار ===== */
+.lane { position: relative; display: flex; flex-direction: column; align-items: stretch; padding: calc(var(--u) * .6) calc(var(--u) * .9) calc(var(--u) * .5); gap: calc(var(--u) * .6); background: linear-gradient(180deg, var(--sky2) 0%, var(--c2) 100%); border-right: calc(var(--u) * .3) solid var(--cd); min-width: 0; overflow: hidden; }
+.l-head { display: flex; align-items: center; gap: calc(var(--u) * .7); height: calc(var(--u) * 4); }
+.l-avatar { flex: none; width: calc(var(--u) * 3.6); height: calc(var(--u) * 3.6); border-radius: 50%; background: var(--c); border: calc(var(--u) * .2) solid var(--cd); overflow: hidden; display: grid; place-items: center; }
+.l-avatar svg { width: 118%; height: 118%; margin-top: 8%; }
+.l-title { margin: 0; flex: 1 1 auto; min-width: 0; font-size: calc(var(--u) * 1.65); line-height: 1.1; font-weight: 800; color: var(--cd); }
+.l-title small { display: block; font-size: calc(var(--u) * 1.15); font-weight: 500; color: var(--mute); margin-top: calc(var(--u) * .15); }
+.l-stars { display: flex; gap: calc(var(--u) * .2); direction: ltr; flex: none; }
+.l-stars svg { width: calc(var(--u) * 1.9); height: calc(var(--u) * 1.9); }
+.l-stars .off { fill: #e3e8ed; stroke: #b8c2cc; stroke-width: 1.2; }
+.l-stars .on { fill: #f2b01e; stroke: #9a6a00; stroke-width: 1.2; }
+
+/* ===== مشهد الطريق: داخله فقط السيارة والزخارف ===== */
+.road { position: relative; height: calc(var(--u) * 11); border-radius: calc(var(--u) * 1.2); overflow: hidden; flex: none; border: calc(var(--u) * .18) solid var(--cd); background: var(--sky); }
+.road .sky { position: absolute; top: 0; right: 0; left: 0; bottom: 0; background: linear-gradient(180deg, var(--sky) 0%, #ffffff 100%); }
+.road .cloud { position: absolute; display: block; height: calc(var(--u) * 1.5); width: calc(var(--u) * 5); border-radius: calc(var(--u) * 1); background: #fff; opacity: .85; box-shadow: calc(var(--u) * 1.2) calc(var(--u) * -.6) 0 calc(var(--u) * .1) #fff; animation: drift 70s linear infinite; }
+.road .cloud.c1 { top: calc(var(--u) * 1); left: 20%; }
+.road .cloud.c2 { top: calc(var(--u) * 2.4); left: 62%; animation-duration: 95s; animation-delay: -30s; transform: scale(.7); }
+@keyframes drift { from { margin-left: calc(var(--u) * -8); } to { margin-left: calc(var(--u) * 8); } }
+.road .hillwrap { position: absolute; right: 0; left: 0; bottom: calc(var(--u) * 3); height: calc(var(--u) * 5.2); }
+.road .hillwrap svg { width: 100%; height: 100%; display: block; }
+.road .asphalt { position: absolute; right: 0; left: 0; bottom: 0; height: calc(var(--u) * 3.6); background: #4e5a67; border-top: calc(var(--u) * .35) solid #c9ced4; }
+.road .asphalt::before { content: ""; position: absolute; right: 0; left: 0; top: 52%; border-top: calc(var(--u) * .28) dashed #f3efe2; opacity: .9; }
+.moving .road .asphalt::before { animation: roll 1s linear; }
+@keyframes roll { from { background-position: 0 0; transform: translateX(0); } to { transform: translateX(calc(var(--u) * -2)); } }
+.road .finish { position: absolute; left: calc(var(--u) * 2.6); bottom: 0; width: calc(var(--u) * 1.2); height: calc(var(--u) * 3.6); background: repeating-conic-gradient(#16222f 0 25%, #fff 0 50%) 0 0 / calc(var(--u) * .6) calc(var(--u) * .6); border-left: calc(var(--u) * .12) solid #16222f; border-right: calc(var(--u) * .12) solid #16222f; }
+.road .flag { position: absolute; left: calc(var(--u) * .3); bottom: calc(var(--u) * 3.3); width: calc(var(--u) * 2.6); height: calc(var(--u) * 3.9); }
+.road .flag svg { width: 100%; height: 100%; display: block; }
+.car { position: absolute; bottom: calc(var(--u) * .5); width: calc(var(--u) * 10.6); height: calc(var(--u) * 5.6); transition: transform 1s cubic-bezier(.45, .05, .35, 1); will-change: transform; }
+.car svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.wheel { transform-box: fill-box; transform-origin: center; }
+.moving .wheel { animation: spin 1s linear; }
+@keyframes spin { from { transform: rotate(0); } to { transform: rotate(-540deg); } }
+.moving .car svg { animation: bob 1s ease-in-out; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(calc(var(--u) * -.18)); } }
+.sparks { position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; }
+.spark { position: absolute; width: calc(var(--u) * 1.1); height: calc(var(--u) * 1.1); margin: calc(var(--u) * -.55) 0 0 calc(var(--u) * -.55); background: #ffd54a; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); opacity: 0; animation: rise 1.6s ease-out both; }
+@keyframes rise { 0% { opacity: 0; transform: translateY(0) scale(.6); } 25% { opacity: .95; } 100% { opacity: 0; transform: translateY(calc(var(--u) * -2.2)) scale(1); } }
+
+/* ===== لوحة السؤال: العنصر الأكبر والأوضح ===== */
+.q-area { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--u) * .5); background: var(--card); border: calc(var(--u) * .22) solid var(--c); border-radius: calc(var(--u) * 1.6); padding: calc(var(--u) * .6); box-shadow: 0 calc(var(--u) * .25) 0 var(--cd); }
+.q-eq { direction: ltr; unicode-bidi: bidi-override; font-weight: 800; font-size: calc(var(--u) * 7.2); line-height: 1.05; color: var(--ink); white-space: nowrap; }
+.q-eq .op { color: var(--c); padding-left: .16em; padding-right: .16em; }
+.q-eq .qm { color: var(--cd); }
+.q-pics ~ .q-eq { font-size: calc(var(--u) * 3.4); line-height: 1; margin-top: calc(var(--u) * .1); }
+.q-pics { direction: ltr; display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * .8); width: 100%; }
+.q-pics .grp { display: flex; flex-wrap: wrap; gap: calc(var(--u) * .35); justify-content: center; align-items: center; align-content: center; width: calc(var(--u) * 11.2); min-height: calc(var(--u) * 6.4); padding: calc(var(--u) * .5); border: calc(var(--u) * .18) dashed var(--c); border-radius: calc(var(--u) * 1.1); background: var(--c2); }
+.q-pics .grp svg { width: calc(var(--u) * 4.5); height: calc(var(--u) * 4.5); }
+.q-pics .plus { font-size: calc(var(--u) * 4); font-weight: 800; color: var(--c); }
+.q-hint { min-height: calc(var(--u) * 1.8); margin: 0; font-size: calc(var(--u) * 1.5); line-height: 1.25; color: var(--mute); text-align: center; font-weight: 500; }
+.q-hint.ok { color: var(--good); font-weight: 800; }
+.help-box { direction: ltr; width: 100%; display: flex; justify-content: center; align-items: center; min-height: calc(var(--u) * 5.2); }
+#lane1 .help-box { display: none; }
+.help-box svg { width: 100%; height: auto; max-height: calc(var(--u) * 6.2); }
+.dots { display: flex; align-items: center; gap: calc(var(--u) * .7); flex-wrap: wrap; justify-content: center; }
+.dots .g { display: flex; gap: calc(var(--u) * .35); }
+.dots i { width: calc(var(--u) * 2.1); height: calc(var(--u) * 2.1); border-radius: 50%; background: var(--c); display: block; }
+.dots .g2 i { background: #7a4aa0; }
+.dots b { font-size: calc(var(--u) * 2.4); color: var(--mute); }
+
+/* ===== الإجابات ===== */
+.answers { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * .8); flex: none; direction: ltr; }
+.ans { height: calc(var(--u) * 9.4); border-radius: calc(var(--u) * 1.7); border: calc(var(--u) * .3) solid var(--cd); background: var(--c); color: #fff; font-family: inherit; font-size: calc(var(--u) * 5.6); font-weight: 800; line-height: 1; padding: 0; box-shadow: 0 calc(var(--u) * .4) 0 var(--cd); transition: transform .1s, background .2s, opacity .3s; text-shadow: 0 calc(var(--u) * .12) 0 rgba(0,0,0,.25); }
+.ans.press { transform: translateY(calc(var(--u) * .3)); box-shadow: 0 calc(var(--u) * .1) 0 var(--cd); filter: brightness(1.06); }
+.ans.wrong { opacity: .4; background: #9aa6b2; border-color: #7b8794; border-style: dashed; box-shadow: none; text-shadow: none; }
+.ans.right { background: var(--good); border-color: #0f4a2b; box-shadow: 0 calc(var(--u) * .4) 0 #0f4a2b; }
+.ans:disabled { cursor: default; }
+
+/* ===== أسفل المسار ===== */
+.l-foot { display: flex; gap: calc(var(--u) * .6); flex: none; height: calc(var(--u) * 3.9); }
+.btn { flex: 1 1 0; border-radius: calc(var(--u) * 1.2); border: calc(var(--u) * .2) solid var(--cd); background: #fff; font-family: inherit; font-size: calc(var(--u) * 1.55); font-weight: 700; color: var(--cd); padding: 0 calc(var(--u) * .4); white-space: nowrap; }
+.btn.on { background: var(--cd); color: #fff; }
+.btn.press { transform: translateY(calc(var(--u) * .12)); background: var(--c2); }
+.btn[hidden] { display: none; }
+
+/* ===== احتفال بسيط: يغطي لوحة السؤال فقط ويترك السيارة عند خط النهاية ظاهرة ===== */
+.cele { position: absolute; top: calc(var(--u) * 16.6); right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--u) * 1.2); background: linear-gradient(180deg, rgba(255,255,255,.98), var(--c2)); text-align: center; z-index: 3; animation: fadein .8s ease both; border-top: calc(var(--u) * .25) solid var(--cd); }
+.cele[hidden] { display: none; }
+.cele h2 { margin: 0; font-size: calc(var(--u) * 2.9); color: var(--cd); font-weight: 800; }
+.cele p { margin: 0; font-size: calc(var(--u) * 1.9); color: var(--mute); }
+.cele .big-stars { display: flex; gap: calc(var(--u) * .6); direction: ltr; }
+.cele .big-stars svg { width: calc(var(--u) * 3.8); height: calc(var(--u) * 3.8); fill: #f2b01e; stroke: #9a6a00; stroke-width: 1.2; animation: glow 3s ease-in-out infinite; }
+.cele .big-stars svg:nth-child(2) { animation-delay: .3s; } .cele .big-stars svg:nth-child(3) { animation-delay: .6s; } .cele .big-stars svg:nth-child(4) { animation-delay: .9s; } .cele .big-stars svg:nth-child(5) { animation-delay: 1.2s; }
+.cele .btn { flex: none; width: calc(var(--u) * 22); height: calc(var(--u) * 5.6); font-size: calc(var(--u) * 2.2); background: var(--c); color: #fff; border-color: var(--cd); box-shadow: 0 calc(var(--u) * .35) 0 var(--cd); }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes glow { 0%, 100% { opacity: .78; transform: scale(.97); } 50% { opacity: 1; transform: scale(1.03); } }
+
+/* ===== أدوات المعلم ===== */
+#tools { position: absolute; bottom: 0; left: 0; right: 0; height: calc(var(--u) * 4); display: flex; gap: calc(var(--u) * 1); align-items: center; justify-content: center; background: #1b2a3a; z-index: 6; }
+.tool { min-height: calc(var(--u) * 3); min-width: calc(var(--u) * 13); padding: 0 calc(var(--u) * .9); border-radius: calc(var(--u) * 1.6); border: calc(var(--u) * .16) solid #7b8794; background: rgba(255,255,255,.96); font-family: inherit; font-size: calc(var(--u) * 1.3); font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+.tool[aria-pressed="true"] { background: #1b2a3a; color: #fff; }
+#toolTouch { background: #ffd23f; border-color: #ffd23f; color: #1b2a3a; min-width: calc(var(--u) * 22); }
+#toolTouch[aria-pressed="true"] { background: #d11a2a; border-color: #d11a2a; color: #fff; }
+
+/* ===== وضع اختبار اللمس ===== */
+#touchLayer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; z-index: 9; }
+.tp-dot { position: absolute; width: calc(var(--u) * 5); height: calc(var(--u) * 5); margin: calc(var(--u) * -2.5) 0 0 calc(var(--u) * -2.5); border-radius: 50%; border: calc(var(--u) * .3) solid #d11a2a; background: rgba(209,26,42,.18); display: grid; place-items: center; font-size: calc(var(--u) * 1.4); font-weight: 700; color: #7d0f19; direction: ltr; }
+#touchPanel { position: absolute; top: calc(var(--u) * .6); left: 50%; transform: translateX(-50%); z-index: 8; width: calc(var(--u) * 27); padding: calc(var(--u) * .4) calc(var(--u) * 1); line-height: 1.35; background: rgba(255,255,255,.97); border: calc(var(--u) * .2) solid #1b2a3a; border-radius: calc(var(--u) * 1.2); font-size: calc(var(--u) * 1.35); }
+#touchPanel[hidden] { display: none; }
+#touchPanel #tpLog { margin: calc(var(--u) * .2) 0 0; padding-right: calc(var(--u) * 2); max-height: calc(var(--u) * 4.4); overflow: hidden; font-size: calc(var(--u) * 1.1); color: var(--mute); }
+#tpReset { min-height: calc(var(--u) * 2.6); min-width: calc(var(--u) * 7); }
+
+@media (prefers-reduced-motion: reduce) { .car, .cele, .cele .big-stars svg, .cloud, .spark, .wheel, .road .asphalt::before, .car svg { transition: none !important; animation: none !important; } }

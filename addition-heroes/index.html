@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1b2a3a">
+<title>تحدي أبطال الجمع</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="heroes.css">
+</head>
+<body>
+<div id="stage" aria-label="تحدي أبطال الجمع">
+    <main id="lanes">
+        <section class="lane" id="lane1" data-lane="1" style="--c:#ee7a1f;--cd:#a34700;--c2:#fff3e6;--sky:#fde7cf;--sky2:#fff6ea;"></section>
+        <section class="lane" id="lane2" data-lane="2" style="--c:#2f78d0;--cd:#1b4f94;--c2:#eaf3fd;--sky:#cfe5fb;--sky2:#f0f7fe;"></section>
+        <section class="lane" id="lane3" data-lane="3" style="--c:#2fa35f;--cd:#1d6b3e;--c2:#e8f7ee;--sky:#cdeedb;--sky2:#f0fbf4;"></section>
+    </main>
+    <nav id="tools" aria-label="أدوات المعلم">
+        <button type="button" id="toolSound" class="tool" aria-pressed="false">🔇 الصوت: مغلق</button>
+        <button type="button" id="toolTouch" class="tool" aria-pressed="false">☝ اختبار اللمس (٣ أصابع)</button>
+    </nav>
+    <div id="touchPanel" hidden>
+        <b>وضع اختبار اللمس</b>
+        <div>اللمسات الآن: <span id="tpNow">٠</span> · أقصى عدد معًا: <span id="tpMax">٠</span></div>
+        <div>المسار: <span id="tpLane">—</span></div>
+        <button type="button" id="tpReset" class="tool">تصفير</button>
+        <ol id="tpLog"></ol>
+    </div>
+    <div id="touchLayer" aria-hidden="true"></div>
+</div>
+<script src="heroes.js"></script>
+</body>
+</html>
