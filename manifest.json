@@ -1,6 +1,7 @@
 {
+  "id": "./index.html",
   "name": "تعلم مع أ/طه محمد",
-  "short_name": "تعلم مع طه",
+  "short_name": "تعلم مع أ/طه محمد",
   "description": "تطبيق تعليمي ممتع للأطفال لتعلم الحروف والكلمات والأرقام والقرآن الكريم",
   "start_url": "./index.html",
   "scope": "./",
@@ -29,5 +30,10 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "categories": [
+    "education",
+    "kids"
+  ],
+  "prefer_related_applications": false
 }

@@ -16513,3 +16513,19 @@ body.dark-mode .wbk-pauseov { background: rgba(15, 26, 46, .9); }
 #additionHeroes .heroes-back { width: 46px; height: 46px; flex: 0 0 46px; }
 #additionHeroes .heroes-bar-title { color: #fff; font-weight: 700; font-size: 18px; }
 #additionHeroes .heroes-frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 0; background: #0f1a26; display: block; }
+
+
+/* =========================================================
+   📲 زر «تثبيت التطبيق» — يظهر فقط حين يكون التثبيت متاحًا (hidden افتراضيًا)
+========================================================= */
+.hm-install { display: flex; justify-content: center; margin: 18px 0 6px; }
+.hm-install[hidden], .hm-install-dlg[hidden] { display: none; }
+#home .hm-install__btn, .hm-install-dlg .hm-install__btn, body[data-ui] .hm-install__btn { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 60px; min-width: 240px; padding: 0 28px; border: 0; border-radius: 999px; background: linear-gradient(135deg, #2f78d0, #6a3dd6); background-color: #4a5fd0; color: #fff; -webkit-text-fill-color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.25); font-family: inherit; font-size: 20px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 22px -10px rgba(47, 60, 160, .65); transition: transform .15s; }
+.hm-install__btn:active { transform: scale(.97); }
+.hm-install__btn:focus-visible { outline: 4px solid #ffd23f; outline-offset: 3px; }
+.hm-install__ic { font-size: 26px; line-height: 1; }
+.hm-install-dlg { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(20, 24, 60, .6); }
+.hm-install-dlg__card { width: min(92vw, 440px); max-height: 90vh; overflow: auto; padding: 22px 20px; border-radius: 24px; background: #fff; color: #18214d; text-align: center; box-shadow: 0 20px 50px rgba(0, 0, 0, .35); }
+.hm-install-dlg__card h3 { margin: 0 0 12px; font-size: 21px; }
+.hm-install-dlg__card ol { margin: 0 0 18px; padding: 0 22px 0 0; text-align: right; font-size: 18px; line-height: 1.9; }
+body.dark-mode .hm-install-dlg__card { background: #1d2547; color: #f1f3ff; }

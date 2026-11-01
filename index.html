@@ -21,7 +21,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="تعلم مع طه">
+<meta name="apple-mobile-web-app-title" content="تعلم مع أ/طه محمد">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 
@@ -964,6 +964,26 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
                 <span class="hm-tile__title">الإعدادات</span>
             </button>
 
+        </div>
+    </div>
+
+    <!-- ===== تثبيت التطبيق: مخفي افتراضيًا، يُظهره pwa-install.js فقط حين يكون التثبيت ممكنًا ===== -->
+    <div class="hm-install" id="hmInstall" hidden>
+        <button type="button" class="hm-install__btn" id="hmInstallBtn">
+            <span class="hm-install__ic" aria-hidden="true">📲</span>
+            <span class="hm-install__txt">تثبيت التطبيق</span>
+        </button>
+    </div>
+
+    <div class="hm-install-dlg" id="hmInstallIos" role="dialog" aria-modal="true" aria-label="تثبيت التطبيق على iPhone وiPad" hidden>
+        <div class="hm-install-dlg__card">
+            <h3>تثبيت التطبيق على الشاشة الرئيسية</h3>
+            <ol>
+                <li>اضغط زر <b>المشاركة</b> <span aria-hidden="true">⬆️</span> (مربع بسهم لأعلى) في متصفح Safari.</li>
+                <li>اختر <b>«إضافة إلى الشاشة الرئيسية»</b>.</li>
+                <li>اضغط <b>«إضافة»</b> فتظهر أيقونة «تعلم مع أ/طه محمد» بين تطبيقاتك.</li>
+            </ol>
+            <button type="button" class="hm-install__btn" data-close>إغلاق</button>
         </div>
     </div>
 
@@ -5106,6 +5126,7 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
 <script src="wbk4.js"></script>
 <script src="nav.js"></script>
 <script src="heroes-app.js"></script>
+<script src="pwa-install.js"></script>
 <script src="ui2.js"></script>
 
 </body>
