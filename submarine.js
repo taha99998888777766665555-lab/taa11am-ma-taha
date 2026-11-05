@@ -506,7 +506,7 @@
             '<div class="sg-joywrap" id="sgJoyWrap"><div class="sg-joy" id="sgJoy" role="application" aria-label="عصا التحكم بالغواصة">' +
             '<svg class="sg-joy-arrows" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8l11 14H39zM50 92L39 78h22zM8 50l14-11v22zM92 50L78 39v22z" fill="currentColor"/></svg>' +
             '<div class="sg-knob" id="sgKnob"></div></div></div>' +
-            '<div class="sg-counter" id="sgCounter" role="status" aria-live="polite"><span class="sg-c-n" id="sgCn">٠</span><span class="sg-c-of">من</span><span class="sg-c-t" id="sgCt">٠</span></div>' +
+            '<div class="sg-counter" id="sgCounter" role="status" aria-live="polite"><span class="sg-c-lbl">جمعت</span><span class="sg-c-n" id="sgCn">٠</span><span class="sg-c-of">من</span><span class="sg-c-t" id="sgCt">٠</span></div>' +
             '<button type="button" class="sg-flip" id="sgFlip" aria-label="تغيير اتجاه الغواصة">' + ICON_FLIP + '<span>اتجاه الغواصة</span></button>' +
             '</div>';
         dom.bar = sec.querySelector(".sg-bar");
@@ -651,8 +651,8 @@
         return { x: (e.clientX - r.left) * (G.W / r.width), y: (e.clientY - r.top) * (G.H / r.height) };
     }
     function hitFish(f, x, y) {
-        var sp = f.sp, pad = Math.max(12, 16 * G.F);
-        var rx = sp.len * f.k * G.F * 0.5 + pad, ry = Math.max(sp.h * f.k * G.F * 0.5 + pad, 30);
+        var sp = f.sp, pad = Math.max(16, 20 * G.F), minR = 46;   /* مساحة إمساك لا تقل عن ٤٦ بكسل حول مركز السمكة */
+        var rx = Math.max(sp.len * f.k * G.F * 0.5 + pad, minR), ry = Math.max(sp.h * f.k * G.F * 0.5 + pad, minR);
         var dx = x - f.x, dy = y - f.y;
         var v = (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry);
         return v <= 1 ? v : -1;
@@ -665,8 +665,19 @@
         for (i = list.length - 1; i >= 0; i--) {
             f = list[i];
             if (f.state !== "swim" && f.state !== "return") continue;
+            if (f.kind === "shark" && f.appear < 0.6) continue;
             v = hitFish(f, p.x, p.y);
             if (v >= 0 && v < bv) { bv = v; best = f; }
+        }
+        if (!best) {
+            /* لا لمسة دقيقة؟ نلتقط أقرب سمكة ضمن ٧٢ بكسل (سامح مع الأصابع الصغيرة) */
+            var bd = 72;
+            for (i = list.length - 1; i >= 0; i--) {
+                f = list[i];
+                if (f.state !== "swim" && f.state !== "return") continue;
+                v = hyp(f.x - p.x, f.y - p.y);
+                if (v < bd) { bd = v; best = f; }
+            }
         }
         if (!best) return;
         e.preventDefault();
@@ -807,17 +818,19 @@
     function spawnShark(atStart) {
         var f = {
             id: 99, sp: SHARK, k: 1, x: 0, y: 0, vx: 0, vy: 0, face: 1, faceT: 1, tilt: 0, state: "swim",
-            ph: 0, wt: 0, wx: 0, wy: 0, sp0: 30, shake: 0, drag: null, pop: 0, kind: "shark", entering: true, appear: 0
+            ph: 0, wt: 0, wx: 0, wy: 0, sp0: 30, shake: 0, drag: null, pop: 0, kind: "shark", entering: false, appear: 0
         };
         var side = Math.random() < 0.5 ? -1 : 1;
-        if (atStart) { f.x = G.W * (side < 0 ? 0.2 : 0.8); f.y = G.H * 0.2; f.entering = false; }
-        else { f.x = side < 0 ? -SHARK.len * G.F * 0.6 : G.W + SHARK.len * G.F * 0.6; f.y = rnd(G.H * 0.14, G.H * 0.3); }
+        /* يظهر القرش دائمًا كاملًا داخل الشاشة: يتلألأ ويكبر بلطف من نقطة قرب الجانب مع فقاعات */
+        var half = SHARK.len * G.F * 0.5 + 18;
+        f.x = side < 0 ? half + 8 : G.W - half - 8; f.y = atStart ? G.H * 0.2 : rnd(G.H * 0.14, G.H * 0.3);
+        if (atStart) f.appear = 1;
         f.face = side < 0 ? 1 : -1; f.faceT = f.face;
-        f.vx = f.face * 70 * G.F; f.vy = 0;
+        f.vx = f.face * 40 * G.F; f.vy = 0;
         pickWaypoint(f);
         G.shark = f;
         G.sharkShown = true;
-        if (!atStart) { sfx("shark", 300); for (var i = 0; i < 10; i++) bubble(f.x < 0 ? 20 : G.W - 20, f.y + rnd(-30, 30), 1); }
+        if (!atStart) { sfx("shark", 300); for (var i = 0; i < 14; i++) bubble(f.x + rnd(-half * 0.8, half * 0.8), f.y + rnd(-40, 40), 1); }
     }
 
     function insideSubZone(x, y, m) {
@@ -828,7 +841,7 @@
 
     function pickWaypoint(f) {
         var tries = 0, x, y;
-        var mx = f.sp.len * f.k * G.F * 0.4, my = Math.max(f.sp.h * f.k * G.F * 0.5, 24);
+        var mx = f.sp.len * f.k * G.F * (f.kind === "shark" ? 0.5 : 0.4) + (f.kind === "shark" ? 8 : 0), my = Math.max(f.sp.h * f.k * G.F * 0.5, 24);
         do {
             x = rnd(mx, G.W - mx); y = rnd(my + 4, G.groundY - my);
             tries++;
@@ -843,7 +856,7 @@
     function updateCounter(bump) {
         dom.cn.textContent = ar(G.count);
         dom.ct.textContent = ar(G.target);
-        dom.counter.setAttribute("aria-label", ar(G.count) + " من " + ar(G.target));
+        dom.counter.setAttribute("aria-label", "جمعت " + ar(G.count) + " من " + ar(G.target));
         if (bump) { dom.counter.classList.remove("sg-bump"); void dom.counter.offsetWidth; dom.counter.classList.add("sg-bump"); }
     }
 
@@ -857,7 +870,7 @@
 
     function subBounds() {
         var L = G.subL;
-        return { x0: L * 0.52 + 8, x1: G.W - L * 0.52 - 8, y0: L * 0.5 + 18, y1: G.groundY - L * 0.2 };
+        return { x0: L * 0.5 + 6, x1: G.W - L * 0.5 - 6, y0: L * 0.5 + 18, y1: G.groundY - L * 0.2 };
     }
 
     function step(dt) {
@@ -908,8 +921,7 @@
             f = list[i];
             updateFish(f, dt, list);
             if (f.state === "drag") {
-                var dd = hyp(f.x - G.hatch.x, f.y - G.hatch.y);
-                if (dd < G.hatch.r * 1.15 + 10) near = true;
+                if (inCatch(f)) near = true;
             }
         }
         G.nearHatch = near;
@@ -954,8 +966,8 @@
         if (f.state === "drag") {
             var d = f.drag;
             var tx = d.tx + d.ox, ty = d.ty + d.oy;
-            tx = clamp(tx, len * 0.3, G.W - len * 0.3); ty = clamp(ty, 20, G.H - 20);
-            var a = 1 - Math.exp(-dt * 16);
+            tx = clamp(tx, len * 0.5 + 4, G.W - len * 0.5 - 4); ty = clamp(ty, 24, G.H - 24);
+            var a = 1 - Math.exp(-dt * 22);
             var px = f.x, py = f.y;
             f.x += (tx - f.x) * a; f.y += (ty - f.y) * a;
             var ivx = (f.x - px) / Math.max(dt, 0.001), ivy = (f.y - py) / Math.max(dt, 0.001);
@@ -983,7 +995,11 @@
             var dvx = dxn * speed, dvy = (dyn + wob * 0.4) * speed * 0.75;
             var k = 1 - Math.exp(-dt * (f.state === "return" ? 1.2 : 1.7));
             f.vx += (dvx - f.vx) * k; f.vy += (dvy - f.vy) * k;
-            if (f.entering) { f.vx = (G.W / 2 > f.x ? 1 : -1) * 170 * F; f.vy *= 0.5; }   /* دخول القرش حاسم وسريع، ثم يسبح بهدوء */
+            if (f.entering) {   /* دخول لطيف: يبطئ تدريجيًا كلما اقترب من موضعه داخل الشاشة */
+                var inX = f.x < G.W / 2 ? len * 0.5 + 24 : G.W - len * 0.5 - 24;
+                var toGo = Math.abs(inX - f.x), dir = G.W / 2 > f.x ? 1 : -1;
+                f.vx = dir * clamp(60 + toGo * 0.9, 60, 150) * F; f.vy = (f.wy - f.y) * 0.5;
+            }
             /* ابتعاد عن الغواصة وعن بعضها */
             var s = G.sub, ex = (f.x - s.x) / (G.subL * 0.72), ey = (f.y - s.y + G.subL * 0.07) / (G.subL * 0.5), ev = ex * ex + ey * ey;
             if (ev < 1.25) {
@@ -1002,9 +1018,9 @@
             if (sp2 > cap) { f.vx *= cap / sp2; f.vy *= cap / sp2; }
             f.x += f.vx * dt; f.y += f.vy * dt;
             /* الحدود (القرش القادم من خارج الشاشة يُستثنى حتى يدخل) */
-            var mx = len * 0.34, myT = Math.max(f.sp.h * f.k * F * 0.5, 22), top = 6 + myT, bot = G.groundY - myT * 0.6;
+            var mx = f.kind === "shark" ? len * 0.5 + 6 : len * 0.34, myT = Math.max(f.sp.h * f.k * F * 0.5, 22), top = 6 + myT, bot = G.groundY - myT * 0.6;
             if (f.entering) {
-                if (f.x > mx && f.x < G.W - mx) f.entering = false;
+                if (f.x > mx + 10 && f.x < G.W - mx - 10) f.entering = false;
             } else {
                 if (f.x < mx) { f.x = mx; f.vx = Math.abs(f.vx) * 0.6; if (f.wx < mx) pickWaypoint(f); }
                 if (f.x > G.W - mx) { f.x = G.W - mx; f.vx = -Math.abs(f.vx) * 0.6; if (f.wx > G.W - mx) pickWaypoint(f); }
@@ -1019,13 +1035,18 @@
         f.tilt += (ut - f.tilt) * Math.min(1, dt * 6);
         if (f.shake > 0) f.shake -= dt;
         if (f.pop > 0) f.pop -= dt;
-        if (f.kind === "shark" && f.appear < 1) f.appear = Math.min(1, f.appear + dt * 2);
+        if (f.kind === "shark" && f.appear < 1) f.appear = Math.min(1, f.appear + dt * 1.15);
+    }
+
+    /* منطقة الاستقبال المتسامحة: قرب الفتحة، أو فوق جسم الغواصة نفسه */
+    function inCatch(f) {
+        var d = hyp(f.x - G.hatch.x, f.y - G.hatch.y);
+        return d <= G.hatch.r * 1.9 + 22 || insideSubZone(f.x, f.y, 0.92);
     }
 
     function releaseFish(f) {
         if (f.state !== "drag") return;
-        var near = hyp(f.x - G.hatch.x, f.y - G.hatch.y) <= G.hatch.r * 1.15 + 10;
-        if (near) tryEnter(f);
+        if (inCatch(f)) tryEnter(f);
         else {
             f.state = "swim";
             f.vx = clamp(f.drag.vx * 0.5, -140, 140); f.vy = clamp(f.drag.vy * 0.5, -140, 140);
@@ -1120,7 +1141,7 @@
         dom.canvas.width = Math.round(W * dpr); dom.canvas.height = Math.round(H * dpr);
         dom.canvas.style.width = W + "px"; dom.canvas.style.height = H + "px";
         G.F = clamp(Math.min(W / 900, H / 600), 0.7, 1.5);
-        G.subL = clamp(Math.min(W * 0.46, H * 0.78), 190, 430);
+        G.subL = clamp(Math.min(W * (W < 600 ? 0.62 : 0.46), H * 0.78), 190, 430);
         G.groundY = H - clamp(H * 0.13, 46, 120);
         if (ow && oh) {
             var sx = W / ow, sy = H / oh;
@@ -1141,7 +1162,7 @@
         var ns = G.lowFx ? 0 : 26;
         for (i = 0; i < ns; i++) G.snow.push({ x: r() * G.W, y: r() * G.groundY, r: 0.8 + r() * 1.6, v: 4 + r() * 8, ph: r() * 6 });
         G.kelp = [];
-        var xs = [0.04, 0.12, 0.27, 0.41, 0.58, 0.7, 0.83, 0.93];
+        var xs = [0.05, 0.22, 0.46, 0.7, 0.93];
         xs.forEach(function (fx, k) { G.kelp.push({ x: fx * G.W, h: (0.13 + r() * 0.12) * G.H, w: (7 + r() * 5) * G.F, ph: r() * 6, col: k % 2 ? "#2bb673" : "#1f9d6a" }); });
     }
 
@@ -1188,12 +1209,12 @@
         for (i = 0; i < 28; i++) { c.beginPath(); c.arc(r() * W, gy + 12 + r() * (gh - 14), 1 + r() * 2, 0, 6.28); c.fill(); }
         /* شعاب مرجانية: فروع وردية وبرتقالية وبنفسجية */
         var cols = ["#ff6b8b", "#ff8f5a", "#c36bff", "#ff5a7a", "#ffa94d"];
-        var cn = Math.max(5, Math.round(W / 130));
+        var cn = Math.max(4, Math.round(W / 215));
         for (i = 0; i < cn; i++) {
             var cx = (i + 0.3 + r() * 0.4) * (W / cn), base = gy + 8 + r() * 10;
-            var col = cols[i % cols.length], sc = (0.75 + r() * 0.7) * Math.max(0.7, G.F);
+            var col = cols[i % cols.length], sc = (0.7 + r() * 0.55) * Math.max(0.7, G.F);
             var kind = i % 4;
-            if (kind === 0 || kind === 3) { for (var b = -1; b <= 1; b++) branchCoral(c, cx + b * 10 * sc, base, 30 * sc, -Math.PI / 2 + b * 0.4, 3, col, 7 * sc, r); }
+            if (kind === 0 || kind === 3) { for (var b = -1; b <= 1; b += 2) branchCoral(c, cx + b * 10 * sc, base, 30 * sc, -Math.PI / 2 + b * 0.4, 3, col, 7 * sc, r); }
             else if (kind === 1) {   /* مروحة بحرية */
                 c.strokeStyle = col; c.lineWidth = 2 * sc; c.lineCap = "round";
                 for (var a = -1.15; a <= 1.15; a += 0.16) { c.beginPath(); c.moveTo(cx, base); c.lineTo(cx + Math.sin(a) * 44 * sc, base - Math.cos(a) * 46 * sc); c.stroke(); }
@@ -1207,12 +1228,12 @@
             }
         }
         /* إسفنج أنبوبي ونجمة بحر وصدفة */
-        for (i = 0; i < Math.max(2, Math.round(W / 320)); i++) {
+        for (i = 0; i < Math.max(1, Math.round(W / 520)); i++) {
             var tx = r() * W, th = (26 + r() * 22) * Math.max(0.8, G.F);
             c.fillStyle = grad(c, tx - 8, 0, tx + 8, 0, [0, "#ffe27a", 1, "#f0b429"]);
             for (var tt = 0; tt < 3; tt++) { var ox = tt * 11 - 11; c.beginPath(); c.roundRect ? c.roundRect(tx + ox - 5, gy + 12 - th + tt * 7, 10, th, 5) : c.rect(tx + ox - 5, gy + 12 - th + tt * 7, 10, th); c.fill(); c.fillStyle = "rgba(120,70,0,.45)"; c.beginPath(); c.ellipse(tx + ox, gy + 12 - th + tt * 7, 4, 2, 0, 0, 6.28); c.fill(); c.fillStyle = grad(c, tx - 8, 0, tx + 8, 0, [0, "#ffe27a", 1, "#f0b429"]); }
         }
-        for (i = 0; i < 3; i++) {
+        for (i = 0; i < 2; i++) {
             var sx = r() * W, sy = gy + 18 + r() * Math.max(6, gh - 36), ss = (9 + r() * 6) * Math.max(0.8, G.F);
             c.fillStyle = i % 2 ? "#ff7f50" : "#ff5d73"; c.beginPath();
             for (var p = 0; p < 10; p++) { var rad = p % 2 ? ss * 0.45 : ss; var an = p / 10 * 6.28 - 1.57; c.lineTo(sx + Math.cos(an) * rad, sy + Math.sin(an) * rad); }
@@ -1271,9 +1292,10 @@
 
     function drawFish(c, f) {
         var sp = f.sp, s = G.F * f.k * (f.scaleIn !== undefined && f.state === "entering" ? f.scaleIn : 1);
-        if (f.kind === "shark") s = G.F * (0.95 + 0.05 * f.appear);
+        if (f.kind === "shark") s = G.F * (0.4 + 0.6 * easeOut(f.appear));
         var drag = f.state === "drag";
         c.save();
+        if (f.kind === "shark" && f.appear < 1) c.globalAlpha = Math.min(1, f.appear * 1.6);
         c.translate(f.x, f.y);
         if (f.shake > 0) c.translate(Math.sin(f.shake * 50) * 4, 0);
         c.rotate(-Math.sign(f.faceT || 1) * f.tilt * 0.5 + (f.shake > 0 ? Math.sin(f.shake * 40) * 0.08 : 0) * 0);
@@ -1401,18 +1423,18 @@
 
     function slotLayout(N) {
         /* مواضع خانات النافذة (إحداثيات محلية للنافذة) حسب العدد المطلوب */
-        var cols = N <= 3 ? N : (N <= 8 ? Math.ceil(N / 2) : 5), rows = N <= 3 ? 1 : 2, W = 0.43, H = 0.25, out = [];
+        var cols = N <= 3 ? N : (N <= 8 ? Math.ceil(N / 2) : 5), rows = N <= 3 ? 1 : 2, W = 0.58, H = 0.33, out = [];
         var cw = W / cols, ch = H / rows;
         for (var i = 0; i < N; i++) {
             var rr = Math.floor(i / cols), cc = i % cols, inRow = rr === rows - 1 ? N - cols * (rows - 1) : cols;
             var x0 = -((inRow - 1) * cw) / 2;
-            out.push({ x: x0 + cc * cw, y: (rr - (rows - 1) / 2) * ch, len: Math.min(cw * 0.88, 0.17), cw: cw });
+            out.push({ x: x0 + cc * cw, y: (rr - (rows - 1) / 2) * ch, len: Math.min(cw * 0.92, 0.2), cw: cw });
         }
         return out;
     }
 
     function drawWindow(c, s, t) {
-        var cx = -0.1, cy = 0.035, rx = 0.265, ry = 0.17;
+        var cx = -0.14, cy = 0.03, rx = 0.31, ry = 0.195;
         c.save(); c.translate(cx, cy);
         c.fillStyle = "#c9d2dc"; c.beginPath(); c.ellipse(0, 0, rx + 0.02, ry + 0.02, 0, 0, 6.28); c.fill();
         c.strokeStyle = "#7d8996"; c.lineWidth = 0.01; c.stroke();
@@ -1420,7 +1442,7 @@
         c.fillStyle = grad(c, 0, -ry, 0, ry, [0, "#aeeaff", 0.55, "#4cb6ec", 1, "#1a78c2"]); c.fillRect(-rx, -ry, rx * 2, ry * 2);
         /* فقاعات صغيرة داخل الماء */
         c.fillStyle = "rgba(255,255,255,.45)";
-        for (var b = 0; b < 4; b++) { var by = ((t * 0.05 + b * 0.27) % 1); c.beginPath(); c.arc(-0.18 + b * 0.12, ry - by * ry * 2, 0.006 + (b % 2) * 0.004, 0, 6.28); c.fill(); }
+        for (var b = 0; b < 4; b++) { var by = ((t * 0.05 + b * 0.27) % 1); c.beginPath(); c.arc(-0.22 + b * 0.15, ry - by * ry * 2, 0.006 + (b % 2) * 0.004, 0, 6.28); c.fill(); }
         /* الخانات: أسماك مجمّعة (غير معكوسة) ومواضع فارغة باهتة */
         var N = Math.max(1, G.target), slots = slotLayout(N), inv = s.face >= 0 ? 1 : -1;
         for (var i = 0; i < N; i++) {
@@ -1439,7 +1461,7 @@
             c.restore();
         }
         c.restore();
-        c.fillStyle = "rgba(255,255,255,.22)"; c.beginPath(); c.ellipse(-0.08, -0.08, 0.12, 0.028, -0.3, 0, 6.28); c.fill();
+        c.fillStyle = "rgba(255,255,255,.22)"; c.beginPath(); c.ellipse(-0.1, -0.1, 0.14, 0.03, -0.3, 0, 6.28); c.fill();
         c.strokeStyle = "#aab4bf"; c.lineWidth = 0.012; c.beginPath(); c.ellipse(0, 0, rx, ry, 0, 0, 6.28); c.stroke();
         c.fillStyle = "#7d8996"; for (var k = 0; k < 8; k++) { var a = k / 8 * 6.2832; c.beginPath(); c.arc(Math.cos(a) * (rx + 0.01), Math.sin(a) * (ry + 0.01), 0.006, 0, 6.28); c.fill(); }
         c.restore();

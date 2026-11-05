@@ -51,6 +51,7 @@
 #submarineGame #sgCanvas:active { cursor: grabbing; }
 
 #submarineGame[data-mode="easy"] .sg-dock { height: clamp(82px, 13vh, 104px); }
+#submarineGame[data-mode="easy"] .sg-joywrap, #submarineGame[data-mode="easy"] .sg-flip { display: none; }
 /* لوحة السفلية: عصا التحكم + العداد + زر الاتجاه (خارج ساحة السباحة) */
 #submarineGame .sg-dock {
     flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -74,10 +75,11 @@
 #submarineGame .sg-counter {
     flex: 1 1 auto; display: flex; align-items: baseline; justify-content: center; gap: 12px; direction: rtl;
     font-weight: 800; padding: 6px 18px; border-radius: 26px; background: rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.3);
-    max-width: 360px; margin: 0 auto; min-height: 76px; align-self: center;
+    max-width: 440px; margin: 0 auto; min-height: 76px; align-self: center;
 }
-#submarineGame .sg-c-n { font-size: clamp(44px, 9vh, 72px); color: #ffd60a; line-height: 1; min-width: .9em; text-align: center; }
-#submarineGame .sg-c-t { font-size: clamp(44px, 9vh, 72px); line-height: 1; min-width: .9em; text-align: center; }
+#submarineGame .sg-c-lbl { font-size: clamp(20px, 3.6vh, 28px); opacity: .95; white-space: nowrap; }
+#submarineGame .sg-c-n { font-size: clamp(44px, 9vh, 72px); color: #ffd60a; line-height: 1; min-width: 1.15em; text-align: center; font-variant-numeric: tabular-nums; }
+#submarineGame .sg-c-t { font-size: clamp(44px, 9vh, 72px); line-height: 1; min-width: 1.15em; text-align: center; font-variant-numeric: tabular-nums; }
 #submarineGame .sg-c-of { font-size: clamp(20px, 3.6vh, 28px); opacity: .9; }
 #submarineGame .sg-counter.sg-bump { animation: sgBump .45s ease; }
 @keyframes sgBump { 0% { transform: scale(1); } 35% { transform: scale(1.14); background: rgba(255,214,10,.28); } 100% { transform: scale(1); } }
@@ -183,9 +185,11 @@ body.calm-mode #submarineGame .sgw-star svg { animation: none; }
     #submarineGame .sg-joy { width: 108px; height: 108px; border-width: 3px; }
     #submarineGame .sg-flip { width: 98px; height: 98px; font-size: 11.5px; border-width: 3px; }
     #submarineGame .sg-flip svg { width: 44px; height: 28px; }
-    #submarineGame .sg-counter { gap: 6px; padding: 4px 8px; min-width: 0; min-height: 66px; flex: 1 1 0; }
-    #submarineGame .sg-c-n, #submarineGame .sg-c-t { font-size: 38px; }
+    #submarineGame .sg-counter { gap: 2px 6px; padding: 3px 6px; min-width: 0; min-height: 70px; flex: 1 1 0; flex-wrap: wrap; align-content: center; justify-content: center; }
+    #submarineGame .sg-c-lbl { flex: 0 0 100%; text-align: center; font-size: 14px; line-height: 1.1; }
+    #submarineGame .sg-c-n, #submarineGame .sg-c-t { font-size: 34px; min-width: 1.05em; }
     #submarineGame .sg-c-of { font-size: 15px; }
+    #submarineGame[data-mode="easy"] .sg-c-lbl { flex: 0 0 auto; font-size: 20px; }
     #submarineGame[data-mode="easy"] .sg-c-n, #submarineGame[data-mode="easy"] .sg-c-t { font-size: 46px; }
 }
 @media (max-width: 520px) and (min-height: 700px) { #submarineGame .sg-dock { height: 132px; } #submarineGame[data-mode="easy"] .sg-dock { height: 92px; } }
