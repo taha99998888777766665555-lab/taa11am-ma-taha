@@ -16533,3 +16533,41 @@ body.dark-mode .hm-install-dlg__card { background: #1d2547; color: #f1f3ff; }
 
 /* الطرح: المعادلة في سطر واحد (يصغّر fitSubtractionQuestion الخط عند الحاجة) */
 #subtractionLevelCard #subQuestion.operation { white-space: nowrap; }
+
+/* قسم «تدريبات إضافية» في شاشة الطرح */
+.sub-extra { margin-top: 22px; padding-top: 14px; border-top: 2px dashed #cfd8e6; }
+.sub-extra-title { margin: 0 0 4px; font-size: clamp(20px, 2.4vw, 28px); color: #1f3558; }
+.sub-extra-note { margin: 0 0 12px; color: #5b6b85; font-size: clamp(14px, 1.6vw, 18px); }
+
+/* «تدريبات إضافية»: نفس مظهر بطاقات المستويات */
+#subtractionExtraGrid .add2-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    min-height: 168px;
+    padding: 16px 10px 12px;
+    border-radius: 22px;
+    border: 2px solid var(--a2-line);
+    background: var(--a2-surface);
+    color: var(--a2-ink);
+    box-shadow: 0 4px 14px rgba(36, 59, 83, 0.08);
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    text-align: center;
+    font-family: inherit;
+}
+#subtractionExtraGrid .add2-card:active { transform: scale(.97); }
+#subtractionExtraGrid .add2-card:focus-visible { outline: 3px solid var(--a2-accent); outline-offset: 2px; }
+#subtractionExtraGrid .add2-phase-concrete { --a2-accent: var(--a2-concrete); border-color: color-mix(in srgb, var(--a2-concrete) 40%, transparent); }
+#subtractionExtraGrid .add2-phase-visual   { --a2-accent: var(--a2-visual);   border-color: color-mix(in srgb, var(--a2-visual) 40%, transparent); }
+#subtractionExtraGrid .add2-phase-abstract { --a2-accent: var(--a2-abstract); border-color: color-mix(in srgb, var(--a2-abstract) 40%, transparent); }
+#subtractionExtraGrid .add2-card.completed {
+    background: linear-gradient(180deg, var(--a2-surface), var(--a2-soft));
+    border-color: var(--a2-ok);
+}
+#subtractionExtraGrid .add2-card.recommended {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--a2-accent) 30%, transparent), 0 6px 18px rgba(36, 59, 83, 0.12);
+}

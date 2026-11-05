@@ -2555,6 +2555,64 @@ document.addEventListener(
 );
 
 /* =========================================================
+⌨️ لوحة مفاتيح الكمبيوتر في الجمع والطرح
+   الأرقام (٠-٩ لاتينية أو هندية، صف الأرقام أو لوحة الأرقام) تدخل الإجابة وتظهر هندية دائمًا،
+   Backspace يمسح خانة، وEnter يتحقق. تعمل فقط حين تكون لوحة الأرقام ظاهرة في شاشة الجمع/الطرح الفعّالة،
+   ولا تتدخل في أي حقل كتابة آخر أو نافذة أو قسم آخر.
+========================================================= */
+
+document.addEventListener("keydown", function (e) {
+
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+
+    const isDigit = e.key && e.key.length === 1 && /[0-9\u0660-\u0669\u06F0-\u06F9]/.test(e.key);
+    const isBack = e.key === "Backspace";
+    const isEnter = e.key === "Enter";
+
+    if (!isDigit && !isBack && !isEnter) return;
+
+    const active = document.querySelector(".screen.active");
+    if (!active) return;
+
+    let kind = null;
+    if (active.id === "addition") kind = "add";
+    else if (active.id === "subtraction") kind = "sub";
+    if (!kind) return;
+
+    const padId = kind === "add" ? "additionDigitPad" : "subtractionDigitPad";
+    const inputId = kind === "add" ? "addAnswer" : "subAnswer";
+    const pad = document.getElementById(padId);
+    const input = document.getElementById(inputId);
+
+    if (!pad || !input || pad.getClientRects().length === 0) return;
+
+    /* لا نتدخل إن كان التركيز في حقل كتابة آخر أو في نافذة مفتوحة */
+    const ae = document.activeElement;
+    if (ae && ae !== input && ae !== document.body &&
+        (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable)) return;
+    if (Array.from(document.querySelectorAll("dialog[open], [aria-modal='true']"))
+        .some(el => el.getClientRects().length > 0)) return;
+
+    if (isEnter) {
+        /* Enter على الحقل نفسه يعالجه المستمع القديم أعلاه؛ على زر مركّز يضغطه المتصفح؛ هنا فقط حين لا تركيز */
+        if (ae && ae !== document.body) return;
+        e.preventDefault();
+        if (kind === "add") checkAddition(); else checkSubtraction();
+        return;
+    }
+
+    e.preventDefault();
+
+    if (isBack) {
+        if (kind === "add") clearAdditionDigit(); else clearSubtractionDigit();
+        return;
+    }
+
+    const d = Number(toWesternDigits(e.key));
+    if (kind === "add") appendAdditionDigit(d); else appendSubtractionDigit(d);
+});
+
+/* =========================================================
 📖 القرآن الكريم
 🎙️ الشيخ الحصري
 🔊 EveryAyah
@@ -24650,7 +24708,7 @@ document.addEventListener("DOMContentLoaded", () => {
    borrowNote = ملاحظة «نفكّ عشرة» في التلميح لمسائل الاستلاف. */
 const SUBTRACTION_LEGACY_KEYS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-const SUBTRACTION_LEVELS = [
+const SUBTRACTION_MAIN_LEVELS = [
     { id: 1,  key: 1,  title: "طرح بالصور ضمن ٥",          icon: "🥕", max: 5,   mode: "concrete-removal" },
     { id: 2,  key: 11, title: "طرح بالأرقام ضمن ٥",        icon: "🔢", max: 5,   mode: "choice-result" },
     { id: 3,  key: 2,  title: "طرح بالصور ضمن ١٠",         icon: "🔟", max: 10,  mode: "ten-frame" },
@@ -24662,6 +24720,23 @@ const SUBTRACTION_LEVELS = [
     { id: 9,  key: 17, title: "طرح ضمن ١٠٠ دون استلاف",    icon: "⛰️", max: 100, mode: "digit-pad", helpPlace: true },
     { id: 10, key: 18, title: "طرح ضمن ١٠٠ مع الاستلاف",   icon: "🏔️", max: 100, mode: "digit-pad", helpPlace: true, borrowNote: true }
 ];
+
+/* «تدريبات إضافية»: المستويات القديمة التي أُخرجت من التدرج العشري، محفوظة كما كانت
+   (نفس المحرك ونفس الوصفات) ومفتوحة دائمًا. مفاتيحها key = ٣–١٠ هي نفسها مفاتيح التقدم القديمة،
+   فيظهر لكل طالب تقدّمه السابق فيها كما هو دون أي تحويل في التخزين. المعرّفات ١١–١٨ للعرض فقط. */
+const SUBTRACTION_EXTRA_LEVELS = [
+    { id: 11, key: 3,  title: "طرح ضمن ٢٠",          icon: "🔢", max: 20,  mode: "digit-pad" },
+    { id: 12, key: 4,  title: "العدد المفقود",        icon: "❓", max: 10,  mode: "missing-number" },
+    { id: 13, key: 5,  title: "طرح أفقي",             icon: "➡️", max: 20,  mode: "digit-pad" },
+    { id: 14, key: 6,  title: "طرح رأسي",             icon: "⬇️", max: 20,  mode: "vertical" },
+    { id: 15, key: 7,  title: "خط الأعداد",           icon: "🐇", max: 10,  mode: "number-line" },
+    { id: 16, key: 8,  title: "مسائل متنوعة",         icon: "📖", max: 15,  mode: "word-problem" },
+    { id: 17, key: 9,  title: "طرح ضمن ٥٠",           icon: "🗂️", max: 50,  mode: "digit-pad" },
+    { id: 18, key: 10, title: "طرح ضمن ١٠٠",          icon: "💯", max: 100, mode: "digit-pad" }
+];
+
+/* المصفوفة الكاملة للبحث بالمعرّف (id = موضع+١)؛ العرض يستعمل MAIN / EXTRA كلًّا على حدة */
+const SUBTRACTION_LEVELS = SUBTRACTION_MAIN_LEVELS.concat(SUBTRACTION_EXTRA_LEVELS);
 
 /* =========================================================
    🥕🎈🚌 مسرحيات المرحلة المحسوسة (Concrete) — تُستخدم في
@@ -25801,7 +25876,7 @@ function renderSubtractionLevelsHub() {
 
     const bestScores = loadSubtractionLevelBest();
 
-    grid.innerHTML = SUBTRACTION_LEVELS.map(level => {
+    grid.innerHTML = SUBTRACTION_MAIN_LEVELS.map(level => {
 
         const isUnlocked = true; /* كل المستويات مفتوحة دائمًا */
         const isCompleted = (bestScores[level.id] || 0) >= SUBTRACTION_PASS_SCORE;
@@ -26760,7 +26835,8 @@ function renderSubtractionLevelResultScreen(level, score, passed) {
 
     hideSubtractionHint();
 
-    const nextLevel = SUBTRACTION_LEVELS[level.id];
+    const nextLevel = (SUBTRACTION_LEVELS[level.id] && (SUBTRACTION_LEVELS[level.id].id > 10) === (level.id > 10))
+        ? SUBTRACTION_LEVELS[level.id] : null;
 
     if (stage) {
 
@@ -33627,7 +33703,7 @@ const StudentData = (function () {
             unlockedLevels: {
                 words: Number(localStorage.getItem("taha_words_unlocked_level") || 1),
                 addition: ADDITION_LEVELS.length, /* كل مستويات الجمع مفتوحة دائمًا */
-                subtraction: SUBTRACTION_LEVELS.length /* كل مستويات الطرح مفتوحة دائمًا */
+                subtraction: SUBTRACTION_MAIN_LEVELS.length /* كل مستويات الطرح مفتوحة دائمًا */
             },
 
             questsCompletedTotal: Number(localStorage.getItem("taha_quests_completed_total") || 0),
@@ -38045,17 +38121,17 @@ renderSubtractionLevelsHub = function () {
     if (!grid) return;
 
     const best = loadSubtractionLevelBest();
-    const completed = SUBTRACTION_LEVELS.filter(l => (best[l.id] || 0) >= SUBTRACTION_PASS_SCORE).length;
-    const recommended = (SUBTRACTION_LEVELS.find(l => (best[l.id] || 0) < SUBTRACTION_PASS_SCORE) || {}).id;
+    const completed = SUBTRACTION_MAIN_LEVELS.filter(l => (best[l.id] || 0) >= SUBTRACTION_PASS_SCORE).length;
+    const recommended = (SUBTRACTION_MAIN_LEVELS.find(l => (best[l.id] || 0) < SUBTRACTION_PASS_SCORE) || {}).id;
 
     const stats = $("subHubStats");
     if (stats) {
         stats.innerHTML =
             `<span class="add2-stat">⭐ ${arabicNumber(getStars())}</span>` +
-            `<span class="add2-stat">✅ ${arabicNumber(completed)}/${arabicNumber(SUBTRACTION_LEVELS.length)}</span>`;
+            `<span class="add2-stat">✅ ${arabicNumber(completed)}/${arabicNumber(SUBTRACTION_MAIN_LEVELS.length)}</span>`;
     }
 
-    grid.innerHTML = SUBTRACTION_LEVELS.map(level => {
+    const cardHTML = level => {
 
         const meta = SUB2_META[level.key] || SUB2_META[1];
         const score = best[level.id] || 0;
@@ -38078,7 +38154,13 @@ renderSubtractionLevelsHub = function () {
                 ${score ? `<span class="subtraction-level-best add2-card-best">${arabicNumber(score)}/١٠</span>` : ""}
             </button>
         `;
-    }).join("");
+    };
+
+    grid.innerHTML = SUBTRACTION_MAIN_LEVELS.map(cardHTML).join("");
+
+    /* قسم «تدريبات إضافية» (المستويات القديمة) — مفتوحة دائمًا، لا يدخل في العدّاد ولا في «مقترح لك» */
+    const extraGrid = $("subtractionExtraGrid");
+    if (extraGrid) extraGrid.innerHTML = SUBTRACTION_EXTRA_LEVELS.map(cardHTML).join("");
 };
 
 /* ---------- شريط التقدم بنقاط ---------- */

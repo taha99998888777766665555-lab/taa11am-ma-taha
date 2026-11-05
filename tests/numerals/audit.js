@@ -14,7 +14,7 @@ const SCAN=(secId)=>{const root=document.getElementById(secId);const out=[];cons
  await p.addInitScript(()=>{try{if(!localStorage.getItem('taha_child_name')){localStorage.setItem('taha_child_name','طالب');localStorage.setItem('taha_child_avatar','🦁')}}catch(e){}});
  await p.goto(`http://127.0.0.1:${PORT}/index.html`);await p.waitForTimeout(1500);
  const rec=async(tag,sec)=>{const r=await p.evaluate(SCAN,sec);r.forEach(x=>{const k=sec+'|'+x[0]+'|'+x[1]+'|'+x[2];if(!found.has(k))found.set(k,tag)})};
- for(const [sec,P,max] of [['addition','Addition',10],['subtraction','Subtraction',10]]){
+ for(const [sec,P,max] of [['addition','Addition',10],['subtraction','Subtraction',18]]){
   await p.evaluate(s=>showScreen(s),sec);await p.waitForTimeout(500);await rec(sec+' hub',sec);
   for(let lv=1;lv<=max;lv++){
    await p.evaluate(([f,l])=>window[f](l),['open'+P+'Level',lv]);await p.waitForTimeout(400);

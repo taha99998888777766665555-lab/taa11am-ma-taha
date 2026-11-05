@@ -4,14 +4,14 @@ let pass=0,fail=0;const ok=(c,m,d='')=>{if(c)pass++;else{fail++;console.log('FAI
 (async()=>{const br=await chromium.launch();const p=await br.newPage();const errs=[];p.on('pageerror',e=>errs.push(String(e)));
  await p.addInitScript(()=>{try{localStorage.setItem('taha_child_name','طالب');localStorage.setItem('taha_child_avatar','🦁')}catch(e){}});
  await p.goto(`http://127.0.0.1:${PORT}/index.html`);await p.waitForTimeout(1500);
- const titles=await p.evaluate(()=>SUBTRACTION_LEVELS.map(l=>l.title+'|'+l.mode+'|'+l.max));
+ const titles=await p.evaluate(()=>SUBTRACTION_MAIN_LEVELS.map(l=>l.title+'|'+l.mode+'|'+l.max));
  const want=['طرح بالصور ضمن ٥|concrete-removal|5','طرح بالأرقام ضمن ٥|choice-result|5','طرح بالصور ضمن ١٠|ten-frame|10','طرح بالأرقام ضمن ١٠|digit-pad|10','طرح ضمن ٢٠ دون استلاف|digit-pad|20','طرح ضمن ٢٠ مع الاستلاف|digit-pad|20','طرح ضمن ٥٠ دون استلاف|digit-pad|50','طرح ضمن ٥٠ مع الاستلاف|digit-pad|50','طرح ضمن ١٠٠ دون استلاف|digit-pad|100','طرح ضمن ١٠٠ مع الاستلاف|digit-pad|100'];
  ok(JSON.stringify(titles)===JSON.stringify(want),'ترتيب المستويات العشرة وأنماطها كما طلب المستخدم',titles.join(' ; '));
- ok(await p.evaluate(()=>new Set(SUBTRACTION_LEVELS.map(l=>l.key)).size===10),'مفاتيح التقدم فريدة');
+ ok(await p.evaluate(()=>new Set(SUBTRACTION_MAIN_LEVELS.map(l=>l.key)).size===10),'مفاتيح التقدم فريدة');
  const R=await p.evaluate(()=>{ // مستقل عن تعريف التطبيق: حاجة الاستلاف بمقارنة الخانات
   const borrow=(a,b)=>{while(a>0||b>0){if(a%10<b%10)return true;a=Math.floor(a/10);b=Math.floor(b/10)}return false};
   const out=[];
-  SUBTRACTION_LEVELS.forEach(l=>{const o={id:l.id,bad:[],pairs:new Set(),tierDown:0,len:0,zero:0,minA:999,maxA:0,rounds:0};
+  SUBTRACTION_MAIN_LEVELS.forEach(l=>{const o={id:l.id,bad:[],pairs:new Set(),tierDown:0,len:0,zero:0,minA:999,maxA:0,rounds:0};
    for(let r=0;r<400;r++){const tasks=generateSubtractionTasksForLevel(l);o.rounds++;
     if(tasks.length!==10)o.bad.push('len '+tasks.length);
     const seen=new Set();let lastTier=0;
