@@ -50,6 +50,11 @@
     href="ui2.css"
 >
 
+<link
+    rel="stylesheet"
+    href="submarine.css"
+>
+
 <style id="hm-home-styles">
 /* =========================================================
    ✨ الهوية الجديدة — الرأس والصفحة الرئيسية فقط
@@ -1377,6 +1382,28 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
         <span class="aj-entry-text">
             <strong>🌟 أرقامي الجميلة</strong>
             <small>أنشطة تفاعلية من ١ إلى ٢٠</small>
+        </span>
+        <span class="aj-entry-go" aria-hidden="true">◀</span>
+    </button>
+
+
+    <button
+        class="aj-entry-btn sg-entry-btn"
+        type="button"
+        onclick="openSubmarineGame()"
+    >
+        <svg class="sg-entry-ico" viewBox="0 0 112 80" aria-hidden="true">
+            <defs><linearGradient id="sgEg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset=".5" stop-color="#ffc800"/><stop offset="1" stop-color="#f08f00"/></linearGradient></defs>
+            <path d="M16 36l-12-14 4 28z" fill="#e8890c" stroke="#a85d00" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="34" y="8" width="26" height="22" rx="8" fill="url(#sgEg)" stroke="#b86e00" stroke-width="3"/>
+            <path d="M44 8V0h14" fill="none" stroke="#7d8996" stroke-width="4" stroke-linecap="round"/>
+            <ellipse cx="60" cy="44" rx="46" ry="27" fill="url(#sgEg)" stroke="#b86e00" stroke-width="3"/>
+            <ellipse cx="46" cy="44" rx="17" ry="12" fill="#6cc6f0" stroke="#aab4bf" stroke-width="4"/>
+            <circle cx="86" cy="44" r="11" fill="#fff" stroke="#1b6fd1" stroke-width="4"/>
+        </svg>
+        <span class="aj-entry-text">
+            <strong>مغامرة الغواصة – صياد الأرقام</strong>
+            <small>اسحب الأسماك وعُدّ معنا من ١ إلى ١٠</small>
         </span>
         <span class="aj-entry-go" aria-hidden="true">◀</span>
     </button>
@@ -3243,6 +3270,11 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
     </div>
     <iframe id="heroesFrame" class="heroes-frame" title="تحدي أبطال الجمع" allow="autoplay" data-src="addition-heroes/index.html"></iframe>
 </section>
+
+<!-- =========================================================
+     🐠 مغامرة الغواصة – صياد الأرقام (يُبنى محتواها برمجيًا في submarine.js)
+========================================================= -->
+<section id="submarineGame" class="screen" aria-label="مغامرة الغواصة – صياد الأرقام"></section>
 
 <section
     id="matchingGame"
@@ -5136,6 +5168,7 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
 <script src="wbk4.js"></script>
 <script src="nav.js"></script>
 <script src="heroes-app.js"></script>
+<script src="submarine.js"></script>
 <script src="pwa-install.js"></script>
 <script src="ui2.js"></script>
 
