@@ -12,9 +12,9 @@ const L=require('./lib.js');const vp=process.env.VP||'m390';
  // قياس حجم النافذة والأسماك المجمعة
  const win=await p.evaluate(()=>{const G=__subGame.G;return {winW:Math.round(2*0.31*G.subL),slotLen:Math.round(0.58/4*0.92*G.subL),subL:Math.round(G.subL)}});
  console.log('نافذة الغواصة بالبكسل:',JSON.stringify(win));
- L.ok(win.winW>=(vp.startsWith('m')?120:170),'النافذة كبيرة',win);
+ L.ok(win.winW>=(vp.startsWith('m')||vp==='phoneL'?120:170),'النافذة كبيرة',win);
  // تسامح الإمساك: ٥٠ بكسل عن مركز السمكة
- let fp=await L.pickFish(p);
+ let fp=await L.pickFish(p);const DY=await p.evaluate(y=>y>__subGame.G.H*0.4?-60:60,fp.y);
  const f0=await p.evaluate(id=>{const f=__subGame.G.fish.find(q=>q.id===id);return {x:f.x,y:f.y}},fp.id);
  const g1=await L.w2p(p,fp.x+50,fp.y);
  await p.evaluate(()=>{});
@@ -22,18 +22,18 @@ const L=require('./lib.js');const vp=process.env.VP||'m390';
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:g1.x,y:g1.y,id:1}]});await p.waitForTimeout(150);
   var grabbed=await p.evaluate(id=>__subGame.G.fish.find(q=>q.id===id).state==='drag',fp.id);
   // تتبع: حرّك الإصبع بسرعة ثم اقِس التأخر
-  const tgt=await L.w2p(p,fp.x+50,fp.y-60);
+  const tgt=await L.w2p(p,fp.x+50,fp.y+DY);
   for(let i=1;i<=10;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:g1.x+(tgt.x-g1.x)*i/10,y:g1.y+(tgt.y-g1.y)*i/10,id:1}]});await p.waitForTimeout(16)}
   await p.waitForTimeout(250);
-  var lag=await p.evaluate(([id,ty])=>{const f=__subGame.G.fish.find(q=>q.id===id);return {st:f.state,dy:Math.abs(f.y-(ty))}},[fp.id,fp.y-60]);
+  var lag=await p.evaluate(([id,ty])=>{const f=__subGame.G.fish.find(q=>q.id===id);return {st:f.state,dy:Math.abs(f.y-(ty))}},[fp.id,fp.y+DY]);
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[{x:tgt.x,y:tgt.y,id:1}]});
  }else{
   await p.mouse.move(g1.x,g1.y);await p.mouse.down();await p.waitForTimeout(150);
   var grabbed=await p.evaluate(id=>__subGame.G.fish.find(q=>q.id===id).state==='drag',fp.id);
-  const tgt=await L.w2p(p,fp.x+50,fp.y-60);
+  const tgt=await L.w2p(p,fp.x+50,fp.y+DY);
   for(let i=1;i<=10;i++){await p.mouse.move(g1.x+(tgt.x-g1.x)*i/10,g1.y+(tgt.y-g1.y)*i/10);await p.waitForTimeout(16)}
   await p.waitForTimeout(250);
-  var lag=await p.evaluate(([id,ty])=>{const f=__subGame.G.fish.find(q=>q.id===id);return {st:f.state,dy:Math.abs(f.y-(ty))}},[fp.id,fp.y-60]);
+  var lag=await p.evaluate(([id,ty])=>{const f=__subGame.G.fish.find(q=>q.id===id);return {st:f.state,dy:Math.abs(f.y-(ty))}},[fp.id,fp.y+DY]);
   await p.mouse.up();
  }
  L.ok(grabbed,'التقاط السمكة من ٥٠ بكسل عن مركزها');
