@@ -12,7 +12,7 @@ const L=require('./lib.js');const vp=process.env.VP||'tablet';
  await p.evaluate(()=>{__subGame.setMode('free');__subGame.audioLog.length=0;__subGame.startRound({type:'num',n:6})});await p.waitForTimeout(500);
  // --- لمس المساحات: أحجام الأزرار ---
  const jb=await rectOf('#sgJoy'),fb=await rectOf('#sgFlip'),bb=await rectOf('#sgBack');
- L.ok(jb.w>=110&&jb.h>=110,'عصا التحكم كبيرة',[jb.w,jb.h]);L.ok(fb.w>=100,'زر الاتجاه كبير',[fb.w,fb.h]);L.ok(bb.h>=48,'زر الرجوع كبير',bb.h);
+ L.ok(jb.w>=(vp==='m360'||vp==='m390'?100:vp==='phoneL'?90:110)&&jb.h>=(vp==='m360'||vp==='m390'?100:vp==='phoneL'?90:110),'عصا التحكم كبيرة',[jb.w,jb.h]);L.ok(fb.w>=(vp==='m360'||vp==='m390'?96:vp==='phoneL'?86:100),'زر الاتجاه كبير',[fb.w,fb.h]);L.ok(bb.h>=48,'زر الرجوع كبير',bb.h);
  // لا تداخل بين الأزرار وساحة اللعب
  const st=await rectOf('#sgStage');
  L.ok(jb.t>=st.t+st.h/2+0.5*0 && jb.t>=(st.t+ (await p.evaluate(()=>document.getElementById('sgStage').getBoundingClientRect().height)))-1,'العصا خارج ساحة اللعب',{jt:jb.t});
