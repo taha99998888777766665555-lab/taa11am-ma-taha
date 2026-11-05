@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v51";
+const CACHE_VERSION = "taha-app-v52";
 const CACHE_NAME = CACHE_VERSION;
 
 const APP_SHELL = [
@@ -22,6 +22,8 @@ const APP_SHELL = [
     "./wbk4.css",
     "./nav.js",
     "./heroes-app.js",
+    "./submarine.js",
+    "./submarine.css",
     "./pwa-install.js",
     "./addition-heroes/index.html",
     "./addition-heroes/heroes.css",
