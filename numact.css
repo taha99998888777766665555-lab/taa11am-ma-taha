@@ -506,3 +506,111 @@
     unicode-range: U+0660;
     size-adjust: 125%;
 }
+
+/* =========================================================
+   الرقم ١١ فقط (المرحلة ٣): أخطاء هادئة، شبكة ٦×٥، خط أعداد متصل، كوّن العدد
+   كل القواعد مقيّدة بأصناف لا تظهر إلا في نشاطات الرقم ١١
+========================================================= */
+
+/* خطأ هادئ: بلا اهتزاز ولا أحمر ولا عقوبة */
+#ajPlay .aj-calm .aj-opt-wrong,
+#ajPlay .aj-calm .aj-cell-wrong,
+#ajPlay .aj-calm .aj-conn-wrong {
+    animation: none;
+    border-style: solid !important;
+    border-color: #c2b3e0 !important;
+    background: #f3eefb !important;
+}
+#ajPlay .aj-calm .aj-conn-bad-line { stroke: #b9a7dc; stroke-dasharray: none; opacity: .55; }
+
+/* مرجع الرقم المطلوب */
+#ajPlay .aj-find-ref {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    width: fit-content; margin: 0 auto 10px; padding: 2px 20px;
+    background: #fff; border: 3px solid #fff; border-radius: 999px;
+    box-shadow: 0 4px 0 rgba(143, 178, 220, .5);
+}
+#ajPlay .aj-find-ref-label { font-size: clamp(16px, 2vw, 22px); font-weight: 600; }
+#ajPlay .aj-find-ref-num { font-family: var(--na-num); font-weight: 800; font-size: clamp(38px, 5.5vw, 60px); line-height: 1.1; }
+
+/* شبكة ٦×٥: كل الخانات قابلة للمس بلا قص */
+#ajPlay .aj-find-six .aj-find-grid { width: min(100%, clamp(300px, 54vh, 600px)); margin-inline: auto; gap: clamp(6px, 1.2vw, 12px); }
+#ajPlay .aj-find-six .aj-cell { aspect-ratio: 1 / 1; min-height: 0; padding: 0; border-width: 3px; border-radius: 16px; }
+#ajPlay .aj-find-six .aj-cell-num { font-size: clamp(24px, min(7.2vw, 5.2vh), 50px); }
+
+/* خط الأعداد المتصل ١٠ ← ١٥ (يصعد من اليمين إلى اليسار) */
+#ajPlay .aj-lineg { display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2vh, 20px); }
+#ajPlay .aj-lineg-stim { flex-direction: row; gap: 18px; justify-content: center; align-items: center; padding: 6px 22px; }
+#ajPlay .aj-lineg-stim .aj-bignum { font-size: clamp(64px, 12vw, 110px); line-height: 1.05; }
+#ajPlay .aj-lineg-line {
+    position: relative; display: flex; width: min(100%, clamp(300px, 92vw, 960px));
+    border-bottom: 8px solid #4a78b5; border-radius: 4px; margin-bottom: clamp(34px, 5vh, 48px);
+}
+#ajPlay .aj-lineg-line::after {
+    content: ""; position: absolute; left: -10px; bottom: -19px; width: 0; height: 0;
+    border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-right: 24px solid #4a78b5;
+}
+#ajPlay .aj-lineg .aj-lineg-opt {
+    position: relative; flex: 1 1 0; min-width: 0; min-height: clamp(92px, 14vh, 150px); padding: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;
+    background: transparent; border: 0; border-radius: 12px 12px 0 0; box-shadow: none;
+}
+#ajPlay .aj-lineg .aj-lineg-opt:hover { background: rgba(255, 255, 255, .55); }
+#ajPlay .aj-lineg .aj-opt-num { font-size: clamp(34px, 7.4vw, 78px); padding: 0 .2em; border-radius: 999px; line-height: 1.2; }
+#ajPlay .aj-lineg .aj-tick-mark { width: 5px; height: 18px; background: #4a78b5; border-radius: 3px; }
+#ajPlay .aj-lineg-cap { position: absolute; top: 100%; margin-top: 14px; inset-inline: 0; text-align: center; min-height: 1.3em; font-size: clamp(13px, 1.9vw, 20px); font-weight: 700; color: #5a6b86; }
+#ajPlay .aj-lineg .aj-lineg-hit .aj-opt-num,
+#ajPlay .aj-lineg .aj-lineg-opt.aj-lineg-hit .aj-opt-num { box-shadow: 0 0 0 5px #2a9a47; background: #e6f7ec; }
+#ajPlay .aj-lineg .aj-lineg-nb .aj-opt-num { box-shadow: 0 0 0 4px #f0c24b; background: #fff6d9; }
+#ajPlay .aj-lineg .aj-lineg-start .aj-opt-num { box-shadow: 0 0 0 4px #8fbfee; background: #eaf3fd; }
+#ajPlay .aj-lineg .aj-opt-correct::after,
+#ajPlay .aj-lineg .aj-mark-circle::after { display: none; }
+#ajPlay .aj-lineg .aj-opt-correct, #ajPlay .aj-lineg .aj-mark-circle { outline: 0; border: 0; }
+#ajPlay .aj-lineg .aj-opt-wrong { border: 0 !important; }
+#ajPlay .aj-lineg-rel { min-height: 1.3em; font-family: var(--na-num); font-weight: 800; font-size: clamp(26px, 4.2vw, 46px); }
+
+/* كوّن العدد بنفسك: محاولتان متدرجتان */
+#ajPlay .aj-guided { gap: 12px; }
+#ajPlay .aj-guided-row { flex-direction: column; gap: 8px; }
+#ajPlay .aj-guided-row[hidden] { display: none; }
+#ajPlay .aj-guided-title { font-size: clamp(16px, 2.2vw, 24px); font-weight: 700; text-align: center; }
+#ajPlay .aj-guided-body { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: clamp(8px, 1.6vw, 16px); }
+#ajPlay .aj-guided .aj-frame { width: clamp(200px, min(36vw, 44vh), 520px); max-width: 100%; border-width: 4px; }
+#ajPlay .aj-guided .aj-frame-cell { aspect-ratio: 1 / 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#ajPlay .aj-guided .aj-counter { width: 74%; height: auto; aspect-ratio: 1 / 1; }
+#ajPlay .aj-guided .aj-plus { font-size: clamp(34px, 5vw, 54px); font-weight: 800; }
+#ajPlay .aj-guided-eq { font-family: var(--na-num); font-weight: 800; font-size: clamp(30px, 4.4vw, 48px); }
+#ajPlay .aj-guided-eq:empty { display: none; }
+#ajPlay .aj-guided-row.aj-row-ok:not(:last-child) .aj-guided-body { display: none; }
+
+/* ١١: خيارات دائرية بحجم يتّسع للثلاثة في سطر واحد دون تمرير زائد */
+#ajPlay .aj-calm .aj-opts-round .aj-opt { width: clamp(86px, min(26vw, 16vh), 150px); height: clamp(86px, min(26vw, 16vh), 150px); }
+#ajPlay .aj-calm .aj-opts { gap: clamp(8px, 2vw, 22px); flex-wrap: nowrap; justify-content: center; }
+#ajPlay .aj-calm .aj-opts-round .aj-opt-num { font-size: clamp(40px, min(9vw, 8vh), 76px); }
+
+/* ١١: أرقام البالونات داخل البالون */
+#ajPlay .aj-calm.aj-find-balloons .aj-cell-num { font-size: clamp(22px, 5.6vw, 54px); }
+#ajPlay .aj-calm.aj-find-balloons .aj-cell { min-height: clamp(96px, 24vw, 170px); }
+
+/* ١١: كوّن العدد — على الجوال الإطاران فوق بعضهما بخلايا ≥ ٥٦ بكسل */
+@media (max-width: 700px) {
+    #ajPlay .aj-guided-body { flex-direction: column; }
+    #ajPlay .aj-guided .aj-frame { width: min(100%, 300px); }
+}
+
+/* ١١: عدّ ١١ تفاحة في صفّين (٦ + ٥) ليظهر لوح الأرقام دون تمرير زائد */
+#ajPlay .aj-cw-11 .aj-countable { display: grid; grid-template-columns: repeat(6, auto); justify-content: center; gap: clamp(4px, 1vw, 12px); }
+#ajPlay .aj-cw-11 .aj-countable .aj-object { width: clamp(52px, 14.2vw, 110px); height: clamp(56px, 15.2vw, 118px); }
+@media (min-width: 1100px) {
+    #ajPlay .aj-cw-11 .aj-stim .aj-objects.aj-countable .aj-object { width: clamp(52px, 7.8vh, 96px); height: clamp(56px, 8.4vh, 104px); }
+}
+
+/* ١١: ضبط الارتفاع على السبورة والجوال دون تمرير زائد */
+#ajPlay .aj-paint-c .aj-canvas-wide { width: min(100%, clamp(250px, 34vh, 480px)); }
+#ajPlay .aj-paint-c .aj-frames-pair .aj-frame, #ajPlay .aj-paint-c .aj-frame { max-width: clamp(180px, 25vh, 250px); }
+#ajPlay .aj-calm.aj-connect .aj-frames-mini { max-width: clamp(100px, 13vh, 150px); }
+#ajPlay .aj-calm.aj-connect .aj-conn-item { min-height: clamp(78px, 11vh, 124px); }
+@media (max-width: 700px) {
+    #ajPlay .aj-cw-11 .aj-key { min-height: 56px; }
+    #ajPlay .aj-cw-11 .aj-keypad { gap: 8px; }
+}
