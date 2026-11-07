@@ -17539,6 +17539,22 @@ function startAJNumber(n) {
     if (dialog) dialog.style.display = "none";
 
     renderAJActivity();
+
+    /* الرقم ١٠ و٢٠ يحويان الصفر: خط الصفر ملف صغير مخزّن للعمل دون إنترنت. إن لم يكن جاهزًا لحظة العرض
+       نعيد رسم النشاط مرة واحدة فور تحميله، بشرط ألا يكون الطالب قد لمس شيئًا ولم يُنجز النشاط بعد. */
+    if (String(n).indexOf("0") !== -1 && document.fonts && document.fonts.load && !document.fonts.check('900 40px "AJ Zero"', "\u0660")) {
+        const mySession = ajGame.session;
+        const myIndex = ajGame.actIndex;
+        let touched = false;
+        const stageEl = $("ajStage");
+        if (stageEl) stageEl.addEventListener("pointerdown", () => { touched = true; }, { once: true, capture: true });
+        document.fonts.load('900 100px "AJ Zero"', "\u0660").then(() => {
+            if (!touched && ajGame.active && ajGame.session === mySession && ajGame.actIndex === myIndex &&
+                ajGame.current && !ajGame.current.solved) {
+                renderAJActivity();
+            }
+        }, () => {});
+    }
 }
 
 function ajBackToMap() {
@@ -17960,7 +17976,8 @@ function ajCountableObjects(kind, count, api, onChange) {
    ========================================================= */
 
 function ajGlyphFont(size) {
-    return "900 " + size + "px Tahoma, \"Noto Naskh Arabic\", Arial, sans-serif";
+    /* "AJ Zero" يخصّ الصفر «٠» وحده (numact.css) ليظهر بالشكل نفسه في كل الأجهزة؛ بقية الأرقام كما كانت */
+    return "900 " + size + "px \"AJ Zero\", Tahoma, \"Noto Naskh Arabic\", Arial, sans-serif";
 }
 
 /* تخطيط الرقم داخل اللوحة: حجم خط يناسب العرض والارتفاع، ومركز رأسي دقيق */
@@ -18385,18 +18402,17 @@ function ajRenderTrace(stage, spec, api) {
 
         ajApplyLayout(gctx, layout);
 
-        if (kind === "dotted") {
-            gctx.fillStyle = "#f1f5fb";
-            gctx.fillText(spec.text, layout.x, layout.y);
-        }
-
+        /* رسم المرشد فقط: حدّ خارجي واحد ثم تعبئة فوقه تُخفي أي خطوط داخلية (لا تغيير في الاحتساب) */
         gctx.lineJoin = "round";
-        gctx.lineCap = "round";
-        gctx.setLineDash([1, kind === "dotted" ? 11 : 15]);
-        gctx.lineWidth = kind === "dotted" ? 8 : 7;
-        gctx.strokeStyle = kind === "dotted" ? "#6f7f97" : "#c3cddb";
+        gctx.lineCap = "butt";
+        gctx.setLineDash(kind === "dotted" ? [] : [10, 12]);
+        gctx.lineWidth = kind === "dotted" ? 6 : 5;
+        gctx.strokeStyle = kind === "dotted" ? "#4a78b5" : "#a9bdd6";
         gctx.strokeText(spec.text, layout.x, layout.y);
         gctx.setLineDash([]);
+        gctx.fillStyle = kind === "dotted" ? "#cfe2fa" : "#e8f1fc";
+        gctx.fillText(spec.text, layout.x, layout.y);
+        
     }
 
     function coverage() {

@@ -1,0 +1,779 @@
+/* =========================================================
+   🌳 واجهات قسم الأرقام — المرحلة الأولى
+   ---------------------------------------------------------
+   يغطي شاشتين فقط: #numbers (البطاقتان) و #ajHome (خريطة الأرقام).
+   كل القواعد مقيّدة بهذين المعرّفين؛ لا تمسّ #ajPlay ولا الغواصة من الداخل
+   ولا الترويسة العامة ولا أي قسم آخر.
+   خط الأرقام متغيّر واحد (--nh-num-font) لتبديله في مكان واحد.
+   الأرقام كلها نص HTML حقيقي بالأرقام الهندية.
+========================================================= */
+
+#numbers,
+#ajHome {
+    --nh-font: "Readex Pro", "Tahoma", "Arial", sans-serif;
+    --nh-num-font: var(--nh-font);
+    --nh-ink: #1f3b63;
+    --nh-purple: #4b2a96;
+}
+
+#numbers [hidden],
+#ajHome [hidden] { display: none !important; }
+
+/* ---------- المشهد: حديقة (سماء + تلال + أرضية + أشجار مرسومة) ---------- */
+
+#numbers .nh-hub,
+#ajHome .aj-wrap.nh-map-stage {
+    --nh-stage-w: min(96vw, 1180px);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    box-sizing: border-box;
+    width: var(--nh-stage-w);
+    max-width: none;
+    margin-inline: calc(50% - var(--nh-stage-w) / 2);
+    border: 0;
+    border-radius: 30px;
+    color: var(--nh-ink);
+    font-family: var(--nh-font);
+    box-shadow: 0 10px 28px rgba(18, 74, 120, .25);
+}
+
+#ajHome .aj-wrap.nh-map-stage { --nh-stage-w: min(96vw, 1000px); }
+
+.nh-garden {
+    background:
+        url("assets/images/numhub/ground.webp") center bottom / 100% auto no-repeat,
+        radial-gradient(62% 13% at 10% 60%, #9bda55 0 96%, transparent 100%),
+        radial-gradient(66% 14% at 92% 61%, #8cd048 0 96%, transparent 100%),
+        linear-gradient(180deg, #2aa9f6 0%, #58c3fd 30%, #a9e3ff 52%, #c7eeff 59%, #97d655 59.2%, #6eb62f 100%);
+}
+
+#numbers .nh-hub {
+    min-height: min(80vh, 780px);
+    padding: clamp(18px, 3vw, 30px) clamp(12px, 3vw, 34px) clamp(76px, calc(11.7vw + 26px), 164px);
+}
+
+#ajHome .aj-wrap.nh-map-stage {
+    padding: clamp(14px, 2.4vw, 22px) clamp(12px, 3vw, 28px) calc(var(--nh-stage-w) * .305);
+}
+
+/* الأشجار والسحب: رسوم WebP شفافة، زينة بحتة خلف المحتوى */
+
+.nh-trees { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+
+.nh-trees i {
+    position: absolute;
+    top: -9%;
+    height: 70%;
+    width: clamp(150px, 22vw, 330px);
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: drop-shadow(0 8px 10px rgba(20, 70, 20, .25));
+}
+
+.nh-trees .nh-tree-l { left: -2%; background-image: url("assets/images/numhub/tree_a.webp"); }
+.nh-trees .nh-tree-r { right: -2%; background-image: url("assets/images/numhub/tree_b.webp"); }
+
+.nh-trees::before,
+.nh-trees::after {
+    content: "";
+    position: absolute;
+    top: 7%;
+    width: clamp(110px, 15vw, 230px);
+    aspect-ratio: 320 / 140;
+    background: url("assets/images/numhub/cloud.webp") center / contain no-repeat;
+    opacity: .95;
+}
+.nh-trees::before { left: 26%; }
+.nh-trees::after { right: 24%; top: 12%; transform: scale(.8); }
+
+@media (max-width: 700px) {
+    .nh-trees i { top: 2%; height: 34%; width: 110px; }
+    .nh-trees .nh-tree-l { left: -34px; }
+    .nh-trees .nh-tree-r { right: -34px; }
+    .nh-trees::before { left: 30%; top: 3%; width: 90px; }
+    .nh-trees::after { display: none; }
+}
+
+/* ---------- اللافتة الخشبية ---------- */
+
+#numbers .nh-sign,
+#ajHome .aj-cover-title {
+    position: relative;
+    z-index: 1;
+    width: fit-content;
+    max-width: 94%;
+    margin: clamp(14px, 3vw, 26px) auto clamp(18px, 3vw, 30px);
+    padding: clamp(8px, 1.6vw, 14px) clamp(26px, 6vw, 72px) clamp(10px, 1.8vw, 16px);
+    background:
+        repeating-linear-gradient(176deg, rgba(255,255,255,.08) 0 3px, transparent 3px 12px, rgba(0,0,0,.07) 12px 14px),
+        linear-gradient(180deg, #cb8c50, #a76b36 55%, #8e5a2c);
+    border: 4px solid #6b4424;
+    border-radius: 22px 22px 28px 28px / 16px 16px 30px 30px;
+    box-shadow: 0 6px 0 #5a371b, 0 14px 22px rgba(0, 0, 0, .25), inset 0 3px 0 rgba(255, 255, 255, .3);
+    font-family: var(--nh-font);
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    color: #fff;
+    text-shadow:
+        -3px -3px 0 var(--nh-purple), 3px -3px 0 var(--nh-purple),
+        -3px 3px 0 var(--nh-purple), 3px 3px 0 var(--nh-purple),
+        0 -3px 0 var(--nh-purple), 0 3px 0 var(--nh-purple),
+        -3px 0 0 var(--nh-purple), 3px 0 0 var(--nh-purple),
+        0 6px 0 #2f1a6e, 0 10px 14px rgba(0, 0, 0, .3);
+}
+
+#numbers .nh-sign { font-size: clamp(34px, 6vw, 62px); }
+#ajHome .aj-cover-title { font-size: clamp(30px, 5.2vw, 52px); }
+
+#numbers .nh-sign::before,
+#numbers .nh-sign::after,
+#ajHome .aj-cover-title::before,
+#ajHome .aj-cover-title::after {
+    content: "";
+    position: absolute;
+    top: -26px;
+    width: 8px;
+    height: 28px;
+    background: repeating-linear-gradient(0deg, #d9b27a 0 5px, #b98b52 5px 9px);
+    border-radius: 4px;
+}
+
+#numbers .nh-sign::before,
+#ajHome .aj-cover-title::before { left: 16%; }
+#numbers .nh-sign::after,
+#ajHome .aj-cover-title::after { right: 16%; }
+
+/* =========================================================
+   البطاقتان (#numbers)
+========================================================= */
+
+#numbers .nh-cards {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(16px, 3vw, 34px);
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+/* إعادة ضبط كاملة لزر البطاقة القديم (aj-entry-btn / sg-entry-btn) */
+#numbers .nh-card {
+    all: unset;
+    box-sizing: border-box;
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    align-items: center;
+    column-gap: clamp(8px, 2vw, 18px);
+    row-gap: 10px;
+    direction: ltr;
+    min-height: 190px;
+    padding: 12px clamp(10px, 2vw, 18px) 16px;
+    border-radius: 34px;
+    cursor: pointer;
+    font-family: var(--nh-font);
+    color: var(--nh-ink);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+#numbers .nh-card-aj {
+    background:
+        radial-gradient(120% 70% at 30% 105%, #8bd04a 0 55%, transparent 56%),
+        linear-gradient(180deg, #ffe27a, #f8bd38 70%, #f1a81f);
+    border: 6px solid #f3c13a;
+    box-shadow: 0 8px 0 #c98f12, 0 16px 24px rgba(120, 70, 0, .28), inset 0 3px 0 rgba(255, 255, 255, .55);
+}
+
+#numbers .nh-card-sub {
+    background:
+        radial-gradient(90% 40% at 50% 112%, #2b88d8 0 60%, transparent 61%),
+        linear-gradient(180deg, #4fc7ff, #1f8eec 62%, #1467cf);
+    border: 6px solid #8fdcff;
+    box-shadow: 0 8px 0 #0d4c9a, 0 16px 24px rgba(5, 50, 110, .32), inset 0 3px 0 rgba(255, 255, 255, .5);
+}
+
+#numbers .nh-card:hover { transform: translateY(-4px); }
+#numbers .nh-card:active { transform: translateY(3px); }
+
+#numbers .nh-card:focus-visible {
+    outline: 6px solid var(--nh-ink);
+    outline-offset: 4px;
+}
+
+/* منطقة الرسم */
+
+#numbers .nh-art {
+    position: relative;
+    display: block;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    min-height: 150px;
+}
+
+#numbers .nh-boy {
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    height: 118%;
+    max-height: 250px;
+    width: auto;
+    pointer-events: none;
+}
+
+/* أرقام ١ ٢ ٣: نص حقيقي بأسلوب «حلوى» */
+
+#numbers .nh-digits {
+    position: absolute;
+    right: -6%;
+    top: 4%;
+    display: flex;
+    align-items: flex-end;
+    direction: ltr;
+    gap: 2px;
+    font-family: var(--nh-num-font);
+    font-weight: 900;
+    line-height: 1;
+    pointer-events: none;
+}
+
+#numbers .nh-digits b { display: block; font-weight: 900; }
+
+#numbers .nh-digits .d1 {
+    font-size: clamp(64px, 9.5vw, 118px);
+    color: #ee3b3b;
+    text-shadow: 0 4px 0 #a41818, 0 9px 10px rgba(0, 0, 0, .25), 0 0 0 #fff;
+    -webkit-text-stroke: 2px rgba(255, 255, 255, .75);
+    transform: rotate(4deg);
+}
+
+#numbers .nh-digits .d2 {
+    font-size: clamp(52px, 8vw, 100px);
+    color: #ffc928;
+    text-shadow: 0 4px 0 #b57f00, 0 9px 10px rgba(0, 0, 0, .25);
+    -webkit-text-stroke: 2px rgba(255, 255, 255, .75);
+    transform: translateY(-8px) rotate(-6deg);
+}
+
+#numbers .nh-digits .d3 {
+    font-size: clamp(44px, 6.8vw, 86px);
+    color: #2fa8f5;
+    text-shadow: 0 4px 0 #136aa8, 0 9px 10px rgba(0, 0, 0, .25);
+    -webkit-text-stroke: 2px rgba(255, 255, 255, .75);
+    transform: translateY(6px) rotate(-10deg);
+}
+
+/* عناصر البطاقة البحرية */
+
+#numbers .nh-sub {
+    position: absolute;
+    left: -4%;
+    top: 14%;
+    width: 112%;
+    height: auto;
+    pointer-events: none;
+}
+
+#numbers .nh-fish1 { position: absolute; left: 4%; top: -4%; width: 34%; height: auto; pointer-events: none; }
+#numbers .nh-fish2 { position: absolute; right: -2%; top: 2%; width: 26%; height: auto; pointer-events: none; }
+#numbers .nh-star { position: absolute; right: -4%; bottom: -2%; width: 26%; height: auto; pointer-events: none; }
+
+#numbers .nh-bub {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.95) 0 14%, rgba(255,255,255,.18) 40%, rgba(255,255,255,.08) 70%);
+    border: 2px solid rgba(255, 255, 255, .55);
+    pointer-events: none;
+}
+#numbers .nh-bub1 { width: 22px; height: 22px; left: 10%; bottom: 18%; }
+#numbers .nh-bub2 { width: 14px; height: 14px; left: 22%; bottom: 8%; }
+#numbers .nh-bub3 { width: 18px; height: 18px; right: 14%; top: 42%; }
+
+/* لوح العنوان */
+
+#numbers .nh-plate {
+    position: relative;
+    z-index: 1;
+    grid-column: 2;
+    grid-row: 1;
+    direction: rtl;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: clamp(8px, 1.4vw, 14px) clamp(12px, 2vw, 22px) clamp(10px, 1.6vw, 16px);
+    border-radius: 26px;
+    background: linear-gradient(180deg, #fffef6, #fdf0cc);
+    border: 3px solid #fff;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, .14), inset 0 2px 0 #fff;
+    text-align: center;
+}
+
+#numbers .nh-card-sub .nh-plate {
+    background: linear-gradient(180deg, #f6fcff, #d5f0ff);
+}
+
+#numbers .nh-plate strong {
+    font-weight: 600;
+    font-size: clamp(22px, 3.4vw, 38px);
+    line-height: 1.25;
+    color: #3b1a78;
+}
+
+#numbers .nh-plate small {
+    font-weight: 400;
+    font-size: clamp(15px, 2.1vw, 21px);
+    line-height: 1.5;
+    color: #3a3f5c;
+}
+
+/* زر الإجراء */
+
+#numbers .nh-cta {
+    grid-column: 2;
+    grid-row: 2;
+    direction: rtl;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 10px clamp(18px, 3vw, 34px);
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 600;
+    font-size: clamp(20px, 2.8vw, 30px);
+    line-height: 1.2;
+    text-shadow: 0 2px 0 rgba(0, 0, 0, .28);
+}
+
+#numbers .nh-cta-green {
+    background: linear-gradient(180deg, #27901f, #166616);
+    box-shadow: 0 6px 0 #0f4a10, 0 12px 16px rgba(0, 0, 0, .22), inset 0 2px 0 rgba(255, 255, 255, .4);
+}
+
+#numbers .nh-cta-purple {
+    background: linear-gradient(180deg, #8657e8, #5a2fc0);
+    box-shadow: 0 6px 0 #3a1c8c, 0 12px 16px rgba(0, 0, 0, .22), inset 0 2px 0 rgba(255, 255, 255, .4);
+}
+
+#numbers .nh-play {
+    flex: 0 0 auto;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 11px 0 11px 18px;
+    border-color: transparent transparent transparent #fff;
+    filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .25));
+}
+
+@media (max-width: 759px) {
+    #numbers .nh-digits { display: none; }
+}
+
+/* شاشة عريضة: بطاقتان متجاورتان بتصميم عمودي */
+
+@media (min-width: 760px) {
+
+    #numbers .nh-cards {
+        grid-template-columns: 1fr 1fr;
+        direction: ltr;
+    }
+
+    #numbers .nh-card {
+        direction: rtl;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        row-gap: 14px;
+        min-height: 0;
+        padding: 14px clamp(12px, 2vw, 20px) clamp(16px, 2.4vw, 24px);
+    }
+
+    #numbers .nh-art {
+        grid-column: 1;
+        grid-row: 1;
+        height: clamp(200px, 25vw, 300px);
+        min-height: 0;
+    }
+
+    #numbers .nh-boy {
+        left: 0;
+        bottom: -14px;
+        height: 112%;
+        max-height: none;
+    }
+
+    #numbers .nh-digits { right: 2%; top: 6%; }
+
+    #numbers .nh-sub { left: 8%; top: 12%; width: 84%; }
+    #numbers .nh-fish1 { left: 2%; top: 0; width: 22%; }
+    #numbers .nh-fish2 { right: 4%; top: 4%; width: 18%; }
+    #numbers .nh-star { right: 2%; bottom: 2%; width: 18%; }
+    #numbers .nh-bub1 { width: 28px; height: 28px; }
+
+    #numbers .nh-plate,
+    #numbers .nh-cta { grid-column: 1; }
+    #numbers .nh-plate { grid-row: 2; }
+    #numbers .nh-cta { grid-row: 3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #numbers .nh-card,
+    #ajMap .aj-num-btn { transition: none; }
+}
+
+/* =========================================================
+   خريطة الأرقام (#ajHome) — نفس معرّفات الكود والأصناف
+========================================================= */
+
+/* لا ترويسة ثانية: السهم والنجوم عنصران عائمان فقط */
+#ajHome .aj-topbar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    z-index: 3;
+    margin: 0;
+    pointer-events: none;
+    justify-content: space-between;
+}
+
+#ajHome .aj-top-title { display: none; }
+
+#ajHome .aj-back-btn,
+#ajHome .aj-stars { pointer-events: auto; }
+
+#ajHome .aj-back-btn {
+    width: 58px;
+    height: 58px;
+    border: 0;
+    border-radius: 50%;
+    font-size: 26px;
+    background: linear-gradient(180deg, #5bb2ff, #2a6fd8);
+    color: #fff;
+    box-shadow: 0 5px 0 #17469a, 0 10px 14px rgba(0, 0, 0, .22), inset 0 2px 0 rgba(255, 255, 255, .5);
+}
+
+#ajHome .aj-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 52px;
+    padding: 4px 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .92);
+    border: 3px solid #ffd54a;
+    color: var(--nh-ink);
+    font-size: 22px;
+    font-weight: 600;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, .12);
+}
+
+/* الغلاف: لافتة + الولد + أرقام عائمة */
+
+#ajHome .aj-cover {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: clamp(150px, 22vw, 210px);
+    margin: clamp(56px, 8vw, 76px) 0 6px;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+
+#ajHome .aj-cover-title { margin-top: clamp(22px, 3vw, 34px); margin-bottom: 14px; }
+#ajHome .aj-gold-line { display: none; }
+
+#ajHome .aj-cover-sub {
+    margin: 0;
+    padding: 5px 24px 7px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #b87a40, #8e5a2c);
+    border: 3px solid #6b4424;
+    box-shadow: 0 4px 0 #5a371b;
+    color: #fff;
+    font-size: clamp(16px, 2.4vw, 22px);
+    font-weight: 400;
+}
+
+/* الولد: واقف على أرضية الحديقة يسار الشبكة (أكبر من قبل) — بلا أرقام عائمة */
+
+#ajHome .aj-cover { position: static; }
+
+#ajHome .nh-cover-boy {
+    position: absolute;
+    left: clamp(0px, 1vw, 20px);
+    bottom: calc(var(--nh-stage-w) * .028);
+    z-index: 2;
+    height: calc(var(--nh-stage-w) * .27);
+    width: auto;
+    pointer-events: none;
+    filter: drop-shadow(0 8px 8px rgba(30, 70, 10, .35));
+}
+
+#ajHome .aj-cover-dots { display: none !important; }
+
+@media (max-width: 700px) {
+    #ajHome .aj-wrap.nh-map-stage { padding-bottom: calc(var(--nh-stage-w) * .42); }
+    #ajHome .nh-cover-boy { height: calc(var(--nh-stage-w) * .38); bottom: calc(var(--nh-stage-w) * .012); left: 2px; }
+}
+
+@media (max-width: 600px) {
+    #ajHome .aj-cover { min-height: 0; margin-top: 54px; }
+    #ajHome .aj-back-btn { width: 50px; height: 50px; font-size: 22px; }
+    #ajHome .aj-stars { min-height: 44px; font-size: 19px; padding: 2px 14px; }
+}
+
+/* التبويبان */
+
+#ajHome .aj-tabs {
+    position: relative;
+    z-index: 1;
+    max-width: 580px;
+    margin: 6px auto 12px;
+    padding: 7px;
+    gap: 8px;
+    background: rgba(238, 249, 255, .94);
+    border: 3px solid #fff;
+    border-radius: 999px;
+    box-shadow: 0 6px 14px rgba(0, 60, 120, .18);
+}
+
+#ajHome .aj-tab {
+    flex: 1;
+    min-height: 62px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--nh-ink);
+    font-family: var(--nh-font);
+    font-weight: 600;
+    font-size: clamp(19px, 3vw, 28px);
+    cursor: pointer;
+}
+
+#ajHome .aj-tab.aj-tab-on {
+    background: linear-gradient(180deg, #ffe46c, #ffc41a);
+    color: var(--nh-ink);
+    border: 0;
+    box-shadow: 0 4px 0 #d49a00, inset 0 2px 0 rgba(255, 255, 255, .7);
+}
+
+/* عداد الإنجاز الكلي */
+
+#ajHome .nh-progress {
+    position: relative;
+    z-index: 1;
+    max-width: 580px;
+    margin: 0 auto 14px;
+    padding: 9px 18px 10px;
+    background: rgba(255, 255, 255, .88);
+    border-radius: 22px;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, .1);
+}
+
+#ajHome .aj-overall-track { height: 14px; background: #d7e4f2; border-radius: 10px; margin: 0 0 6px; }
+#ajHome .aj-overall-fill { background: linear-gradient(90deg, #5fd04a, #2f9e2b); border-radius: 10px; }
+#ajHome .aj-overall-text { margin: 0; font-size: clamp(15px, 2.2vw, 18px); font-weight: 600; color: var(--nh-ink); text-align: center; }
+
+/* شبكة الأرقام: أزرار «حلوى» كبيرة */
+
+#ajHome #ajMap {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(8px, 1.8vw, 18px);
+    padding: 4px 4px 10px;
+}
+
+#ajMap .aj-num-btn {
+    --c1: #ff7b6b; --c2: #e4352b; --edge: #9c1c16;
+    min-height: clamp(98px, 15vw, 140px);
+    padding: 8px 4px 10px;
+    gap: 3px;
+    border: 0;
+    border-radius: clamp(20px, 3vw, 30px);
+    background: linear-gradient(180deg, var(--c1), var(--c2));
+    color: #fff;
+    font-family: var(--nh-font);
+    box-shadow:
+        0 7px 0 var(--edge),
+        0 13px 16px rgba(0, 0, 0, .22),
+        inset 0 3px 0 rgba(255, 255, 255, .45),
+        inset 0 -8px 12px rgba(0, 0, 0, .12);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+#ajMap .aj-num-btn:nth-child(10n+1) { --c1: #ff7b6b; --c2: #e4352b; --edge: #9c1c16; }
+#ajMap .aj-num-btn:nth-child(10n+2) { --c1: #ffb347; --c2: #f07f0a; --edge: #a85500; }
+#ajMap .aj-num-btn:nth-child(10n+3) { --c1: #5db7ff; --c2: #1e7be0; --edge: #114f9a; }
+#ajMap .aj-num-btn:nth-child(10n+4) { --c1: #79d65a; --c2: #2fa32b; --edge: #1d6f1b; }
+#ajMap .aj-num-btn:nth-child(10n+5) { --c1: #b27cf0; --c2: #7d3fd0; --edge: #51268f; }
+#ajMap .aj-num-btn:nth-child(10n+6) { --c1: #4fd8d0; --c2: #16a0a8; --edge: #0d6670; }
+#ajMap .aj-num-btn:nth-child(10n+7) { --c1: #ff7fb5; --c2: #e83a86; --edge: #a01e5b; }
+#ajMap .aj-num-btn:nth-child(10n+8) { --c1: #c77cf2; --c2: #9a3fd0; --edge: #62278f; }
+#ajMap .aj-num-btn:nth-child(10n+9) { --c1: #ffe45e; --c2: #ffb800; --edge: #a87400; }
+#ajMap .aj-num-btn:nth-child(10n) { --c1: #42a5ff; --c2: #1263d6; --edge: #0a3e91; }
+
+#ajMap .aj-num-btn:hover { transform: translateY(-3px); }
+#ajMap .aj-num-btn:active { transform: translateY(4px); box-shadow: 0 3px 0 var(--edge), 0 6px 10px rgba(0,0,0,.2), inset 0 3px 0 rgba(255,255,255,.4); }
+
+#ajMap .aj-num-btn:focus-visible { outline: 5px solid var(--nh-ink); outline-offset: 3px; }
+
+#ajMap .aj-num-glyph {
+    font-family: var(--nh-num-font);
+    font-weight: 900;
+    font-size: clamp(38px, 8.4vw, 80px);
+    line-height: 1.05;
+    color: #fff;
+    text-shadow:
+        -2px 0 var(--edge), 2px 0 var(--edge), 0 -2px var(--edge), 0 2px var(--edge),
+        -2px -2px var(--edge), 2px -2px var(--edge), -2px 2px var(--edge), 2px 2px var(--edge),
+        0 5px 0 var(--edge);
+}
+
+#ajMap .aj-num-meta {
+    direction: ltr;
+    unicode-bidi: isolate;
+    padding: 1px 12px 3px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--nh-ink);
+    font-size: clamp(15px, 2.6vw, 21px);
+    font-weight: 700;
+    line-height: 1.35;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, .18);
+}
+
+#ajMap .aj-num-bar { width: 78%; height: 9px; background: rgba(0, 0, 0, .3); border-radius: 6px; overflow: hidden; }
+#ajMap .aj-num-bar-fill { background: #fff; border-radius: 6px; }
+
+#ajMap .aj-num-btn.aj-complete { border: 0; }
+#ajMap .aj-num-btn.aj-complete .aj-num-meta { color: #1c7a36; font-size: clamp(16px, 3vw, 22px); }
+
+/* نجمة الإكمال: على الرقم المكتمل فقط */
+#ajMap .aj-num-btn.aj-complete::after {
+    content: "";
+    position: absolute;
+    top: -9px;
+    left: -7px;
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(180deg, #ffe66b, #ffb400);
+    clip-path: polygon(50% 0, 62% 35%, 98% 36%, 69% 57%, 80% 92%, 50% 71%, 20% 92%, 31% 57%, 2% 36%, 38% 35%);
+    filter: drop-shadow(0 2px 0 rgba(150, 90, 0, .7));
+}
+
+/* الرقم المقترح */
+#ajMap .aj-num-btn.aj-current {
+    border: 0;
+    outline: 5px solid #fff;
+    outline-offset: 2px;
+    box-shadow:
+        0 7px 0 var(--edge),
+        0 0 0 10px rgba(255, 214, 64, .75),
+        0 14px 20px rgba(0, 0, 0, .25),
+        inset 0 3px 0 rgba(255, 255, 255, .45);
+}
+
+#ajHome .aj-home-hint { position: relative; z-index: 1; }
+
+/* =========================================================
+   الشاشات العريضة (حاسوب / سبورة ذكية): استغلال أفضل للمساحة
+   بتكبير متناسب فقط — لا تشويه ولا تمدّد للصور
+========================================================= */
+
+@media (min-width: 1280px) {
+    #numbers .nh-hub { --nh-stage-w: min(94vw, 1480px); min-height: calc(100vh - 150px); }
+    #ajHome .aj-wrap.nh-map-stage { --nh-stage-w: min(94vw, 1320px); min-height: calc(100vh - 150px); padding-bottom: calc(var(--nh-stage-w) * .118); }
+    #ajHome .aj-cover { margin-top: 44px; min-height: 0; }
+    #ajHome .aj-cover-title { margin-top: 22px; margin-bottom: 10px; padding-top: 6px; padding-bottom: 8px; }
+    #ajHome .aj-tabs { margin: 4px auto 8px; }
+    #ajHome .nh-progress { margin-bottom: 10px; padding-block: 6px 7px; }
+
+    #numbers .nh-cards { max-width: 1240px; gap: 44px; }
+    #numbers .nh-art { height: clamp(230px, 27vh, 360px); }
+    #numbers .nh-plate strong { font-size: clamp(34px, 2.5vw, 46px); }
+    #numbers .nh-plate small { font-size: clamp(20px, 1.5vw, 26px); }
+    #numbers .nh-cta { min-height: 74px; font-size: clamp(28px, 2vw, 36px); }
+    #numbers .nh-sign { font-size: clamp(50px, 3.4vw, 64px); margin-block: 8px 14px; }
+
+    #ajHome .aj-cover-title { font-size: clamp(44px, 3vw, 54px); }
+    #ajHome .aj-tabs,
+    #ajHome .nh-progress { max-width: 700px; }
+    #ajHome .aj-tab { min-height: 60px; font-size: clamp(26px, 1.9vw, 32px); }
+    #ajHome #ajMap { max-width: min(820px, calc(var(--nh-stage-w) * .56)); gap: 22px; }
+    #ajMap .aj-num-btn { min-height: clamp(108px, calc(var(--nh-stage-w) * .084), 140px); gap: 4px; }
+    #ajMap .aj-num-glyph { font-size: clamp(64px, calc(var(--nh-stage-w) * .062), 92px); }
+    #ajMap .aj-num-meta { font-size: 22px; }
+    #ajHome .nh-cover-boy { height: calc(var(--nh-stage-w) * .195); bottom: calc(var(--nh-stage-w) * .03); }
+}
+
+/* =========================================================
+   الجوال: ترويسة الصفحات الداخلية — العنوان في سطر واحد
+   (يخص جوال الصفحات الداخلية فقط؛ الأزرار الثلاثة كما هي)
+========================================================= */
+
+@media (max-width: 599px) {
+    body.ta-inner .hm-header .hm-homebtn {
+        min-height: 48px;
+        min-width: 48px;
+        padding-inline: 12px 14px;
+        font-size: 16px;
+        gap: 6px;
+    }
+    body.ta-inner .hm-header .hm-homebtn svg { width: 22px; height: 22px; }
+    body.ta-inner .hm-header h1 {
+        font-size: clamp(16px, 5vw, 21px);
+        white-space: nowrap;
+    }
+    body.ta-inner .hm-header p { font-size: 13px; white-space: nowrap; }
+    body.ta-inner .hm-brand { text-align: center; }
+}
+
+/* =========================================================
+   التابلت (٦٠٠–١٠٢٣): ترويسة الصفحات الداخلية بصفّين كالجوال
+   الصف الأول: الحساب + النجوم/المستوى — الثاني: الرئيسية + العنوان في سطر
+========================================================= */
+
+@media (min-width: 600px) and (max-width: 1023px) {
+    body.ta-inner .hm-header__inner {
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "chip stats"
+            "home brand";
+        gap: 10px 12px;
+    }
+    body.ta-inner .hm-header .profile-chip { grid-area: chip; justify-self: start; }
+    body.ta-inner .hm-header .stats { grid-area: stats; }
+    body.ta-inner .hm-header .hm-homebtn { grid-area: home; justify-self: start; }
+    body.ta-inner .hm-brand { grid-area: brand; }
+    body.ta-inner .hm-header h1 { white-space: nowrap; font-size: 24px; }
+    body.ta-inner .hm-header p { white-space: nowrap; }
+}
+
+/* الجوال (≤٥٩٩): منع تمدّد الترويسة أفقيًا مع الأسماء الطويلة */
+@media (max-width: 599px) {
+    body.ta-inner .hm-header__inner { grid-template-columns: minmax(0, 1fr) auto; }
+    body.ta-inner .hm-header .profile-chip { min-width: 0; max-width: 100%; overflow: hidden; }
+    body.ta-inner .hm-brand { min-width: 0; }
+    body.ta-inner .hm-header h1,
+    body.ta-inner .hm-header p { overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (max-width: 420px) {
+    body.ta-inner .hm-header h1 { font-size: clamp(15px, 4.6vw, 19px); }
+}

@@ -307,10 +307,12 @@ body[data-ui="v2"] .ltr-toolbar { margin-bottom: 14px; }
 /* ---------- ٩) مبدّل المعاينة (للمراجعة فقط؛ يُحذف عند الاعتماد) ---------- */
 .u2-switch {
     position: fixed; inset-block-end: 10px; inset-inline-start: 10px; z-index: 2000;
-    display: flex; gap: 4px; padding: 4px;
+    display: none; gap: 4px; padding: 4px;
     font-family: system-ui, "Noto Sans Arabic", Tahoma, Arial, sans-serif;
     background: #ffffff; border: 2px solid #1b2347; border-radius: 999px;
 }
+/* مخفي عن الطلاب؛ للمطوّر: افتح الرابط بإضافة ?dev=1 */
+body.u2-dev .u2-switch { display: flex; }
 .u2-switch button {
     min-height: 44px; min-width: 72px; padding: 0 14px;
     font: inherit; font-size: 15px; font-weight: 800; color: #1b2347;

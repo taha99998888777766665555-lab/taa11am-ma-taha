@@ -12,6 +12,8 @@
     var mode = qs.get("ui") === "off" ? "off" : "v2";
     var body = document.body;
     if (qs.get("shots") === "1") body.classList.add("u2-shots");
+    /* المبدّل للمطوّر فقط: يظهر بإضافة ?dev=1 إلى الرابط، ومخفي عن الطلاب */
+    if (qs.get("dev") === "1") body.classList.add("u2-dev");
 
     function apply(m) {
         mode = m;

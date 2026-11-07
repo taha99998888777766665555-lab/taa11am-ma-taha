@@ -12,7 +12,7 @@ const PORT=8976,OLD='/tmp/old48',NEW=process.env.NEWDIR||process.cwd();let pass=
  execSync(`fuser -k ${PORT}/tcp || true`);await p.waitForTimeout(600);
  sv=spawn('python3',['-m','http.server',PORT,'--bind','127.0.0.1'],{cwd:NEW,stdio:'ignore'});await p.waitForTimeout(1200);
  await p.reload();await p.waitForTimeout(4500);await p.reload();await p.waitForTimeout(4500);
- ks=await p.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v52','بعد إعادتين للتحميل: v50 فقط (لا نسخة قديمة)',ks.join());
+ ks=await p.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v61','بعد إعادتين للتحميل: v50 فقط (لا نسخة قديمة)',ks.join());
  ok(await p.evaluate(()=>!!document.getElementById('hmInstall')&&typeof taInstallState==='function'),'ملف التثبيت الجديد يعمل بعد الترقية');
  const after=await snap();const d=Object.keys(before).filter(k=>after[k]!==before[k]);const nk=Object.keys(after).filter(k=>!(k in before));ok(d.length===0&&nk.every(k=>/__taha_badges$/.test(k)),'بيانات الطلاب والنجوم كما هي',d.join());
  const c=await p.evaluate(async()=>{const o=[];for(const k of await caches.keys()){const c=await caches.open(k);o.push(...(await c.keys()).map(x=>x.url.replace(location.origin,'')))}return o});
