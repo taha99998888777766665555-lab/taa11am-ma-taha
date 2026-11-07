@@ -683,3 +683,9 @@
     #ajPlay .aj-cw-12 .aj-key { min-height: 56px; }
     #ajPlay .aj-cw-12 .aj-keypad { gap: 8px; }
 }
+
+/* عُدّ واكتب (١١ و١٢) على الشاشات الضيقة جدًا (≤٣٥٩px): تفاحات أصغر قليلًا (≥٤٤px) كي لا يتجاوز الصف حافتي الشاشة */
+@media (max-width: 359px) {
+    #ajPlay :is(.aj-cw-11, .aj-cw-12) .aj-countable { gap: 3px; max-width: 100%; }
+    #ajPlay :is(.aj-cw-11, .aj-cw-12) .aj-countable .aj-object { width: 44px; height: 48px; }
+}
