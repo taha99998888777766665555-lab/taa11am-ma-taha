@@ -16429,7 +16429,7 @@ const AJ_PLAN_1_10 = [
 
 const AJ_PLAN_11_20 = {
     11: [["frameColor", "balloonsFind", "colorReveal"], ["connectPictures", "tenHowManyCircle", "frameBuilder"], ["numberLine", "countWrite", "traceTwo"]],
-    12: [["frameColor", "countCircle"], ["beforeAfter", "circleBigger", "maze"], ["traceTwo", "numberLine", "crossOutCard"]],
+    12: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
     13: [["frameColor", "balloonsFind"], ["baseTenCircle", "missingNumber", "colorReveal"], ["traceTwo", "orderNumbers"]],
     14: [["frameColor", "countCircle"], ["tenHowManyWrite", "beforeAfter", "dotToDot"], ["traceTwo", "frameBuilder"]],
     15: [["frameColor", "balloonsFind"], ["trainMissing", "circleSmaller", "colorReveal"], ["traceTwo", "beforeAfter"]],
@@ -17002,21 +17002,25 @@ function ajBuildCountWrite(n) {
 
 function ajBuildFrameColor(n) {
     const spec = { text: ajNum(n), objects: { type: "frames", count: n }, goal: 0.72 };
-    if (n === 11) spec.compact = true;
+    if (n === 11 || n === 12) spec.compact = true;
     return spec;
 }
 
 function ajBuildBalloonsFind(n) {
-    if (n === 11) {
-        /* ٨ بالونات: أربعة فيها ١١ وأربعة بأعداد قريبة (١٠ و١٢ و١٣ و١٤) */
+    if (n === 11 || n === 12) {
+        /* ٨ بالونات: أربعة فيها العدد المطلوب وأربعة بأعداد قريبة مدروسة
+           (١١: ١٠ و١٢ و١٣ و١٤ — ١٢: ١٠ و١١ و١٣ و٢١ «المقلوب») */
+        const near = (n === 11) ? [10, 12, 13, 14] : [10, 11, 13, 21];
         const cells = [];
-        for (let i = 0; i < 4; i++) cells.push({ text: ajNum(11), target: true });
-        [10, 12, 13, 14].forEach(v => cells.push({ text: ajNum(v), target: false }));
+        for (let i = 0; i < 4; i++) cells.push({ text: ajNum(n), target: true });
+        near.forEach(v => cells.push({ text: ajNum(v), target: false }));
         return {
             variant: "balloons", cols: 4, mark: "color",
             cells: shuffle(cells),
             word: ajNum(n), ref: ajNum(n), calm: true,
-            hintText: "💡 تلميح: انظر إلى الرقم الكبير ١١ — الرقم المطلوب فيه ١ ثم ١"
+            hintText: (n === 11)
+                ? "💡 تلميح: انظر إلى الرقم الكبير ١١ — الرقم المطلوب فيه ١ ثم ١"
+                : "💡 تلميح: انظر إلى الرقم الكبير ١٢ — يبدأ بالواحد ١ ثم الاثنين ٢"
         };
     }
     return {
@@ -17772,7 +17776,10 @@ function renderAJActivity() {
 
     /* ضبط خاص بالرقم ١١ فقط (أزرار التحكم على الجوال، ثبات رسالة التتبّع) */
     const playEl = $("ajPlay");
-    if (playEl) playEl.classList.toggle("aj-n11", n === 11);
+    if (playEl) {
+        playEl.classList.toggle("aj-n11", n === 11);
+        playEl.classList.toggle("aj-n12", n === 12);
+    }
 
     const msg = $("ajMessage");
     if (msg) msg.textContent = "";
