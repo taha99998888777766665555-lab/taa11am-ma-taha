@@ -20,7 +20,7 @@ for(const [vn,vp] of Object.entries(VP)){
  const plan=await p.evaluate(()=>ajGame.plan.flat.map(x=>x.type));
  ok(JSON.stringify(plan)===JSON.stringify(["frameColor","balloonsFind","colorReveal","connectPictures","tenHowManyCircle","frameBuilder","numberLine","countWrite","traceTwo"]),vn+' ترتيب الأنشطة التسعة',plan);
  const scan=async (selCanvas,rowStep=14)=>{ // يمسح مركز اللوحة باللمس
-  const r=await p.evaluate(s=>{const c=document.querySelector(s);c.scrollIntoView({block:'center'});const b=c.getBoundingClientRect();return{x:b.left,y:b.top,w:b.width,h:b.height}},selCanvas);
+  await p.evaluate(s=>document.querySelector(s).scrollIntoView({block:'center'}),selCanvas);await p.waitForTimeout(700);const r=await p.evaluate(s=>{const b=document.querySelector(s).getBoundingClientRect();return{x:b.left,y:b.top,w:b.width,h:b.height}},selCanvas);
   let flip=false;for(let y=r.y+r.h*0.08;y<r.y+r.h*0.95;y+=rowStep){const pts=[];for(let k=0;k<=24;k++){const xx=r.x+r.w*(0.1+0.8*(flip?1-k/24:k/24));pts.push({x:xx,y});}flip=!flip;await touchDrag(pts);}};
  // ١) تلوين
  await goto(0);await scan('.aj-cv-paint',10);

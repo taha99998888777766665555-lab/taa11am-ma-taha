@@ -17018,6 +17018,7 @@ function ajBuildBalloonsFind(n) {
             variant: "balloons", cols: 4, mark: "color",
             cells: shuffle(cells),
             word: ajNum(n), ref: ajNum(n), calm: true,
+            palette: (n === 12),
             hintText: (n === 11)
                 ? "💡 تلميح: انظر إلى الرقم الكبير ١١ — الرقم المطلوب فيه ١ ثم ١"
                 : "💡 تلميح: انظر إلى الرقم الكبير ١٢ — يبدأ بالواحد ١ ثم الاثنين ٢"
@@ -19100,6 +19101,30 @@ function ajRenderFind(stage, spec, api) {
         root.appendChild(ref);
     }
 
+    /* لوحة ألوان اختيارية (البالونات في الرقم ١٢): الطفل يختار اللون ثم يلمس البالون، والأحمر محدد افتراضيًا */
+    let paintColor = AJ_COLORS[0].hex;
+
+    if (spec.palette) {
+        const palette = ajEl("div", "aj-palette aj-find-palette");
+        palette.setAttribute("role", "group");
+        palette.setAttribute("aria-label", "اختر لون البالون");
+
+        AJ_COLORS.forEach((c, i) => {
+            const b = ajEl("button", "aj-swatch");
+            b.type = "button";
+            b.style.background = c.hex;
+            b.setAttribute("aria-label", "اللون " + c.name);
+            b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+            b.addEventListener("click", () => {
+                paintColor = c.hex;
+                Array.from(palette.children).forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+            });
+            palette.appendChild(b);
+        });
+
+        root.appendChild(palette);
+    }
+
     const targets = spec.cells.filter(c => c.target).length;
 
     let marked = 0;
@@ -19116,7 +19141,7 @@ function ajRenderFind(stage, spec, api) {
         btn.setAttribute("aria-pressed", "true");
 
         if (spec.mark === "color") {
-            const c = cell.pic || AJ_COLORS[colorIdx % AJ_COLORS.length].hex;
+            const c = cell.pic || (spec.palette ? paintColor : AJ_COLORS[colorIdx % AJ_COLORS.length].hex);
             colorIdx++;
             btn.style.setProperty("--aj-mark", c);
         }
@@ -19218,7 +19243,9 @@ function ajRenderFind(stage, spec, api) {
 
     api.say(spec.variant === "reveal"
         ? "🖼️ لوّن كل خانة فيها الرقم " + spec.word + " لتظهر صورة مفاجأة"
-        : "🔍 ابحث عن كل الرقم " + spec.word);
+        : (spec.palette
+            ? "🎨 اختر لونًا، ثم المس كل بالون فيه الرقم " + spec.word
+            : "🔍 ابحث عن كل الرقم " + spec.word));
 }
 
 /* =========================================================
