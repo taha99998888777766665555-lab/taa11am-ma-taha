@@ -650,3 +650,8 @@
 @media (max-width:599px){
   #ajPlay.aj-n11 .aj-wrap.aj-play-wrap { overflow: clip; }
 }
+
+/* ١١ — الجوال: مساحة آمنة تتبع ارتفاع الشريط السفلي (بلا أي أثر على الكمبيوتر/السبورة) */
+@media (max-width:599px){
+  html:has(#ajPlay.aj-n11:not([hidden])) { scroll-padding-bottom: calc(58px + 24px + env(safe-area-inset-bottom, 0px)); }
+}
