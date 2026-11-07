@@ -16621,11 +16621,12 @@ function ajMigrateNumber11(p) {
 
 /* ترحيل الرقم ١٢ مرة واحدة لكل طالب: الترتيب القديم (٨ أنشطة) → الجديد (١١)،
    بحسب نوع النشاط ولا يُنقل إلا ما تطابقت مهارته واستجابته ومعيار نجاحه:
-   frameColor ٠→٠ ، beforeAfter ٢→٦ ، maze ٤→٧ ، traceTwo ٥→١٠ ، numberLine ٦→٥ ، crossOutCard ٧→٨.
-   لا يُنقل: countCircle (١) لأن «عُدّ وضع دائرة» تغيّرت استجابته إلى «عُدّ واكتب»، ولا circleBigger (٣) لأنه حُذف.
+   frameColor ٠→٠ ، beforeAfter ٢→٦ ، traceTwo ٥→١٠ ، crossOutCard ٧→٨.
+   لا يُنقل: countCircle (١) لأن «عُدّ وضع دائرة» تغيّرت استجابته إلى «عُدّ واكتب»، ولا circleBigger (٣) لأنه حُذف،
+   ولا maze (٤) لأن المسار صار ١٢ خانة بتصميم ومشتتات جديدة، ولا numberLine (٦) لأن مجموعة الخيارات والتوجيه تغيّرا.
    الأنشطة الجديدة (البالونات، صِل، عشرة وكم، كوّن العدد، عُدّ واكتب) تبدأ غير مكتملة.
    النجوم والهدايا لا تُمَس، وتبقى نسخة من حالة ١٢ القديمة داخل mig["12"].before. */
-const AJ_MIG12_MAP = { 0: 0, 2: 6, 4: 7, 5: 10, 6: 5, 7: 8 };
+const AJ_MIG12_MAP = { 0: 0, 2: 6, 5: 10, 7: 8 };
 
 function ajMigrateNumber12(p) {
     return ajMigrateNumberGeneric(p, 12, AJ_MIG12_MAP);
