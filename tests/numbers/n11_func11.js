@@ -68,7 +68,11 @@ for(const [vn,vp] of Object.entries(VP)){
  ok(await p.evaluate(()=>document.querySelector('.aj-guided-row:nth-child(2)').hidden),tag(6,'المحاولة ٢ مخفية أولًا'));
  const r1=p.locator('.aj-guided-row').nth(0).locator('.aj-frame-live .aj-frame-cell-btn');
  await r1.nth(0).scrollIntoViewIfNeeded();await r1.nth(3).tap();await p.waitForTimeout(250);
- ok(await p.evaluate(()=>document.querySelector('.aj-guided-row').classList.contains('aj-row-ok')&&!document.querySelector('.aj-guided-row:nth-child(2)').hidden),tag(6,'المحاولة ١ تنجح وتظهر الثانية'));
+ ok(await p.evaluate(()=>document.querySelector('.aj-guided-row').classList.contains('aj-row-ok')),tag(6,'المحاولة ١ تنجح'));
+ await p.waitForTimeout(1900);
+ ok(await p.evaluate(()=>!document.querySelector('.aj-guided-row:nth-child(2)').hidden),tag(6,'تظهر المحاولة ٢ بعد التهنئة'));
+ const lab=await p.evaluate(()=>[...document.querySelectorAll('.aj-guided-row:nth-child(2) .aj-guided-label')].map(x=>x.textContent.trim()));ok(lab.length===2&&/عشرة/.test(lab[0])&&/آحاد/.test(lab[1]),tag(6,'عنوانا العشرة والآحاد ثابتان بنفس الترتيب'),lab);
+ ok(await p.evaluate(()=>!/١٠ \+ ١ = ١١/.test(document.querySelector('.aj-guided').textContent)),tag(6,'المعادلة غير ظاهرة قبل إكمال المحاولة ٢'));
  ok(!(await solved()),tag(6,'النشاط لا يكتمل بالأولى فقط'));
  const A=p.locator('.aj-guided-row').nth(1).locator('.aj-frame-live').nth(0).locator('.aj-frame-cell-btn'),B=p.locator('.aj-guided-row').nth(1).locator('.aj-frame-live').nth(1).locator('.aj-frame-cell-btn');
  await B.nth(0).scrollIntoViewIfNeeded();await B.nth(0).tap();await p.waitForTimeout(150);ok(!(await solved()),tag(6,'واحد في الآحاد دون عشرة لا يكمل'));
@@ -88,9 +92,14 @@ for(const [vn,vp] of Object.entries(VP)){
  // ٨) عُدّ واكتب
  await goto(7);
  ok(await p.locator('.aj-countable .aj-object').count()===11,tag(8,'١١ تفاحة'));
- const cnt=p.locator('.aj-countable .aj-object');for(let k=0;k<11;k++){await cnt.nth(k).scrollIntoViewIfNeeded();await cnt.nth(k).tap();}
- const lastBadge=await p.evaluate(()=>[...document.querySelectorAll('.aj-count-badge')].map(b=>b.textContent).pop());ok(lastBadge==='١١',tag(8,'العد بالمدلول ينتهي عند ١١'),lastBadge);
- const K=d=>p.locator('.aj-key',{hasText:new RegExp('^'+E(d)+'$')}).first();
+ const cnt=p.locator('.aj-countable .aj-object');
+ const K0=d=>p.locator('.aj-key',{hasText:new RegExp('^'+E(d)+'$')}).first();
+ await K0(1).scrollIntoViewIfNeeded();await K0(1).tap();await K0(1).tap();await p.waitForTimeout(300);
+ ok(!(await solved())&&/المس كل/.test(await msg()),tag(8,'لا تُقبل الإجابة قبل عدّ كل التفاحات'),await msg());await p.waitForTimeout(1000);
+ for(const k of [10,3,7,0,5,1,9,2,8,4,6,6,10,0]){await cnt.nth(k).scrollIntoViewIfNeeded();await cnt.nth(k).tap();}
+ ok(await p.evaluate(()=>document.querySelectorAll('.aj-countable .aj-counted').length===11),tag(8,'١١ مَعدودة بأي ترتيب'));
+ const maxBadge=await p.evaluate(()=>Math.max(...[...document.querySelectorAll('.aj-count-badge')].map(b=>b.textContent.trim()).map(t=>'٠١٢٣٤٥٦٧٨٩'.split('').reduce((a,c,i)=>a.split(c).join(i),t)*1)));ok(maxBadge===11,tag(8,'لا عدّ مزدوج'),maxBadge);
+  const K=d=>p.locator('.aj-key',{hasText:new RegExp('^'+E(d)+'$')}).first();
  await K(1).scrollIntoViewIfNeeded();await K(1).tap();await K(2).tap();await p.waitForTimeout(250);
  ok(!(await solved())&&/عُدّ/.test(await msg()),tag(8,'١٢ خطأ هادئ'),await msg());await p.waitForTimeout(800);
  await K(1).tap();await K(1).tap();await p.waitForTimeout(250);ok(await solved(),tag(8,'كتابة ١١ تكمل'));

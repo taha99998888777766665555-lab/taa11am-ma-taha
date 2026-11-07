@@ -16993,7 +16993,9 @@ function ajBuildTrace(n) {
 }
 
 function ajBuildCountWrite(n) {
-    return { objects: { type: "apples", count: n }, answer: n };
+    const spec = { objects: { type: "apples", count: n }, answer: n };
+    if (n === 11) spec.requireCount = true;
+    return spec;
 }
 
 /* ---------- ١١–٢٠ ---------- */
@@ -17767,6 +17769,10 @@ function renderAJActivity() {
     const stage = $("ajStage");
     stage.innerHTML = "";
     stage.className = "aj-stage aj-stage-" + def.kind;
+
+    /* ضبط خاص بالرقم ١١ فقط (أزرار التحكم على الجوال، ثبات رسالة التتبّع) */
+    const playEl = $("ajPlay");
+    if (playEl) playEl.classList.toggle("aj-n11", n === 11);
 
     const msg = $("ajMessage");
     if (msg) msg.textContent = "";
@@ -18760,7 +18766,7 @@ function ajRenderFramesGuided(stage, spec, api) {
             const cell = ajEl("button", "aj-frame-cell aj-frame-cell-btn");
             cell.type = "button";
             cell.setAttribute("aria-pressed", "false");
-            cell.setAttribute("aria-label", "خانة " + ajNum(i + 1) + "، اضغط لتضع دائرة أو لتزيلها");
+            cell.setAttribute("aria-label", "خانة " + ajNum(i + 1) + " في " + label + "، اضغط لتضع دائرة أو لتزيلها");
             cells.push(cell);
             frame.appendChild(cell);
         }
@@ -18781,6 +18787,14 @@ function ajRenderFramesGuided(stage, spec, api) {
         }
     }
 
+    /* عمود بعنوان ثابت فوق الإطار: «عشرة» ثم «آحاد» بالترتيب البصري نفسه في المحاولتين */
+    function column(label, frameEl) {
+        const col = ajEl("div", "aj-guided-col");
+        col.appendChild(ajEl("div", "aj-guided-label", label));
+        col.appendChild(frameEl);
+        return col;
+    }
+
     function lock(r) {
         r.live.forEach(l => l.cells.forEach(c => { c.disabled = true; }));
     }
@@ -18791,35 +18805,36 @@ function ajRenderFramesGuided(stage, spec, api) {
         rowEl.setAttribute("role", "group");
         rowEl.setAttribute("aria-label", "المحاولة " + ajNum(index + 1));
 
-        rowEl.appendChild(ajEl("div", "aj-guided-title", title));
+        const titleEl = ajEl("div", "aj-guided-title", title);
+        rowEl.appendChild(titleEl);
 
         const body = ajEl("div", "aj-guided-body");
         rowEl.appendChild(body);
 
         const live = [];
+        let tens;
 
         if (scratch) {
-            const A = makeLive("الإطار الأول: ضع عشر دوائر");
-            const B = makeLive("إطار الآحاد: ضع دائرة واحدة");
-            live.push(A, B);
-            body.appendChild(A.frame);
-            body.appendChild(ajEl("span", "aj-plus", "+"));
-            body.appendChild(B.frame);
+            const A = makeLive("إطار العشرة");
+            live.push(A);
+            tens = A.frame;
         } else {
-            const full = ajFrameEl(10);
-            full.classList.add("aj-guided-full");
-            const B = makeLive("إطار الآحاد: ضع دائرة واحدة");
-            live.push(B);
-            body.appendChild(full);
-            body.appendChild(ajEl("span", "aj-plus", "+"));
-            body.appendChild(B.frame);
+            tens = ajFrameEl(10);
+            tens.classList.add("aj-guided-full");
         }
+
+        const U = makeLive("إطار الآحاد");
+        live.push(U);
+
+        body.appendChild(column("عشرة", tens));
+        body.appendChild(ajEl("span", "aj-plus", "+"));
+        body.appendChild(column("آحاد", U.frame));
 
         const eq = ajEl("div", "aj-guided-eq");
         eq.setAttribute("aria-live", "polite");
         rowEl.appendChild(eq);
 
-        const r = { rowEl: rowEl, live: live, scratch: scratch, solved: false, eq: eq };
+        const r = { rowEl: rowEl, titleEl: titleEl, title: title, live: live, scratch: scratch, solved: false, eq: eq };
         rows.push(r);
         root.appendChild(rowEl);
         return r;
@@ -18834,57 +18849,67 @@ function ajRenderFramesGuided(stage, spec, api) {
         r.solved = true;
         r.rowEl.classList.add("aj-row-ok");
         lock(r);
-        r.eq.textContent = ajNum(10) + " + " + ajNum(1) + " = " + ajNum(11);
 
         api.speakNumber(spec.target);
 
         if (r === r1) {
-            api.say("✓ أحسنت! ١٠ + ١ = ١١ — الآن كوّن العدد بنفسك");
-            r2.rowEl.hidden = false;
-            api.later(() => { try { r2.rowEl.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) { } }, 250);
+
+            /* المعادلة تظهر لحظةً عند نجاح المحاولة الأولى فقط؛ ثم تُطوى ولا تظهر في المحاولة الثانية */
+            r.eq.textContent = ajNum(10) + " + " + ajNum(1) + " = " + ajNum(11);
+            api.say("✓ أحسنت! ١٠ + ١ = ١١");
+
+            api.later(() => {
+                r.eq.textContent = "";
+                r.titleEl.textContent = "✓ المحاولة ١ مكتملة";
+                r2.rowEl.hidden = false;
+                api.say("⚫ الآن كوّن العدد بنفسك: املأ إطار العشرة بعشر دوائر ثم ضع دائرة في إطار الآحاد");
+                try { r2.rowEl.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) { }
+            }, 1500);
+
         } else {
+            r.eq.textContent = ajNum(10) + " + " + ajNum(1) + " = " + ajNum(11);
             api.say("🎉 أحسنت! ١٠ + ١ = ١١");
             api.solved();
         }
     }
 
     /* المحاولة ١: واحد في إطار الآحاد */
-    const B1 = r1.live[0];
-    B1.cells.forEach(cell => cell.addEventListener("click", () => {
+    const U1 = r1.live[0];
+    U1.cells.forEach(cell => cell.addEventListener("click", () => {
         if (r1.solved) return;
         toggle(cell);
-        const c = B1.count();
+        const c = U1.count();
         if (c === 1) finishRow(r1);
         else if (c > 1) api.say("😊 نحتاج دائرة واحدة فقط — المس دائرة لتزيلها");
-        else api.say("⚫ ضع دائرة واحدة في الإطار الثاني");
+        else api.say("⚫ ضع دائرة واحدة في إطار الآحاد");
     }));
 
-    /* المحاولة ٢: عشرة في الإطار الأول وواحد في الثاني */
-    const A2 = r2.live[0], B2 = r2.live[1];
+    /* المحاولة ٢: عشرة في إطار العشرة وواحد في إطار الآحاد */
+    const T2 = r2.live[0], U2 = r2.live[1];
 
     function check2() {
 
-        const a = A2.count(), b = B2.count();
+        const a = T2.count(), b = U2.count();
 
         if (a === 10 && b === 1) { finishRow(r2); return; }
 
         if (b > 1) { api.say("😊 في إطار الآحاد دائرة واحدة فقط — المس دائرة لتزيلها"); return; }
 
         if (a < 10) {
-            api.say(a === 0 ? "⚫ املأ الإطار الأول بعشر دوائر" : "🧮 بقي " + ajNum(10 - a) + " في الإطار الأول");
+            api.say(a === 0 ? "⚫ املأ إطار العشرة بعشر دوائر" : "🧮 بقي " + ajNum(10 - a) + " في إطار العشرة");
             return;
         }
 
-        api.say("✓ عشرة كاملة! الآن ضع دائرة واحدة في الإطار الثاني");
+        api.say("✓ عشرة كاملة! الآن ضع دائرة واحدة في إطار الآحاد");
     }
 
-    [A2, B2].forEach(F => F.cells.forEach(cell => cell.addEventListener("click", () => {
+    [T2, U2].forEach(F => F.cells.forEach(cell => cell.addEventListener("click", () => {
         if (r2.solved) return;
         toggle(cell);
         check2();
     })));
 
-    api.say("⚫ ضع دائرة واحدة في الإطار الثاني لتصبح ١٠ + ١");
+    api.say("⚫ ضع دائرة واحدة في إطار الآحاد لتصبح ١٠ + ١");
 }
 
 /* =========================================================
@@ -19602,7 +19627,8 @@ function ajRenderCountWrite(stage, spec, api) {
     const info = AJ_OBJECTS[spec.objects.type];
 
     const box = ajEl("div", "aj-stim aj-stim-countable");
-    box.appendChild(ajCountableObjects(spec.objects.type, spec.objects.count, api));
+    let countedNow = 0;
+    box.appendChild(ajCountableObjects(spec.objects.type, spec.objects.count, api, c => { countedNow = c; }));
     box.appendChild(ajEl("div", "aj-stim-hint", "اضغط كل " + info.label + " لتعدّها"));
     root.appendChild(box);
 
@@ -19626,6 +19652,18 @@ function ajRenderCountWrite(stage, spec, api) {
     }
 
     function check() {
+
+        /* الرقم ١١: لا يُقبل الجواب قبل لمس كل التفاحات وعدّها (بأي ترتيب، ولا تُحتسب تفاحة مرتين) */
+        if (spec.requireCount && countedNow < spec.objects.count) {
+            answerBox.classList.add("aj-answer-soft");
+            api.say("🍎 المس كل " + info.label + " وعُدّها أولًا — بقي " + ajNum(spec.objects.count - countedNow));
+            api.later(() => {
+                typed = "";
+                answerBox.classList.remove("aj-answer-soft");
+                render();
+            }, 900);
+            return;
+        }
 
         if (Number(typed) === spec.answer) {
 
@@ -19653,7 +19691,7 @@ function ajRenderCountWrite(stage, spec, api) {
 
     const pad = ajKeypad(d => {
 
-        if (done || typed.length >= len || answerBox.classList.contains("aj-answer-wrong")) return;
+        if (done || typed.length >= len || answerBox.classList.contains("aj-answer-wrong") || answerBox.classList.contains("aj-answer-soft")) return;
 
         typed += String(d);
         render();
