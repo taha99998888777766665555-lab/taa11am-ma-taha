@@ -17014,15 +17014,16 @@ function ajBuildBalloonsFind(n) {
         const cells = [];
         for (let i = 0; i < 4; i++) cells.push({ text: ajNum(n), target: true });
         near.forEach(v => cells.push({ text: ajNum(v), target: false }));
-        return {
+        const bspec = {
             variant: "balloons", cols: 4, mark: "color",
             cells: shuffle(cells),
             word: ajNum(n), ref: ajNum(n), calm: true,
-            palette: (n === 12),
             hintText: (n === 11)
                 ? "💡 تلميح: انظر إلى الرقم الكبير ١١ — الرقم المطلوب فيه ١ ثم ١"
                 : "💡 تلميح: انظر إلى الرقم الكبير ١٢ — يبدأ بالواحد ١ ثم الاثنين ٢"
         };
+        if (n === 12) bspec.palette = true;
+        return bspec;
     }
     return {
         variant: "balloons", cols: 4, mark: "color",
@@ -17063,6 +17064,18 @@ function ajBuildTenHowManyCircle(n) {
         });
         return { mark: "circle", calm: true, groups: [mk(1, 10, 12), mk(2, 11, 13)] };
     }
+    if (n === 12) {
+        /* مجموعتان: عشرة + ٢ (الهدف ١٢، المشتتان ١١ و١٣) ثم عشرة + ٣ (١٣ مع ١٢ و١٤) */
+        const near12 = (v, a, b) => shuffle([ajNumeralOption(v, true), ajNumeralOption(a, false), ajNumeralOption(b, false)]);
+        const mk12 = (m, a, b) => ({
+            stimulus: { type: "tenPlus", extra: m },
+            options: near12(10 + m, a, b),
+            layout: "row",
+            cls: "aj-opts-round",
+            hint: "💡 تلميح: في الإطار الكامل عشرة، عُدّ الدوائر الصغيرة وأضفها"
+        });
+        return { mark: "circle", calm: true, groups: [mk12(2, 11, 13), mk12(3, 12, 14)] };
+    }
     const m1 = n - 10;
     let m2 = ajRand(1, 9);
     if (m2 === m1) m2 = (m2 % 9) + 1;
@@ -17078,7 +17091,7 @@ function ajBuildTenHowManyCircle(n) {
 }
 
 function ajBuildConnectPictures(n) {
-    const values = (n === 11) ? [11, 12, 13] : [n].concat(ajOthers(n, 11, 20, 2));
+    const values = (n === 11 || n === 12) ? [11, 12, 13] : [n].concat(ajOthers(n, 11, 20, 2));
     const left = shuffle(values);
     const right = ajDifferentOrder(left);
     const pairs = {};
@@ -17089,7 +17102,7 @@ function ajBuildConnectPictures(n) {
         b: right.map(v => ({ id: "b" + v, value: v, numeral: ajNum(v), speak: numberWords[v] })),
         pairs: pairs
     };
-    if (n === 11) {
+    if (n === 11 || n === 12) {
         spec.calm = true;
         spec.hintText = "💡 تلميح: عُدّ الدوائر في الإطار الصغير تحت العشرة";
     }
@@ -17163,9 +17176,9 @@ function ajBuildColorReveal(n) {
 }
 
 function ajBuildFrameBuilder(n) {
-    if (n === 11) {
-        /* محاولتان متدرجتان: (١) عشرة كاملة + واحد، (٢) كوّن العشرة بنفسك + واحد */
-        return { target: 11, guided: true, calm: true };
+    if (n === 11 || n === 12) {
+        /* محاولتان متدرجتان: (١) عشرة كاملة + الآحاد، (٢) كوّن العشرة بنفسك + الآحاد */
+        return { target: n, guided: true, calm: true };
     }
     const need = n - 10;
     const pre = need >= 2 ? ajRand(0, need - 1) : 0;
@@ -18760,6 +18773,12 @@ function ajRenderFramesGuided(stage, spec, api) {
     const root = ajEl("div", "aj-frames aj-guided aj-calm");
     stage.appendChild(root);
 
+    /* عدد الآحاد المطلوب (١ للعدد ١١، ٢ للعدد ١٢) وصياغته العربية */
+    const U_NEED = spec.target - 10;
+    const UNITS_WORD = U_NEED === 1 ? "دائرة واحدة" : (U_NEED === 2 ? "دائرتين" : ajNum(U_NEED) + " دوائر");
+    const ADD_WORD = U_NEED === 1 ? "واحدًا" : (U_NEED === 2 ? "اثنين" : ajNum(U_NEED));
+    const EQ_TEXT = ajNum(10) + " + " + ajNum(U_NEED) + " = " + ajNum(spec.target);
+
     const rows = [];
 
     function makeLive(label) {
@@ -18848,8 +18867,8 @@ function ajRenderFramesGuided(stage, spec, api) {
         return r;
     }
 
-    const r1 = buildRow(0, "المحاولة ١: عندك عشرة كاملة — أضف واحدًا", false);
-    const r2 = buildRow(1, "المحاولة ٢: كوّن العشرة بنفسك ثم أضف واحدًا", true);
+    const r1 = buildRow(0, "المحاولة ١: عندك عشرة كاملة — أضف " + ADD_WORD, false);
+    const r2 = buildRow(1, "المحاولة ٢: كوّن العشرة بنفسك ثم أضف " + ADD_WORD, true);
     r2.rowEl.hidden = true;
 
     function finishRow(r) {
@@ -18863,20 +18882,20 @@ function ajRenderFramesGuided(stage, spec, api) {
         if (r === r1) {
 
             /* المعادلة تظهر لحظةً عند نجاح المحاولة الأولى فقط؛ ثم تُطوى ولا تظهر في المحاولة الثانية */
-            r.eq.textContent = ajNum(10) + " + " + ajNum(1) + " = " + ajNum(11);
-            api.say("✓ أحسنت! ١٠ + ١ = ١١");
+            r.eq.textContent = EQ_TEXT;
+            api.say("✓ أحسنت! " + EQ_TEXT);
 
             api.later(() => {
                 r.eq.textContent = "";
                 r.titleEl.textContent = "✓ المحاولة ١ مكتملة";
                 r2.rowEl.hidden = false;
-                api.say("⚫ الآن كوّن العدد بنفسك: املأ إطار العشرة بعشر دوائر ثم ضع دائرة في إطار الآحاد");
+                api.say("⚫ الآن كوّن العدد بنفسك: املأ إطار العشرة بعشر دوائر ثم ضع " + UNITS_WORD + " في إطار الآحاد");
                 try { r2.rowEl.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) { }
             }, 1500);
 
         } else {
-            r.eq.textContent = ajNum(10) + " + " + ajNum(1) + " = " + ajNum(11);
-            api.say("🎉 أحسنت! ١٠ + ١ = ١١");
+            r.eq.textContent = EQ_TEXT;
+            api.say("🎉 أحسنت! " + EQ_TEXT);
             api.solved();
         }
     }
@@ -18887,9 +18906,10 @@ function ajRenderFramesGuided(stage, spec, api) {
         if (r1.solved) return;
         toggle(cell);
         const c = U1.count();
-        if (c === 1) finishRow(r1);
-        else if (c > 1) api.say("😊 نحتاج دائرة واحدة فقط — المس دائرة لتزيلها");
-        else api.say("⚫ ضع دائرة واحدة في إطار الآحاد");
+        if (c === U_NEED) finishRow(r1);
+        else if (c > U_NEED) api.say("😊 نحتاج " + UNITS_WORD + " فقط — المس دائرة لتزيلها");
+        else if (c === 0) api.say("⚫ ضع " + UNITS_WORD + " في إطار الآحاد");
+        else api.say("🧮 بقي " + ajNum(U_NEED - c) + " في إطار الآحاد");
     }));
 
     /* المحاولة ٢: عشرة في إطار العشرة وواحد في إطار الآحاد */
@@ -18899,16 +18919,18 @@ function ajRenderFramesGuided(stage, spec, api) {
 
         const a = T2.count(), b = U2.count();
 
-        if (a === 10 && b === 1) { finishRow(r2); return; }
+        if (a === 10 && b === U_NEED) { finishRow(r2); return; }
 
-        if (b > 1) { api.say("😊 في إطار الآحاد دائرة واحدة فقط — المس دائرة لتزيلها"); return; }
+        if (b > U_NEED) { api.say("😊 في إطار الآحاد " + UNITS_WORD + " فقط — المس دائرة لتزيلها"); return; }
 
         if (a < 10) {
             api.say(a === 0 ? "⚫ املأ إطار العشرة بعشر دوائر" : "🧮 بقي " + ajNum(10 - a) + " في إطار العشرة");
             return;
         }
 
-        api.say("✓ عشرة كاملة! الآن ضع دائرة واحدة في إطار الآحاد");
+        api.say(b === 0
+            ? "✓ عشرة كاملة! الآن ضع " + UNITS_WORD + " في إطار الآحاد"
+            : "🧮 بقي " + ajNum(U_NEED - b) + " في إطار الآحاد");
     }
 
     [T2, U2].forEach(F => F.cells.forEach(cell => cell.addEventListener("click", () => {
@@ -18917,7 +18939,7 @@ function ajRenderFramesGuided(stage, spec, api) {
         check2();
     })));
 
-    api.say("⚫ ضع دائرة واحدة في إطار الآحاد لتصبح ١٠ + ١");
+    api.say("⚫ ضع " + UNITS_WORD + " في إطار الآحاد لتصبح ١٠ + " + ajNum(U_NEED));
 }
 
 /* =========================================================

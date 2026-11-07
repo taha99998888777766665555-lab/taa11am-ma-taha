@@ -22,7 +22,7 @@ for(const [w,h] of VPS){const phone=w<600;const ctx=await br.newContext({viewpor
       nextFull:Math.round(R(nx).width/(cb.width-16)*100),nextAbove:R(nx).top<Math.min(...others.map(b=>R(b).top))-4,
       oneRow:new Set(others.map(b=>Math.round(R(b).top))).size===1,
       lines:others.map(b=>{const r=document.createRange();r.selectNodeContents(b);return new Set([...r.getClientRects()].map(x=>Math.round(x.top/4))).size}).join(''),
-      barBottom:Math.round(cb.bottom),vh:innerHeight,sw:document.documentElement.scrollWidth}});
+      clear:cb.top>=document.getElementById('ajStage').getBoundingClientRect().bottom-1,barBottom:Math.round(cb.bottom),vh:innerHeight,sw:document.documentElement.scrollWidth}});
     const tag=`${w}x${h} #${n} نشاط${act+1} ${state}`;
     ok(m.solved===(state==='after'),tag+' حالة الإكمال',m);
     ok(m.overflow.length===0,tag+' لا تجاوز للنص',m.overflow);
@@ -31,7 +31,7 @@ for(const [w,h] of VPS){const phone=w<600;const ctx=await br.newContext({viewpor
       ok(m.minFont>=(w<=340?14:15),tag+' نص الأزرار الثانوية ≥١٥px (١٤px على ٣٢٠)',m.minFont);ok(m.minW>=60&&m.minH>=48,tag+' مساحات لمس ≥٦٠×٤٨',m);
       ok(m.nextFull>=95&&m.nextAbove,tag+' «التالي» صف مستقل بعرض كامل',m);ok(m.oneRow,tag+' الأزرار الثانوية في صف واحد',m);
       ok(w<=340?/^[12]+$/.test(m.lines):/^1+$/.test(m.lines),tag+' نص كل زر سطر واحد (سطران كحد أقصى على ٣٢٠ دون كسر كلمة)',m.lines);
-      ok(m.pos===(h>=700?'sticky':'static'),tag+' لصق الشريط حسب ارتفاع الشاشة',m.pos);
+      ok(m.pos==='static'&&m.clear,tag+' الشريط غير لاصق ولا يغطي أي جزء من النشاط (أسفل المحتوى مباشرة)',m);
     } else { ok(m.pos==='static'&&m.oneRow,tag+' الحاسوب/السبورة: الشريط غير لاصق وصف واحد',m); }
    }}}
  ok(errs.length===0,`${w}x${h} بلا أخطاء JS`,errs);await ctx.close();}
