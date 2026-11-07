@@ -655,10 +655,31 @@
 #ajPlay .aj-find-palette { margin: 0 auto 10px; }
 #ajPlay .aj-find-palette .aj-swatch { width: clamp(40px, 10.5vw, 58px); height: clamp(40px, 10.5vw, 58px); }
 
-/* ١٢ — «كوّن العدد بنفسك» على الجوال: إطارات كبيرة بعرض العمود (خانات لمس ≥٥٠px) بدل التقلّص لمحتواها */
+/* ١١ و١٢ — «كوّن العدد بنفسك» على الجوال: إطارات كبيرة بعرض العمود (خانات لمس ≥٥٠px) بدل التقلّص لمحتواها */
 @media (max-width: 599px) {
-    #ajPlay.aj-n12 .aj-guided-row { align-items: stretch; }
-    #ajPlay.aj-n12 .aj-guided-body { width: 100%; align-self: stretch; }
-    #ajPlay.aj-n12 .aj-guided-col { width: 100%; }
-    #ajPlay.aj-n12 .aj-guided .aj-frame { width: min(100%, 330px); }
+    #ajPlay:is(.aj-n11, .aj-n12) .aj-guided-row { align-items: stretch; }
+    #ajPlay:is(.aj-n11, .aj-n12) .aj-guided-body { width: 100%; align-self: stretch; }
+    #ajPlay:is(.aj-n11, .aj-n12) .aj-guided-col { width: 100%; }
+    #ajPlay:is(.aj-n11, .aj-n12) .aj-guided .aj-frame { width: min(100%, 330px); }
+}
+
+/* ---- الرقم ١٢: الأنشطة ٦–١١ ---- */
+
+/* أخطاء هادئة في الكتابة والمتاهة (بلا اهتزاز ولا أحمر) */
+#ajPlay .aj-calm .aj-blank-wrong {
+    animation: none;
+    border-style: solid !important;
+    border-color: #c2b3e0 !important;
+    background: #f3eefb !important;
+}
+
+/* عدّ ١٢ تفاحة في صفّين (٦ + ٦) */
+#ajPlay .aj-cw-12 .aj-countable { display: grid; grid-template-columns: repeat(6, auto); justify-content: center; gap: clamp(4px, 1vw, 12px); }
+#ajPlay .aj-cw-12 .aj-countable .aj-object { width: clamp(52px, 14.2vw, 110px); height: clamp(56px, 15.2vw, 118px); }
+@media (min-width: 1100px) {
+    #ajPlay .aj-cw-12 .aj-stim .aj-objects.aj-countable .aj-object { width: clamp(52px, 7.8vh, 96px); height: clamp(56px, 8.4vh, 104px); }
+}
+@media (max-width: 700px) {
+    #ajPlay .aj-cw-12 .aj-key { min-height: 56px; }
+    #ajPlay .aj-cw-12 .aj-keypad { gap: 8px; }
 }

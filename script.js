@@ -16604,6 +16604,7 @@ function ajLoadProgress() {
     if (data.mig && typeof data.mig === "object") ajProgressCache.mig = data.mig;
 
     ajMigrateNumber11(ajProgressCache);
+    ajMigrateNumber12(ajProgressCache);
 
     return ajProgressCache;
 }
@@ -16615,25 +16616,44 @@ function ajLoadProgress() {
 const AJ_MIG11_MAP = { 0: 0, 1: 1, 2: 6, 3: 4, 4: 3, 5: 2, 6: 8, 7: 5 };
 
 function ajMigrateNumber11(p) {
+    return ajMigrateNumberGeneric(p, 11, AJ_MIG11_MAP);
+}
 
-    if (p.mig && p.mig["11"]) return false;
+/* ترحيل الرقم ١٢ مرة واحدة لكل طالب: الترتيب القديم (٨ أنشطة) → الجديد (١١)،
+   بحسب نوع النشاط ولا يُنقل إلا ما تطابقت مهارته واستجابته ومعيار نجاحه:
+   frameColor ٠→٠ ، beforeAfter ٢→٦ ، maze ٤→٧ ، traceTwo ٥→١٠ ، numberLine ٦→٥ ، crossOutCard ٧→٨.
+   لا يُنقل: countCircle (١) لأن «عُدّ وضع دائرة» تغيّرت استجابته إلى «عُدّ واكتب»، ولا circleBigger (٣) لأنه حُذف.
+   الأنشطة الجديدة (البالونات، صِل، عشرة وكم، كوّن العدد، عُدّ واكتب) تبدأ غير مكتملة.
+   النجوم والهدايا لا تُمَس، وتبقى نسخة من حالة ١٢ القديمة داخل mig["12"].before. */
+const AJ_MIG12_MAP = { 0: 0, 2: 6, 4: 7, 5: 10, 6: 5, 7: 8 };
+
+function ajMigrateNumber12(p) {
+    return ajMigrateNumberGeneric(p, 12, AJ_MIG12_MAP);
+}
+
+function ajMigrateNumberGeneric(p, num, map) {
+
+    const key = String(num);
+    const prefix = key + ":";
+
+    if (p.mig && p.mig[key]) return false;
 
     const before = { done: [], skipped: [] };
     const nextDone = {};
     const nextSkipped = {};
 
     Object.keys(p.done).forEach(k => {
-        if (k.indexOf("11:") !== 0) return;
+        if (k.indexOf(prefix) !== 0) return;
         before.done.push(k);
-        const idx = parseInt(k.slice(3), 10);
-        if (idx in AJ_MIG11_MAP) nextDone["11:" + AJ_MIG11_MAP[idx]] = 1;
+        const idx = parseInt(k.slice(prefix.length), 10);
+        if (idx in map) nextDone[prefix + map[idx]] = 1;
     });
 
     Object.keys(p.skipped).forEach(k => {
-        if (k.indexOf("11:") !== 0) return;
+        if (k.indexOf(prefix) !== 0) return;
         before.skipped.push(k);
-        const idx = parseInt(k.slice(3), 10);
-        if (idx in AJ_MIG11_MAP) nextSkipped["11:" + AJ_MIG11_MAP[idx]] = 1;
+        const idx = parseInt(k.slice(prefix.length), 10);
+        if (idx in map) nextSkipped[prefix + map[idx]] = 1;
     });
 
     before.done.forEach(k => { delete p.done[k]; });
@@ -16643,7 +16663,7 @@ function ajMigrateNumber11(p) {
     Object.keys(nextSkipped).forEach(k => { if (!p.done[k]) p.skipped[k] = 1; });
 
     if (!p.mig) p.mig = {};
-    p.mig["11"] = { v: 1, before: before };
+    p.mig[key] = { v: 1, before: before };
 
     try {
         localStorage.setItem(AJ_KEY, JSON.stringify(p));
@@ -16994,7 +17014,7 @@ function ajBuildTrace(n) {
 
 function ajBuildCountWrite(n) {
     const spec = { objects: { type: "apples", count: n }, answer: n };
-    if (n === 11) spec.requireCount = true;
+    if (n === 11 || n === 12) spec.requireCount = true;
     return spec;
 }
 
@@ -17033,12 +17053,14 @@ function ajBuildBalloonsFind(n) {
 }
 
 function ajBuildNumberLine(n) {
-    if (n === 11) {
+    if (n === 11 || n === 12) {
         /* خط أعداد متصل من ١٠ إلى ١٥، يصعد من اليمين إلى اليسار */
         return {
-            mark: "circle", guided: "line", calm: true, target: 11,
-            options: ajRange(10, 15).map(v => Object.assign(ajNumeralOption(v, v === 11), { tick: true })),
-            hintText: "💡 تلميح: ابدأ من ١٠ وتقدّم خطوة واحدة إلى الأمام"
+            mark: "circle", guided: "line", calm: true, target: n,
+            options: ajRange(10, 15).map(v => Object.assign(ajNumeralOption(v, v === n), { tick: true })),
+            hintText: (n === 11)
+                ? "💡 تلميح: ابدأ من ١٠ وتقدّم خطوة واحدة إلى الأمام"
+                : "💡 تلميح: ابدأ من ١٠ وتقدّم خطوتين إلى الأمام"
         };
     }
     return {
@@ -17202,6 +17224,18 @@ function ajBlank(answer) { return { type: "blank", answer: answer }; }
 function ajFixed(text, hl) { return { type: "fixed", text: text, hl: !!hl }; }
 
 function ajBuildBeforeAfter(n) {
+    if (n === 12) {
+        /* صفّان هادئان: ١٢ (قبله ١١ وبعده ١٣) ثم عدد مجاور آخر (١١ أو ١٤) بلا تلميح على اللوحة */
+        const other = Math.random() < 0.5 ? 11 : 14;
+        const rowFor12 = (v, i) => ({
+            tokens: [
+                Object.assign(ajBlank(v - 1), { hint: "💡 تلميح: العدد الذي قبل " + ajNum(v) + " نقوله قبله مباشرة عند العدّ" }),
+                ajFixed(ajNum(v), true),
+                Object.assign(ajBlank(v + 1), { hint: "💡 تلميح: العدد الذي بعد " + ajNum(v) + " نقوله بعده مباشرة عند العدّ" })
+            ]
+        });
+        return { rows: [rowFor12(12), rowFor12(other)], label: "قبل — الرقم — بعد", calm: true };
+    }
     let m = ajRand(12, 19);
     if (m === n) m = (m === 19 ? 12 : m + 1);
 
@@ -17273,7 +17307,39 @@ function ajBuildCompare(n, bigger) {
 function ajBuildCircleBigger(n) { return ajBuildCompare(n, true); }
 function ajBuildCircleSmaller(n) { return ajBuildCompare(n, false); }
 
+/* مسارات المتاهة المصمَّمة للرقم ١٢: ١٢ خانة متصلة بلا اختصارات (كل خانة لا تجاور من المسار إلا السابقة واللاحقة) */
+const AJ_MAZE12_PATHS = [
+    [[0,5],[1,5],[2,5],[3,5],[4,5],[4,4],[4,3],[3,3],[3,2],[3,1],[3,0],[4,0]],
+    [[0,5],[1,5],[2,5],[3,5],[3,4],[3,3],[2,3],[2,2],[2,1],[2,0],[3,0],[4,0]],
+    [[0,5],[1,5],[2,5],[2,4],[2,3],[1,3],[1,2],[1,1],[1,0],[2,0],[3,0],[4,0]],
+    [[0,5],[1,5],[1,4],[1,3],[0,3],[0,2],[0,1],[0,0],[1,0],[2,0],[3,0],[4,0]]
+];
+
+function ajBuildMaze12() {
+    const rows = 5, cols = 6, n = 12;
+    const path = AJ_MAZE12_PATHS[ajRand(0, AJ_MAZE12_PATHS.length - 1)];
+    const onPath = {};
+    path.forEach(p => { onPath[p[0] + "," + p[1]] = true; });
+
+    /* مشتتات مدروسة: ١١ و١٣ و١٠ والمقلوب ٢١، موزّعة بالتساوي ولا تظهر ١٢ خارج المسار */
+    const decoys = shuffle([11, 21, 13, 10, 11, 21, 13, 10, 11, 21, 13, 10, 11, 21, 13, 10, 11, 21]);
+    let k = 0;
+    const cells = [];
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            const isPath = !!onPath[i + "," + j];
+            cells.push({ r: i, c: j, path: isPath, value: isPath ? n : decoys[k++] });
+        }
+    }
+    return {
+        rows: rows, cols: cols, path: path, cells: cells, target: n, calm: true,
+        hintText: "💡 تلميح: ابحث عن الرقم ١٢ المجاور للمربع الأخضر — يبدأ بالواحد ١ ثم الاثنين ٢"
+    };
+}
+
 function ajBuildMaze(n) {
+
+    if (n === 12) return ajBuildMaze12();
 
     const rows = 5, cols = 6;
     let r = 0, c = cols - 1;
@@ -17312,6 +17378,28 @@ function ajRepresentation(type, value) {
 }
 
 function ajBuildCrossOutCard(n) {
+
+    if (n === 12) {
+        /* ثلاث بطاقات تمثّل ١٢ بطرق مختلفة (رقم، إطار عشرة+٢، مكعبات عشرة+٢) وبطاقة رابعة مختلفة بلا أي علامة تكشفها */
+        const wrongs = [
+            ajRepresentation("numeral", 21), ajRepresentation("numeral", 11), ajRepresentation("numeral", 13),
+            ajRepresentation("frame", 11), ajRepresentation("frame", 13),
+            ajRepresentation("base10", 11), ajRepresentation("base10", 13)
+        ];
+        const cards12 = [ajRepresentation("numeral", 12), ajRepresentation("frame", 12), ajRepresentation("base10", 12)]
+            .map(rep => ({ rep: rep, correct: false, aria: "بطاقة" }));
+        const odd = { rep: wrongs[ajRand(0, wrongs.length - 1)], correct: true, aria: "بطاقة" };
+        return {
+            mark: "cross", calm: true,
+            hintText: "💡 تلميح: عُدّ ما في كل بطاقة — ثلاث بطاقات تساوي ١٢، وواحدة لا تساويه",
+            groups: [{
+                stimulus: { type: "bigNumeral", value: 12 },
+                options: shuffle(cards12.concat([odd])),
+                layout: "cards",
+                cls: "aj-opts-cards aj-opts-rep"
+            }]
+        };
+    }
 
     const deltas = [-2, -1, 1, 2].filter(d => n + d >= 11 && n + d <= 20);
     const wrongValue = n + deltas[ajRand(0, deltas.length - 1)];
@@ -19773,7 +19861,7 @@ function ajRenderCountWrite(stage, spec, api) {
 
 function ajRenderFillSeq(stage, spec, api) {
 
-    const root = ajEl("div", "aj-fill");
+    const root = ajEl("div", "aj-fill" + (spec.calm ? " aj-calm" : ""));
     stage.appendChild(root);
 
     const blanks = [];
@@ -19794,7 +19882,7 @@ function ajRenderFillSeq(stage, spec, api) {
                 b.setAttribute("aria-label", "مربع فارغ، اكتب العدد");
                 b.setAttribute("aria-pressed", "false");
 
-                const rec = { el: b, answer: tok.answer, len: String(tok.answer).length, typed: "", solved: false };
+                const rec = { el: b, answer: tok.answer, len: String(tok.answer).length, typed: "", solved: false, hint: tok.hint };
 
                 b.addEventListener("click", () => {
                     if (!rec.solved) setActive(rec);
@@ -19895,7 +19983,10 @@ function ajRenderFillSeq(stage, spec, api) {
 
         rec.el.classList.add("aj-blank-wrong");
 
-        if (wrongRun >= 2) {
+        if (spec.calm) {
+            /* هادئ: لا إضاءة لمفتاح الإجابة؛ تلميح نصي فقط */
+            api.say(wrongRun >= 2 ? (rec.hint || "💡 تلميح: خذ وقتك وعُدّ بهدوء") : "😊 حاول مرة أخرى");
+        } else if (wrongRun >= 2) {
             const need = Number(String(rec.answer)[0]);
             const key = ajKeyFor(pad, need);
             if (key) key.classList.add("aj-hint");
@@ -20207,7 +20298,7 @@ function ajRenderDnd(stage, spec, api) {
 
 function ajRenderMaze(stage, spec, api) {
 
-    const root = ajEl("div", "aj-maze");
+    const root = ajEl("div", "aj-maze" + (spec.calm ? " aj-calm" : ""));
     stage.appendChild(root);
 
     const goal = ajEl("div", "aj-maze-goal", "امشِ على الرقم " + ajNum(spec.target) + " فقط");
@@ -20307,7 +20398,10 @@ function ajRenderMaze(stage, spec, api) {
 
         api.say("😊 هذا ليس " + ajNum(spec.target) + " — جرّب مربعًا آخر");
 
-        if (wrongRun >= 3 && next) {
+        if (spec.calm) {
+            /* هادئ: تلميح نصي فقط بلا إضاءة للخانة التالية */
+            if (wrongRun >= 2 && spec.hintText) api.say(spec.hintText);
+        } else if (wrongRun >= 3 && next) {
             const hintRec = byKey[next[0] + "," + next[1]];
             if (hintRec) hintRec.el.classList.add("aj-hint");
         }
