@@ -16430,7 +16430,7 @@ const AJ_PLAN_1_10 = [
 const AJ_PLAN_11_20 = {
     11: [["frameColor", "balloonsFind", "colorReveal"], ["connectPictures", "tenHowManyCircle", "frameBuilder"], ["numberLine", "countWrite", "traceTwo"]],
     12: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
-    13: [["frameColor", "balloonsFind"], ["baseTenCircle", "missingNumber", "colorReveal"], ["traceTwo", "orderNumbers"]],
+    13: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
     14: [["frameColor", "countCircle"], ["tenHowManyWrite", "beforeAfter", "dotToDot"], ["traceTwo", "frameBuilder"]],
     15: [["frameColor", "balloonsFind"], ["trainMissing", "circleSmaller", "colorReveal"], ["traceTwo", "beforeAfter"]],
     16: [["frameColor", "countCircle", "numberLine"], ["baseTenCircle", "connectBaseTen", "maze"], ["traceTwo", "frameBuilder"]],
@@ -17023,15 +17023,15 @@ function ajBuildCountWrite(n) {
 
 function ajBuildFrameColor(n) {
     const spec = { text: ajNum(n), objects: { type: "frames", count: n }, goal: 0.72 };
-    if (n === 11 || n === 12) spec.compact = true;
+    if (n === 11 || n === 12 || n === 13) spec.compact = true;
     return spec;
 }
 
 function ajBuildBalloonsFind(n) {
-    if (n === 11 || n === 12) {
+    if (n === 11 || n === 12 || n === 13) {
         /* ٨ بالونات: أربعة فيها العدد المطلوب وأربعة بأعداد قريبة مدروسة
            (١١: ١٠ و١٢ و١٣ و١٤ — ١٢: ١٠ و١١ و١٣ و٢١ «المقلوب») */
-        const near = (n === 11) ? [10, 12, 13, 14] : [10, 11, 13, 21];
+        const near = (n === 11) ? [10, 12, 13, 14] : (n === 13 ? [10, 12, 14, 31] : [10, 11, 13, 21]);
         const cells = [];
         for (let i = 0; i < 4; i++) cells.push({ text: ajNum(n), target: true });
         near.forEach(v => cells.push({ text: ajNum(v), target: false }));
@@ -17041,9 +17041,11 @@ function ajBuildBalloonsFind(n) {
             word: ajNum(n), ref: ajNum(n), calm: true,
             hintText: (n === 11)
                 ? "💡 تلميح: انظر إلى الرقم الكبير ١١ — الرقم المطلوب فيه ١ ثم ١"
-                : "💡 تلميح: انظر إلى الرقم الكبير ١٢ — يبدأ بالواحد ١ ثم الاثنين ٢"
+                : (n === 13
+                    ? "💡 تلميح: انظر إلى الرقم الكبير ١٣ — يبدأ بالواحد ١ ثم الثلاثة ٣"
+                    : "💡 تلميح: انظر إلى الرقم الكبير ١٢ — يبدأ بالواحد ١ ثم الاثنين ٢")
         };
-        if (n === 12) bspec.palette = true;
+        if (n === 12 || n === 13) bspec.palette = true;
         return bspec;
     }
     return {
@@ -17099,6 +17101,25 @@ function ajBuildTenHowManyCircle(n) {
         });
         return { mark: "circle", calm: true, groups: [mk12(2, 11, 13), mk12(3, 12, 14)] };
     }
+    if (n === 13) {
+        /* مجموعتان بخطوتين: (١) كم دائرة صغيرة؟ (٢) كم المجموع؟ — الطالب يحدّد الآحاد بنفسه قبل المجموع
+           ١٠ + ٣ (١٢/١٣/١٤) ثم ١٠ + ٢ (١١/١٢/١٣) */
+        const opts3 = (v, a, b) => shuffle([ajNumeralOption(v, true), ajNumeralOption(a, false), ajNumeralOption(b, false)]);
+        const mk13 = (m, uo, ta, tb) => ({
+            stimulus: { type: "tenPlus", extra: m },
+            units: {
+                prompt: "كم دائرة صغيرة؟",
+                options: opts3(m, uo[0], uo[1]),
+                hint: "💡 تلميح: عُدّ الدوائر الصغيرة في الإطار الصغير واحدة واحدة"
+            },
+            options: opts3(10 + m, ta, tb),
+            layout: "row",
+            cls: "aj-opts-round",
+            hint: "💡 تلميح: في الإطار الكامل عشرة، أضف إليها الدوائر الصغيرة"
+        });
+        return { mark: "circle", calm: true, groups: [mk13(3, [2, 4], 12, 14), mk13(2, [1, 3], 11, 13)] };
+    }
+
     const m1 = n - 10;
     let m2 = ajRand(1, 9);
     if (m2 === m1) m2 = (m2 % 9) + 1;
@@ -17114,7 +17135,7 @@ function ajBuildTenHowManyCircle(n) {
 }
 
 function ajBuildConnectPictures(n) {
-    const values = (n === 11 || n === 12) ? [11, 12, 13] : [n].concat(ajOthers(n, 11, 20, 2));
+    const values = (n === 11 || n === 12) ? [11, 12, 13] : (n === 13 ? [12, 13, 14] : [n].concat(ajOthers(n, 11, 20, 2)));
     const left = shuffle(values);
     const right = ajDifferentOrder(left);
     const pairs = {};
@@ -17125,7 +17146,7 @@ function ajBuildConnectPictures(n) {
         b: right.map(v => ({ id: "b" + v, value: v, numeral: ajNum(v), speak: numberWords[v] })),
         pairs: pairs
     };
-    if (n === 11 || n === 12) {
+    if (n === 11 || n === 12 || n === 13) {
         spec.calm = true;
         spec.hintText = "💡 تلميح: عُدّ الدوائر في الإطار الصغير تحت العشرة";
     }
@@ -17199,7 +17220,7 @@ function ajBuildColorReveal(n) {
 }
 
 function ajBuildFrameBuilder(n) {
-    if (n === 11 || n === 12) {
+    if (n === 11 || n === 12 || n === 13) {
         /* محاولتان متدرجتان: (١) عشرة كاملة + الآحاد، (٢) كوّن العشرة بنفسك + الآحاد */
         return { target: n, guided: true, calm: true };
     }
@@ -17882,6 +17903,7 @@ function renderAJActivity() {
     if (playEl) {
         playEl.classList.toggle("aj-n11", n === 11);
         playEl.classList.toggle("aj-n12", n === 12);
+        playEl.classList.toggle("aj-n13", n === 13);
     }
 
     const msg = $("ajMessage");
@@ -19120,9 +19142,56 @@ function ajRenderChoice(stage, spec, api) {
 
         if (g.stimulus) box.appendChild(ajStimulusNode(g.stimulus, api));
 
+        /* خطوة اختيارية أولى: الطالب يحدّد عدد الآحاد بنفسه قبل ظهور خيارات المجموع (بلا كشف تلقائي) */
+        let unitsDone = !g.units;
+        let totalLabel = null;
+        if (g.units) {
+            const ubox = ajEl("div", "aj-units-step");
+            ubox.appendChild(ajEl("div", "aj-units-q", g.units.prompt));
+            const uopts = ajEl("div", "aj-opts aj-opts-row aj-opts-round aj-units-opts");
+            uopts.setAttribute("role", "group");
+            uopts.setAttribute("aria-label", "عدد الدوائر الصغيرة");
+            ubox.appendChild(uopts);
+            box.appendChild(ubox);
+            let uWrong = 0;
+            const ubtns = [];
+            g.units.options.forEach(uo => {
+                const ub = ajEl("button", "aj-opt");
+                ub.type = "button";
+                ub.setAttribute("aria-label", uo.text + "، اضغط للاختيار");
+                ub.appendChild(ajEl("span", "aj-opt-num", uo.text));
+                ub.addEventListener("click", () => {
+                    if (unitsDone) return;
+                    if (uo.speak) api.speakText(uo.speak);
+                    if (uo.correct) {
+                        unitsDone = true;
+                        ub.classList.add("aj-opt-correct", "aj-mark-circle");
+                        ubtns.forEach(x => { if (x !== ub) x.classList.add("aj-dim"); x.setAttribute("aria-disabled", "true"); });
+                        opts.hidden = false;
+                        totalLabel.hidden = false;
+                        api.say("✓ أحسنت! الآن اختر العدد الكلي: عشرة وهذه الدوائر معًا");
+                    } else {
+                        uWrong++;
+                        ub.classList.add("aj-opt-wrong");
+                        api.later(() => ub.classList.remove("aj-opt-wrong"), 650);
+                        api.say(uWrong >= 2 ? g.units.hint : "😊 حاول مرة أخرى");
+                    }
+                });
+                ubtns.push(ub);
+                uopts.appendChild(ub);
+            });
+        }
+
+        if (g.units) {
+            totalLabel = ajEl("div", "aj-units-q", "كم المجموع؟");
+            totalLabel.hidden = true;
+            box.appendChild(totalLabel);
+        }
+
         const opts = ajEl("div", "aj-opts aj-opts-" + g.layout + " " + (g.cls || ""));
         opts.setAttribute("role", "group");
         opts.setAttribute("aria-label", total > 1 ? "المجموعة " + ajNum(gi + 1) : "الخيارات");
+        if (g.units) opts.hidden = true;
         box.appendChild(opts);
 
         let wrongRun = 0;
