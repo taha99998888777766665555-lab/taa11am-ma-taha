@@ -17111,11 +17111,13 @@ function ajBuildNumberLine(n) {
         const start = Math.max(10, Math.min(n - 3, 15));
         const k = n - start;
         const stepsWord = k === 1 ? "خطوة واحدة" : (k === 2 ? "خطوتين" : (k === 3 ? "ثلاث خطوات" : ajNum(k) + " خطوات"));
-        return {
-            mark: "circle", guided: "line", calm: true, target: n, start,
+        const spec = {
+            mark: "circle", guided: "line", calm: true, target: n,
             options: ajRange(start, start + 5).map(v => Object.assign(ajNumeralOption(v, v === n), { tick: true })),
             hintText: "💡 تلميح: ابدأ من " + ajNum(start) + " وتقدّم " + stepsWord + " إلى الأمام"
         };
+        if (start !== 10) spec.start = start;
+        return spec;
     }
     return {
         mark: "circle",
