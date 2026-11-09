@@ -2,7 +2,7 @@
 const {chromium}=require('/opt/npm-tools/node_modules/playwright');const PORT=process.env.PORT;let pass=0,fail=0;const ok=(c,m,d)=>{if(c)pass++;else{fail++;console.log(' -',m,JSON.stringify(d))}};
 (async()=>{const br=await chromium.launch();const ctx=await br.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(String(e)));
 await p.goto(`http://127.0.0.1:${PORT}/index.html`);await p.waitForTimeout(3500);await p.evaluate(()=>navigator.serviceWorker.ready.then(()=>1));await p.waitForTimeout(3000);
-const ks=await p.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v66','كاش الإصدار الحالي فقط',ks);
+const ks=await p.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v67','كاش الإصدار الحالي فقط',ks);
 await ctx.setOffline(true);await p.reload();await p.waitForTimeout(3000);
 const r=await p.evaluate(async()=>{localStorage.removeItem('taha_aj_progress_v1');localStorage.setItem('taha_app_stars','0');ajReloadProgressFromStorage();startAJNumber(13);const out=[];for(let i=0;i<11;i++){ajGame.actIndex=i;renderAJActivity();await new Promise(r=>setTimeout(r,250));out.push(document.querySelectorAll('#ajStage *').length)}return out});
 ok(r.every(x=>x>5),'الأنشطة ١–١١ تُرسم بلا اتصال',r);

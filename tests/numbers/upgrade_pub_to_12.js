@@ -45,7 +45,7 @@ ok(r===0,'إعادة حل أنشطة منقولة وإنهاء ١٢ (هديته 
 const r2=await p2.evaluate(()=>{const s0=+localStorage.getItem('taha_app_stars');startAJNumber(12);ajGame.actIndex=9;renderAJActivity();ajActivitySolved();ajGame.actIndex=9;renderAJActivity();ajActivitySolved();return +localStorage.getItem('taha_app_stars')-s0});
 ok(r2===1,'نشاط جديد غير منقول يمنح نجمة واحدة فقط مهما أُعيد حلّه',r2);
 // النسخة والكاش
-const ks=await p2.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v66','الكاش الجديد فقط بعد التفعيل',{old:oldVer,now:ks});
+const ks=await p2.evaluate(()=>caches.keys());ok(ks.join()==='taha-app-v67','الكاش الجديد فقط بعد التفعيل',{old:oldVer,now:ks});
 // بلا اتصال: واجهة الأرقام الجديدة والأرقام ١–١٢
 await ctx2.setOffline(true);await p2.reload();await p2.waitForTimeout(3000);
 const off=await p2.evaluate(async()=>{showScreen('numbers');await new Promise(r=>setTimeout(r,500));const imgs=[...document.querySelectorAll('.nh-card img')].map(i=>i.complete&&i.naturalWidth>0);const out={imgs:imgs.length&&imgs.every(Boolean),acts:{}};

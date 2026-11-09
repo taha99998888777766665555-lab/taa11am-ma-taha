@@ -736,3 +736,18 @@
 @media (max-width: 359px) {
     #ajPlay :is(.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-countable .aj-object { width: 46px; height: 46px; }
 }
+
+/* ١٣–٢٠ «عُدّ واكتب»: لا أرقام ترتيب فوق التفاح؛ بعد اللمس تلوين هادئ وعلامة ✓ صغيرة داخل زاوية التفاحة (منع العدّ المزدوج في الكود كما هو) */
+#ajPlay.aj-n13 .aj-countable .aj-object { position: relative; overflow: visible; }
+#ajPlay.aj-n13 .aj-counted { background: #e6f7e0; outline: 3px solid #4cae3b; }
+#ajPlay.aj-n13 .aj-count-badge {
+    top: 1px; right: 1px; left: auto; min-width: 0; width: 20px; height: 20px; padding: 0; border-radius: 50%;
+    background: #2f9e2b; font-size: 0; line-height: 0; pointer-events: none;
+}
+#ajPlay.aj-n13 .aj-count-badge::after { content: "✓"; color: #fff; font-size: 14px; font-weight: 900; line-height: 1; }
+
+/* ٣٢٠px وما حولها: نص «النشاط س من ص» يلتف على سطرين بدل أن يتداخل مع شارة النجوم */
+@media (max-width: 359px) {
+    #ajPlay .aj-wrap.aj-play-wrap { column-gap: 8px; }
+    #ajPlay .aj-progress-text { white-space: normal; font-size: 12.5px; line-height: 1.2; min-width: 0; overflow-wrap: anywhere; }
+}
