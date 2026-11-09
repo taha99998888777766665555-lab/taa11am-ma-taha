@@ -30,7 +30,7 @@ ok(A.other_section_probe===O.other_section_probe&&A.taha_child_name===O.taha_chi
 const changed=Object.keys(O).filter(k=>A[k]!==O[k]);
 ok(changed.every(k=>k==='taha_aj_progress_v1'),'المفتاح الوحيد المتغير هو تقدم أرقامي الجميلة',changed.map(k=>[k,String(O[k]).slice(0,60),String(A[k]).slice(0,60)]));
 const P=JSON.parse(A.taha_aj_progress_v1);const keys=o=>Object.keys(o).sort().join(',');
-ok(['1:0','1:4','5:2','10:10','13:0'].every(k=>P.done[k]===1)&&P.skipped['14:1']===1,'تقدّم الأرقام ١–١٠ و١٣–٢٠ كما هو');
+ok(['1:0','1:4','5:2','10:10','13:0'].every(k=>P.done[k]===1)&&!P.skipped['14:1']&&P.mig['14']&&P.mig['14'].before.skipped.includes('14:1'),'تقدّم ١–١٠ كما هو؛ ١٣ و١٤ مرحّلان (المتخطّى القديم محفوظ في السجل ولا يُنقل)');
 ok(JSON.stringify(P.bonus)===JSON.stringify(seed.bonus),'الهدايا كما هي',P.bonus);
 ok(keys(Object.fromEntries(Object.keys(P.done).filter(k=>k.startsWith('12:')).map(k=>[k,1])))==='12:0,12:10,12:6,12:8','١٢: أربعة أنشطة منقولة فقط',keys(P.done));
 ok(keys(Object.fromEntries(Object.keys(P.done).filter(k=>k.startsWith('11:')).map(k=>[k,1])))==='11:0,11:1,11:2,11:3,11:4,11:5,11:6,11:8'.split(',').sort().join(','),'١١: الترحيل المعتمد (٨ منقولة، عُدّ واكتب جديد)',keys(P.done));

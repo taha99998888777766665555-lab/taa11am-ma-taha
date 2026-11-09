@@ -34,8 +34,8 @@ await set({done:{'12:0':1,'12:1':1,'12:2':1,'12:3':1,'12:4':1,'12:5':1,'12:6':1,
 await p.evaluate(()=>{startAJNumber(12);[1,2,3,4,5,7,9].forEach(i=>{ajGame.actIndex=i;renderAJActivity();ajActivitySolved()});ajFinishNumber();ajFinishNumber()});g=await get();
 ok(g.s===10+7+3,'٧ نجوم + هدية واحدة (٣) فقط',g.s);
 // ٥ب) طالب لم ينجز شيئًا في ١٢ (بيانات لأرقام أخرى فقط) + نجوم قائمة
-await set({done:{'5:1':1,'15:2':1},skipped:{'7:0':1},bonus:{'5':1}},12);g=await get();
-ok(keys(g.p.done)===S(['5:1','15:2'])&&keys(g.p.skipped)==='7:0'&&g.s===12&&JSON.stringify(g.p.bonus)==='{"5":1}'&&g.p.mig['12'].before.done.length===0,'طالب بلا تقدّم في ١٢: لا شيء يُنقل ولا يتغير غيره');
+await set({done:{'5:1':1,'9:2':1},skipped:{'7:0':1},bonus:{'5':1}},12);g=await get();
+ok(keys(g.p.done)===S(['5:1','9:2'])&&keys(g.p.skipped)==='7:0'&&g.s===12&&JSON.stringify(g.p.bonus)==='{"5":1}'&&g.p.mig['12'].before.done.length===0,'طالب بلا تقدّم في ١٢: لا شيء يُنقل ولا يتغير غيره');
 // ٥ج) المتاهة وخط الأعداد القديمان لا يُنقلان صراحةً
 await set({done:{'12:4':1,'12:6':1},skipped:{},bonus:{}},2);g=await get();ok(keys(g.p.done)===''&&g.p.mig['12'].before.done.length===2,'إنجاز المتاهة القديمة (٤) وخط الأعداد القديم (٦) لا يُنقلان ويبقيان في النسخة المحفوظة',g.p);
 // ٦) فارغة وتالفة
