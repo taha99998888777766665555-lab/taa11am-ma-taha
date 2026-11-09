@@ -51,31 +51,31 @@ for(const [vn,vp] of Object.entries({w320:{width:320,height:640,isMobile:true},w
  await start(13);await p.evaluate(()=>{document.getElementById('ajBtnSkip').click()});await p.waitForTimeout(400);
  await goto(0);const s1=await p.evaluate(()=>{ajActivitySolved();return{stars:+localStorage.getItem('taha_app_stars'),done:JSON.stringify(JSON.parse(localStorage.getItem('taha_aj_progress_v1')).done)}});
  ok(s1.stars===1&&s1.done.includes('13:0'),tag('نشاط مُتخطّى يمكن حلّه لاحقًا بنجمة واحدة'),s1);
- // ٥) قبل وما بعد: تلميحات صف ١٥
+ // ٥) قبل وما بعد: صفّان ١٣ ثم ١٢، بتلميحات بسيطة للعدّ والترتيب دون كشف
  await start(13);
  const KK=d=>p.locator('.aj-key',{hasText:new RegExp('^'+E(d)+'$')}).first();
  const typeNum=async s=>{for(const ch of String(s)){const k=KK(ch);await k.scrollIntoViewIfNeeded();await k.tap();}};
- for(const force of [0.9,0.1]){
-  await p.evaluate(f=>{window.__r=Math.random;Math.random=()=>f;startAJNumber(13);ajGame.actIndex=6;renderAJActivity();Math.random=window.__r},force);await p.waitForTimeout(500);
-  const rows=await p.evaluate(()=>[...document.querySelectorAll('.aj-seq-row')].map(r=>[...r.children].map(c=>c.classList.contains('aj-blank')?'_':c.textContent.trim()).join()));
-  const other=force>0.5?'١٥':'١٢';ok(rows[1]===`_,${other},_`,tag('الصف الثاني '+other),rows);
-  // اجعل الصف الثاني نشطًا: حلّ الصف الأول
-  for(const a of [12,14]){await typeNum(a);await p.waitForTimeout(400)}
-  const hints=[];
-  for(let k=0;k<5;k++){await typeNum('99');await p.waitForTimeout(900);hints.push(await msg())}
-  if(other==='١٥'){
-   ok(/عُدّ بهدوء من ١٠ حتى تصل إلى ١٥/.test(hints[1])&&!/١٤/.test(hints[1]),tag('تلميح ١٥ (قبل): خطوة أولى بلا ذكر الجواب'),hints[1]);
-   ok(/يُكتب بالواحد ١ ثم الأربعة ٤/.test(hints[3])||/يُكتب بالواحد ١ ثم الأربعة ٤/.test(hints[4]),tag('تلميح ١٥ (قبل): خطوة ثانية بعد ٤ محاولات'),hints);
-   ok(!/[0-9]/.test(hints.join('')),tag('تلميحات بأرقام هندية فقط'));
-   // الصف يعمل بعد التلميحات: حلّ ١٤ ثم ١٦
-   await p.waitForTimeout(900);await typeNum(14);await p.waitForTimeout(500);
-   for(let k=0;k<4;k++){await typeNum('99');await p.waitForTimeout(900)}
-   ok(/ثم تابع العدّ خطوة واحدة/.test(await p.evaluate(()=>document.getElementById('ajMessage').textContent))||true,tag('تلميح بعد ١٥ (مرحلة ١)'));
-   const m2=await msg();ok(/الستة ٦/.test(m2)||/تابع العدّ/.test(m2),tag('تلميح بعد ١٥: تدرّج'),m2);
-   await p.waitForTimeout(900);await typeNum(16);await p.waitForTimeout(500);ok(await solved(),tag('الصف بـ١٥ يكتمل'));
-  }else{
-   ok(!/الأربعة|الستة|الواحد ١/.test(hints.join('')),tag('صف ١٢ بلا تلميح الكتابة'),hints);
-  }
- }
+ const rowsAll=[];
+ for(let rep=0;rep<3;rep++){await goto(6);rowsAll.push(await p.evaluate(()=>[...document.querySelectorAll('.aj-seq-row')].map(r=>[...r.children].map(c=>c.classList.contains('aj-blank')?'_':c.textContent.trim()).join('|'))))}
+ ok(rowsAll.every(r=>r.length===2&&r[0]==='_|١٣|_'&&r[1]==='_|١٢|_'),tag('الصفّان ١٣ ثم ١٢ في كل مرة (لا ١٥ إطلاقًا)'),rowsAll);
+ ok(await p.evaluate(()=>{let bad=0;for(let i=0;i<300;i++){const sp=ajBuildBeforeAfter(13);const t=JSON.stringify(sp);if(/١٤|١٥|١٦|١٧/.test(t.replace(/"answer":14/g,''))&&/١٥|١٦/.test(t))bad++;if(sp.rows[1].tokens[1].text!=='١٢'&&!/١٢/.test(JSON.stringify(sp.rows[1].tokens[1])))bad++}return bad===0}),tag('٣٠٠ بناء: لا ١٥ ولا ١٦ ولا تلميح ٢ ولا تلميح ١٥'));
+ ok(await p.evaluate(()=>{const t=JSON.stringify(ajBuildBeforeAfter(13));return !/hint2|يُكتب بالواحد|عُدّ بهدوء من/.test(t)}),tag('لا تلميحات كتابة ولا عدّ من ١٠'));
+ // الصف الأول: أخطاء وتلميحات
+ await goto(6);
+ const hints=[];
+ for(let k=0;k<5;k++){await typeNum('99');await p.waitForTimeout(900);hints.push(await msg())}
+ ok(!/تلميح/.test(hints[0])&&/تلميح/.test(hints[1]),tag('صف ١٣: لا تلميح بعد خطأ، وتلميح بعد خطأين'),hints);
+ ok(hints.slice(1).every(h=>/قبل|بعد|عدّ/.test(h)&&!/[0-9]/.test(h)),tag('تلميح العدّ والترتيب بأرقام هندية'),hints);
+ ok(!hints.some(h=>/ثم الأربعة|ثم الستة|١٤ |١٢،/.test(h)&&/يُكتب/.test(h)),tag('لا كشف للإجابة في التلميح'),hints);
+ ok(await p.evaluate(()=>document.querySelectorAll('.aj-hint').length===0),tag('لا إضاءة لمفتاح الإجابة'));
+ await p.waitForTimeout(900);
+ await typeNum(12);await p.waitForTimeout(500);await typeNum(14);await p.waitForTimeout(500);
+ ok(!(await solved()),tag('الصف الأول وحده لا يكمل'));
+ // الصف الثاني: خطأ ثم صحيح
+ const h2=[];for(let k=0;k<3;k++){await typeNum('77');await p.waitForTimeout(900);h2.push(await msg())}
+ ok(/تلميح/.test(h2[1])&&!/[0-9]/.test(h2[1])&&/١٢/.test(h2[1]),tag('صف ١٢: تلميح نصي بسيط'),h2);
+ ok(!(await solved()),tag('خطأ الصف الثاني لا يكمل'));
+ await p.waitForTimeout(900);await typeNum(11);await p.waitForTimeout(500);await typeNum(13);await p.waitForTimeout(500);
+ ok(await solved(),tag('الصفّان يكتملان بالأعداد ١٢،١٤ و١١،١٣'));
  ok(errs.length===0,tag('بلا أخطاء JS'),errs.join('|'));await ctx.close();}
 await br.close();console.log(`PASS ${pass} FAIL ${fail}`);iss.forEach(x=>console.log(' -',x));process.exit(fail?1:0)})();

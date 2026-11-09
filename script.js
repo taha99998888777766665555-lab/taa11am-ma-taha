@@ -17264,18 +17264,11 @@ function ajFixed(text, hl) { return { type: "fixed", text: text, hl: !!hl }; }
 function ajBuildBeforeAfter(n) {
     if (n === 12 || n === 13) {
         /* صفّان هادئان: العدد (قبله وبعده) ثم عدد مجاور آخر بلا تلميح على اللوحة
-           (١٢ ← ١١ أو ١٤ — ١٣ ← ١٢ أو ١٥) */
-        const other = (n === 13) ? (Math.random() < 0.5 ? 12 : 15) : (Math.random() < 0.5 ? 11 : 14);
+           (١٢ ← ١١ أو ١٤ — ١٣ ← ثم ١٢ دائمًا) */
+        const other = (n === 13) ? 12 : (Math.random() < 0.5 ? 11 : 14);
         const rowFor12 = (v, i) => {
             const hb = { hint: "💡 تلميح: العدد الذي قبل " + ajNum(v) + " نقوله قبله مباشرة عند العدّ" };
             const ha = { hint: "💡 تلميح: العدد الذي بعد " + ajNum(v) + " نقوله بعده مباشرة عند العدّ" };
-            if (n === 13 && v === 15) {
-                /* ١٥ عدد مجاور لم يُتقن بعد، فالتلميح لا يفترض معرفته: خطوة أولى «عُدّ من ١٠»، ثم (بعد أربع محاولات) طريقة كتابة العدد المطلوب */
-                hb.hint = "💡 تلميح: عُدّ بهدوء من ١٠ حتى تصل إلى ١٥ — العدد الذي قبل ١٥ هو الذي نطقته قبله مباشرة";
-                hb.hint2 = "💡 تلميح: العدد الذي نبحث عنه يُكتب بالواحد ١ ثم الأربعة ٤";
-                ha.hint = "💡 تلميح: عُدّ بهدوء من ١٠ حتى ١٥ ثم تابع العدّ خطوة واحدة — هذا هو العدد الذي بعد ١٥";
-                ha.hint2 = "💡 تلميح: العدد الذي نبحث عنه يُكتب بالواحد ١ ثم الستة ٦";
-            }
             return {
                 tokens: [
                     Object.assign(ajBlank(v - 1), hb),
@@ -20034,7 +20027,7 @@ function ajRenderFillSeq(stage, spec, api) {
                 b.setAttribute("aria-label", "مربع فارغ، اكتب العدد");
                 b.setAttribute("aria-pressed", "false");
 
-                const rec = { el: b, answer: tok.answer, len: String(tok.answer).length, typed: "", solved: false, hint: tok.hint, hint2: tok.hint2 };
+                const rec = { el: b, answer: tok.answer, len: String(tok.answer).length, typed: "", solved: false, hint: tok.hint };
 
                 b.addEventListener("click", () => {
                     if (!rec.solved) setActive(rec);
@@ -20137,7 +20130,7 @@ function ajRenderFillSeq(stage, spec, api) {
 
         if (spec.calm) {
             /* هادئ: لا إضاءة لمفتاح الإجابة؛ تلميح نصي فقط */
-            api.say(wrongRun >= 4 && rec.hint2 ? rec.hint2 : (wrongRun >= 2 ? (rec.hint || "💡 تلميح: خذ وقتك وعُدّ بهدوء") : "😊 حاول مرة أخرى"));
+            api.say(wrongRun >= 2 ? (rec.hint || "💡 تلميح: خذ وقتك وعُدّ بهدوء") : "😊 حاول مرة أخرى");
         } else if (wrongRun >= 2) {
             const need = Number(String(rec.answer)[0]);
             const key = ajKeyFor(pad, need);

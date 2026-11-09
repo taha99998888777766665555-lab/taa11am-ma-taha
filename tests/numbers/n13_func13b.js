@@ -53,7 +53,7 @@ for(const [vn,vp] of Object.entries(VP)){
  // ٧) ما قبل وما بعد
  await goto(6);
  const rows=await p.evaluate(()=>[...document.querySelectorAll('.aj-seq-row')].map(r=>[...r.children].map(c=>c.classList.contains('aj-blank')?'_':c.textContent.trim())));
- ok(rows.length===2&&rows[0].join()==='_,١٣,_'&&/^_,(١٢|١٥),_$/.test(rows[1].join()),tag(7,'صفّان: ١٣ ثم ١٢ أو ١٥'),rows);
+ ok(rows.length===2&&rows[0].join()==='_,١٣,_'&&rows[1].join()==='_,١٢,_',tag(7,'صفّان: ١٣ ثم ١٢'),rows);
  const KK=d=>p.locator('.aj-key',{hasText:new RegExp('^'+E(d)+'$')}).first();
  const typeNum=async s=>{for(const ch of String(s)){const k=KK(ch);await k.scrollIntoViewIfNeeded();await k.tap();}};
  ok(await p.evaluate(()=>document.querySelector('.aj-fill').classList.contains('aj-calm')),tag(7,'نمط هادئ'));
@@ -62,7 +62,7 @@ for(const [vn,vp] of Object.entries(VP)){
  ok(await p.evaluate(()=>{const w=document.querySelector('.aj-blank-wrong');return !w||getComputedStyle(w).animationName==='none'}),tag(7,'خطأ بلا اهتزاز'));
  await p.waitForTimeout(800);
  const ans=await p.evaluate(()=>[...document.querySelectorAll('.aj-seq-row')].map(r=>{const t=[...r.children].map(c=>c.classList.contains('aj-blank')?null:+c.textContent.trim().split('').map(ch=>'٠١٢٣٤٥٦٧٨٩'.indexOf(ch)).join('')).find(x=>x!==null);return[t-1,t+1]}));
- ok(ans[0][0]===12&&ans[0][1]===14,tag(7,'إجابات الصف الأول ١٢ و١٤'),ans);
+ ok(ans[0][0]===12&&ans[0][1]===14&&ans[1][0]===11&&ans[1][1]===13,tag(7,'إجابات الصفين: ١٢،١٤ و١١،١٣'),ans);
  for(const row of ans){for(const a of row){await typeNum(a);await p.waitForTimeout(400);}}
  await p.waitForTimeout(300);ok(await solved(),tag(7,'يكتمل بكتابة الأعداد الأربعة'),await msg());
  // ٨) المتاهة — تحقق من التصميم عبر ٣٠٠ بناء
