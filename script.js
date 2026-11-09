@@ -16605,6 +16605,7 @@ function ajLoadProgress() {
 
     ajMigrateNumber11(ajProgressCache);
     ajMigrateNumber12(ajProgressCache);
+    ajMigrateNumber13(ajProgressCache);
 
     return ajProgressCache;
 }
@@ -16630,6 +16631,19 @@ const AJ_MIG12_MAP = { 0: 0, 2: 6, 5: 10, 7: 8 };
 
 function ajMigrateNumber12(p) {
     return ajMigrateNumberGeneric(p, 12, AJ_MIG12_MAP);
+}
+
+/* ترحيل الرقم ١٣ مرة واحدة لكل طالب: الخطة القديمة (٧ أنشطة) → الجديدة (١١)،
+   ولا يُنقل إلا ما تطابقت مهارته واستجابته ومعيار نجاحه (تحقّقتُ بمقارنة مواصفات البناء):
+   frameColor ٠→٠ (النص والعدد والهدف ٠٫٧٢ نفسها؛ الفرق عرض مضغوط فقط)،
+   traceTwo ٥→١٠ (المراحل والعتبات نفسها).
+   لا يُنقل: balloonsFind (١) لأن مشتتاته وتلميحه ولوحة ألوانه تغيّرت، ولا baseTenCircle ولا missingNumber
+   ولا colorReveal ولا orderNumbers لأنها حُذفت أو تغيّرت مهارتها.
+   النجوم والهدايا لا تُمَس، وتبقى نسخة من حالة ١٣ القديمة داخل mig["13"].before. */
+const AJ_MIG13_MAP = { 0: 0, 5: 10 };
+
+function ajMigrateNumber13(p) {
+    return ajMigrateNumberGeneric(p, 13, AJ_MIG13_MAP);
 }
 
 function ajMigrateNumberGeneric(p, num, map) {
@@ -17015,7 +17029,7 @@ function ajBuildTrace(n) {
 
 function ajBuildCountWrite(n) {
     const spec = { objects: { type: "apples", count: n }, answer: n };
-    if (n === 11 || n === 12) spec.requireCount = true;
+    if (n === 11 || n === 12 || n === 13) spec.requireCount = true;
     return spec;
 }
 
@@ -17056,14 +17070,16 @@ function ajBuildBalloonsFind(n) {
 }
 
 function ajBuildNumberLine(n) {
-    if (n === 11 || n === 12) {
+    if (n === 11 || n === 12 || n === 13) {
         /* خط أعداد متصل من ١٠ إلى ١٥، يصعد من اليمين إلى اليسار */
         return {
             mark: "circle", guided: "line", calm: true, target: n,
             options: ajRange(10, 15).map(v => Object.assign(ajNumeralOption(v, v === n), { tick: true })),
             hintText: (n === 11)
                 ? "💡 تلميح: ابدأ من ١٠ وتقدّم خطوة واحدة إلى الأمام"
-                : "💡 تلميح: ابدأ من ١٠ وتقدّم خطوتين إلى الأمام"
+                : (n === 13
+                    ? "💡 تلميح: ابدأ من ١٠ وتقدّم ثلاث خطوات إلى الأمام"
+                    : "💡 تلميح: ابدأ من ١٠ وتقدّم خطوتين إلى الأمام")
         };
     }
     return {
@@ -17246,9 +17262,10 @@ function ajBlank(answer) { return { type: "blank", answer: answer }; }
 function ajFixed(text, hl) { return { type: "fixed", text: text, hl: !!hl }; }
 
 function ajBuildBeforeAfter(n) {
-    if (n === 12) {
-        /* صفّان هادئان: ١٢ (قبله ١١ وبعده ١٣) ثم عدد مجاور آخر (١١ أو ١٤) بلا تلميح على اللوحة */
-        const other = Math.random() < 0.5 ? 11 : 14;
+    if (n === 12 || n === 13) {
+        /* صفّان هادئان: العدد (قبله وبعده) ثم عدد مجاور آخر بلا تلميح على اللوحة
+           (١٢ ← ١١ أو ١٤ — ١٣ ← ١٢ أو ١٥) */
+        const other = (n === 13) ? (Math.random() < 0.5 ? 12 : 15) : (Math.random() < 0.5 ? 11 : 14);
         const rowFor12 = (v, i) => ({
             tokens: [
                 Object.assign(ajBlank(v - 1), { hint: "💡 تلميح: العدد الذي قبل " + ajNum(v) + " نقوله قبله مباشرة عند العدّ" }),
@@ -17256,7 +17273,7 @@ function ajBuildBeforeAfter(n) {
                 Object.assign(ajBlank(v + 1), { hint: "💡 تلميح: العدد الذي بعد " + ajNum(v) + " نقوله بعده مباشرة عند العدّ" })
             ]
         });
-        return { rows: [rowFor12(12), rowFor12(other)], label: "قبل — الرقم — بعد", calm: true };
+        return { rows: [rowFor12(n), rowFor12(other)], label: "قبل — الرقم — بعد", calm: true };
     }
     let m = ajRand(12, 19);
     if (m === n) m = (m === 19 ? 12 : m + 1);
@@ -17337,6 +17354,37 @@ const AJ_MAZE12_PATHS = [
     [[0,5],[1,5],[1,4],[1,3],[0,3],[0,2],[0,1],[0,0],[1,0],[2,0],[3,0],[4,0]]
 ];
 
+/* ١٣: ١٣ خانة في المسار (٣٠ خانة)، كل التصاميم «مُستحثّة» (لا تتجاور خانتان غير متتاليتين) فلا اختصارات،
+   وكلها تبدأ من أعلى اليمين (٠،٥) وتنتهي في البيت (٤،١) */
+const AJ_MAZE13_PATHS = [
+    [[0,5],[1,5],[2,5],[3,5],[4,5],[4,4],[4,3],[3,3],[2,3],[2,2],[2,1],[3,1],[4,1]],
+    [[0,5],[1,5],[2,5],[3,5],[3,4],[3,3],[2,3],[1,3],[1,2],[1,1],[2,1],[3,1],[4,1]],
+    [[0,5],[1,5],[2,5],[2,4],[2,3],[1,3],[0,3],[0,2],[0,1],[1,1],[2,1],[3,1],[4,1]],
+    [[0,5],[0,4],[0,3],[0,2],[1,2],[2,2],[2,3],[2,4],[3,4],[4,4],[4,3],[4,2],[4,1]]
+];
+
+function ajBuildMaze13() {
+    const rows = 5, cols = 6, n = 13;
+    const path = AJ_MAZE13_PATHS[ajRand(0, AJ_MAZE13_PATHS.length - 1)];
+    const onPath = {};
+    path.forEach(p => { onPath[p[0] + "," + p[1]] = true; });
+
+    /* ١٧ مشتتًا: ١٢ و١٤ و١٠ و٣١ «المقلوب» بالتساوي تقريبًا، ولا يظهر ١٣ خارج المسار */
+    const decoys = shuffle([12, 14, 10, 31, 12, 14, 10, 31, 12, 14, 10, 31, 12, 14, 10, 31, 12]);
+    let k = 0;
+    const cells = [];
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            const isPath = !!onPath[i + "," + j];
+            cells.push({ r: i, c: j, path: isPath, value: isPath ? n : decoys[k++] });
+        }
+    }
+    return {
+        rows: rows, cols: cols, path: path, cells: cells, target: n, calm: true,
+        hintText: "💡 تلميح: ابحث عن الرقم ١٣ المجاور للمربع الأخضر — يبدأ بالواحد ١ ثم الثلاثة ٣"
+    };
+}
+
 function ajBuildMaze12() {
     const rows = 5, cols = 6, n = 12;
     const path = AJ_MAZE12_PATHS[ajRand(0, AJ_MAZE12_PATHS.length - 1)];
@@ -17362,6 +17410,7 @@ function ajBuildMaze12() {
 function ajBuildMaze(n) {
 
     if (n === 12) return ajBuildMaze12();
+    if (n === 13) return ajBuildMaze13();
 
     const rows = 5, cols = 6;
     let r = 0, c = cols - 1;
@@ -17400,6 +17449,28 @@ function ajRepresentation(type, value) {
 }
 
 function ajBuildCrossOutCard(n) {
+
+    if (n === 13) {
+        /* ثلاث بطاقات تمثّل ١٣ (رقم، إطار عشرة+٣، مكعبات عشرة+٣) وبطاقة رابعة مختلفة واحدة بلا علامة تكشفها */
+        const wrongs13 = [
+            ajRepresentation("numeral", 31), ajRepresentation("numeral", 12), ajRepresentation("numeral", 14),
+            ajRepresentation("frame", 12), ajRepresentation("frame", 14),
+            ajRepresentation("base10", 12), ajRepresentation("base10", 14)
+        ];
+        const same13 = [ajRepresentation("numeral", 13), ajRepresentation("frame", 13), ajRepresentation("base10", 13)]
+            .map(rep => ({ rep: rep, correct: false, aria: "بطاقة" }));
+        const odd13 = { rep: wrongs13[ajRand(0, wrongs13.length - 1)], correct: true, aria: "بطاقة" };
+        return {
+            mark: "cross", calm: true,
+            hintText: "💡 تلميح: عُدّ ما في كل بطاقة — ثلاث بطاقات تساوي ١٣، وواحدة لا تساويه",
+            groups: [{
+                stimulus: { type: "bigNumeral", value: 13 },
+                options: shuffle(same13.concat([odd13])),
+                layout: "cards",
+                cls: "aj-opts-cards aj-opts-rep"
+            }]
+        };
+    }
 
     if (n === 12) {
         /* ثلاث بطاقات تمثّل ١٢ بطرق مختلفة (رقم، إطار عشرة+٢، مكعبات عشرة+٢) وبطاقة رابعة مختلفة بلا أي علامة تكشفها */

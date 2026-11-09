@@ -7,14 +7,14 @@ const get=()=>p.evaluate(()=>({p:JSON.parse(localStorage.getItem('taha_aj_progre
 const keys=o=>Object.keys(o||{}).sort().join(',');
 const S=a=>a.sort().join(',');
 // ١) حالة مختلطة: قديم 0 frameColor، 1 countCircle، 2 beforeAfter، 3 circleBigger، 4 maze، 5 traceTwo، 6 numberLine، 7 crossOutCard
-let old={done:{'1:0':1,'11:3':1,'12:0':1,'12:1':1,'12:2':1,'12:3':1,'12:5':1,'13:0':1},skipped:{'12:4':1,'12:6':1,'12:7':1,'3:1':1},bonus:{'1':1}};
+let old={done:{'1:0':1,'11:3':1,'12:0':1,'12:1':1,'12:2':1,'12:3':1,'12:5':1,'15:0':1},skipped:{'12:4':1,'12:6':1,'12:7':1,'3:1':1},bonus:{'1':1}};
 await set(JSON.parse(JSON.stringify(old)),9);let g=await get();
-ok(keys(g.p.done)===S(['1:0','11:4','12:0','12:6','12:10','13:0']),'المنجز: ٠←٠ ٢←٦ ٥←١٠ ؛ countCircle وcircleBigger ولا متاهة ولا خط أعداد',keys(g.p.done));
+ok(keys(g.p.done)===S(['1:0','11:4','12:0','12:6','12:10','15:0']),'المنجز: ٠←٠ ٢←٦ ٥←١٠ ؛ countCircle وcircleBigger ولا متاهة ولا خط أعداد',keys(g.p.done));
 ok(keys(g.p.skipped)===S(['12:8','3:1']),'المتخطى: ٧←٨ فقط (المتاهة وخط الأعداد لا يُنقلان)',keys(g.p.skipped));
 ok(g.s===9&&JSON.stringify(g.p.bonus)==='{"1":1}','النجوم والهدايا لم تتغير',g);
 ok(g.p.mig&&g.p.mig['12']&&g.p.mig['12'].v===1&&S(g.p.mig['12'].before.done)===S(['12:0','12:1','12:2','12:3','12:5'])&&S(g.p.mig['12'].before.skipped)===S(['12:4','12:6','12:7']),'نسخة السجل القديم كاملة محفوظة',g.p.mig);
 ok(g.p.mig['11'].before.done.length===1,'ترحيل ١١ مستقل (لا يتأثر بـ١٢)',g.p.mig);
-ok(['1:0','13:0','3:1'].every(k=>k in g.p.done||k in g.p.skipped),'أرقام أخرى لم تُمس');
+ok(['1:0','15:0','3:1'].every(k=>k in g.p.done||k in g.p.skipped),'أرقام أخرى لم تُمس');
 // ٢) تكرار التحميل
 await p.reload();await p.waitForTimeout(2000);let g2=await get();ok(JSON.stringify(g2.p)===JSON.stringify(g.p),'إعادة التحميل لا تعيد الترحيل');
 await p.evaluate(()=>{ajReloadProgressFromStorage();ajLoadProgress();ajReloadProgressFromStorage()});g2=await get();ok(JSON.stringify(g2.p)===JSON.stringify(g.p),'تحميلات متكررة آمنة');
@@ -34,8 +34,8 @@ await set({done:{'12:0':1,'12:1':1,'12:2':1,'12:3':1,'12:4':1,'12:5':1,'12:6':1,
 await p.evaluate(()=>{startAJNumber(12);[1,2,3,4,5,7,9].forEach(i=>{ajGame.actIndex=i;renderAJActivity();ajActivitySolved()});ajFinishNumber();ajFinishNumber()});g=await get();
 ok(g.s===10+7+3,'٧ نجوم + هدية واحدة (٣) فقط',g.s);
 // ٥ب) طالب لم ينجز شيئًا في ١٢ (بيانات لأرقام أخرى فقط) + نجوم قائمة
-await set({done:{'5:1':1,'13:2':1},skipped:{'7:0':1},bonus:{'5':1}},12);g=await get();
-ok(keys(g.p.done)===S(['5:1','13:2'])&&keys(g.p.skipped)==='7:0'&&g.s===12&&JSON.stringify(g.p.bonus)==='{"5":1}'&&g.p.mig['12'].before.done.length===0,'طالب بلا تقدّم في ١٢: لا شيء يُنقل ولا يتغير غيره');
+await set({done:{'5:1':1,'15:2':1},skipped:{'7:0':1},bonus:{'5':1}},12);g=await get();
+ok(keys(g.p.done)===S(['5:1','15:2'])&&keys(g.p.skipped)==='7:0'&&g.s===12&&JSON.stringify(g.p.bonus)==='{"5":1}'&&g.p.mig['12'].before.done.length===0,'طالب بلا تقدّم في ١٢: لا شيء يُنقل ولا يتغير غيره');
 // ٥ج) المتاهة وخط الأعداد القديمان لا يُنقلان صراحةً
 await set({done:{'12:4':1,'12:6':1},skipped:{},bonus:{}},2);g=await get();ok(keys(g.p.done)===''&&g.p.mig['12'].before.done.length===2,'إنجاز المتاهة القديمة (٤) وخط الأعداد القديم (٦) لا يُنقلان ويبقيان في النسخة المحفوظة',g.p);
 // ٦) فارغة وتالفة

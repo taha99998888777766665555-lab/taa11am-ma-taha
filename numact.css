@@ -699,3 +699,23 @@
 #ajPlay .aj-group > [hidden] { display: none !important; }
 #ajPlay .aj-units-step + .aj-units-q { margin-top: 16px; }
 #ajPlay .aj-units-opts { padding-bottom: 4px; }
+
+/* ١٣: عدّ ١٣ تفاحة في ثلاثة صفوف (٥ + ٥ + ٣) */
+#ajPlay .aj-cw-13 .aj-countable { display: grid; grid-template-columns: repeat(5, auto); justify-content: center; gap: clamp(4px, 1vw, 12px); }
+#ajPlay .aj-cw-13 .aj-countable .aj-object { width: clamp(52px, 14.2vw, 100px); height: clamp(52px, 13vw, 100px); }
+@media (min-width: 1100px) {
+    #ajPlay .aj-cw-13 .aj-stim .aj-objects.aj-countable .aj-object { width: clamp(48px, 6.8vh, 86px); height: clamp(48px, 6.8vh, 90px); }
+}
+@media (max-width: 700px) {
+    #ajPlay .aj-cw-13 .aj-key { min-height: 52px; }
+    #ajPlay .aj-cw-13 .aj-keypad { gap: 8px; }
+}
+@media (max-width: 359px) {
+    #ajPlay .aj-cw-13 .aj-countable { gap: 3px; max-width: 100%; }
+    #ajPlay .aj-cw-13 .aj-countable .aj-object { width: 48px; height: 48px; }
+}
+
+/* ١٣: متاهة بخانات ≥٤٤px على ٣٢٠px (فجوة أصغر بين الخانات) */
+@media (max-width: 339px) {
+    #ajPlay.aj-n13 .aj-maze-grid { gap: 2px; }
+}
