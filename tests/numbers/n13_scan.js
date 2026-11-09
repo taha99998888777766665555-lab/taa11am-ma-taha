@@ -8,7 +8,7 @@ for(const [vn,vp] of Object.entries({p320:{width:320,height:640,isMobile:true},p
  for(let i=0;i<11;i++){
   await p.evaluate(i=>{ajGame.actIndex=i;renderAJActivity()},i);await p.waitForTimeout(500);
   const r=await p.evaluate(()=>{const vw=innerWidth;const els=[...document.querySelectorAll('#ajStage button, #ajStage .aj-object, #ajStage .aj-maze-cell, #ajStage .aj-obj-btn, #ajStage .aj-key')].filter(e=>e.offsetParent!==null);
-   const small=els.filter(e=>{const b=e.getBoundingClientRect();return b.width<43.5||b.height<43.5}).map(e=>e.className+':'+Math.round(e.getBoundingClientRect().width)+'x'+Math.round(e.getBoundingClientRect().height));
+   const small=els.filter(e=>!e.matches('.aj-frame-paint .aj-obj-circle')).filter(e=>{const b=e.getBoundingClientRect();return b.width<43.5||b.height<43.5}).map(e=>e.className+':'+Math.round(e.getBoundingClientRect().width)+'x'+Math.round(e.getBoundingClientRect().height));
    const out=[...document.querySelectorAll('#ajStage *')].filter(e=>e.offsetParent!==null&&!e.closest('canvas')).filter(e=>{const b=e.getBoundingClientRect();return b.width>0&&(b.left<-1||b.right>vw+1)}).map(e=>e.className).slice(0,4);
    return{sw:document.documentElement.scrollWidth,vw,small:[...new Set(small)].slice(0,5),out}});
   ok(r.sw<=r.vw+1,`${vn} #${i+1} لا تمرير أفقي`,r);ok(r.out.length===0,`${vn} #${i+1} لا قص خارج الشاشة`,r);ok(r.small.length===0,`${vn} #${i+1} أهداف ≥٤٤`,r);

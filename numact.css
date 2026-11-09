@@ -717,5 +717,16 @@
 
 /* ١٣: متاهة بخانات ≥٤٤px على ٣٢٠px (فجوة أصغر بين الخانات) */
 @media (max-width: 339px) {
-    #ajPlay.aj-n13 .aj-maze-grid { gap: 2px; }
+    #ajPlay:is(.aj-n12, .aj-n13) .aj-maze-grid { gap: 2px; }
 }
+
+/* ١٣: ألوان البالونات ≥٤٤px (ويتّسع الصف على ٣٢٠px بفجوة أصغر) */
+#ajPlay.aj-n13 .aj-find-palette .aj-swatch { width: clamp(44px, 11.5vw, 58px); height: clamp(44px, 11.5vw, 58px); }
+@media (max-width: 359px) {
+    #ajPlay.aj-n13 .aj-find-palette { gap: 3px; padding: 6px 4px; }
+}
+
+/* ١٣ «لوّن الرقم والدوائر»: إطار أوسع كي تصير خانة كل دائرة ≥٤٤px، ومنطقة لمس ٤٤×٤٤ مركزها الدائرة دون تكبير الدائرة المرئية */
+#ajPlay.aj-n13 .aj-paint-c .aj-frame-paint { max-width: none; width: min(100%, 250px); }
+#ajPlay.aj-n13 .aj-frame-paint .aj-obj-circle { position: relative; width: calc(clamp(180px, 25vh, 250px) * .1545); height: calc(clamp(180px, 25vh, 250px) * .1545); }
+#ajPlay.aj-n13 .aj-frame-paint .aj-obj-circle::after { content: ""; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); border-radius: 0; }
