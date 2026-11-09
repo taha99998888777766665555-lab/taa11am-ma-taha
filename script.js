@@ -16428,16 +16428,17 @@ const AJ_PLAN_1_10 = [
 ];
 
 const AJ_PLAN_11_20 = {
+    /* ١٤–٢٠ تتبع خطة ١٣ نفسها (١١ نشاطًا بالتدرج التعليمي ذاته) — تُعاد صياغتها بعد التعريف */
     11: [["frameColor", "balloonsFind", "colorReveal"], ["connectPictures", "tenHowManyCircle", "frameBuilder"], ["numberLine", "countWrite", "traceTwo"]],
     12: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
     13: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
-    14: [["frameColor", "countCircle"], ["tenHowManyWrite", "beforeAfter", "dotToDot"], ["traceTwo", "frameBuilder"]],
-    15: [["frameColor", "balloonsFind"], ["trainMissing", "circleSmaller", "colorReveal"], ["traceTwo", "beforeAfter"]],
-    16: [["frameColor", "countCircle", "numberLine"], ["baseTenCircle", "connectBaseTen", "maze"], ["traceTwo", "frameBuilder"]],
-    17: [["frameColor", "balloonsFind"], ["missingNumber", "tenHowManyWrite", "colorReveal"], ["traceTwo", "orderNumbers"]],
-    18: [["frameColor", "countCircle"], ["tenHowManyCircle", "beforeAfter", "dotToDot"], ["traceTwo", "circleSmaller"]],
-    19: [["frameColor", "balloonsFind"], ["trainMissing", "circleBigger", "colorReveal"], ["traceTwo", "beforeAfter"]],
-    20: [["frameColor", "countCircle"], ["baseTenCircle", "missingNumber", "maze"], ["traceTwo", "orderNumbers"]]
+    14: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
+    15: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
+    16: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
+    17: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
+    18: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
+    19: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]],
+    20: [["frameColor", "balloonsFind", "connectPictures"], ["tenHowManyCircle", "frameBuilder", "numberLine"], ["beforeAfter", "maze", "crossOutCard"], ["countWrite", "traceTwo"]]
 };
 
 const AJ_OBJECTS = {
@@ -16606,6 +16607,7 @@ function ajLoadProgress() {
     ajMigrateNumber11(ajProgressCache);
     ajMigrateNumber12(ajProgressCache);
     ajMigrateNumber13(ajProgressCache);
+    ajMigrateNumbers14to20(ajProgressCache);
 
     return ajProgressCache;
 }
@@ -16644,6 +16646,19 @@ const AJ_MIG13_MAP = { 0: 0, 5: 10 };
 
 function ajMigrateNumber13(p) {
     return ajMigrateNumberGeneric(p, 13, AJ_MIG13_MAP);
+}
+
+/* الأرقام ١٤–٢٠: الخطة القديمة كانت ٧–٨ أنشطة بترتيب خاص بكل رقم؛ ينتقل التلوين (٠←٠) والتتبّع (موضعه القديم ←١٠) فقط
+   بعد التحقق من تطابق المواصفات (التلوين: نص وكمية وهدف ٠٫٧٢؛ التتبّع: المراحل والعتبات). ما عداهما لا يُنقل
+   (تغيّرت مهارته أو استجابته أو معياره). النجوم والهدايا لا تُمَس، وتبقى نسخة السجل القديم في mig[n].before. */
+const AJ_MIG_OLD_TRACE_IDX = { 14: 5, 15: 5, 16: 6, 17: 5, 18: 5, 19: 5, 20: 5 };
+
+function ajMigrateNumbers14to20(p) {
+    Object.keys(AJ_MIG_OLD_TRACE_IDX).forEach(k => {
+        const map = { 0: 0 };
+        map[AJ_MIG_OLD_TRACE_IDX[k]] = 10;
+        ajMigrateNumberGeneric(p, Number(k), map);
+    });
 }
 
 function ajMigrateNumberGeneric(p, num, map) {
@@ -17029,23 +17044,44 @@ function ajBuildTrace(n) {
 
 function ajBuildCountWrite(n) {
     const spec = { objects: { type: "apples", count: n }, answer: n };
-    if (n === 11 || n === 12 || n === 13) spec.requireCount = true;
+    if (n >= 11) spec.requireCount = true;
     return spec;
 }
 
 /* ---------- ١١–٢٠ ---------- */
 
+/* مساعدات الأرقام ١٣–٢٠ (نفس التدرّج التعليمي: التعرّف ← الكمية والقيمة المكانية ← العدّ والكتابة) */
+const AJ_UNIT_WORDS = { 3: "الثلاثة", 4: "الأربعة", 5: "الخمسة", 6: "الستة", 7: "السبعة", 8: "الثمانية", 9: "التسعة" };
+
+/* ثلاثة أعداد متتالية تحوي v داخل [lo, hi] */
+function ajTriple(v, lo, hi) {
+    const start = Math.max(lo, Math.min(v - 1, hi - 2));
+    return [start, start + 1, start + 2];
+}
+
+/* أعداد قريبة مدروسة للمشتتات: ١٠ والسابق واللاحق والمقلوب (١٣ ← ٣١)؛ ٢٠: ١٠ و١٩ و٢ (آحاد فقط) و١٢ */
+function ajBigNear(n) {
+    if (n === 20) return [10, 19, 2, 12];
+    return [10, n - 1, n + 1, (n % 10) * 10 + 1];
+}
+
+/* تلميح نصي هادئ لا يكشف الجواب: ينظر إلى الرقم الكبير ويقرأ ترتيب رقميه */
+function ajBigHintTail(n) {
+    if (n === 20) return "يبدأ بالاثنين ٢ ثم الصفر ٠";
+    return "يبدأ بالواحد ١ ثم " + AJ_UNIT_WORDS[n - 10] + " " + ajNum(n - 10);
+}
+
 function ajBuildFrameColor(n) {
     const spec = { text: ajNum(n), objects: { type: "frames", count: n }, goal: 0.72 };
-    if (n === 11 || n === 12 || n === 13) spec.compact = true;
+    if (n >= 11) spec.compact = true;
     return spec;
 }
 
 function ajBuildBalloonsFind(n) {
-    if (n === 11 || n === 12 || n === 13) {
+    if (n >= 11) {
         /* ٨ بالونات: أربعة فيها العدد المطلوب وأربعة بأعداد قريبة مدروسة
            (١١: ١٠ و١٢ و١٣ و١٤ — ١٢: ١٠ و١١ و١٣ و٢١ «المقلوب») */
-        const near = (n === 11) ? [10, 12, 13, 14] : (n === 13 ? [10, 12, 14, 31] : [10, 11, 13, 21]);
+        const near = (n === 11) ? [10, 12, 13, 14] : (n >= 13 ? ajBigNear(n) : [10, 11, 13, 21]);
         const cells = [];
         for (let i = 0; i < 4; i++) cells.push({ text: ajNum(n), target: true });
         near.forEach(v => cells.push({ text: ajNum(v), target: false }));
@@ -17055,11 +17091,11 @@ function ajBuildBalloonsFind(n) {
             word: ajNum(n), ref: ajNum(n), calm: true,
             hintText: (n === 11)
                 ? "💡 تلميح: انظر إلى الرقم الكبير ١١ — الرقم المطلوب فيه ١ ثم ١"
-                : (n === 13
-                    ? "💡 تلميح: انظر إلى الرقم الكبير ١٣ — يبدأ بالواحد ١ ثم الثلاثة ٣"
+                : (n >= 13
+                    ? "💡 تلميح: انظر إلى الرقم الكبير " + ajNum(n) + " — " + ajBigHintTail(n)
                     : "💡 تلميح: انظر إلى الرقم الكبير ١٢ — يبدأ بالواحد ١ ثم الاثنين ٢")
         };
-        if (n === 12 || n === 13) bspec.palette = true;
+        if (n >= 12) bspec.palette = true;
         return bspec;
     }
     return {
@@ -17070,16 +17106,15 @@ function ajBuildBalloonsFind(n) {
 }
 
 function ajBuildNumberLine(n) {
-    if (n === 11 || n === 12 || n === 13) {
-        /* خط أعداد متصل من ١٠ إلى ١٥، يصعد من اليمين إلى اليسار */
+    if (n >= 11) {
+        /* خط أعداد متصل بنافذة من ٦ أعداد تحوي العدد المطلوب (١١–١٣: من ١٠ إلى ١٥)، يصعد من اليمين إلى اليسار */
+        const start = Math.max(10, Math.min(n - 3, 15));
+        const k = n - start;
+        const stepsWord = k === 1 ? "خطوة واحدة" : (k === 2 ? "خطوتين" : (k === 3 ? "ثلاث خطوات" : ajNum(k) + " خطوات"));
         return {
-            mark: "circle", guided: "line", calm: true, target: n,
-            options: ajRange(10, 15).map(v => Object.assign(ajNumeralOption(v, v === n), { tick: true })),
-            hintText: (n === 11)
-                ? "💡 تلميح: ابدأ من ١٠ وتقدّم خطوة واحدة إلى الأمام"
-                : (n === 13
-                    ? "💡 تلميح: ابدأ من ١٠ وتقدّم ثلاث خطوات إلى الأمام"
-                    : "💡 تلميح: ابدأ من ١٠ وتقدّم خطوتين إلى الأمام")
+            mark: "circle", guided: "line", calm: true, target: n, start,
+            options: ajRange(start, start + 5).map(v => Object.assign(ajNumeralOption(v, v === n), { tick: true })),
+            hintText: "💡 تلميح: ابدأ من " + ajNum(start) + " وتقدّم " + stepsWord + " إلى الأمام"
         };
     }
     return {
@@ -17117,23 +17152,46 @@ function ajBuildTenHowManyCircle(n) {
         });
         return { mark: "circle", calm: true, groups: [mk12(2, 11, 13), mk12(3, 12, 14)] };
     }
-    if (n === 13) {
-        /* مجموعتان بخطوتين: (١) كم دائرة صغيرة؟ (٢) كم المجموع؟ — الطالب يحدّد الآحاد بنفسه قبل المجموع
-           ١٠ + ٣ (١٢/١٣/١٤) ثم ١٠ + ٢ (١١/١٢/١٣) */
-        const opts3 = (v, a, b) => shuffle([ajNumeralOption(v, true), ajNumeralOption(a, false), ajNumeralOption(b, false)]);
-        const mk13 = (m, uo, ta, tb) => ({
+    if (n >= 13) {
+        /* مجموعتان بخطوات: (١) كم دائرة صغيرة؟ (٢) كم المجموع؟ — الطالب يحدّد الآحاد بنفسه قبل المجموع بلا كشف تلقائي.
+           المجموعة الأولى = العدد المطلوب (١٠ + الآحاد)، والثانية = العدد السابق له.
+           ٢٠ = عشرتان وصفر آحاد: (١) كم عشرة؟ (٢) كم دائرة صغيرة خارج العشرتين؟ (٣) المجموع. */
+        const mkOpts = (v, set) => shuffle(set.map(x => ajNumeralOption(x, x === v)));
+        const mkUnits = m => ({
             stimulus: { type: "tenPlus", extra: m },
             units: {
                 prompt: "كم دائرة صغيرة؟",
-                options: opts3(m, uo[0], uo[1]),
+                options: mkOpts(m, ajTriple(m, 1, 9)),
                 hint: "💡 تلميح: عُدّ الدوائر الصغيرة في الإطار الصغير واحدة واحدة"
             },
-            options: opts3(10 + m, ta, tb),
+            options: mkOpts(10 + m, ajTriple(10 + m, 11, 20)),
             layout: "row",
             cls: "aj-opts-round",
             hint: "💡 تلميح: في الإطار الكامل عشرة، أضف إليها الدوائر الصغيرة"
         });
-        return { mark: "circle", calm: true, groups: [mk13(3, [2, 4], 12, 14), mk13(2, [1, 3], 11, 13)] };
+        if (n === 20) {
+            const twoTens = {
+                stimulus: { type: "tenPlus", extra: 10 },
+                steps: [
+                    {
+                        prompt: "كم عشرة؟", label: "عدد العشرات",
+                        options: mkOpts(2, [1, 2, 3]),
+                        hint: "💡 تلميح: عُدّ الإطارات المملوءة كلها، كل إطار عشرة"
+                    },
+                    {
+                        prompt: "كم دائرة صغيرة خارج العشرتين؟", label: "عدد الآحاد",
+                        options: mkOpts(0, [0, 1, 2]),
+                        hint: "💡 تلميح: انظر: هل بقيت دوائر خارج الإطارين المملوءين؟"
+                    }
+                ],
+                options: mkOpts(20, [10, 19, 20]),
+                layout: "row",
+                cls: "aj-opts-round",
+                hint: "💡 تلميح: عشرة ومعها عشرة أخرى"
+            };
+            return { mark: "circle", calm: true, groups: [twoTens, mkUnits(9)] };
+        }
+        return { mark: "circle", calm: true, groups: [mkUnits(n - 10), mkUnits(n - 11)] };
     }
 
     const m1 = n - 10;
@@ -17151,7 +17209,7 @@ function ajBuildTenHowManyCircle(n) {
 }
 
 function ajBuildConnectPictures(n) {
-    const values = (n === 11 || n === 12) ? [11, 12, 13] : (n === 13 ? [12, 13, 14] : [n].concat(ajOthers(n, 11, 20, 2)));
+    const values = (n === 11 || n === 12) ? [11, 12, 13] : (n >= 13 ? (n === 20 ? [18, 19, 20] : [n - 1, n, n + 1]) : [n].concat(ajOthers(n, 11, 20, 2)));
     const left = shuffle(values);
     const right = ajDifferentOrder(left);
     const pairs = {};
@@ -17162,7 +17220,7 @@ function ajBuildConnectPictures(n) {
         b: right.map(v => ({ id: "b" + v, value: v, numeral: ajNum(v), speak: numberWords[v] })),
         pairs: pairs
     };
-    if (n === 11 || n === 12 || n === 13) {
+    if (n >= 11) {
         spec.calm = true;
         spec.hintText = "💡 تلميح: عُدّ الدوائر في الإطار الصغير تحت العشرة";
     }
@@ -17236,7 +17294,7 @@ function ajBuildColorReveal(n) {
 }
 
 function ajBuildFrameBuilder(n) {
-    if (n === 11 || n === 12 || n === 13) {
+    if (n >= 11) {
         /* محاولتان متدرجتان: (١) عشرة كاملة + الآحاد، (٢) كوّن العشرة بنفسك + الآحاد */
         return { target: n, guided: true, calm: true };
     }
@@ -17262,13 +17320,17 @@ function ajBlank(answer) { return { type: "blank", answer: answer }; }
 function ajFixed(text, hl) { return { type: "fixed", text: text, hl: !!hl }; }
 
 function ajBuildBeforeAfter(n) {
-    if (n === 12 || n === 13) {
+    if (n >= 12) {
         /* صفّان هادئان: العدد (قبله وبعده) ثم عدد مجاور آخر بلا تلميح على اللوحة
-           (١٢ ← ١١ أو ١٤ — ١٣ ← ثم ١٢ دائمًا) */
-        const other = (n === 13) ? 12 : (Math.random() < 0.5 ? 11 : 14);
+           (١٢ ← ١١ أو ١٤ — ١٣ وما بعده ← ثم العدد السابق دائمًا) */
+        const other = (n >= 13) ? n - 1 : (Math.random() < 0.5 ? 11 : 14);
         const rowFor12 = (v, i) => {
             const hb = { hint: "💡 تلميح: العدد الذي قبل " + ajNum(v) + " نقوله قبله مباشرة عند العدّ" };
             const ha = { hint: "💡 تلميح: العدد الذي بعد " + ajNum(v) + " نقوله بعده مباشرة عند العدّ" };
+            /* ٢٠ هو آخر عدد في الدرس: صف «قبل» فقط دون عدد لاحق خارج النطاق */
+            if (v === 20) {
+                return { tokens: [Object.assign(ajBlank(v - 1), hb), ajFixed(ajNum(v), true)] };
+            }
             return {
                 tokens: [
                     Object.assign(ajBlank(v - 1), hb),
@@ -17367,14 +17429,15 @@ const AJ_MAZE13_PATHS = [
     [[0,5],[0,4],[0,3],[0,2],[1,2],[2,2],[2,3],[2,4],[3,4],[4,4],[4,3],[4,2],[4,1]]
 ];
 
-function ajBuildMaze13() {
-    const rows = 5, cols = 6, n = 13;
+function ajBuildMazeBig(n) {
+    const rows = 5, cols = 6;
     const path = AJ_MAZE13_PATHS[ajRand(0, AJ_MAZE13_PATHS.length - 1)];
     const onPath = {};
     path.forEach(p => { onPath[p[0] + "," + p[1]] = true; });
 
-    /* ١٧ مشتتًا: ١٢ و١٤ و١٠ و٣١ «المقلوب» بالتساوي تقريبًا، ولا يظهر ١٣ خارج المسار */
-    const decoys = shuffle([12, 14, 10, 31, 12, 14, 10, 31, 12, 14, 10, 31, 12, 14, 10, 31, 12]);
+    /* ١٧ مشتتًا من الأعداد القريبة المدروسة (السابق واللاحق و١٠ والمقلوب) بالتساوي تقريبًا، ولا يظهر العدد المطلوب خارج المسار */
+    const nr = ajBigNear(n);
+    const decoys = shuffle(ajRange(0, 16).map(i => nr[i % 4]));
     let k = 0;
     const cells = [];
     for (let i = 0; i < rows; i++) {
@@ -17385,7 +17448,7 @@ function ajBuildMaze13() {
     }
     return {
         rows: rows, cols: cols, path: path, cells: cells, target: n, calm: true,
-        hintText: "💡 تلميح: ابحث عن الرقم ١٣ المجاور للمربع الأخضر — يبدأ بالواحد ١ ثم الثلاثة ٣"
+        hintText: "💡 تلميح: ابحث عن الرقم " + ajNum(n) + " المجاور للمربع الأخضر — " + ajBigHintTail(n)
     };
 }
 
@@ -17414,7 +17477,7 @@ function ajBuildMaze12() {
 function ajBuildMaze(n) {
 
     if (n === 12) return ajBuildMaze12();
-    if (n === 13) return ajBuildMaze13();
+    if (n >= 13) return ajBuildMazeBig(n);
 
     const rows = 5, cols = 6;
     let r = 0, c = cols - 1;
@@ -17454,21 +17517,22 @@ function ajRepresentation(type, value) {
 
 function ajBuildCrossOutCard(n) {
 
-    if (n === 13) {
-        /* ثلاث بطاقات تمثّل ١٣ (رقم، إطار عشرة+٣، مكعبات عشرة+٣) وبطاقة رابعة مختلفة واحدة بلا علامة تكشفها */
-        const wrongs13 = [
-            ajRepresentation("numeral", 31), ajRepresentation("numeral", 12), ajRepresentation("numeral", 14),
-            ajRepresentation("frame", 12), ajRepresentation("frame", 14),
-            ajRepresentation("base10", 12), ajRepresentation("base10", 14)
-        ];
-        const same13 = [ajRepresentation("numeral", 13), ajRepresentation("frame", 13), ajRepresentation("base10", 13)]
+    if (n >= 13) {
+        /* ثلاث بطاقات تمثّل العدد (رقم، إطار عشرة+آحاد، مكعبات) وبطاقة رابعة مختلفة واحدة بلا علامة تكشفها */
+        const nearN = [n - 1, n + 1].filter(v => v >= 11 && v <= 20);
+        const nr = ajBigNear(n);
+        const wrongs13 = [ajRepresentation("numeral", nr[3] === n ? nr[1] : nr[3]), ajRepresentation("numeral", nr[1])];
+        nearN.forEach(v => {
+            wrongs13.push(ajRepresentation("numeral", v), ajRepresentation("frame", v), ajRepresentation("base10", v));
+        });
+        const same13 = [ajRepresentation("numeral", n), ajRepresentation("frame", n), ajRepresentation("base10", n)]
             .map(rep => ({ rep: rep, correct: false, aria: "بطاقة" }));
         const odd13 = { rep: wrongs13[ajRand(0, wrongs13.length - 1)], correct: true, aria: "بطاقة" };
         return {
             mark: "cross", calm: true,
-            hintText: "💡 تلميح: عُدّ ما في كل بطاقة — ثلاث بطاقات تساوي ١٣، وواحدة لا تساويه",
+            hintText: "💡 تلميح: عُدّ ما في كل بطاقة — ثلاث بطاقات تساوي " + ajNum(n) + "، وواحدة لا تساويه",
             groups: [{
-                stimulus: { type: "bigNumeral", value: 13 },
+                stimulus: { type: "bigNumeral", value: n },
                 options: shuffle(same13.concat([odd13])),
                 layout: "cards",
                 cls: "aj-opts-cards aj-opts-rep"
@@ -17978,7 +18042,7 @@ function renderAJActivity() {
     if (playEl) {
         playEl.classList.toggle("aj-n11", n === 11);
         playEl.classList.toggle("aj-n12", n === 12);
-        playEl.classList.toggle("aj-n13", n === 13);
+        playEl.classList.toggle("aj-n13", n >= 13);
     }
 
     const msg = $("ajMessage");
@@ -18880,7 +18944,7 @@ function ajRenderLineGuided(stage, spec, api) {
 
     const line = ajEl("div", "aj-lineg-line");
     line.setAttribute("role", "group");
-    line.setAttribute("aria-label", "خط الأعداد من " + ajNum(10) + " إلى " + ajNum(15));
+    line.setAttribute("aria-label", "خط الأعداد من " + ajNum(spec.start || 10) + " إلى " + ajNum((spec.start || 10) + 5));
     root.appendChild(line);
 
     const rel = ajEl("div", "aj-lineg-rel");
@@ -18890,6 +18954,7 @@ function ajRenderLineGuided(stage, spec, api) {
     let wrongRun = 0;
     let solved = false;
     const btns = {};
+    const START = spec.start || 10;
 
     spec.options.forEach(opt => {
 
@@ -18912,8 +18977,8 @@ function ajRenderLineGuided(stage, spec, api) {
                 solved = true;
                 b.classList.add("aj-opt-correct", "aj-mark-circle", "aj-lineg-hit");
                 Object.keys(btns).forEach(v => { btns[v].setAttribute("aria-disabled", "true"); });
-                btns[10].classList.remove("aj-lineg-start");
-                btns[10].querySelector(".aj-lineg-cap").textContent = "";
+                btns[START].classList.remove("aj-lineg-start");
+                btns[START].querySelector(".aj-lineg-cap").textContent = "";
 
                 const before = btns[spec.target - 1];
                 const after = btns[spec.target + 1];
@@ -18934,8 +18999,8 @@ function ajRenderLineGuided(stage, spec, api) {
 
             if (wrongRun >= 2) {
                 /* نقطة البداية فقط (١٠) وليس الإجابة */
-                btns[10].classList.add("aj-lineg-start");
-                btns[10].querySelector(".aj-lineg-cap").textContent = "ابدأ من هنا";
+                btns[START].classList.add("aj-lineg-start");
+                btns[START].querySelector(".aj-lineg-cap").textContent = "ابدأ من هنا";
                 api.say(spec.hintText);
             } else {
                 api.say("😊 حاول مرة أخرى");
@@ -19217,47 +19282,61 @@ function ajRenderChoice(stage, spec, api) {
 
         if (g.stimulus) box.appendChild(ajStimulusNode(g.stimulus, api));
 
-        /* خطوة اختيارية أولى: الطالب يحدّد عدد الآحاد بنفسه قبل ظهور خيارات المجموع (بلا كشف تلقائي) */
-        let unitsDone = !g.units;
+        /* خطوات اختيارية أولى (واحدة أو أكثر): الطالب يحدّد الآحاد (أو العشرات) بنفسه قبل ظهور خيارات المجموع، بلا كشف تلقائي */
+        const steps = g.steps || (g.units ? [g.units] : []);
+        let stepsLeft = steps.length;
         let totalLabel = null;
-        if (g.units) {
+        const stepBoxes = [];
+        const revealTotal = () => {
+            opts.hidden = false;
+            if (totalLabel) totalLabel.hidden = false;
+        };
+        steps.forEach((st, si) => {
             const ubox = ajEl("div", "aj-units-step");
-            ubox.appendChild(ajEl("div", "aj-units-q", g.units.prompt));
+            ubox.appendChild(ajEl("div", "aj-units-q", st.prompt));
             const uopts = ajEl("div", "aj-opts aj-opts-row aj-opts-round aj-units-opts");
             uopts.setAttribute("role", "group");
-            uopts.setAttribute("aria-label", "عدد الدوائر الصغيرة");
+            uopts.setAttribute("aria-label", st.label || "عدد الدوائر الصغيرة");
             ubox.appendChild(uopts);
+            if (si > 0) ubox.hidden = true;
             box.appendChild(ubox);
+            stepBoxes.push(ubox);
             let uWrong = 0;
+            let stepDone = false;
             const ubtns = [];
-            g.units.options.forEach(uo => {
+            st.options.forEach(uo => {
                 const ub = ajEl("button", "aj-opt");
                 ub.type = "button";
                 ub.setAttribute("aria-label", uo.text + "، اضغط للاختيار");
                 ub.appendChild(ajEl("span", "aj-opt-num", uo.text));
                 ub.addEventListener("click", () => {
-                    if (unitsDone) return;
+                    if (stepDone) return;
                     if (uo.speak) api.speakText(uo.speak);
                     if (uo.correct) {
-                        unitsDone = true;
+                        stepDone = true;
+                        stepsLeft--;
                         ub.classList.add("aj-opt-correct", "aj-mark-circle");
                         ubtns.forEach(x => { if (x !== ub) x.classList.add("aj-dim"); x.setAttribute("aria-disabled", "true"); });
-                        opts.hidden = false;
-                        totalLabel.hidden = false;
-                        api.say("✓ أحسنت! الآن اختر العدد الكلي: عشرة وهذه الدوائر معًا");
+                        if (stepsLeft > 0) {
+                            stepBoxes[si + 1].hidden = false;
+                            api.say("✓ أحسنت! الآن أجب عن السؤال التالي");
+                        } else {
+                            revealTotal();
+                            api.say("✓ أحسنت! الآن اختر العدد الكلي");
+                        }
                     } else {
                         uWrong++;
                         ub.classList.add("aj-opt-wrong");
                         api.later(() => ub.classList.remove("aj-opt-wrong"), 650);
-                        api.say(uWrong >= 2 ? g.units.hint : "😊 حاول مرة أخرى");
+                        api.say(uWrong >= 2 ? st.hint : "😊 حاول مرة أخرى");
                     }
                 });
                 ubtns.push(ub);
                 uopts.appendChild(ub);
             });
-        }
+        });
 
-        if (g.units) {
+        if (steps.length) {
             totalLabel = ajEl("div", "aj-units-q", "كم المجموع؟");
             totalLabel.hidden = true;
             box.appendChild(totalLabel);
@@ -19266,7 +19345,7 @@ function ajRenderChoice(stage, spec, api) {
         const opts = ajEl("div", "aj-opts aj-opts-" + g.layout + " " + (g.cls || ""));
         opts.setAttribute("role", "group");
         opts.setAttribute("aria-label", total > 1 ? "المجموعة " + ajNum(gi + 1) : "الخيارات");
-        if (g.units) opts.hidden = true;
+        if (steps.length) opts.hidden = true;
         box.appendChild(opts);
 
         let wrongRun = 0;

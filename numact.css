@@ -701,18 +701,18 @@
 #ajPlay .aj-units-opts { padding-bottom: 4px; }
 
 /* ١٣: عدّ ١٣ تفاحة في ثلاثة صفوف (٥ + ٥ + ٣) */
-#ajPlay .aj-cw-13 .aj-countable { display: grid; grid-template-columns: repeat(5, auto); justify-content: center; gap: clamp(4px, 1vw, 12px); }
-#ajPlay .aj-cw-13 .aj-countable .aj-object { width: clamp(52px, 14.2vw, 100px); height: clamp(52px, 13vw, 100px); }
+#ajPlay :is(.aj-cw-13,.aj-cw-14,.aj-cw-15,.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-countable { display: grid; grid-template-columns: repeat(5, auto); justify-content: center; gap: clamp(4px, 1vw, 12px); }
+#ajPlay :is(.aj-cw-13,.aj-cw-14,.aj-cw-15,.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-countable .aj-object { width: clamp(52px, 14.2vw, 100px); height: clamp(52px, 13vw, 100px); }
 @media (min-width: 1100px) {
-    #ajPlay .aj-cw-13 .aj-stim .aj-objects.aj-countable .aj-object { width: clamp(48px, 6.8vh, 86px); height: clamp(48px, 6.8vh, 90px); }
+    #ajPlay :is(.aj-cw-13,.aj-cw-14,.aj-cw-15,.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-stim .aj-objects.aj-countable .aj-object { width: clamp(48px, 6.8vh, 86px); height: clamp(48px, 6.8vh, 90px); }
 }
 @media (max-width: 700px) {
-    #ajPlay .aj-cw-13 .aj-key { min-height: 52px; }
-    #ajPlay .aj-cw-13 .aj-keypad { gap: 8px; }
+    #ajPlay :is(.aj-cw-13,.aj-cw-14,.aj-cw-15,.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-key { min-height: 52px; }
+    #ajPlay :is(.aj-cw-13,.aj-cw-14,.aj-cw-15,.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-keypad { gap: 8px; }
 }
 @media (max-width: 359px) {
-    #ajPlay .aj-cw-13 .aj-countable { gap: 3px; max-width: 100%; }
-    #ajPlay .aj-cw-13 .aj-countable .aj-object { width: 48px; height: 48px; }
+    #ajPlay :is(.aj-cw-13,.aj-cw-14,.aj-cw-15,.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-countable { gap: 3px; max-width: 100%; }
+    #ajPlay :is(.aj-cw-13,.aj-cw-14,.aj-cw-15,.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-countable .aj-object { width: 48px; height: 48px; }
 }
 
 /* ١٣: متاهة بخانات ≥٤٤px على ٣٢٠px (فجوة أصغر بين الخانات) */
@@ -730,3 +730,9 @@
 #ajPlay.aj-n13 .aj-paint-c .aj-frame-paint { max-width: none; width: min(100%, 250px); }
 #ajPlay.aj-n13 .aj-frame-paint .aj-obj-circle { position: relative; width: calc(clamp(180px, 25vh, 250px) * .1545); height: calc(clamp(180px, 25vh, 250px) * .1545); }
 #ajPlay.aj-n13 .aj-frame-paint .aj-obj-circle::after { content: ""; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); border-radius: 0; }
+
+/* ١٦–٢٠: أربعة صفوف (٥ في كل صف) فتُصغَّر التفاحة قليلًا مع بقاء منطقة اللمس ≥٤٤px */
+#ajPlay :is(.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-countable .aj-object { width: clamp(46px, 12.8vw, 92px); height: clamp(46px, 12.2vw, 92px); }
+@media (max-width: 359px) {
+    #ajPlay :is(.aj-cw-16,.aj-cw-17,.aj-cw-18,.aj-cw-19,.aj-cw-20) .aj-countable .aj-object { width: 46px; height: 46px; }
+}
