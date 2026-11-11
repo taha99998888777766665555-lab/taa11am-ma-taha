@@ -1224,6 +1224,184 @@ body.calm-mode .hp-mini.hp-flash { animation: none; }
     class="screen active"
 >
 
+<style id="hp-home-v4">
+/* =========================================================
+   🎨 جولة التحسين البصري (المرحلة أ-٢): عمق ولمعان + ارتفاع أقل
+   تغيّر المظهر فقط؛ لا وظائف ولا بيانات.
+========================================================= */
+
+/* ---------- عمق ولمعان (كل المقاسات) ---------- */
+.hp-big, .hp-mini { overflow: visible; isolation: isolate; }
+
+.hp-big {
+    background:
+        radial-gradient(90% 38% at 50% 0%, rgba(255, 255, 255, .75) 0%, rgba(255, 255, 255, 0) 100%),
+        radial-gradient(70% 55% at 50% 108%, rgba(255, 255, 255, .45) 0%, rgba(255, 255, 255, 0) 100%),
+        linear-gradient(168deg, var(--c1) 0%, var(--c2) 100%);
+    box-shadow:
+        0 0 0 3px var(--cb),
+        0 9px 0 -1px var(--cs),
+        0 20px 26px -8px rgba(0, 20, 60, .4),
+        inset 0 3px 0 rgba(255, 255, 255, .85),
+        inset 0 -14px 22px -6px rgba(255, 255, 255, .35),
+        inset 0 -4px 0 rgba(0, 0, 0, .05);
+}
+
+/* لمعة زجاجية رفيعة أعلى البطاقة (خلف المحتوى، لا تلتقط اللمس) */
+.hp-big::before, .hp-mini::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0 0 auto 0;
+    height: 46%;
+    border-radius: inherit;
+    background: radial-gradient(75% 100% at 50% 0%, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+}
+
+.hp-mini {
+    background:
+        radial-gradient(90% 36% at 50% 0%, rgba(255, 255, 255, .8) 0%, rgba(255, 255, 255, 0) 100%),
+        linear-gradient(170deg, var(--m1) 0%, var(--m2) 100%);
+    box-shadow:
+        0 0 0 2px var(--mb),
+        0 7px 0 -1px var(--ms),
+        0 16px 20px -8px rgba(0, 20, 60, .36),
+        inset 0 3px 0 rgba(255, 255, 255, .9),
+        inset 0 -10px 16px -6px rgba(255, 255, 255, .4);
+}
+
+/* الرسوم: لمعان + ظل طبقي + هالة ناعمة تحتها */
+.hp-art {
+    filter: saturate(1.12) contrast(1.04)
+            drop-shadow(0 1.5px 0 rgba(255, 255, 255, .85))
+            drop-shadow(0 7px 4px rgba(0, 20, 60, .3));
+}
+
+.hp-mini__ic {
+    padding: 6px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, rgba(255, 255, 255, .85) 0%, rgba(255, 255, 255, .35) 55%, rgba(255, 255, 255, 0) 72%);
+    filter: saturate(1.15) contrast(1.05)
+            drop-shadow(0 1.5px 0 rgba(255, 255, 255, .8))
+            drop-shadow(0 5px 3px rgba(0, 20, 60, .28));
+}
+
+.hp-go {
+    background: linear-gradient(180deg, #fff 0%, #eef3ff 100%);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, .16), inset 0 2px 0 #fff, inset 0 -2px 0 rgba(0, 0, 0, .07);
+}
+
+/* النجوم: رقم أوضح (الصفر الهندي «٠» نقطة صغيرة بطبيعته) */
+body:not(.ta-inner) .hm-header .stats b { font-weight: 900; font-size: 17px; min-width: 1ch; text-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+
+@media (max-width: 399px) {
+    body:not(.ta-inner) .hm-header__inner { column-gap: 5px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay { max-width: 82px; }
+    body:not(.ta-inner) .hm-header .stats .hm-stat,
+    body:not(.ta-inner) .hm-header #headerNameDisplay { padding-inline: 8px; }
+}
+@media (max-width: 359px) {
+    body:not(.ta-inner) .hm-header { --hp-av: 52px; }
+    body:not(.ta-inner) .hm-header #headerAvatarDisplay { font-size: 28px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay { max-width: 62px; }
+}
+
+/* ---------- الجوال: بطاقات كبيرة أقصر (الأيقونات والنصوص كما هي) ---------- */
+@media (max-width: 599px) {
+    .hp-subjects, .hp-activities { gap: 10px; }
+    .hp-big {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto 1fr;
+        justify-items: center;
+        align-items: center;
+        gap: 2px;
+        min-height: 128px;
+        padding: 9px 8px 8px;
+        border-width: 3px;
+        border-radius: 24px;
+    }
+    .hp-big__title { font-size: 17px; line-height: 1.2; }
+    .hp-big .hp-art { max-width: 118px; max-height: 78px; width: auto; height: 78px; margin: 0; }
+    /* السهم في الزاوية السفلية دون أن يزيد الارتفاع */
+    .hp-big .hp-go {
+        position: absolute;
+        inset-block-end: 6px;
+        inset-inline-end: 6px;
+        width: 28px;
+        height: 28px;
+        align-self: auto;
+    }
+    .hp-big .hp-go svg { width: 15px; height: 15px; }
+    .hp-ribbon { margin: 18px auto 12px; }
+    .hp-signwrap { margin: 12px 0 20px; }
+}
+
+@media (max-width: 359px) {
+    body:not(.ta-inner) .hm-header .stats .hm-stat,
+    body:not(.ta-inner) .hm-header #headerNameDisplay { padding-inline: 7px; font-size: 14px; gap: 4px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay { max-width: 78px; }
+    body:not(.ta-inner) .hm-header .stats b { font-size: 15px; }
+    body:not(.ta-inner) .hm-header .stats .hm-stat__icon { width: 24px; height: 24px; }
+    .hp-big { min-height: 118px; padding-inline: 5px; }
+    .hp-big__title { font-size: 16px; }
+    .hp-big .hp-art { max-width: 100px; height: 66px; max-height: 66px; }
+    .hp-big .hp-go { width: 26px; height: 26px; inset-block-end: 5px; inset-inline-end: 5px; }
+}
+
+/* البطاقة العريضة الأخيرة على الجوال: رسم أكبر قليلًا في صف كامل */
+@media (max-width: 599px) {
+    .hp-subjects > :last-child .hp-art, .hp-activities > :last-child .hp-art { max-width: 150px; height: 82px; max-height: 82px; }
+}
+
+/* ---------- السبورة (١٠٢٤+): ارتفاعات أقل لعرض محتوى أكثر دون ازدحام ---------- */
+@media (min-width: 1024px) {
+    body:not(.ta-inner) header.hm-header.hm-header { padding: 12px 36px 4px; }
+    body:not(.ta-inner) .hm-header { --hp-av: 84px; }
+    body:not(.ta-inner) .hm-header #headerAvatarDisplay { font-size: 48px; border-width: 5px; }
+    body:not(.ta-inner) .hm-header__inner { row-gap: 6px; }
+    body:not(.ta-inner) .hm-header h1 { font-size: 34px; }
+    body:not(.ta-inner) .hm-header .hm-brand { padding: 5px 30px 7px; }
+    body:not(.ta-inner) .hm-header .hm-brand p { font-size: 17px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay,
+    body:not(.ta-inner) .hm-header .stats .hm-stat { min-height: 48px; font-size: 21px; }
+    body:not(.ta-inner) .hm-header .stats .hm-stat__icon { width: 32px; height: 32px; }
+    main.container:has(#home.active) { padding-top: 0; }
+    .hp-wrap { padding-bottom: 28px; }
+    .hp-signwrap { margin: 6px 0 14px; }
+    .hm-title.hp-sign { font-size: 30px; padding: 7px 50px 9px; }
+    .hp-signwrap::after { height: 26px; }
+    .hp-subjects, .hp-activities { gap: 20px; }
+    .hp-big { min-height: 196px; padding: 12px 14px 12px; }
+    .hp-big__title { font-size: 28px; }
+    .hp-big .hp-art { max-width: 210px; max-height: 128px; width: auto; height: 128px; }
+    .hp-big .hp-go { width: 38px; height: 38px; }
+    .hp-ribbon { margin: 18px auto 10px; padding: 4px 28px; font-size: 24px; }
+    .hp-ribbon svg { width: 30px; height: 30px; }
+    .hp-minis { gap: 14px; }
+    .hp-mini { min-height: 150px; padding: 10px 8px 9px; gap: 3px; }
+    .hp-mini__ic { width: 70px; height: 70px; }
+    .hp-mini__title { font-size: 20px; }
+    .hp-mini .hp-go { width: 30px; height: 30px; }
+}
+
+/* شاشة عريضة وقصيرة (٧٦٨ ارتفاعًا): ضغط إضافي هادئ */
+@media (min-width: 1024px) and (max-height: 820px) {
+    .hp-big { min-height: 184px; }
+    .hp-big .hp-art { height: 118px; max-height: 118px; }
+    .hp-mini { min-height: 142px; }
+}
+
+@media (min-width: 1700px) and (min-height: 900px) {
+    .hp-big { min-height: 230px; }
+    .hp-big .hp-art { height: 156px; max-height: 156px; max-width: 250px; }
+    .hp-mini { min-height: 176px; }
+    .hp-mini__ic { width: 82px; height: 82px; }
+}
+</style>
 <div class="hp-wrap">
 
     <div class="hp-signwrap">
@@ -1231,9 +1409,9 @@ body.calm-mode .hp-mini.hp-flash { animation: none; }
     </div>
 
     <div class="hp-subjects" role="group" aria-label="المواد">
-            <button class="hp-big hp-big--deen" type="button" data-hp-target="deen" aria-label="التربية الإسلامية: عرض أقسامها">
-                <span class="hp-big__title">التربية الإسلامية</span>
-                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-deen"/></svg>
+            <button class="hp-big hp-big--arabic" type="button" data-hp-target="arabic" aria-label="اللغة العربية: عرض أقسامها">
+                <span class="hp-big__title">اللغة العربية</span>
+                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-arabic"/></svg>
                 <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
             <button class="hp-big hp-big--math" type="button" data-hp-target="math" aria-label="الرياضيات: عرض أقسامها">
@@ -1241,9 +1419,9 @@ body.calm-mode .hp-mini.hp-flash { animation: none; }
                 <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-math"/></svg>
                 <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-            <button class="hp-big hp-big--arabic" type="button" data-hp-target="arabic" aria-label="اللغة العربية: عرض أقسامها">
-                <span class="hp-big__title">اللغة العربية</span>
-                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-arabic"/></svg>
+            <button class="hp-big hp-big--deen" type="button" data-hp-target="deen" aria-label="التربية الإسلامية: عرض أقسامها">
+                <span class="hp-big__title">التربية الإسلامية</span>
+                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-deen"/></svg>
                 <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
     </div>
