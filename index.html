@@ -97,9 +97,11 @@ body {
         var(--hm-bg);
 }
 
+
 html {
     background: #f6f2ea;
 }
+
 
 /* ---------- رأس التطبيق ---------- */
 
@@ -114,6 +116,7 @@ header.hm-header {
     box-shadow: 0 14px 30px -20px rgba(24, 33, 77, 0.7);
 }
 
+
 /* شريط الهوية: ألوان المجموعات الأربع أسفل الرأس */
 header.hm-header::after {
     content: "";
@@ -125,6 +128,7 @@ header.hm-header::after {
     background: linear-gradient(to left, #e8642f 0 25%, #2f74e6 25% 50%, #14966c 50% 75%, #7b52e6 75% 100%);
 }
 
+
 .hm-header__inner {
     width: 100%;
     max-width: 1360px;
@@ -135,10 +139,12 @@ header.hm-header::after {
     gap: 16px;
 }
 
+
 .hm-brand {
     text-align: center;
     min-width: 0;
 }
+
 
 .hm-header h1 {
     margin: 0;
@@ -148,11 +154,13 @@ header.hm-header::after {
     color: #ffffff;
 }
 
+
 .hm-header p {
     margin: 2px 0 0;
     font-size: 15px;
     color: rgba(255, 255, 255, 0.8);
 }
+
 
 .hm-header .profile-chip {
     display: inline-flex;
@@ -170,10 +178,12 @@ header.hm-header::after {
     border-radius: 999px;
 }
 
+
 .hm-header .profile-chip:hover {
     background: rgba(255, 255, 255, 0.18);
     transform: none;
 }
+
 
 .hm-header #headerAvatarDisplay {
     display: grid;
@@ -186,6 +196,7 @@ header.hm-header::after {
     border-radius: 50%;
 }
 
+
 .hm-header .stats {
     display: flex;
     justify-content: flex-end;
@@ -193,6 +204,7 @@ header.hm-header::after {
     gap: 8px;
     margin: 0;
 }
+
 
 .hm-header .stats .hm-stat {
     display: inline-flex;
@@ -207,12 +219,14 @@ header.hm-header::after {
     white-space: nowrap;
 }
 
+
 .hm-header .stats .hm-stat__label {
     padding: 0 !important;
     background: none !important;
     font-size: 14px;
     color: rgba(255, 255, 255, 0.85);
 }
+
 
 .hm-stat__icon {
     flex: none;
@@ -222,15 +236,18 @@ header.hm-header::after {
     border-radius: 50%;
 }
 
+
 .hm-stat--stars .hm-stat__icon {
     color: #6b4300;
     background: #ffcb4f;
 }
 
+
 .hm-stat--level .hm-stat__icon {
     color: #0b4d3a;
     background: #82e6c7;
 }
+
 
 .hm-header .stats b {
     font-size: 19px;
@@ -238,242 +255,21 @@ header.hm-header::after {
     color: #ffffff;
 }
 
-/* ---------- الصفحة الرئيسية ---------- */
-
-#home {
-    font-family: var(--hm-font);
-}
-
-.hm-title {
-    margin: 26px 4px 18px;
-    font-size: clamp(22px, 2.4vw, 32px);
-    font-weight: 800;
-    color: var(--hm-ink);
-}
-
-#home .menu.hm-groups {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 26px;
-    margin-top: 0;
-}
-
-.hm-group--lang {
-    --hm-accent: #c2410c;
-    --hm-soft: #ffd5c2;
-    --hm-tint: #fff0e8;
-}
-
-.hm-group--math {
-    --hm-accent: #1d5bd6;
-    --hm-soft: #cadcff;
-    --hm-tint: #ebf2ff;
-}
-
-.hm-group--deen {
-    --hm-accent: #0d7656;
-    --hm-soft: #bce9d6;
-    --hm-tint: #e5f6ee;
-}
-
-.hm-group--play {
-    --hm-accent: #6a3dd6;
-    --hm-soft: #dacdff;
-    --hm-tint: #f1ecff;
-}
-
-.hm-group--tools {
-    --hm-accent: #3f4a6e;
-    --hm-soft: #dde1ec;
-    --hm-tint: #eef0f6;
-}
-
-.hm-group__head {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 12px;
-    padding: 7px 16px 7px 14px;
-    font-size: 17px;
-    font-weight: 800;
-    color: var(--hm-ink);
-    background: var(--hm-surface);
-    border: 1px solid var(--hm-line);
-    border-radius: 999px;
-}
-
-.hm-group__mark {
-    flex: none;
-    width: 16px;
-    height: 16px;
-    background: var(--hm-accent);
-}
-
-.hm-group__grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-}
-
-/* البطاقة */
-
-#home .hm-tile {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    min-height: 172px;
-    padding: 22px 12px 18px;
-    font-family: inherit;
-    font-size: 20px;
-    color: var(--hm-ink);
-    text-align: center;
-    background: var(--hm-surface);
-    border: 2px solid var(--hm-line);
-    border-radius: 26px;
-    box-shadow: var(--hm-shadow);
-    cursor: pointer;
-    touch-action: manipulation;
-    -webkit-user-select: none;
-    user-select: none;
-    transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-#home .hm-tile span {
-    margin-top: 0;
-}
-
-#home .hm-tile .hm-plate {
-    display: grid;
-}
-
-.hm-plate {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 86px;
-    height: 86px;
-    color: var(--hm-accent);
-    background: var(--hm-tint);
-}
-
-.hm-plate svg {
-    width: 62%;
-    height: 62%;
-}
-
-/* شكل اللوحة يختلف لكل مجموعة — تمييز لا يعتمد على اللون وحده */
-.hm-group--lang .hm-plate,
-.hm-group--lang .hm-group__mark {
-    border-radius: 30%;
-}
-
-.hm-group--math .hm-plate,
-.hm-group--math .hm-group__mark {
-    border-radius: 50%;
-}
-
-.hm-group--deen .hm-plate,
-.hm-group--deen .hm-group__mark {
-    clip-path: polygon(50% 0%, 35.4% 14.6%, 14.6% 14.6%, 14.6% 35.4%, 0% 50%, 14.6% 64.6%, 14.6% 85.4%, 35.4% 85.4%, 50% 100%, 64.6% 85.4%, 85.4% 85.4%, 85.4% 64.6%, 100% 50%, 85.4% 35.4%, 85.4% 14.6%, 64.6% 14.6%);
-}
-
-.hm-group--deen .hm-plate svg {
-    width: 54%;
-    height: 54%;
-}
-
-.hm-group--play .hm-plate,
-.hm-group--play .hm-group__mark {
-    border-radius: 44% 56% 52% 48% / 50% 44% 56% 50%;
-}
-
-.hm-group--tools .hm-plate,
-.hm-group--tools .hm-group__mark {
-    border-radius: 16px;
-}
-
-.hm-group--tools .hm-group__mark {
-    border-radius: 4px;
-}
-
-#home .hm-tile .hm-tile__title {
-    display: block;
-    font-size: 20px;
-    font-weight: 800;
-    line-height: 1.3;
-    color: var(--hm-ink);
-}
-
-.hm-tile__go {
-    position: absolute;
-    top: 12px;
-    inset-inline-end: 12px;
-    width: 30px;
-    height: 30px;
-    padding: 6px;
-    color: var(--hm-accent);
-    background: var(--hm-tint);
-    border-radius: 50%;
-}
-
-/* التفاعل */
-
-@media (hover: hover) {
-    #home .hm-tile:hover {
-        border-color: var(--hm-soft);
-        transform: translateY(-2px);
-    }
-}
-
-#home .hm-tile:active {
-    transform: scale(0.97);
-    background: var(--hm-tint);
-    border-color: var(--hm-accent);
-    box-shadow: none;
-}
-
-#home .hm-tile:focus-visible {
-    outline: 4px solid var(--hm-accent);
-    outline-offset: 3px;
-    border-radius: 26px;
-}
-
-/* أدواتي: بطاقات أصغر أفقية */
-
-#home .hm-group--tools .hm-tile {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 14px;
-    min-height: 92px;
-    padding: 14px 16px;
-    text-align: start;
-}
-
-.hm-group--tools .hm-plate {
-    width: 58px;
-    height: 58px;
-}
-
-#home .hm-group--tools .hm-tile__title {
-    font-size: 18px;
-}
 
 /* ---------- الجوال ---------- */
 
 @media (max-width: 599px) {
-
-    header.hm-header {
+header.hm-header {
         padding: 10px 12px 16px;
         border-radius: 0 0 24px 24px;
     }
+
 
     header.hm-header::after {
         inset-inline: 22px;
         height: 4px;
     }
+
 
     .hm-header__inner {
         grid-template-columns: 1fr auto;
@@ -483,71 +279,30 @@ header.hm-header::after {
         gap: 10px 8px;
     }
 
+
     .hm-header .profile-chip { grid-area: chip; justify-self: start; min-height: 46px; font-size: 15px; max-width: 100%; }
+
     .hm-header .stats { grid-area: stats; }
+
     .hm-brand { grid-area: brand; }
 
+
     .hm-header #headerAvatarDisplay { width: 36px; height: 36px; font-size: 21px; }
+
     .hm-header h1 { font-size: 22px; }
+
     .hm-header p { font-size: 14px; }
 
+
     .hm-header .stats .hm-stat { padding: 4px 12px 4px 5px; min-height: 44px; }
+
     .hm-stat__icon { width: 30px; height: 30px; }
-
-    .hm-title { margin: 20px 4px 14px; font-size: 22px; }
-
-    #home .menu.hm-groups { gap: 22px; }
-
-    .hm-group__grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-    }
-
-    #home .hm-tile { min-height: 150px; padding: 18px 10px 14px; gap: 12px; border-radius: 24px; }
-    .hm-plate { width: 72px; height: 72px; }
-    #home .hm-tile .hm-tile__title { font-size: 18px; }
-    .hm-tile__go { top: 10px; inset-inline-end: 10px; width: 26px; height: 26px; padding: 5px; }
-
-    /* أول بطاقة في كل مجموعة بعرض كامل (لا بطاقة يتيمة) */
-    #home .hm-group:not(.hm-group--tools) .hm-tile:first-child {
-        grid-column: 1 / -1;
-        flex-direction: row;
-        justify-content: flex-start;
-        min-height: 112px;
-        padding: 16px 18px;
-        gap: 16px;
-        text-align: start;
-    }
-
-    #home .hm-group:not(.hm-group--tools) .hm-tile:first-child .hm-tile__go {
-        position: static;
-        margin-inline-start: auto;
-        width: 34px;
-        height: 34px;
-        padding: 7px;
-    }
-
-    #home .hm-group:not(.hm-group--tools) .hm-tile:first-child .hm-tile__title { font-size: 20px; }
-
-    /* أدواتي على الجوال: ثلاث بطاقات عمودية مضغوطة */
-    .hm-group--tools .hm-group__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-
-    #home .hm-group--tools .hm-tile {
-        flex-direction: column;
-        justify-content: center;
-        gap: 8px;
-        min-height: 112px;
-        padding: 12px 6px;
-        text-align: center;
-    }
-
-    .hm-group--tools .hm-plate { width: 50px; height: 50px; }
-    #home .hm-group--tools .hm-tile__title { font-size: 15px; }
 }
+
 
 /* الشاشات الضيقة جدًا: إخفاء كلمتي "النجوم/المستوى" بصريًا فقط (تبقى مقروءة لقارئ الشاشة) */
 @media (max-width: 420px) {
-    .hm-header .stats .hm-stat__label {
+.hm-header .stats .hm-stat__label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -555,49 +310,26 @@ header.hm-header::after {
         clip: rect(0 0 0 0);
         white-space: nowrap;
     }
+
     .hm-header .stats .hm-stat { padding-inline-end: 12px; gap: 6px; }
+
     .hm-header #headerNameDisplay { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
 
 /* ---------- السبورة الذكية والحاسوب ---------- */
 
 @media (min-width: 1024px) {
-    #home {
-        width: min(1360px, calc(100vw - 64px));
-        margin-inline: calc((100% - min(1360px, calc(100vw - 64px))) / 2);
-    }
-
-    header.hm-header { padding: 14px 28px 20px; }
+header.hm-header { padding: 14px 28px 20px; }
 }
 
-@media (min-width: 1200px) {
-    #home .menu.hm-groups {
-        grid-template-columns: 1fr 1fr;
-        gap: 30px 34px;
-    }
-
-    .hm-group--tools { grid-column: 1 / -1; }
-
-    #home .hm-tile { min-height: 200px; gap: 16px; }
-    .hm-plate { width: 100px; height: 100px; }
-    #home .hm-tile .hm-tile__title { font-size: 23px; }
-    .hm-group__head { font-size: 19px; }
-    .hm-group--tools .hm-group__grid { max-width: 1000px; }
-}
-
-@media (min-width: 1600px) {
-    #home .hm-tile { min-height: 230px; }
-    .hm-plate { width: 116px; height: 116px; }
-    #home .hm-tile .hm-tile__title { font-size: 26px; }
-    #home .hm-group--tools .hm-tile__title { font-size: 20px; }
-    .hm-title { font-size: 34px; }
-}
 
 /* ---------- الوضع الليلي ---------- */
 
 html:has(body.dark-mode) {
     background: #0e1222;
 }
+
 
 html body.dark-mode {
     --hm-bg: #0e1222;
@@ -611,26 +343,11 @@ html body.dark-mode {
         var(--hm-bg);
 }
 
+
 body.dark-mode header.hm-header {
     background: linear-gradient(160deg, #10163a 0%, #1a2560 100%);
 }
 
-body.dark-mode .hm-group--lang { --hm-accent: #ff9a6b; --hm-soft: #6b3420; --hm-tint: #2a1c19; }
-body.dark-mode .hm-group--math { --hm-accent: #84b3ff; --hm-soft: #23407a; --hm-tint: #172443; }
-body.dark-mode .hm-group--deen { --hm-accent: #5fd8ac; --hm-soft: #1d5a45; --hm-tint: #14302a; }
-body.dark-mode .hm-group--play { --hm-accent: #bba0ff; --hm-soft: #4a3590; --hm-tint: #231d44; }
-body.dark-mode .hm-group--tools { --hm-accent: #c2c9e3; --hm-soft: #3d4668; --hm-tint: #222a45; }
-
-/* ---------- الوضع الهادئ ---------- */
-
-body.calm-mode #home .hm-tile:hover,
-body.calm-mode #home .hm-tile:active {
-    transform: none;
-}
-
-/* ---------- خلفيات المتجر ---------- */
-
-body.theme-space .hm-title { color: #ffffff; }
 
 /* ========== نهاية كتلة الهوية الجديدة ========== */
 
@@ -657,22 +374,634 @@ body.theme-space .hm-title { color: #ffffff; }
     white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
 }
+
 .hm-header .hm-homebtn svg { flex: none; width: 26px; height: 26px; }
+
 .hm-header .hm-homebtn:hover { background: #eef1fb; }
+
 .hm-header .hm-homebtn:active { transform: translateY(1px); box-shadow: none; }
+
 .hm-header .hm-homebtn:focus-visible { outline: 3px solid #ffd54a; outline-offset: 2px; }
+
 body.ta-inner .hm-header .hm-homebtn { display: inline-flex; }
+
 body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
 
+
 @media (max-width: 599px) {
-    body.ta-inner .hm-header__inner {
+body.ta-inner .hm-header__inner {
         grid-template-columns: auto 1fr;
         grid-template-areas:
             "chip stats"
             "home brand";
     }
+
     .hm-header .hm-homebtn { grid-area: home; justify-self: start; }
 }
+
+</style>
+<style id="hp-home-v3">
+/* =========================================================
+   🌤️ الصفحة الرئيسية — الهوية البصرية v3 (المرحلة أ: نموذج بصري)
+   - الرأس والخلفية: على الرئيسية فقط (body:not(.ta-inner)).
+   - الشاشات الداخلية تحتفظ بالرأس الحالي (تُعالج في المرحلة ب).
+   - لا صور خارجية: كل الرسوم SVG/CSS مضمّنة وتعمل دون اتصال.
+   - لا حركة مستمرة؛ الإبراز مؤقت وهادئ.
+========================================================= */
+
+/* ---------- المشهد (خلف كل شيء، لا يلتقط اللمس) ---------- */
+body:not(.ta-inner) {
+    --hp-ink: #1d2a6b;
+    --hp-navy: #0f2c77;
+    --hp-navy2: #1a4aa8;
+    --hp-line: #4f86dc;
+    --hp-yellow: #ffc928;
+    min-height: 100vh;
+    background: none;
+}
+
+/* القماش (html) يحمل لون السماء الاحتياطي؛ جسم الصفحة شفاف ليظهر المشهد الثابت خلفه */
+html:has(body:not(.ta-inner)) { background: #8ed3fb; }
+
+body:not(.ta-inner)::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%2270%22 viewBox=%220 0 260 70%22%3E%3Cg fill=%22%233f9a26%22%3E%3Cpath d=%22M8 70l4-34 4 34zM22 70l3-24 4 24zM96 70l4-30 4 30zM110 70l3-20 3 20zM180 70l4-32 4 32zM232 70l3-26 4 26z%22/%3E%3C/g%3E%3Cg%3E%3Ccircle cx=%2240%22 cy=%2246%22 r=%227%22 fill=%22%23ff8ac4%22/%3E%3Ccircle cx=%2240%22 cy=%2246%22 r=%223%22 fill=%22%23ffd23f%22/%3E%3Ccircle cx=%22130%22 cy=%2250%22 r=%226%22 fill=%22%23fff%22/%3E%3Ccircle cx=%22130%22 cy=%2250%22 r=%222.600%22 fill=%22%23ffd23f%22/%3E%3Ccircle cx=%22208%22 cy=%2244%22 r=%227%22 fill=%22%23ffb3de%22/%3E%3Ccircle cx=%22208%22 cy=%2244%22 r=%223%22 fill=%22%23ffd23f%22/%3E%3Ccircle cx=%2270%22 cy=%2258%22 r=%225%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2270%22 cy=%2258%22 r=%222%22 fill=%22%23ffd23f%22/%3E%3C/g%3E%3Cg stroke=%22%233f9a26%22 stroke-width=%222.500%22%3E%3Cpath d=%22M40 53v17M130 56v14M208 51v19M70 63v7%22/%3E%3C/g%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 220 110%22%3E%3Cg fill=%22%23c98a4a%22 stroke=%22%237a4720%22 stroke-width=%223%22%3E%3Crect x=%2210%22 y=%2220%22 width=%2222%22 height=%2286%22 rx=%224%22/%3E%3Crect x=%2262%22 y=%2214%22 width=%2222%22 height=%2292%22 rx=%224%22/%3E%3Crect x=%22114%22 y=%2220%22 width=%2222%22 height=%2286%22 rx=%224%22/%3E%3Crect x=%22166%22 y=%2214%22 width=%2222%22 height=%2292%22 rx=%224%22/%3E%3Crect x=%220%22 y=%2242%22 width=%22220%22 height=%2214%22 rx=%224%22/%3E%3Crect x=%220%22 y=%2272%22 width=%22220%22 height=%2214%22 rx=%224%22/%3E%3C/g%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 260 340%22%3E%3Cpath d=%22M112 340c4-40 2-80-6-110l44 0c-6 30-6 70 0 110z%22 fill=%22%238a5424%22/%3E%3Cpath d=%22M118 340c3-40 2-80-4-110h14c-4 30-4 70-2 110z%22 fill=%22%23a96a30%22/%3E%3Cg stroke=%22%232d7a22%22 stroke-width=%225%22%3E%3Ccircle cx=%2270%22 cy=%22170%22 r=%2256%22 fill=%22%233f9d2e%22/%3E%3Ccircle cx=%22190%22 cy=%22170%22 r=%2256%22 fill=%22%233f9d2e%22/%3E%3Ccircle cx=%22130%22 cy=%22110%22 r=%2274%22 fill=%22%234fb236%22/%3E%3Ccircle cx=%2282%22 cy=%22110%22 r=%2246%22 fill=%22%235cc13c%22/%3E%3Ccircle cx=%22182%22 cy=%22112%22 r=%2246%22 fill=%22%235cc13c%22/%3E%3Ccircle cx=%22130%22 cy=%2246%22 r=%2240%22 fill=%22%236ccd48%22/%3E%3C/g%3E%3Cg fill=%22%23a9ec74%22 opacity=%22.75%22%3E%3Cellipse cx=%22110%22 cy=%2270%22 rx=%2222%22 ry=%2212%22/%3E%3Cellipse cx=%2266%22 cy=%2296%22 rx=%2214%22 ry=%228%22/%3E%3Cellipse cx=%22190%22 cy=%22100%22 rx=%2214%22 ry=%228%22/%3E%3C/g%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 260 340%22%3E%3Cpath d=%22M112 340c4-40 2-80-6-110l44 0c-6 30-6 70 0 110z%22 fill=%22%238a5424%22/%3E%3Cpath d=%22M118 340c3-40 2-80-4-110h14c-4 30-4 70-2 110z%22 fill=%22%23a96a30%22/%3E%3Cg stroke=%22%232d7a22%22 stroke-width=%225%22%3E%3Ccircle cx=%2270%22 cy=%22170%22 r=%2256%22 fill=%22%233f9d2e%22/%3E%3Ccircle cx=%22190%22 cy=%22170%22 r=%2256%22 fill=%22%233f9d2e%22/%3E%3Ccircle cx=%22130%22 cy=%22110%22 r=%2274%22 fill=%22%234fb236%22/%3E%3Ccircle cx=%2282%22 cy=%22110%22 r=%2246%22 fill=%22%235cc13c%22/%3E%3Ccircle cx=%22182%22 cy=%22112%22 r=%2246%22 fill=%22%235cc13c%22/%3E%3Ccircle cx=%22130%22 cy=%2246%22 r=%2240%22 fill=%22%236ccd48%22/%3E%3C/g%3E%3Cg fill=%22%23a9ec74%22 opacity=%22.75%22%3E%3Cellipse cx=%22110%22 cy=%2270%22 rx=%2222%22 ry=%2212%22/%3E%3Cellipse cx=%2266%22 cy=%2296%22 rx=%2214%22 ry=%228%22/%3E%3Cellipse cx=%22190%22 cy=%22100%22 rx=%2214%22 ry=%228%22/%3E%3C/g%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1000 300%22 preserveAspectRatio=%22none%22%3E%3Cpath d=%22M0 120C160 40 330 70 520 110s330 30 480-30V300H0z%22 fill=%22%238fdc50%22/%3E%3Cpath d=%22M0 190C200 120 380 150 560 190s300 30 440-20V300H0z%22 fill=%22%236cc23a%22/%3E%3Cpath d=%22M0 250C240 210 420 240 640 258s240-10 360-26V300H0z%22 fill=%22%2356ae2c%22/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1600 420%22 opacity=%22.92%22%3E%3Cg transform=%22translate(60 40) scale(1.5)%22 fill=%22%23fff%22%3E%3Cellipse cx=%2260%22 cy=%2250%22 rx=%2258%22 ry=%2224%22/%3E%3Ccircle cx=%2246%22 cy=%2234%22 r=%2226%22/%3E%3Ccircle cx=%2280%22 cy=%2230%22 r=%2232%22/%3E%3Ccircle cx=%22104%22 cy=%2246%22 r=%2220%22/%3E%3C/g%3E%3Cg transform=%22translate(620 10) scale(1.1)%22 fill=%22%23fff%22%3E%3Cellipse cx=%2260%22 cy=%2250%22 rx=%2258%22 ry=%2224%22/%3E%3Ccircle cx=%2246%22 cy=%2234%22 r=%2226%22/%3E%3Ccircle cx=%2280%22 cy=%2230%22 r=%2232%22/%3E%3Ccircle cx=%22104%22 cy=%2246%22 r=%2220%22/%3E%3C/g%3E%3Cg transform=%22translate(1020 90) scale(1.7)%22 fill=%22%23fff%22%3E%3Cellipse cx=%2260%22 cy=%2250%22 rx=%2258%22 ry=%2224%22/%3E%3Ccircle cx=%2246%22 cy=%2234%22 r=%2226%22/%3E%3Ccircle cx=%2280%22 cy=%2230%22 r=%2232%22/%3E%3Ccircle cx=%22104%22 cy=%2246%22 r=%2220%22/%3E%3C/g%3E%3Cg transform=%22translate(1380 20) scale(1.0)%22 fill=%22%23fff%22%3E%3Cellipse cx=%2260%22 cy=%2250%22 rx=%2258%22 ry=%2224%22/%3E%3Ccircle cx=%2246%22 cy=%2234%22 r=%2226%22/%3E%3Ccircle cx=%2280%22 cy=%2230%22 r=%2232%22/%3E%3Ccircle cx=%22104%22 cy=%2246%22 r=%2220%22/%3E%3C/g%3E%3Cg transform=%22translate(330 180) scale(0.9)%22 fill=%22%23fff%22%3E%3Cellipse cx=%2260%22 cy=%2250%22 rx=%2258%22 ry=%2224%22/%3E%3Ccircle cx=%2246%22 cy=%2234%22 r=%2226%22/%3E%3Ccircle cx=%2280%22 cy=%2230%22 r=%2232%22/%3E%3Ccircle cx=%22104%22 cy=%2246%22 r=%2220%22/%3E%3C/g%3E%3C/svg%3E"),
+        linear-gradient(180deg, #3f9fec 0%, #78cbf8 30%, #b2e5fd 62%, #d8f3ff 100%);
+    background-repeat: repeat-x, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+    background-position:
+        bottom 0 left 0,
+        left 2vw bottom 11vh,
+        left -6vw bottom 9vh,
+        right -7vw bottom 7vh,
+        bottom 0 left 0,
+        top 30px center,
+        0 0;
+    background-size:
+        260px 70px,
+        min(190px, 15vw) auto,
+        auto min(70vh, 620px),
+        auto min(76vh, 660px),
+        100% 38vh,
+        max(1100px, 100%) auto,
+        100% 100%;
+}
+
+body.dark-mode:not(.ta-inner)::before { filter: brightness(.5) saturate(.85); }
+
+@media (max-width: 599px) {
+    body:not(.ta-inner)::before {
+        background-size: 200px 56px, 0 0, 0 0, 0 0, 100% 30vh, max(900px, 160%) auto, 100% 100%;
+    }
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+    body:not(.ta-inner)::before {
+        background-position: bottom 0 left 0, left 1vw bottom 11vh, left -14vw bottom 9vh, right -15vw bottom 7vh, bottom 0 left 0, top 30px center, 0 0;
+    }
+}
+
+/* ---------- الرأس (الرئيسية) ---------- */
+body:not(.ta-inner) header.hm-header.hm-header {
+    padding: 12px 14px 6px;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+body:not(.ta-inner) header.hm-header.hm-header::after { display: none; }
+
+body:not(.ta-inner) .hm-header__inner {
+    position: relative;
+    max-width: 1240px;
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    grid-template-areas:
+        "av brand brand brand"
+        "av name lvl stars";
+    justify-content: space-between;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 8px;
+}
+
+body:not(.ta-inner) .hm-header .hm-homebtn { display: none; }
+
+/* زر الملف: صندوقه يختفي ويُوزَّع ابناه على الشبكة؛ الضغط على أيٍّ منهما يفتح الملف */
+body:not(.ta-inner) .hm-header .profile-chip {
+    display: contents;
+}
+
+body:not(.ta-inner) .hm-header .profile-chip::before,
+body:not(.ta-inner) .hm-header .profile-chip::after { display: none; }
+
+body:not(.ta-inner) .hm-header #headerAvatarDisplay {
+    grid-area: av;
+    box-sizing: border-box;
+    width: var(--hp-av, 66px);
+    height: var(--hp-av, 66px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    line-height: 1;
+    border-radius: 50%;
+    background: #fff4c9;
+    border: 5px solid var(--hp-yellow);
+    box-shadow: 0 0 0 3px var(--hp-navy), 0 8px 14px rgba(8, 24, 80, .35);
+    cursor: pointer;
+}
+
+body:not(.ta-inner) .hm-header #headerNameDisplay,
+body:not(.ta-inner) .hm-header .stats .hm-stat {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 4px 14px;
+    color: #fff;
+    font-family: var(--hm-font);
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.2;
+    white-space: nowrap;
+    background: linear-gradient(180deg, #1b4eb0 0%, #0f2c77 100%);
+    border: 2px solid var(--hp-line);
+    border-radius: 999px;
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, .22), 0 5px 10px rgba(8, 24, 80, .3);
+}
+
+body:not(.ta-inner) .hm-header #headerNameDisplay {
+    grid-area: name;
+    cursor: pointer;
+    max-width: 132px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    justify-self: start;
+}
+
+body:not(.ta-inner) .hm-header #headerNameDisplay::before {
+    content: "";
+    flex: none;
+    width: 22px;
+    height: 22px;
+    background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M3 18C3 8 10 3 21 3c0 10-5 17-15 17z%22 fill=%22%237be05a%22 stroke=%22%23fff%22 stroke-width=%221.600%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M6 18C10 13 14 9 19 6%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%221.600%22 stroke-linecap=%22round%22/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+body:not(.ta-inner) .hm-header .profile-chip:focus-visible #headerAvatarDisplay,
+body:not(.ta-inner) .hm-header .profile-chip:focus-visible #headerNameDisplay { outline: 4px solid #fff; outline-offset: 3px; }
+
+/* مؤشّر تبديل الطالب ⇄ (تضيفه الشيفرة الحالية داخل الزر): شارة صغيرة على زاوية الصورة */
+body:not(.ta-inner) .hm-header .profile-chip .stu-swap {
+    grid-area: av;
+    align-self: center;
+    justify-self: start;
+    z-index: 1;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin: 0;
+    transform: translate(-6px, calc(var(--hp-av, 66px) / 2 - 14px));
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--hp-navy);
+    background: #fff;
+    border: 2px solid var(--hp-yellow);
+    border-radius: 50%;
+    box-shadow: 0 3px 5px rgba(8, 24, 80, .35);
+    opacity: 1;
+    pointer-events: none;
+}
+
+body:not(.ta-inner) .hm-header .stats { display: contents; }
+body:not(.ta-inner) .hm-header .stats .hm-stat--level { grid-area: lvl; }
+body:not(.ta-inner) .hm-header .stats .hm-stat--stars { grid-area: stars; }
+
+body:not(.ta-inner) .hm-header .stats .hm-stat__icon {
+    box-sizing: border-box;
+    flex: none;
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    border-radius: 50%;
+}
+
+body:not(.ta-inner) .hm-header .stats .hm-stat--stars .hm-stat__icon { background: var(--hp-yellow); color: #8a4d00; }
+body:not(.ta-inner) .hm-header .stats .hm-stat--level .hm-stat__icon { background: #52d6a8; color: #064d3a; }
+
+body:not(.ta-inner) .hm-header .stats b { font-size: 20px; color: #fff; line-height: 1; }
+body:not(.ta-inner) .hm-header .stats .hm-stat__label { font-size: 15px; font-weight: 800; color: #fff; }
+
+/* قرص اسم التطبيق */
+body:not(.ta-inner) .hm-header .hm-brand {
+    grid-area: brand;
+    justify-self: center;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 560px;
+    margin-inline-end: 52px;
+    padding: 6px 18px 8px;
+    text-align: center;
+    background: linear-gradient(180deg, #1b4eb0 0%, #0f2c77 100%);
+    border: 3px solid var(--hp-line);
+    border-radius: 999px;
+    box-shadow: inset 0 3px 0 rgba(255, 255, 255, .22), 0 7px 14px rgba(8, 24, 80, .32);
+}
+
+body:not(.ta-inner) .hm-header h1 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 900;
+    line-height: 1.25;
+    color: #fff;
+    text-shadow: 0 2px 0 rgba(0, 0, 40, .35);
+}
+
+body:not(.ta-inner) .hm-header h1 .hp-hl { color: var(--hp-yellow); }
+
+body:not(.ta-inner) .hm-header .hm-brand p {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #e6f1ff;
+}
+
+/* زر الإعدادات (يفتح شاشة الإعدادات الموجودة) */
+.hm-header .hp-gear { display: none; }
+
+body:not(.ta-inner) .hm-header .hp-gear {
+    position: absolute;
+    top: 2px;
+    inset-inline-end: 0;
+    z-index: 2;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    margin: 0;
+    color: #fff;
+    background: linear-gradient(180deg, #3a84ee 0%, #1747b8 100%);
+    border: 3px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 5px 0 #0f2c77, 0 10px 14px rgba(8, 24, 80, .3);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.hm-header .hp-gear svg { width: 26px; height: 26px; }
+body:not(.ta-inner) .hm-header .hp-gear:active { transform: translateY(2px); box-shadow: 0 3px 0 #0f2c77; }
+body:not(.ta-inner) .hm-header .hp-gear:focus-visible { outline: 4px solid #fff; outline-offset: 3px; }
+
+@media (max-width: 399px) {
+    body:not(.ta-inner) .hm-header { --hp-av: 58px; }
+    body:not(.ta-inner) .hm-header #headerAvatarDisplay { font-size: 31px; }
+    body:not(.ta-inner) .hm-header .stats .hm-stat__label { display: none; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay,
+    body:not(.ta-inner) .hm-header .stats .hm-stat { padding-inline: 10px; font-size: 15px; gap: 5px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay { max-width: 96px; }
+    body:not(.ta-inner) .hm-header .hm-brand { margin-inline-end: 50px; padding-inline: 10px; }
+    body:not(.ta-inner) .hm-header h1 { font-size: 16.5px; }
+    body:not(.ta-inner) .hm-header .hm-brand p { font-size: 11.5px; }
+}
+
+@media (min-width: 400px) and (max-width: 599px) {
+    body:not(.ta-inner) .hm-header #headerNameDisplay { max-width: 118px; }
+    body:not(.ta-inner) .hm-header h1 { font-size: 20px; }
+}
+
+@media (min-width: 600px) {
+    body:not(.ta-inner) header.hm-header.hm-header { padding: 16px 24px 8px; }
+    body:not(.ta-inner) .hm-header__inner { column-gap: 14px; row-gap: 10px; }
+    body:not(.ta-inner) .hm-header { --hp-av: 92px; }
+    body:not(.ta-inner) .hm-header #headerAvatarDisplay { font-size: 52px; border-width: 6px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay,
+    body:not(.ta-inner) .hm-header .stats .hm-stat { min-height: 52px; padding-inline: 20px; font-size: 21px; gap: 8px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay { max-width: 240px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay::before { width: 28px; height: 28px; }
+    body:not(.ta-inner) .hm-header .stats .hm-stat__icon { width: 36px; height: 36px; }
+    body:not(.ta-inner) .hm-header .stats b { font-size: 25px; }
+    body:not(.ta-inner) .hm-header .stats .hm-stat__label { font-size: 19px; }
+    body:not(.ta-inner) .hm-header .hm-brand { max-width: 560px; margin-inline-end: 64px; padding: 8px 26px 10px; }
+    body:not(.ta-inner) .hm-header h1 { font-size: 32px; }
+    body:not(.ta-inner) .hm-header .hm-brand p { font-size: 18px; }
+    body:not(.ta-inner) .hm-header .hp-gear { width: 54px; height: 54px; }
+    .hm-header .hp-gear svg { width: 32px; height: 32px; }
+}
+
+@media (min-width: 1024px) {
+    body:not(.ta-inner) header.hm-header.hm-header { padding: 18px 36px 10px; }
+    body:not(.ta-inner) .hm-header__inner { max-width: 1360px; }
+    body:not(.ta-inner) .hm-header { --hp-av: 104px; }
+    body:not(.ta-inner) .hm-header #headerAvatarDisplay { font-size: 60px; }
+    body:not(.ta-inner) .hm-header h1 { font-size: 38px; }
+    body:not(.ta-inner) .hm-header .hm-brand p { font-size: 20px; }
+    body:not(.ta-inner) .hm-header .hm-brand { max-width: 640px; }
+    body:not(.ta-inner) .hm-header #headerNameDisplay,
+    body:not(.ta-inner) .hm-header .stats .hm-stat { min-height: 56px; font-size: 23px; }
+}
+
+/* ---------- الصفحة ---------- */
+main.container:has(#home.active) { max-width: 1400px; padding-top: 6px; }
+
+#home { font-family: var(--hm-font); }
+
+.hp-wrap { width: 100%; margin: 0 auto; padding-bottom: 28px; }
+
+/* اللافتة الخشبية */
+.hp-signwrap { position: relative; display: flex; justify-content: center; margin: 14px 0 26px; }
+
+.hp-signwrap::after {
+    content: "";
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    z-index: -1;
+    width: min(62%, 420px);
+    height: 46px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, #7a4720 0 16px, transparent 16px calc(100% - 16px), #7a4720 calc(100% - 16px) 100%);
+}
+
+.hm-title.hp-sign {
+    position: relative;
+    box-sizing: border-box;
+    max-width: 100%;
+    margin: 0;
+    padding: 10px clamp(18px, 6vw, 38px) 12px;
+    font-size: clamp(17px, 5.2vw, 36px);
+    font-weight: 900;
+    line-height: 1.3;
+    color: #fff8e1;
+    text-align: center;
+    text-shadow: 0 3px 0 #4e2a0e;
+    background:
+        repeating-linear-gradient(180deg, rgba(0, 0, 0, 0) 0 11px, rgba(70, 35, 8, .2) 11px 13px),
+        linear-gradient(180deg, #cc8e4e 0%, #9a5f2a 100%);
+    border: 4px solid #6b3d16;
+    border-radius: 18px;
+    box-shadow: 0 7px 0 #4e2a0e, 0 14px 18px rgba(0, 0, 0, .28);
+}
+
+.hm-title.hp-sign::before,
+.hm-title.hp-sign::after {
+    content: "";
+    position: absolute;
+    top: -16px;
+    width: 58px;
+    height: 36px;
+    background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 40%22%3E%3Cpath d=%22M2 22C12 4 40 0 62 10 54 30 28 40 2 22z%22 fill=%22%2358c23a%22 stroke=%22%232d7a22%22 stroke-width=%223%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M6 22C24 16 42 14 58 12%22 fill=%22none%22 stroke=%22%232d7a22%22 stroke-width=%222.500%22 stroke-linecap=%22round%22/%3E%3C/svg%3E") center / contain no-repeat;
+    pointer-events: none;
+}
+
+.hm-title.hp-sign::before { inset-inline-start: -14px; transform: rotate(-24deg); }
+.hm-title.hp-sign::after { inset-inline-end: -14px; transform: scaleX(-1) rotate(-24deg); }
+
+/* الشبكات */
+.hp-subjects, .hp-activities, .hp-minis { display: grid; gap: 12px; position: relative; z-index: 1; }
+.hp-subjects, .hp-activities { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hp-subjects > :last-child, .hp-activities > :last-child { grid-column: 1 / -1; }
+.hp-minis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (min-width: 600px) {
+    .hp-subjects, .hp-activities { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .hp-subjects > :last-child, .hp-activities > :last-child { grid-column: auto; }
+    .hp-minis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+}
+
+@media (min-width: 768px) { .hp-minis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+@media (min-width: 1024px) {
+    .hp-subjects, .hp-activities { gap: 24px; }
+    .hp-minis { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; }
+}
+
+/* الشريطان العنبيان */
+.hp-ribbon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 24px auto 14px;
+    padding: 6px 28px;
+    font-size: clamp(18px, 4.6vw, 26px);
+    font-weight: 900;
+    color: #fff;
+    background: linear-gradient(180deg, #b52a50 0%, #7d1033 100%);
+    border: 3px solid #ffb6d0;
+    border-radius: 999px;
+    box-shadow: 0 6px 0 #570a24, 0 12px 16px rgba(0, 0, 0, .25);
+}
+
+.hp-ribbon::before,
+.hp-ribbon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 46px;
+    height: 30px;
+    background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 40%22%3E%3Cpath d=%22M2 22C12 4 40 0 62 10 54 30 28 40 2 22z%22 fill=%22%2358c23a%22 stroke=%22%232d7a22%22 stroke-width=%223%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M6 22C24 16 42 14 58 12%22 fill=%22none%22 stroke=%22%232d7a22%22 stroke-width=%222.500%22 stroke-linecap=%22round%22/%3E%3C/svg%3E") center / contain no-repeat;
+    pointer-events: none;
+}
+
+.hp-ribbon::before { inset-inline-start: -38px; transform: translateY(-50%) rotate(-12deg); }
+.hp-ribbon::after { inset-inline-end: -38px; transform: translateY(-50%) scaleX(-1) rotate(-12deg); }
+
+/* البطاقات الكبيرة */
+.hp-big {
+    --c1: #6cc4ff; --c2: #cfeeff; --cb: #2e8fe8; --cs: #2273c0; --ct: #0b2b6e;
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    min-height: 176px;
+    margin: 0;
+    padding: 12px 10px 12px;
+    font-family: var(--hm-font);
+    color: var(--ct);
+    background:
+        radial-gradient(120% 60% at 50% -10%, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, 0) 60%),
+        linear-gradient(165deg, var(--c1) 0%, var(--c2) 100%);
+    border: 4px solid #fff;
+    border-radius: 28px;
+    box-shadow: 0 0 0 3px var(--cb), 0 9px 0 -1px var(--cs), 0 18px 24px -8px rgba(0, 20, 60, .35);
+    cursor: pointer;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .15s ease;
+}
+
+.hp-big--arabic { --c1: #ff8fc3; --c2: #ffd9ec; --cb: #f25aa5; --cs: #d4458a; --ct: #4a0f3c; }
+.hp-big--math { --c1: #62bfff; --c2: #d3efff; --cb: #2e8fe8; --cs: #2273c0; --ct: #0b2b6e; }
+.hp-big--deen { --c1: #7fdc79; --c2: #e1f8c3; --cb: #46b84a; --cs: #36943a; --ct: #0e3d1f; }
+.hp-big--games { --c1: #c28cf5; --c2: #f2dfff; --cb: #9a58e0; --cs: #7b3fc0; --ct: #36126b; }
+.hp-big--rewards { --c1: #ffd23f; --c2: #fff3ad; --cb: #f0a800; --cs: #d28f00; --ct: #5a2d00; }
+.hp-big--quest { --c1: #4fd9d2; --c2: #cdf8f2; --cb: #1fb7ad; --cs: #159188; --ct: #06454a; }
+
+.hp-big__title {
+    display: block;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1.25;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .55);
+}
+
+.hp-art { display: block; flex: 1 1 auto; width: 100%; max-width: 190px; align-self: center; min-height: 0; height: auto; margin-block: auto; filter: drop-shadow(0 5px 3px rgba(0, 20, 60, .25)); pointer-events: none; }
+
+.hp-go {
+    position: absolute;
+    inset-block-end: 10px;
+    inset-inline-end: 10px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    color: var(--cb);
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, .15), inset 0 -2px 0 rgba(0, 0, 0, .06);
+    pointer-events: none;
+}
+
+.hp-go svg { width: 18px; height: 18px; }
+
+/* في البطاقات الكبيرة: السهم في صف أسفل الرسم (أسفل اليسار) فلا يغطي الرسم */
+.hp-big .hp-go { position: static; align-self: flex-end; flex: none; margin-top: 0; }
+
+/* البطاقات الصغيرة */
+.hp-mini {
+    --m1: #ffd9a0; --m2: #fff1d9; --mb: #ffb347; --ms: #e0902a;
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    min-height: 140px;
+    margin: 0;
+    padding: 14px 8px 12px;
+    font-family: var(--hm-font);
+    color: #1d2a6b;
+    background:
+        radial-gradient(120% 50% at 50% -10%, rgba(255, 255, 255, .6) 0%, rgba(255, 255, 255, 0) 60%),
+        linear-gradient(180deg, var(--m1) 0%, var(--m2) 100%);
+    border: 3px solid #fff;
+    border-radius: 24px;
+    box-shadow: 0 0 0 2px var(--mb), 0 7px 0 -1px var(--ms), 0 14px 18px -8px rgba(0, 20, 60, .32);
+    cursor: pointer;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .15s ease;
+}
+
+.hp-mini--letters { --m1: #ffd49a; --m2: #fff0d8; --mb: #ffa83a; --ms: #d88a20; }
+.hp-mini--words { --m1: #bdd5ff; --m2: #e9f1ff; --mb: #6f9ff0; --ms: #4f7ed0; }
+.hp-mini--writing { --m1: #dbc9ff; --m2: #f2ebff; --mb: #a585ee; --ms: #8062cc; }
+.hp-mini--numbers { --m1: #aae6ff; --m2: #e2f6ff; --mb: #4bbcf0; --ms: #2f98c8; }
+.hp-mini--plus { --m1: #ffb9dd; --m2: #ffe4f2; --mb: #f278b6; --ms: #d0589a; }
+.hp-mini--minus { --m1: #abc9ff; --m2: #e4eeff; --mb: #6a97ee; --ms: #4c78cc; }
+.hp-mini--quran { --m1: #ffe0b2; --m2: #fff3df; --mb: #f0b45a; --ms: #cf9338; }
+.hp-mini--hadith { --m1: #bff0c0; --m2: #e6f9e3; --mb: #5cc470; --ms: #3fa055; }
+.hp-mini--duas { --m1: #ffd9bb; --m2: #fff0e2; --mb: #f4a06a; --ms: #d27f48; }
+.hp-mini--profile { --m1: #dcc9ff; --m2: #f1eaff; --mb: #a67fe6; --ms: #8560c4; }
+.hp-mini--teacher { --m1: #c7d5ff; --m2: #e8eeff; --mb: #7a95e8; --ms: #5a76c6; }
+.hp-mini--settings { --m1: #d6daf8; --m2: #eef0fd; --mb: #8f9be0; --ms: #6f7bc0; }
+
+.hp-mini__ic { display: block; flex: none; width: 62px; height: 62px; filter: drop-shadow(0 4px 2px rgba(0, 20, 60, .22)); pointer-events: none; }
+
+.hp-mini__title {
+    display: block;
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1.25;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+}
+
+.hp-mini .hp-go { position: static; width: 30px; height: 30px; color: var(--mb); }
+.hp-mini .hp-go svg { width: 16px; height: 16px; }
+
+/* ضغط وتركيز وإبراز مؤقت */
+.hp-big:active, .hp-mini:active { transform: translateY(3px); }
+.hp-big:focus-visible, .hp-mini:focus-visible { outline: 5px solid #fff; outline-offset: 4px; }
+
+@media (hover: hover) {
+    .hp-big:hover, .hp-mini:hover { transform: translateY(-3px); }
+}
+
+@keyframes hp-flash { 0% { box-shadow: 0 0 0 3px var(--mb), 0 0 0 0 rgba(255, 255, 255, 0); } 35% { box-shadow: 0 0 0 3px var(--mb), 0 0 0 10px rgba(255, 255, 255, .9); } 100% { box-shadow: 0 0 0 3px var(--mb), 0 0 0 0 rgba(255, 255, 255, 0); } }
+
+.hp-mini.hp-flash { animation: hp-flash 1.8s ease-out 1; outline: 4px solid #fff; outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .hp-big, .hp-mini { transition: none; }
+    .hp-mini.hp-flash { animation: none; }
+}
+
+body.calm-mode .hp-big, body.calm-mode .hp-mini { transition: none; }
+body.calm-mode .hp-big:hover, body.calm-mode .hp-big:active, body.calm-mode .hp-mini:hover, body.calm-mode .hp-mini:active { transform: none; }
+body.calm-mode .hp-mini.hp-flash { animation: none; }
+
+/* مقاسات أكبر */
+@media (min-width: 600px) {
+    .hp-big { min-height: 214px; padding: 16px 14px 18px; }
+    .hp-big__title { font-size: 25px; }
+    .hp-art { max-width: 230px; }
+    .hp-go { width: 40px; height: 40px; }
+    .hp-go svg { width: 22px; height: 22px; }
+    .hp-ribbon { margin: 30px auto 16px; }
+    .hp-mini { min-height: 166px; padding: 16px 10px 14px; }
+    .hp-mini__ic { width: 78px; height: 78px; }
+    .hp-mini__title { font-size: 20px; }
+    .hp-mini .hp-go { width: 34px; height: 34px; }
+}
+
+@media (min-width: 1024px) {
+    .hp-wrap { padding-bottom: 44px; }
+    .hp-big { min-height: 262px; }
+    .hp-big__title { font-size: 32px; }
+    .hp-art { max-width: 270px; }
+    .hp-mini { min-height: 190px; }
+    .hp-mini__ic { width: 92px; height: 92px; }
+    .hp-mini__title { font-size: 21px; }
+    .hm-title.hp-sign { padding: 12px 56px 14px; }
+}
+
+@media (max-width: 359px) {
+    .hp-big { min-height: 150px; padding-inline: 6px; }
+    .hp-big__title { font-size: 16px; }
+    .hp-mini__title { font-size: 15.5px; }
+    .hp-mini { padding-inline: 4px; }
+}
+
 </style>
 
 </head>
@@ -793,6 +1122,51 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
      رأس التطبيق
 ========================================== -->
 
+<svg class="hm-sprite hp-sprite" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+<defs>
+ <linearGradient id="hg-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe784"/><stop offset="1" stop-color="#ffb21a"/></linearGradient>
+ <linearGradient id="hg-red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a8a"/><stop offset="1" stop-color="#e03c4e"/></linearGradient>
+ <linearGradient id="hg-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86ceff"/><stop offset="1" stop-color="#2f86e8"/></linearGradient>
+ <linearGradient id="hg-green" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6ee70"/><stop offset="1" stop-color="#37a82a"/></linearGradient>
+ <linearGradient id="hg-purple" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfa9ff"/><stop offset="1" stop-color="#7a4ad8"/></linearGradient>
+ <linearGradient id="hg-orange" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc474"/><stop offset="1" stop-color="#f26f1b"/></linearGradient>
+ <linearGradient id="hg-pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa6d4"/><stop offset="1" stop-color="#e84f9a"/></linearGradient>
+ <linearGradient id="hg-wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98a4a"/><stop offset="1" stop-color="#8a5424"/></linearGradient>
+ <linearGradient id="hg-paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#f0e6cc"/></linearGradient>
+</defs>
+
+<!-- شيفرون (اتجاه التقدّم في RTL: إلى اليسار) -->
+<symbol id="hp-chev" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+
+<!-- أيقونات صغيرة 100×100 -->
+<symbol id="hp-i-letters" viewBox="0 0 100 100"><path d="M50 6l12.5 28.2 30.7 3-23.2 20.4 6.9 30.1L50 72.6 26.1 87.7 33 57.6 9.8 37.2l30.7-3z" fill="url(#hg-gold)" stroke="#d98a00" stroke-width="4" stroke-linejoin="round"/><text x="50" y="62" text-anchor="middle" font-size="36" font-weight="900" fill="#b45f00" font-family="inherit">أ</text></symbol>
+<symbol id="hp-i-words" viewBox="0 0 100 100"><g font-family="inherit" font-weight="900" font-size="26" fill="#fff" text-anchor="middle"><rect x="4" y="34" width="28" height="36" rx="8" fill="url(#hg-green)" stroke="#2b8a22" stroke-width="3"/><text x="18" y="60">م</text><rect x="36" y="26" width="28" height="36" rx="8" fill="url(#hg-purple)" stroke="#5b34b5" stroke-width="3" transform="rotate(-4 50 44)"/><text x="50" y="52">ل</text><rect x="68" y="34" width="28" height="36" rx="8" fill="url(#hg-blue)" stroke="#1f63b8" stroke-width="3"/><text x="82" y="60">ك</text></g></symbol>
+<symbol id="hp-i-writing" viewBox="0 0 100 100"><g transform="rotate(35 50 46)"><rect x="38" y="6" width="24" height="54" rx="4" fill="url(#hg-gold)" stroke="#c77a00" stroke-width="3"/><rect x="38" y="6" width="24" height="12" rx="4" fill="#ff8aa8" stroke="#c77a00" stroke-width="3"/><path d="M38 60h24L50 84z" fill="#f6d6a8" stroke="#c77a00" stroke-width="3" stroke-linejoin="round"/><path d="M45.5 75h9L50 84z" fill="#444"/></g><path d="M8 90c10-9 18 5 28-3s16-9 26 0 20-6 30 0" fill="none" stroke="#2d86e6" stroke-width="4.5" stroke-linecap="round"/></symbol>
+<symbol id="hp-i-numbers" viewBox="0 0 100 100"><text x="50" y="68" text-anchor="middle" direction="ltr" font-size="50" font-weight="900" font-family="inherit" stroke="#fff" stroke-width="6" paint-order="stroke" stroke-linejoin="round"><tspan fill="#ff6a3d">١</tspan><tspan fill="#2d86e6">٢</tspan><tspan fill="#2fb14a">٣</tspan></text></symbol>
+<symbol id="hp-i-plus" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="24" fill="url(#hg-pink)" stroke="#c23078" stroke-width="4"/><path d="M50 28v44M28 50h44" stroke="#fff" stroke-width="14" stroke-linecap="round"/><ellipse cx="38" cy="20" rx="18" ry="6" fill="#fff" opacity=".35"/></symbol>
+<symbol id="hp-i-minus" viewBox="0 0 100 100"><rect x="6" y="22" width="88" height="56" rx="28" fill="url(#hg-blue)" stroke="#1f63b8" stroke-width="4"/><path d="M30 50h40" stroke="#fff" stroke-width="14" stroke-linecap="round"/><ellipse cx="38" cy="32" rx="20" ry="5" fill="#fff" opacity=".35"/></symbol>
+<symbol id="hp-i-quran" viewBox="0 0 100 100"><path d="M50 78L26 94M50 78l24 16" stroke="#8a5424" stroke-width="7" stroke-linecap="round"/><path d="M4 70c14-8 32-8 46 0 14-8 32-8 46 0v8c-14-8-32-8-46 0-14-8-32-8-46 0z" fill="#1f8a4c" stroke="#145c32" stroke-width="2.5" stroke-linejoin="round"/><path d="M50 28C36 18 18 18 6 26v44c12-8 30-8 44 0z" fill="url(#hg-paper)" stroke="#b58a3a" stroke-width="3" stroke-linejoin="round"/><path d="M50 28c14-10 32-10 44-2v44c-12-8-30-8-44 0z" fill="url(#hg-paper)" stroke="#b58a3a" stroke-width="3" stroke-linejoin="round"/><path d="M14 38c8-3 16-3 28 0M14 48c8-3 16-3 28 0M14 58c8-3 16-3 28 0M58 38c12-3 20-3 28 0M58 48c12-3 20-3 28 0M58 58c12-3 20-3 28 0" fill="none" stroke="#2f9a5a" stroke-width="2.6" stroke-linecap="round"/></symbol>
+<symbol id="hp-i-hadith" viewBox="0 0 100 100"><rect x="8" y="30" width="12" height="58" rx="3" fill="#f7ead0" stroke="#b58a3a" stroke-width="2.5"/><path d="M8 30l6-14 6 14z" fill="url(#hg-green)" stroke="#2a7d2a" stroke-width="2.5" stroke-linejoin="round"/><rect x="80" y="30" width="12" height="58" rx="3" fill="#f7ead0" stroke="#b58a3a" stroke-width="2.5"/><path d="M80 30l6-14 6 14z" fill="url(#hg-green)" stroke="#2a7d2a" stroke-width="2.5" stroke-linejoin="round"/><rect x="18" y="58" width="64" height="30" rx="4" fill="#f7ead0" stroke="#b58a3a" stroke-width="3"/><path d="M24 58C24 28 76 28 76 58z" fill="url(#hg-green)" stroke="#2a7d2a" stroke-width="3" stroke-linejoin="round"/><path d="M50 32v-10" stroke="#d99a00" stroke-width="3.5" stroke-linecap="round"/><circle cx="50" cy="19" r="4.5" fill="#ffc928"/><path d="M33 88V74a6 6 0 0 1 12 0v14zM55 88V74a6 6 0 0 1 12 0v14z" fill="#1f8a4c"/></symbol>
+<symbol id="hp-i-duas" viewBox="0 0 100 100"><g id="hp-hand"><path d="M50 90C34 86 21 68 23 42c1-7 10-6 10 1l1 15c0-14 2-28 6-38 2-6 10-4 9 3-2 12-2 26-2 40z" fill="#ffd9b0" stroke="#d6905a" stroke-width="3" stroke-linejoin="round"/><path d="M26 84l18 10-6 5-20-11z" fill="#e24d5c" stroke="#b02a3a" stroke-width="2.5" stroke-linejoin="round"/></g><use href="#hp-hand" transform="translate(100 0) scale(-1 1)"/></symbol>
+<symbol id="hp-i-profile" viewBox="0 0 100 100"><circle cx="50" cy="32" r="20" fill="url(#hg-purple)" stroke="#5b34b5" stroke-width="4"/><path d="M12 92c0-24 16-36 38-36s38 12 38 36z" fill="url(#hg-purple)" stroke="#5b34b5" stroke-width="4" stroke-linejoin="round"/><ellipse cx="42" cy="24" rx="8" ry="5" fill="#fff" opacity=".35"/></symbol>
+<symbol id="hp-i-teacher" viewBox="0 0 100 100"><rect x="30" y="12" width="64" height="50" rx="6" fill="#1f8a52" stroke="#b0722e" stroke-width="5"/><path d="M40 30c6-6 10 6 16 0s10 6 16 0M40 46h30" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><circle cx="20" cy="38" r="11" fill="#ffd9b0" stroke="#d6905a" stroke-width="3"/><path d="M8 28c2-10 22-10 24 0-6-3-18-3-24 0z" fill="#5a3a1e"/><path d="M4 92c0-20 8-30 16-30s16 10 16 30z" fill="url(#hg-blue)" stroke="#1f63b8" stroke-width="3" stroke-linejoin="round"/><path d="M30 70l22-10" stroke="#ffd9b0" stroke-width="6" stroke-linecap="round"/></symbol>
+<symbol id="hp-i-settings" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="none" stroke="#5666d8" stroke-width="13" stroke-dasharray="12.4 13.3"/><circle cx="50" cy="50" r="29" fill="url(#hg-blue)" stroke="#3a4ec0" stroke-width="4"/><circle cx="50" cy="50" r="12" fill="#fff" stroke="#3a4ec0" stroke-width="4"/></symbol>
+<symbol id="hp-i-gear" viewBox="0 0 100 100"><circle cx="50" cy="50" r="36" fill="none" stroke="#fff" stroke-width="14" stroke-dasharray="13.2 14.3"/><circle cx="50" cy="50" r="30" fill="#fff"/><circle cx="50" cy="50" r="13" fill="#2f67d6"/></symbol>
+<symbol id="hp-i-gamepad" viewBox="0 0 100 100"><path d="M24 34c4-10 14-12 22-8h8c8-4 18-2 22 8l8 36c2 12-12 16-18 6l-6-10H40l-6 10c-6 10-20 6-18-6z" fill="url(#hg-purple)" stroke="#5b34b5" stroke-width="4" stroke-linejoin="round"/><path d="M33 46h14M40 39v14" stroke="#fff" stroke-width="6" stroke-linecap="round"/><circle cx="66" cy="42" r="4.5" fill="#ff5a5a"/><circle cx="75" cy="50" r="4.5" fill="#ffd23f"/><circle cx="66" cy="58" r="4.5" fill="#4cd964"/><circle cx="57" cy="50" r="4.5" fill="#45a6ff"/></symbol>
+
+<!-- رسوم البطاقات الكبيرة 160×110 -->
+<symbol id="hp-art-arabic" viewBox="0 0 160 110"><rect x="8" y="84" width="104" height="17" rx="5" fill="url(#hg-green)" stroke="#2b8a22" stroke-width="3"/><rect x="14" y="68" width="96" height="17" rx="5" fill="url(#hg-blue)" stroke="#1f63b8" stroke-width="3"/><rect x="4" y="52" width="100" height="17" rx="5" fill="url(#hg-red)" stroke="#b02a3a" stroke-width="3"/><path d="M60 14C46 6 28 8 16 14v36c12-6 30-6 44 2z" fill="url(#hg-paper)" stroke="#c9a15a" stroke-width="3" stroke-linejoin="round"/><path d="M60 14c14-8 32-6 44 0v36c-12-6-30-6-44 2z" fill="url(#hg-paper)" stroke="#c9a15a" stroke-width="3" stroke-linejoin="round"/><text x="38" y="42" text-anchor="middle" font-size="30" font-weight="900" fill="#e05a2b" font-family="inherit">أ</text><path d="M72 24c8-3 18-3 26 0M72 33c8-3 18-3 26 0M72 42c8-3 18-3 26 0" stroke="#c9a15a" stroke-width="2.4" fill="none" stroke-linecap="round"/><g transform="rotate(-14 130 40)"><rect x="124" y="14" width="8" height="40" rx="2" fill="#ff5a5a"/><path d="M124 14l4-8 4 8z" fill="#f6d6a8"/></g><g transform="rotate(8 138 40)"><rect x="134" y="12" width="8" height="42" rx="2" fill="#ffd23f"/><path d="M134 12l4-8 4 8z" fill="#f6d6a8"/></g><g transform="rotate(22 146 44)"><rect x="142" y="16" width="8" height="38" rx="2" fill="#4cd964"/><path d="M142 16l4-8 4 8z" fill="#f6d6a8"/></g><path d="M118 54h38l-3 44c0 5-4 8-9 8h-14c-5 0-9-3-9-8z" fill="url(#hg-purple)" stroke="#5b34b5" stroke-width="3" stroke-linejoin="round"/></symbol>
+<symbol id="hp-art-math" viewBox="0 0 160 110"><g font-family="inherit" font-weight="900" font-size="34" fill="#fff" text-anchor="middle" stroke-linejoin="round"><rect x="16" y="30" width="44" height="44" rx="11" fill="url(#hg-orange)" stroke="#c2530d" stroke-width="3" transform="rotate(-10 38 52)"/><text x="37" y="64" transform="rotate(-10 37 52)" stroke="#c2530d" stroke-width="3" paint-order="stroke">٣</text><rect x="106" y="30" width="44" height="44" rx="11" fill="url(#hg-red)" stroke="#a82638" stroke-width="3" transform="rotate(9 128 52)"/><text x="128" y="64" transform="rotate(9 128 52)" stroke="#a82638" stroke-width="3" paint-order="stroke">١</text><rect x="58" y="8" width="46" height="46" rx="11" fill="url(#hg-gold)" stroke="#c78500" stroke-width="3"/><text x="81" y="43" stroke="#c78500" stroke-width="3" paint-order="stroke">٢</text><rect x="46" y="62" width="36" height="34" rx="10" fill="url(#hg-blue)" stroke="#1f63b8" stroke-width="3"/><path d="M64 70v18M55 79h18" stroke="#fff" stroke-width="7" stroke-linecap="round"/><rect x="86" y="62" width="36" height="34" rx="10" fill="url(#hg-blue)" stroke="#1f63b8" stroke-width="3"/><path d="M95 79h18" stroke="#fff" stroke-width="7" stroke-linecap="round"/></g></symbol>
+<symbol id="hp-art-deen" viewBox="0 0 160 110"><path d="M34 12a20 20 0 1 0 14 34 16 16 0 1 1-14-34z" fill="url(#hg-gold)" stroke="#d98a00" stroke-width="3" stroke-linejoin="round"/><rect x="132" y="40" width="14" height="56" rx="3" fill="#f7ead0" stroke="#b58a3a" stroke-width="2.5"/><path d="M132 40l7-18 7 18z" fill="url(#hg-green)" stroke="#2a7d2a" stroke-width="2.5" stroke-linejoin="round"/><circle cx="139" cy="19" r="4" fill="#ffc928"/><rect x="92" y="68" width="42" height="30" rx="4" fill="#f7ead0" stroke="#b58a3a" stroke-width="3"/><path d="M96 68c0-30 34-30 34 0z" fill="url(#hg-green)" stroke="#2a7d2a" stroke-width="3" stroke-linejoin="round"/><path d="M113 46v-9" stroke="#d99a00" stroke-width="3" stroke-linecap="round"/><path d="M104 98V86a6 6 0 0 1 12 0v12z" fill="#1f8a4c"/><path d="M20 106l24-10 6 4-24 10z" fill="#8a5424"/><path d="M96 106l-24-10-6 4 24 10z" fill="#8a5424"/><path d="M14 78l54-14 18 40-54 14z" fill="url(#hg-green)" stroke="#145c32" stroke-width="3.5" stroke-linejoin="round" transform="translate(-2 -2) rotate(-3 40 80)"/><path d="M26 82l36-10 12 28-36 10z" fill="none" stroke="#ffd966" stroke-width="3" stroke-linejoin="round"/><circle cx="46" cy="86" r="7" fill="none" stroke="#ffd966" stroke-width="2.6"/></symbol>
+<symbol id="hp-art-games" viewBox="0 0 160 110"><path d="M26 40c6-14 20-18 32-12h44c12-6 26-2 32 12l12 46c3 16-16 22-26 8l-8-14H48l-8 14c-10 14-29 8-26-8z" fill="url(#hg-purple)" stroke="#5b34b5" stroke-width="4.5" stroke-linejoin="round"/><path d="M44 56h22M55 45v22" stroke="#fff" stroke-width="8" stroke-linecap="round"/><circle cx="108" cy="46" r="6.5" fill="#ff5a5a" stroke="#c23" stroke-width="2"/><circle cx="121" cy="57" r="6.5" fill="#ffd23f" stroke="#c78500" stroke-width="2"/><circle cx="108" cy="68" r="6.5" fill="#4cd964" stroke="#1f8a2a" stroke-width="2"/><circle cx="95" cy="57" r="6.5" fill="#45a6ff" stroke="#1f63b8" stroke-width="2"/><path d="M12 22l4 9 10 1-7.5 6.500 2.500 10-9-5.500-9 5.500 2.500-10L-2 32l10-1z" transform="translate(6 -6) scale(.9)" fill="url(#hg-gold)" stroke="#d98a00" stroke-width="2"/></symbol>
+<symbol id="hp-art-rewards" viewBox="0 0 160 110"><path d="M34 14l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z" fill="url(#hg-gold)" stroke="#d98a00" stroke-width="2.4" stroke-linejoin="round"/><path d="M138 8l4 9 10 1-7.500 6.500L147 35l-9-5.500-9 5.500 2.500-10.500-7.500-6.500 10-1z" transform="translate(-2 2) scale(.9)" fill="url(#hg-gold)" stroke="#d98a00" stroke-width="2.4" stroke-linejoin="round"/><path d="M50 14h60v30c0 24-14 38-30 38S50 68 50 44z" fill="url(#hg-gold)" stroke="#c78500" stroke-width="4" stroke-linejoin="round"/><path d="M50 22H34c-6 22 4 38 22 40M110 22h16c6 22-4 38-22 40" fill="none" stroke="#c78500" stroke-width="5" stroke-linecap="round"/><path d="M80 28l5.500 12 13 1.500-9.500 9 2.500 13-11.500-6.500L68.500 63.500l2.500-13-9.500-9 13-1.500z" fill="#fff6c8" stroke="#d98a00" stroke-width="2.4" stroke-linejoin="round"/><rect x="72" y="80" width="16" height="12" fill="#e8a200" stroke="#c78500" stroke-width="3"/><rect x="56" y="90" width="48" height="14" rx="4" fill="url(#hg-wood)" stroke="#6b3d16" stroke-width="3"/><rect x="112" y="66" width="40" height="38" rx="5" fill="url(#hg-pink)" stroke="#b02a78" stroke-width="3.5"/><rect x="108" y="58" width="48" height="14" rx="4" fill="url(#hg-pink)" stroke="#b02a78" stroke-width="3.5"/><rect x="127" y="58" width="10" height="46" fill="#ffd23f" stroke="#c78500" stroke-width="2"/><path d="M132 58c-12-14-22-6-14 0M132 58c12-14 22-6 14 0" fill="none" stroke="#ffd23f" stroke-width="5" stroke-linecap="round"/></symbol>
+<symbol id="hp-art-quest" viewBox="0 0 160 110"><rect x="24" y="22" width="96" height="78" rx="12" fill="#fff" stroke="#c9d4ee" stroke-width="3"/><path d="M24 34a12 12 0 0 1 12-12h72a12 12 0 0 1 12 12v12H24z" fill="url(#hg-pink)" stroke="#c23078" stroke-width="3"/><rect x="42" y="10" width="9" height="24" rx="4.500" fill="#fff" stroke="#8a2f70" stroke-width="3"/><rect x="93" y="10" width="9" height="24" rx="4.500" fill="#fff" stroke="#8a2f70" stroke-width="3"/><path d="M38 62h28M38 76h28M38 90h20" stroke="#9fb3dd" stroke-width="5" stroke-linecap="round"/><circle cx="104" cy="82" r="24" fill="url(#hg-green)" stroke="#1f8a2a" stroke-width="3.5"/><path d="M92 82l9 9 15-18" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+
+<!-- أيقونات الشرائط -->
+<symbol id="hp-i-ribbon-games" viewBox="0 0 48 48"><path d="M8 18c2-5 8-6 12-4h8c4-2 10-1 12 4l4 14c1 6-6 8-10 3l-3-5H17l-3 5c-4 5-11 3-10-3z" fill="#e9d6ff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M15 23h8M19 19v8" stroke="#7a4ad8" stroke-width="3" stroke-linecap="round"/><circle cx="31" cy="21" r="2.600" fill="#ff5a5a"/><circle cx="36" cy="25" r="2.600" fill="#ffd23f"/></symbol>
+<symbol id="hp-i-ribbon-books" viewBox="0 0 48 48"><rect x="6" y="30" width="36" height="9" rx="2.500" fill="#7a4ad8" stroke="#fff" stroke-width="2"/><rect x="9" y="21" width="32" height="9" rx="2.500" fill="#2f86e8" stroke="#fff" stroke-width="2"/><rect x="6" y="12" width="34" height="9" rx="2.500" fill="#f26f1b" stroke="#fff" stroke-width="2"/></symbol>
+</svg>
+
 <header class="hm-header">
 
 <div class="hm-header__inner">
@@ -813,7 +1187,7 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
 </button>
 
 <div class="hm-brand">
-    <h1>تعلم مع أ/طه محمد</h1>
+    <h1>تعلم مع <span class="hp-hl">أ/طه</span> محمد</h1>
     <p>نتعلم معًا بطريقة ممتعة</p>
 </div>
 
@@ -833,6 +1207,8 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
 
 </div>
 
+<button type="button" class="hp-gear" id="hpGear" onclick="showScreen('settings')" aria-label="الإعدادات"><svg width="30" height="30" aria-hidden="true" focusable="false"><use href="#hp-i-gear"/></svg></button>
+
 </div>
 
 </header>
@@ -848,138 +1224,113 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
     class="screen active"
 >
 
-<h2 class="hm-title">
-    ماذا تريد أن تتعلم؟
-</h2>
+<div class="hp-wrap">
 
-
-<div class="menu hm-groups">
-
-    <!-- ===== اللغة ===== -->
-    <div class="hm-group hm-group--lang" role="group" aria-labelledby="hmGroupLang">
-        <h3 class="hm-group__head" id="hmGroupLang"><span class="hm-group__mark" aria-hidden="true"></span>اللغة العربية</h3>
-        <div class="hm-group__grid">
-
-            <button class="hm-tile" onclick="showScreen('letters')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-letters"/></svg></span>
-                <span class="hm-tile__title">الحروف</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
-            </button>
-
-            <button class="hm-tile" onclick="showScreen('words')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-words"/></svg></span>
-                <span class="hm-tile__title">الكلمات</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
-            </button>
-
-            <button class="hm-tile" onclick="showScreen('writing')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-writing"/></svg></span>
-                <span class="hm-tile__title">الكتابة</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
-            </button>
-
-        </div>
+    <div class="hp-signwrap">
+        <h2 class="hm-title hp-sign"><span>ماذا تريد أن تتعلم اليوم؟</span></h2>
     </div>
 
-    <!-- ===== الرياضيات ===== -->
-    <div class="hm-group hm-group--math" role="group" aria-labelledby="hmGroupMath">
-        <h3 class="hm-group__head" id="hmGroupMath"><span class="hm-group__mark" aria-hidden="true"></span>الرياضيات</h3>
-        <div class="hm-group__grid">
-
-            <button class="hm-tile" onclick="showScreen('numbers')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-numbers"/></svg></span>
-                <span class="hm-tile__title">الأرقام</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+    <div class="hp-subjects" role="group" aria-label="المواد">
+            <button class="hp-big hp-big--deen" type="button" data-hp-target="deen" aria-label="التربية الإسلامية: عرض أقسامها">
+                <span class="hp-big__title">التربية الإسلامية</span>
+                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-deen"/></svg>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-            <button class="hm-tile" onclick="showScreen('addition')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-plus"/></svg></span>
-                <span class="hm-tile__title">الجمع</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            <button class="hp-big hp-big--math" type="button" data-hp-target="math" aria-label="الرياضيات: عرض أقسامها">
+                <span class="hp-big__title">الرياضيات</span>
+                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-math"/></svg>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-            <button class="hm-tile" onclick="showScreen('subtraction')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-minus"/></svg></span>
-                <span class="hm-tile__title">الطرح</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            <button class="hp-big hp-big--arabic" type="button" data-hp-target="arabic" aria-label="اللغة العربية: عرض أقسامها">
+                <span class="hp-big__title">اللغة العربية</span>
+                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-arabic"/></svg>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-        </div>
     </div>
 
-    <!-- ===== ديني ===== -->
-    <div class="hm-group hm-group--deen" role="group" aria-labelledby="hmGroupDeen">
-        <h3 class="hm-group__head" id="hmGroupDeen"><span class="hm-group__mark" aria-hidden="true"></span>ديني</h3>
-        <div class="hm-group__grid">
+    <h3 class="hp-ribbon"><svg width="34" height="34" aria-hidden="true" focusable="false"><use href="#hp-i-ribbon-games"/></svg><span>أنشطة مميزة</span></h3>
 
-            <button class="hm-tile" onclick="showScreen('quran')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-quran"/></svg></span>
-                <span class="hm-tile__title">القرآن الكريم</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+    <div class="hp-activities" role="group" aria-label="أنشطة مميزة">
+            <button class="hm-tile hp-big hp-big--quest" type="button" onclick="showScreen('dailyQuest')">
+                <span class="hp-big__title hm-tile__title">مهمة اليوم</span>
+                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-quest"/></svg>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-            <button class="hm-tile" onclick="showScreen('hadith')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-hadith"/></svg></span>
-                <span class="hm-tile__title">الحديث الشريف</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            <button class="hm-tile hp-big hp-big--rewards" type="button" onclick="showScreen('rewards')">
+                <span class="hp-big__title hm-tile__title">مكافآتي</span>
+                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-rewards"/></svg>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-            <button class="hm-tile" onclick="showScreen('duas')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-duas"/></svg></span>
-                <span class="hm-tile__title">الأدعية</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            <button class="hm-tile hp-big hp-big--games" type="button" onclick="showScreen('games')">
+                <span class="hp-big__title hm-tile__title">الألعاب التعليمية</span>
+                <svg class="hp-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false"><use href="#hp-art-games"/></svg>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-        </div>
     </div>
 
-    <!-- ===== العب واكسب ===== -->
-    <div class="hm-group hm-group--play" role="group" aria-labelledby="hmGroupPlay">
-        <h3 class="hm-group__head" id="hmGroupPlay"><span class="hm-group__mark" aria-hidden="true"></span>العب واكسب</h3>
-        <div class="hm-group__grid">
+    <h3 class="hp-ribbon"><svg width="34" height="34" aria-hidden="true" focusable="false"><use href="#hp-i-ribbon-books"/></svg><span>أقسام التعلم</span></h3>
 
-            <button class="hm-tile" onclick="showScreen('games')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-games"/></svg></span>
-                <span class="hm-tile__title">الألعاب التعليمية</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+    <div class="hp-minis" role="group" aria-label="أقسام التعلم">
+            <button class="hm-tile hp-mini hp-mini--letters" type="button" data-hp-key="letters" onclick="showScreen('letters')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-letters"/></svg>
+                <span class="hp-mini__title hm-tile__title">الحروف</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-            <button class="hm-tile" onclick="showScreen('dailyQuest')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-quest"/></svg></span>
-                <span class="hm-tile__title">مهمة اليوم</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            <button class="hm-tile hp-mini hp-mini--words" type="button" data-hp-key="words" onclick="showScreen('words')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-words"/></svg>
+                <span class="hp-mini__title hm-tile__title">الكلمات</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-            <button class="hm-tile" onclick="showScreen('rewards')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-trophy"/></svg></span>
-                <span class="hm-tile__title">مكافآتي</span>
-                <svg class="hm-tile__go" width="18" height="18" aria-hidden="true" focusable="false"><use href="#hm-i-go"/></svg>
+            <button class="hm-tile hp-mini hp-mini--writing" type="button" data-hp-key="writing" onclick="showScreen('writing')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-writing"/></svg>
+                <span class="hp-mini__title hm-tile__title">الكتابة</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-        </div>
-    </div>
-
-    <!-- ===== أدواتي ===== -->
-    <div class="hm-group hm-group--tools" role="group" aria-labelledby="hmGroupTools">
-        <h3 class="hm-group__head" id="hmGroupTools"><span class="hm-group__mark" aria-hidden="true"></span>أدواتي</h3>
-        <div class="hm-group__grid">
-
-            <button class="hm-tile" onclick="openProfileScreen()">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-profile"/></svg></span>
-                <span class="hm-tile__title">ملفي الشخصي</span>
+            <button class="hm-tile hp-mini hp-mini--numbers" type="button" data-hp-key="numbers" onclick="showScreen('numbers')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-numbers"/></svg>
+                <span class="hp-mini__title hm-tile__title">الأرقام</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-            <button class="hm-tile" onclick="showScreen('teacher')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-teacher"/></svg></span>
-                <span class="hm-tile__title">المعلم</span>
+            <button class="hm-tile hp-mini hp-mini--plus" type="button" data-hp-key="addition" onclick="showScreen('addition')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-plus"/></svg>
+                <span class="hp-mini__title hm-tile__title">الجمع</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-            <button class="hm-tile" onclick="showScreen('settings')">
-                <span class="hm-plate"><svg width="44" height="44" aria-hidden="true" focusable="false"><use href="#hm-i-settings"/></svg></span>
-                <span class="hm-tile__title">الإعدادات</span>
+            <button class="hm-tile hp-mini hp-mini--minus" type="button" data-hp-key="subtraction" onclick="showScreen('subtraction')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-minus"/></svg>
+                <span class="hp-mini__title hm-tile__title">الطرح</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
             </button>
-
-        </div>
+            <button class="hm-tile hp-mini hp-mini--quran" type="button" data-hp-key="quran" onclick="showScreen('quran')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-quran"/></svg>
+                <span class="hp-mini__title hm-tile__title">القرآن الكريم</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
+            </button>
+            <button class="hm-tile hp-mini hp-mini--hadith" type="button" data-hp-key="hadith" onclick="showScreen('hadith')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-hadith"/></svg>
+                <span class="hp-mini__title hm-tile__title">الحديث الشريف</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
+            </button>
+            <button class="hm-tile hp-mini hp-mini--duas" type="button" data-hp-key="duas" onclick="showScreen('duas')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-duas"/></svg>
+                <span class="hp-mini__title hm-tile__title">الأدعية</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
+            </button>
+            <button class="hm-tile hp-mini hp-mini--profile" type="button" data-hp-key="profile" onclick="openProfileScreen()">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-profile"/></svg>
+                <span class="hp-mini__title hm-tile__title">ملفي الشخصي</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
+            </button>
+            <button class="hm-tile hp-mini hp-mini--teacher" type="button" data-hp-key="teacher" onclick="showScreen('teacher')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-teacher"/></svg>
+                <span class="hp-mini__title hm-tile__title">المعلم</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
+            </button>
+            <button class="hm-tile hp-mini hp-mini--settings" type="button" data-hp-key="settings" onclick="showScreen('settings')">
+                <svg class="hp-mini__ic" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#hp-i-settings"/></svg>
+                <span class="hp-mini__title hm-tile__title">الإعدادات</span>
+                <span class="hp-go" aria-hidden="true"><svg width="20" height="20" focusable="false"><use href="#hp-chev"/></svg></span>
+            </button>
     </div>
 
     <!-- ===== تثبيت التطبيق: مخفي افتراضيًا، يُظهره pwa-install.js فقط حين يكون التثبيت ممكنًا ===== -->
@@ -1003,6 +1354,28 @@ body.ta-inner .hm-header__inner { grid-template-columns: auto auto 1fr auto; }
     </div>
 
 </div>
+
+<script id="hp-home-js">
+/* المرحلة أ (نموذج بصري): بطاقات المواد الثلاث تنزلق إلى بطاقاتها الفرعية مع إبراز هادئ مؤقت؛ لا شاشات جديدة */
+(function () {
+    var groups = { arabic: ["letters", "words", "writing"], math: ["numbers", "addition", "subtraction"], deen: ["quran", "hadith", "duas"] };
+    document.querySelectorAll(".hp-big[data-hp-target]").forEach(function (b) {
+        b.addEventListener("click", function () {
+            var els = (groups[b.getAttribute("data-hp-target")] || []).map(function (k) {
+                return document.querySelector('.hp-mini[data-hp-key="' + k + '"]');
+            }).filter(Boolean);
+            if (!els.length) return;
+            var calm = document.body.classList.contains("calm-mode") ||
+                (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+            els[Math.min(1, els.length - 1)].scrollIntoView({ block: "center", behavior: calm ? "auto" : "smooth" });
+            els.forEach(function (e) {
+                e.classList.add("hp-flash");
+                setTimeout(function () { e.classList.remove("hp-flash"); }, 1900);
+            });
+        });
+    });
+})();
+</script>
 
 </section>
 
