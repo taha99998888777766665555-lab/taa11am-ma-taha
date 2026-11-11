@@ -105,11 +105,23 @@
     /* ارتفاع الشريط العلوي الفعلي وعرض زر الرئيسية لتثبيت شريط الدرس بجانبه */
     try {
         var hdr = document.querySelector("header.hm-header");
-        if (hdr && window.ResizeObserver) new ResizeObserver(function () {
-            document.documentElement.style.setProperty("--u-hh", hdr.offsetHeight + "px");
-            var hb = document.getElementById("hmHomeBtn");
-            if (hb) document.documentElement.style.setProperty("--u-homew", hb.offsetWidth + "px");
-        }).observe(hdr);
+        if (hdr) {
+            var upd = function () {
+                document.documentElement.style.setProperty("--u-hh", hdr.offsetHeight + "px");
+                var hb = document.getElementById("hmHomeBtn");
+                /* زر الرئيسية مخفي على الصفحة الرئيسية (عرضه ٠): لا نكتب ٠ فوق قيمة صالحة */
+                if (hb && hb.offsetWidth) document.documentElement.style.setProperty("--u-homew", hb.offsetWidth + "px");
+            };
+            if (window.ResizeObserver) {
+                var ro = new ResizeObserver(upd);
+                ro.observe(hdr);
+                var hb0 = document.getElementById("hmHomeBtn");
+                if (hb0) ro.observe(hb0);
+            }
+            /* الانتقال بين الرئيسية والداخلية يبدّل الرأس: حدّث حتى لو بقي ارتفاعه كما هو */
+            if (window.MutationObserver) new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+            upd();
+        }
     } catch (e) { /* لا شيء */ }
 
     function buildSwitch() {

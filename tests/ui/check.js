@@ -31,8 +31,8 @@ for(const mode of MODES)for(const vp of only){const [w,h,d,t,m]=VPS[vp];const ta
  const hit=async(sel,n)=>{const r=await p.$$eval(sel,els=>els.filter(e=>e.getBoundingClientRect().width>0).map(e=>{const b=e.getBoundingClientRect();const x=b.left+b.width/2,y=Math.min(b.top+b.height/2,innerHeight-1);const el=document.elementFromPoint(x,y);return el===e||e.contains(el)||b.bottom>innerHeight}));ok(r.every(Boolean),`${tag} ${n}: غير مغطّى`)};
  const contrast=async(sel,n,min=4.5)=>{const r=await p.evaluate(`(${CONTRAST})(${JSON.stringify(sel)})`);ok(r.length>0,`${tag} تباين ${n}: عناصر`,sel);const bad=r.filter(x=>x.cr<min);ok(bad.length===0,`${tag} تباين ${n} ≥${min}`,bad.slice(0,3));rows.push([tag,n,r.length?Math.min(...r.map(x=>x.cr)):null]);};
  /* ١) الرئيسية */
- await noH('الرئيسية');await size('#home .hm-tile',56,'بطاقات الرئيسية');await hit('#home .hm-tile','بطاقات الرئيسية');
- await contrast('#home .hm-tile__title, .hm-title, .hm-group__head, header.hm-header h1','نصوص الرئيسية');
+ await noH('الرئيسية');await size('#home .hm-tile, #home .hp-big',56,'بطاقات الرئيسية');await hit('#home .hm-tile, #home .hp-big','بطاقات الرئيسية');
+ await contrast('#home .hm-tile__title, #home .hp-mini__title, #home .hp-big__title, #home .hp-ribbon span, .hm-title, .hm-group__head, header.hm-header h1, #headerNameDisplay','نصوص الرئيسية');
  /* ٢) الكلمات */
  await p.evaluate(()=>showScreen('words'));await p.waitForTimeout(350);await noH('الكلمات');
  await size('#hmHomeBtn',56,'زر الرئيسية');await size('.wbk-entry',56,'بطاقات الدروس');await hit('.wbk-entry','بطاقات الدروس');await hit('#hmHomeBtn','زر الرئيسية');

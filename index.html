@@ -496,16 +496,33 @@ body:not(.ta-inner) .hm-header__inner {
 
 body:not(.ta-inner) .hm-header .hm-homebtn { display: none; }
 
-/* زر الملف: صندوقه يختفي ويُوزَّع ابناه على الشبكة؛ الضغط على أيٍّ منهما يفتح الملف */
+/* زر الملف: يبقى زرًّا حقيقيًّا قابلًا للتركيز بلوحة المفاتيح والقارئ الصوتي (display:contents كان يُسقطه من ترتيب Tab).
+   صندوقه شبكة فرعية تشارك شبكة الرأس فيقع ابناه (الصورة والاسم) في خلاياهما، ولا يلتقط هو اللمس: يلتقطه الابنان ويصعد الحدث إليه. */
 body:not(.ta-inner) .hm-header .profile-chip {
-    display: contents;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
+    min-height: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    pointer-events: none;
+    outline: none;
 }
+body:not(.ta-inner) .hm-header .profile-chip > * { pointer-events: auto; }
 
 body:not(.ta-inner) .hm-header .profile-chip::before,
 body:not(.ta-inner) .hm-header .profile-chip::after { display: none; }
 
 body:not(.ta-inner) .hm-header #headerAvatarDisplay {
-    grid-area: av;
+    grid-column: 1;
+    grid-row: 1 / 3;
+    align-self: center;
     box-sizing: border-box;
     width: var(--hp-av, 66px);
     height: var(--hp-av, 66px);
@@ -543,7 +560,8 @@ body:not(.ta-inner) .hm-header .stats .hm-stat {
 }
 
 body:not(.ta-inner) .hm-header #headerNameDisplay {
-    grid-area: name;
+    grid-column: 2;
+    grid-row: 2;
     cursor: pointer;
     max-width: 132px;
     overflow: hidden;
@@ -564,7 +582,8 @@ body:not(.ta-inner) .hm-header .profile-chip:focus-visible #headerNameDisplay { 
 
 /* مؤشّر تبديل الطالب ⇄ (تضيفه الشيفرة الحالية داخل الزر): شارة صغيرة على زاوية الصورة */
 body:not(.ta-inner) .hm-header .profile-chip .stu-swap {
-    grid-area: av;
+    grid-column: 1;
+    grid-row: 1 / 3;
     align-self: center;
     justify-self: start;
     z-index: 1;
@@ -1357,6 +1376,15 @@ body:not(.ta-inner) .hm-header .stats b { font-weight: 900; font-size: 17px; min
     .hp-subjects > :last-child .hp-art, .hp-activities > :last-child .hp-art { max-width: 150px; height: 82px; max-height: 82px; }
 }
 
+/* اللافتة: في الوضع الليلي ووضع «الحالي» يبقى نصها كريميًّا، فنُعمّق خشبها ليبلغ التباين ≥ ٤٫٥ (في الوضع النهاري الافتراضي يتولّى ui2.css نصًّا كحليًّا) */
+body.dark-mode:not(.ta-inner) .hm-title.hp-sign,
+body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
+    color: #fff8e1;
+    background:
+        repeating-linear-gradient(180deg, rgba(0, 0, 0, 0) 0 11px, rgba(40, 18, 2, .22) 11px 13px),
+        linear-gradient(180deg, #9c5a22 0%, #6b3b14 100%);
+}
+
 /* ---------- السبورة (١٠٢٤+): ارتفاعات أقل لعرض محتوى أكثر دون ازدحام ---------- */
 @media (min-width: 1024px) {
     body:not(.ta-inner) header.hm-header.hm-header { padding: 12px 36px 4px; }
@@ -1534,22 +1562,31 @@ body:not(.ta-inner) .hm-header .stats b { font-weight: 900; font-size: 17px; min
 </div>
 
 <script id="hp-home-js">
-/* المرحلة أ (نموذج بصري): بطاقات المواد الثلاث تنزلق إلى بطاقاتها الفرعية مع إبراز هادئ مؤقت؛ لا شاشات جديدة */
+/* بطاقات المواد الثلاث: تمرير هادئ إلى بطاقاتها الفرعية مع إبراز مؤقت. لا تفتح شاشة ولا تغيّر showScreen ولا تلمس بيانات.
+   تُسجَّل مرة واحدة فقط (الوسم data-hp-bound يمنع التكرار إن أُعيد تنفيذ السكربت). */
 (function () {
     var groups = { arabic: ["letters", "words", "writing"], math: ["numbers", "addition", "subtraction"], deen: ["quran", "hadith", "duas"] };
+    var timers = [];
+    function calm() {
+        return document.body.classList.contains("calm-mode") ||
+            (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    }
     document.querySelectorAll(".hp-big[data-hp-target]").forEach(function (b) {
+        if (b.getAttribute("data-hp-bound")) return;
+        b.setAttribute("data-hp-bound", "1");
         b.addEventListener("click", function () {
             var els = (groups[b.getAttribute("data-hp-target")] || []).map(function (k) {
                 return document.querySelector('.hp-mini[data-hp-key="' + k + '"]');
             }).filter(Boolean);
             if (!els.length) return;
-            var calm = document.body.classList.contains("calm-mode") ||
-                (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-            els[Math.min(1, els.length - 1)].scrollIntoView({ block: "center", behavior: calm ? "auto" : "smooth" });
-            els.forEach(function (e) {
-                e.classList.add("hp-flash");
-                setTimeout(function () { e.classList.remove("hp-flash"); }, 1900);
-            });
+            /* إبراز سابق لم ينتهِ: أزله قبل بدء الجديد */
+            timers.forEach(clearTimeout); timers = [];
+            document.querySelectorAll(".hp-mini.hp-flash").forEach(function (e) { e.classList.remove("hp-flash"); });
+            els[Math.min(1, els.length - 1)].scrollIntoView({ block: "center", behavior: calm() ? "auto" : "smooth" });
+            els.forEach(function (e) { e.classList.add("hp-flash"); });
+            /* لوحة المفاتيح والقارئ الصوتي: انقل التركيز إلى أول بطاقة في المجموعة دون قفزة إضافية */
+            try { els[0].focus({ preventScroll: true }); } catch (e) { /* لا شيء */ }
+            timers.push(setTimeout(function () { els.forEach(function (e) { e.classList.remove("hp-flash"); }); }, 1900));
         });
     });
 })();
