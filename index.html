@@ -3136,7 +3136,32 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
 
             </button>
 
+            <!-- =====================================
+                 🐴 مغامرة الفارس – تعلّم العد (الأعداد ١١–٢٠)
+            ====================================== -->
 
+            <button
+                class="game-launch-card knight-game-card"
+                onclick="startKnightGame()"
+            >
+
+                <div class="game-card-icon">
+                    🛡️
+                </div>
+
+                <h3>
+                    مغامرة الفارس – تعلّم العد
+                </h3>
+
+                <p>
+                    اركب الحصان واجمع النجوم والعملات والورود وعُدّها من ١ إلى ٢٠
+                </p>
+
+                <span>
+                    هيا نلعب ▶
+                </span>
+
+            </button>
 
 
         </div>
@@ -3875,6 +3900,18 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
         <span class="heroes-bar-title">🚗 تحدي أبطال الجمع</span>
     </div>
     <iframe id="heroesFrame" class="heroes-frame" title="تحدي أبطال الجمع" allow="autoplay" data-src="addition-heroes/index.html"></iframe>
+</section>
+
+<!-- =========================================================
+     🐴 مغامرة الفارس – تعلّم العد — لعبة مستقلة تُعرض داخل إطار (knight-counting/)
+     لا تقرأ ولا تكتب بيانات الطلاب أو النجوم؛ الإطار لا يُحمَّل إلا عند فتح الشاشة ويُفرَّغ عند مغادرتها
+========================================================= -->
+<section id="knightGame" class="screen" aria-label="مغامرة الفارس – تعلّم العد">
+    <div class="knight-bar">
+        <button type="button" class="knight-back" onclick="exitKnightGame()" aria-label="رجوع إلى الألعاب">⬅️ رجوع للألعاب</button>
+        <span class="knight-bar-title">🛡️ مغامرة الفارس – تعلّم العد</span>
+    </div>
+    <iframe id="knightFrame" class="knight-frame" title="مغامرة الفارس – تعلّم العد" allow="autoplay" data-src="knight-counting/index.html?level=11"></iframe>
 </section>
 
 <!-- =========================================================
@@ -5782,6 +5819,7 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
 <script src="wbk4.js"></script>
 <script src="nav.js"></script>
 <script src="heroes-app.js"></script>
+<script src="knight-app.js"></script>
 <script src="submarine.js"></script>
 <script src="pwa-install.js"></script>
 <script src="ui2.js"></script>
