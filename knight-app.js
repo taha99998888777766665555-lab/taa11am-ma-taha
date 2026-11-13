@@ -21,6 +21,23 @@
     }
     /* لوحة المفاتيح تعمل داخل اللعبة فور فتحها */
     fr.addEventListener("load", function () { if (loaded) { try { fr.contentWindow.focus(); } catch (e) { /* لا شيء */ } } });
+    /* العمل دون إنترنت: بعد أن تُفتح اللعبة متصلة وتستقر (٨ ثوانٍ كي لا نزاحم تحميلها)
+       نطلب من service worker تخزين بقية ملفاتها (بيئات المستويات الأخرى والأصوات). بأفضل جهد:
+       لا يؤثر فشله على اللعبة ولا على التطبيق، وبعد اكتماله يصبح الطلب فحصًا سريعًا فقط. */
+    var warmTimer = 0;
+    function warm() {
+        try {
+            if (!loaded || !navigator.onLine || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+            var ch = new MessageChannel();
+            ch.port1.onmessage = function (ev) { window.__knightCache = ev.data; };
+            navigator.serviceWorker.controller.postMessage({ type: "CACHE_KNIGHT_GAME" }, [ch.port2]);
+        } catch (e) { /* بصمت */ }
+    }
+    fr.addEventListener("load", function () {
+        if (!loaded) return;
+        clearTimeout(warmTimer);
+        warmTimer = setTimeout(warm, 8000);
+    });
     new MutationObserver(sync).observe(sec, { attributes: true, attributeFilter: ["class"] });
     sync();
 

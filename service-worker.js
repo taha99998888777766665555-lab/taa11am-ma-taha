@@ -3,8 +3,15 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v68";
+const CACHE_VERSION = "taha-app-v69";
 const CACHE_NAME = CACHE_VERSION;
+
+/* لعبة «مغامرة الفارس – تعلّم العد»: كاش مستقل لا يُمسح عند تحديث التطبيق (13 MB لا تُنزَّل من جديد
+   مع كل إصدار). ملفاتها لا تدخل APP_SHELL ولا تُحمَّل عند التثبيت؛ تُخزَّن عند فتح اللعبة فقط.
+   عند تغيير أي ملف في knight-counting/ يُرفع رقم KNIGHT_CACHE ويُعاد توليد knight-assets.js. */
+const KNIGHT_CACHE = "taha-knight-game-v1";
+const KNIGHT_PATH = "/knight-counting/";
+try { importScripts("knight-assets.js"); } catch (e) { /* بصمت: غيابها لا يعطّل التطبيق */ }
 
 const APP_SHELL = [
     "./",
@@ -386,7 +393,7 @@ self.addEventListener("activate", event => {
             .then(keys =>
                 Promise.all(
                     keys
-                        .filter(key => key !== CACHE_NAME)
+                        .filter(key => key !== CACHE_NAME && key !== KNIGHT_CACHE)
                         .map(key => caches.delete(key))
                 )
             )
@@ -396,6 +403,78 @@ self.addEventListener("activate", event => {
     event.waitUntil(ensureLessonAudio().catch(() => {}));
 
     self.clients.claim();
+});
+
+/* =========================================================
+   🛡️ لعبة الفارس: خدمة من كاشها أولًا، وتخزين كامل عند الطلب (بأفضل جهد)
+   - لا علاقة لها بتثبيت التطبيق: أي فشل هنا لا يمس APP_SHELL ولا بقية الألعاب
+   - المفتاح بلا ?query (index.html يُطلب بـ ?level=…&sp=…)
+   - كاش أولًا دون إعادة تحقق بالشبكة (الملفات كبيرة وثابتة بنسخة KNIGHT_CACHE)
+========================================================= */
+function knightKey(url) { return url.split("?")[0].split("#")[0]; }
+
+async function knightResponse(request) {
+    let cache = null;
+    try { cache = await caches.open(KNIGHT_CACHE); } catch (e) { /* بصمت */ }
+    const key = knightKey(request.url);
+    if (cache) {
+        const hit = await cache.match(key).catch(() => null);
+        if (hit) return hit;
+    }
+    try {
+        const response = await fetch(request);
+        if (cache && response && response.status === 200 && !request.headers.has("range")) {
+            cache.put(key, response.clone()).catch(() => {});
+        }
+        return response;
+    } catch (e) {
+        if (request.mode === "navigate" || request.destination === "iframe") {
+            return new Response(
+                '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+                '<body style="font-family:system-ui,sans-serif;direction:rtl;text-align:center;padding:12vh 6vw;background:#bfe3f7;color:#123">' +
+                '<h2>تحتاج اللعبة إلى اتصال بالإنترنت أول مرة</h2><p>افتح اللعبة مرة واحدة وأنت متصل، وبعدها تعمل دون إنترنت.</p></body>',
+                { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } }
+            );
+        }
+        return Response.error();
+    }
+}
+
+async function cacheKnightGame() {
+    const list = Array.isArray(self.KNIGHT_ASSETS) ? self.KNIGHT_ASSETS : [];
+    const cache = await caches.open(KNIGHT_CACHE);
+    const todo = [];
+    for (const url of list) {
+        if (!(await cache.match(knightKey(new URL(url, self.location).href)))) todo.push(url);
+    }
+    const missing = [];
+    for (let i = 0; i < todo.length; i += 3) {
+        await Promise.all(todo.slice(i, i + 3).map(async url => {
+            for (let t = 0; t < 3; t++) {
+                try {
+                    const response = await fetch(new Request(url, { cache: "reload" }));
+                    if (response && response.status === 200) {
+                        await cache.put(knightKey(new URL(url, self.location).href), response);
+                        return;
+                    }
+                } catch (e) { /* نعيد المحاولة */ }
+                await wait(500 * (t + 1));
+            }
+            missing.push(url);
+        }));
+    }
+    return { total: list.length, missing: missing };
+}
+
+/* الصفحة تطلب تخزين اللعبة كاملة (بعد أن فُتحت متصلة). فشل ملف لا يؤثر إلا على إكمال التخزين */
+self.addEventListener("message", event => {
+    if (!event.data || event.data.type !== "CACHE_KNIGHT_GAME") return;
+    const port = event.ports && event.ports[0];
+    event.waitUntil(
+        cacheKnightGame()
+            .then(res => { if (port) port.postMessage(res); })
+            .catch(err => { if (port) port.postMessage({ error: String(err && err.message || err) }); })
+    );
 });
 
 /* الصفحة تطلب فحص أصوات الدرس وإكمال الناقص (يعمل فقط عند وجود اتصال) */
@@ -422,6 +501,12 @@ self.addEventListener("fetch", event => {
 
     /* تجاهل طلبات المصادر الخارجية (مثل أصوات النطق) */
     if (!request.url.startsWith(self.location.origin)) return;
+
+    /* لعبة الفارس: مسار مستقل بكاشها (لا يمس بقية الطلبات) */
+    if (request.url.indexOf(KNIGHT_PATH) !== -1) {
+        event.respondWith(knightResponse(request));
+        return;
+    }
 
     event.respondWith(
         caches.match(request).then(cachedResponse => {
