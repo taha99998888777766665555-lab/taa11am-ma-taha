@@ -9,7 +9,7 @@ const CACHE_NAME = CACHE_VERSION;
 /* لعبة «مغامرة الفارس – تعلّم العد»: كاش مستقل لا يُمسح عند تحديث التطبيق (13 MB لا تُنزَّل من جديد
    مع كل إصدار). ملفاتها لا تدخل APP_SHELL ولا تُحمَّل عند التثبيت؛ تُخزَّن عند فتح اللعبة فقط.
    عند تغيير أي ملف في knight-counting/ يُرفع رقم KNIGHT_CACHE ويُعاد توليد knight-assets.js. */
-const KNIGHT_CACHE = "taha-knight-game-v2";
+const KNIGHT_CACHE = "taha-knight-game-v3";
 const KNIGHT_PATH = "/knight-counting/";
 try { importScripts("knight-assets.js"); } catch (e) { /* بصمت: غيابها لا يعطّل التطبيق */ }
 
