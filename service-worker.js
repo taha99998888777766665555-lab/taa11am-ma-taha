@@ -431,7 +431,9 @@ async function knightResponse(request) {
         if (hit) return hit;
     }
     try {
-        const response = await fetch(request);
+        /* cache: "reload": لا نأخذ نسخة قديمة من كاش المتصفح (HTTP) ونثبّتها في كاش اللعبة؛
+           وإلا بقي لاعب فتح اللعبة قبل التحديث بدقائق على النسخة القديمة */
+        const response = await fetch(request.method === "GET" ? new Request(request.url, { cache: "reload" }) : request);
         if (cache && response && response.status === 200 && !request.headers.has("range")) {
             cache.put(key, response.clone()).catch(() => {});
         }
