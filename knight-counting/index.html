@@ -562,7 +562,7 @@ function hideCard(){card.classList.remove('show');}
 const LEVELS={};for(let n=11;n<=20;n++)LEVELS[n]={id:n,target:n,item:ITEM_OF[envFor(n)],itemName:ITEMS[ITEM_OF[envFor(n)]].one,env:envFor(n)};   // all open, no locks
 let level=LEVELS[LV0],NT=level.target;
 let slowT=0,lap=1,lapT=0,paused=false;const counted=new Set();
-const SPEEDS={slow:0.7,normal:0.9,fast:1.15};
+const SPEEDS={slow:0.805,normal:1.035,fast:1.3225};
 const SPEED0=+(qs.get('sp')||SPEEDS.normal);speedMul=SPEED0;gstate='ready';sp=0;
 const HIT_A=0.8*U,HIT_B=0.48*U;     // generous elliptical catch zone: along-road / sideways
 function hit(st){const a=(sPos-st.s)/HIT_A,b=(lat-st.off)/HIT_B;return a*a+b*b<1;}
