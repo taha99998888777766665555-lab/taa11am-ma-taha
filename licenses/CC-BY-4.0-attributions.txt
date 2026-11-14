@@ -1,0 +1,24 @@
+Creative Commons Attribution 4.0 (CC BY 4.0) — works used in the game
+=======================================================================
+License deed:       https://creativecommons.org/licenses/by/4.0/
+Full legal code:    https://creativecommons.org/licenses/by/4.0/legalcode
+
+1) Horse
+   Title:    Animated Rigged Horse With Saddle
+   Author:   Ayan (https://sketchfab.com/ayanahmadbutt)
+   Source:   https://sketchfab.com/3d-models/animated-rigged-horse-with-saddle-b08743c2c4734fb98a4e0a2f5767c318
+   License:  CC BY (the model's Sketchfab page links to CC BY 4.0; the same is recorded inside the file's metadata)
+   Changes:  None to the model file (knight-counting/horse.glb is the file as downloaded). The game only places,
+             scales and animates it, and seats the knight on it.
+
+2) Knight
+   Title:    The Cartoon Knight!
+   Author:   Lucas DM
+   Source:   https://blendswap.com/blend/25094   (page states: CC-BY)
+   Concept:  the BlendSwap page says the character is based on a concept by Fer Lerena
+   Changes:  Modified for this project: converted to glTF/GLB, recoloured (royal blue and gold),
+             the sword removed, adjusted for a seated riding pose, and re-exported
+             (knight-counting/knight_v3.glb and knight_baseColor_v3.png). The modifications were made
+             by this project; the original author did not make or endorse them.
+
+No warranties are given. The licensors do not endorse this app.

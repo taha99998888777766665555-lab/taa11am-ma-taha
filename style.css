@@ -16582,3 +16582,16 @@ body.dark-mode .hm-install-dlg__card { background: #1d2547; color: #f1f3ff; }
 @media (max-width: 480px) { #knightGame .knight-bar-title { display: none; } #knightGame .knight-back { padding: 0 18px; } }
 #knightGame .knight-frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 0; background: #bfe3f7; display: block; }
 @media (max-height: 460px) { #knightGame .knight-bar { height: 52px; } #knightGame .knight-back { height: 44px; font-size: 18px; } }
+
+/* ── صفحة حقوق ومصادر الأصول ── */
+#assetCredits .credits-card { max-width: 760px; margin: 0 auto; text-align: right; }
+#assetCredits .credits-intro { line-height: 1.8; margin: 0 0 12px; }
+#assetCredits .credits-item { border: 1px solid rgba(0, 0, 0, .12); border-radius: 14px; padding: 10px 14px; margin: 0 0 10px; background: rgba(255, 255, 255, .6); }
+#assetCredits .credits-item h3 { margin: 0 0 6px; font-size: 18px; }
+#assetCredits .credits-item p { margin: 4px 0; line-height: 1.8; font-size: 16px; overflow-wrap: anywhere; }
+#assetCredits .credits-item a { color: #0b5cad; text-decoration: underline; padding: 6px 2px; display: inline-block; min-height: 32px; }
+#assetCredits .credits-files a { margin-inline-end: 14px; }
+#assetCredits .credits-back, #assetCredits .secondary { min-height: 52px; }
+.credits-link { min-height: 48px; }
+body.dark-mode #assetCredits .credits-item, body.night #assetCredits .credits-item { background: rgba(255, 255, 255, .08); }
+body.dark-mode #assetCredits .credits-item a, body.night #assetCredits .credits-item a { color: #8fc4ff; }

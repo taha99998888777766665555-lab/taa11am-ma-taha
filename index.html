@@ -3168,6 +3168,13 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
 
 
         <button
+            class="secondary credits-link"
+            onclick="openAssetCredits('games')"
+        >
+            📜 حقوق ومصادر الأصول
+        </button>
+
+        <button
             class="secondary"
             onclick="showScreen('home')"
         >
@@ -5741,6 +5748,68 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
 
 
 <!-- =========================================================
+     📜 حقوق ومصادر الأصول — نسب الأعمال المستخدمة في لعبة «مغامرة الفارس» وتراخيصها
+     نصوص التراخيص الكاملة في مجلد licenses/ . الصفحة للمعلم وولي الأمر، ولا تظهر أثناء اللعب.
+========================================================= -->
+<section id="assetCredits" class="screen" aria-label="حقوق ومصادر الأصول">
+<div class="card credits-card">
+    <h2>📜 حقوق ومصادر الأصول</h2>
+    <p class="credits-intro">الأعمال التالية مستخدمة في لعبة «مغامرة الفارس – تعلّم العد»، ونشكر أصحابها. جميعها تسمح بالاستخدام في تطبيق تعليمي مجاني بشرط ما يُذكر أدناه.</p>
+
+    <div class="credits-item">
+        <h3>🐴 الحصان</h3>
+        <p>«Animated Rigged Horse With Saddle» — المؤلف: <a href="https://sketchfab.com/ayanahmadbutt" target="_blank" rel="noopener noreferrer">Ayan</a></p>
+        <p>المصدر: <a href="https://sketchfab.com/3d-models/animated-rigged-horse-with-saddle-b08743c2c4734fb98a4e0a2f5767c318" target="_blank" rel="noopener noreferrer">صفحة النموذج على Sketchfab</a></p>
+        <p>الترخيص: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></p>
+        <p>التعديلات: لم يُعدَّل ملف النموذج؛ تُحرِّكه اللعبة وتضبط حجمه فقط.</p>
+    </div>
+
+    <div class="credits-item">
+        <h3>🛡️ الفارس</h3>
+        <p>«The Cartoon Knight!» — المؤلف: Lucas DM — التصميم مبني على مفهوم لـ Fer Lerena كما تذكر صفحة المصدر</p>
+        <p>المصدر: <a href="https://blendswap.com/blend/25094" target="_blank" rel="noopener noreferrer">صفحة النموذج على BlendSwap</a></p>
+        <p>الترخيص: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY</a></p>
+        <p>التعديلات: عُدِّل النموذج لهذا التطبيق — تحويل إلى GLB، وتغيير الألوان (أزرق وذهبي)، وحذف السيف، وضبط وضعية الركوب. التعديلات من إعداد التطبيق ولا ينسبها المؤلف لنفسه.</p>
+    </div>
+
+    <div class="credits-item">
+        <h3>🌳 مجسمات البيئات (Kenney)</h3>
+        <p>حزم <a href="https://kenney.nl/assets/nature-kit" target="_blank" rel="noopener noreferrer">Nature Kit</a> و<a href="https://kenney-assets.itch.io/platformer-kit" target="_blank" rel="noopener noreferrer">Platformer Kit</a> و<a href="https://www.kenney.nl/assets/castle-kit" target="_blank" rel="noopener noreferrer">Castle Kit</a> و<a href="https://www.kenney.nl/assets/fantasy-town-kit" target="_blank" rel="noopener noreferrer">Fantasy Town Kit</a> من إعداد Kenney (www.kenney.nl)</p>
+        <p>الترخيص: <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer">CC0</a> (ملكية عامة، ولا يُشترط ذكر المصدر؛ نذكره شكرًا)</p>
+    </div>
+
+    <div class="credits-item">
+        <h3>🔤 خط Readex Pro</h3>
+        <p>المصدر: <a href="https://github.com/ThomasJockin/readexpro" target="_blank" rel="noopener noreferrer">The Readex Pro Project Authors</a> — الترخيص: SIL Open Font License 1.1</p>
+        <p>التعديل: أُعيد رسم شكل الصفر العربي «٠» ليظهر نقطة مستديرة واضحة للطفل.</p>
+    </div>
+
+    <div class="credits-item">
+        <h3>⚙️ مكتبة three.js</h3>
+        <p>المصدر: <a href="https://github.com/mrdoob/three.js" target="_blank" rel="noopener noreferrer">three.js</a> (الإصدار r160) — حقوق © ٢٠١٠–٢٠٢٣ لمؤلفي three.js — الترخيص: MIT</p>
+    </div>
+
+    <div class="credits-item">
+        <h3>🔊 الأصوات</h3>
+        <p>أرقام اللعبة وعبارة «أحسنت يا بطل» هي تسجيلات التطبيق نفسها، ولا أصوات خارجية فيها.</p>
+    </div>
+
+    <div class="credits-item">
+        <h3>📄 نصوص التراخيص الكاملة</h3>
+        <p class="credits-files">
+            <a href="licenses/OFL-1.1-ReadexPro.txt" target="_blank" rel="noopener">OFL (الخط)</a>
+            <a href="licenses/MIT-three.js.txt" target="_blank" rel="noopener">MIT (three.js)</a>
+            <a href="licenses/CC-BY-4.0-attributions.txt" target="_blank" rel="noopener">CC BY (الحصان والفارس)</a>
+            <a href="licenses/CC0-Kenney.txt" target="_blank" rel="noopener">CC0 (Kenney)</a>
+        </p>
+    </div>
+
+    <button type="button" class="primary credits-back" onclick="exitAssetCredits()">⬅️ رجوع</button>
+    <button type="button" class="secondary" onclick="showScreen('home')">🏠 الرئيسية</button>
+</div>
+</section>
+
+<!-- =========================================================
      ⚙️ الإعدادات
 ========================================================= -->
 
@@ -5796,6 +5865,8 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
     >
         📲 تثبيت التطبيق على الجهاز
     </button>
+
+    <button class="secondary credits-link" onclick="openAssetCredits('settings')">📜 حقوق ومصادر الأصول</button>
 
     <button class="secondary" onclick="showScreen('home')">🏠 الرئيسية</button>
 

@@ -266,6 +266,15 @@ const LESSON_AUDIO = [
     "./assets/audio/educational/phrases/correct_short.mp3"
 ];
 
+/* نصوص التراخيص (صفحة «حقوق ومصادر الأصول») — تُخزَّن بأفضل جهد مع LETTER_ART؛ فشلها لا يُفشل التثبيت */
+const CREDIT_FILES = [
+    "./licenses/README.txt",
+    "./licenses/OFL-1.1-ReadexPro.txt",
+    "./licenses/MIT-three.js.txt",
+    "./licenses/CC-BY-4.0-attributions.txt",
+    "./licenses/CC0-Kenney.txt"
+];
+
 /* الدرس الثاني: التسجيلات المعتمدة فقط (من wbk2-data.js — مصدر واحد للحقيقة).
    ملف غير معتمد لا يُخزَّن ولا يُشغَّل. فشل الاستيراد لا يُفشل التثبيت. */
 try {
@@ -367,7 +376,7 @@ self.addEventListener("install", event => {
                     )
                 ).then(() =>
                     Promise.allSettled(
-                        LETTER_ART.map(url =>
+                        LETTER_ART.concat(CREDIT_FILES).map(url =>
                             fetch(url).then(response =>
                                 response && response.ok ? cache.put(url, response) : null
                             )

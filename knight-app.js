@@ -43,4 +43,9 @@
 
     window.startKnightGame = function () { showScreen("knightGame"); };
     window.exitKnightGame = function () { showScreen("games"); };
+
+    /* صفحة «حقوق ومصادر الأصول»: تُفتح من الألعاب أو الإعدادات ويعود الزر إلى مكان الفتح */
+    var creditsFrom = "games";
+    window.openAssetCredits = function (from) { creditsFrom = from || "games"; showScreen("assetCredits"); };
+    window.exitAssetCredits = function () { showScreen(creditsFrom); };
 })();

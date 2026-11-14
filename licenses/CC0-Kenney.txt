@@ -1,0 +1,22 @@
+Kenney 3D assets — Creative Commons Zero (CC0 1.0)
+==================================================
+Used in the game "مغامرة الفارس – تعلّم العد" (models loaded from knight-counting/pack/):
+  - Nature Kit          https://kenney.nl/assets/nature-kit            (CC0, per the kit's page)
+  - Platformer Kit      https://kenney-assets.itch.io/platformer-kit    (CC0 1.0, per the kit's page)
+  - Castle Kit          https://www.kenney.nl/assets/castle-kit         (CC0, per the kit's page)
+  - Fantasy Town Kit    https://www.kenney.nl/assets/fantasy-town-kit   (CC0; license file shipped in knight-counting/pack/Town/)
+
+Legal text: https://creativecommons.org/publicdomain/zero/1.0/
+Credit to "Kenney" (www.kenney.nl) is not required by CC0; it is given here as thanks.
+
+The license file shipped with the Fantasy Town Kit says:
+  "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/
+   You can use this content for personal, educational, and commercial purposes.
+   Support by crediting 'Kenney' or 'www.kenney.nl' (this is not a requirement)"
+
+Not used by the game but present in knight-counting/pack/MiniForest/ (6 files): the published
+"Mini Forest" pack page (https://opengameart.org/content/mini-forest) credits Kenney under CC0, but
+its page does not list individual model names, so these 6 file names could not be matched to the pack's list.
+They are not referenced by the game's code. No further attribution is claimed for them.
+
+Textures/colormap.png in the Platformer and Castle folders are 1x1 white placeholders added by this project.
