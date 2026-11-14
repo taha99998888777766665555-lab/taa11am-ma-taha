@@ -9,7 +9,7 @@ html,body{font-family:RX,system-ui,'Segoe UI',Tahoma,sans-serif;margin:0;height:
 #ui button.on{background:#1f7a4d;color:#fff}
 #hud{position:fixed;bottom:8px;right:8px;left:8px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;font-size:13px;color:#123}
 #pad button{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));width:clamp(96px,23vmin,176px);height:clamp(96px,23vmin,176px);border-radius:50%;border:5px solid #fff;background:rgba(31,122,77,.62);color:#fff;font-size:clamp(46px,12vmin,88px);line-height:1;display:flex;align-items:center;justify-content:center;padding:0 0 .08em;box-shadow:0 6px 18px #0004;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent;z-index:5}
-#pad #bL{left:max(16px,env(safe-area-inset-left))}#pad #bR{right:max(16px,env(safe-area-inset-right))}
+#pad #bJ{right:max(16px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + clamp(96px,23vmin,176px) + 18px);background:rgba(36,99,200,.68);font-size:clamp(40px,10vmin,76px)}#pad #bJ.off{opacity:.55}#pad #bL{left:max(16px,env(safe-area-inset-left))}#pad #bR{right:max(16px,env(safe-area-inset-right))}
 #pad button.hint{animation:hint 1s ease-in-out infinite;border-color:#ffd60a}@keyframes hint{50%{transform:scale(1.1);background:rgba(255,176,0,.85)}}
 @media (prefers-reduced-motion:reduce){#pad button.hint{animation:none;background:rgba(255,176,0,.85)}}
 #fade{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .5s;z-index:7}#fade.on{opacity:.92}
@@ -53,7 +53,7 @@ html,body{font-family:RX,system-ui,'Segoe UI',Tahoma,sans-serif;margin:0;height:
 .dev #ui,.dev #hud{display:flex}#ui,#hud{display:none}
 #hud div{background:#fffd;border-radius:8px;padding:5px 10px;white-space:pre-line}
 </style>
-<canvas id="c"></canvas><div id="ui"></div><div id="top"><button id="mnu" aria-label="القائمة">☰<span class="lb"> المستويات</span></button><button id="snd" aria-label="الصوت">🔊</button><button id="rst">↻<span class="lb"> من البداية</span></button></div><div id="pad"><button id="bL" aria-label="يسار">◀</button><button id="bR" aria-label="يمين">▶</button></div><div id="cnt" role="status" aria-live="polite"><svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="sg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3a0"/><stop offset="1" stop-color="#ffb703"/></linearGradient></defs><path d="M50 6l13 28 31 4-23 21 6 31-27-15-27 15 6-31L6 38l31-4z" fill="url(#sg1)" stroke="#c77700" stroke-width="5" stroke-linejoin="round"/></svg><span id="cn" class="zero">٠</span><span id="cof">من ١١</span></div><div id="pop" aria-hidden="true"></div><div id="fade"></div><div id="toast"></div><div id="menu"><div class="box"><h2>اختر المستوى</h2><div class="row" id="lvls"></div><h2>سرعة الحصان</h2><div class="row sp" id="spds"></div><button class="close" id="mclose">متابعة</button></div></div><div id="conf"></div><div id="card"><div class="st">⭐</div><div class="tx"></div><div class="sub" id="csub"></div><button id="again" style="display:none">العب مرة أخرى</button></div><div id="start"><div class="box"><h1>عدّ النجوم مع الفارس</h1><p id="stp">اجمع النجوم وعُدّها من ١ إلى ١١</p><button id="go">ابدأ ◀</button></div></div><div id="hud"><div id="info">جارٍ التحميل…</div><div id="fps"></div></div>
+<canvas id="c"></canvas><div id="ui"></div><div id="top"><button id="mnu" aria-label="القائمة">☰<span class="lb"> المستويات</span></button><button id="snd" aria-label="الصوت">🔊</button><button id="rst">↻<span class="lb"> من البداية</span></button></div><div id="pad"><button id="bL" aria-label="يسار">◀</button><button id="bJ" aria-label="قفز">⬆️</button><button id="bR" aria-label="يمين">▶</button></div><div id="cnt" role="status" aria-live="polite"><svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="sg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3a0"/><stop offset="1" stop-color="#ffb703"/></linearGradient></defs><path d="M50 6l13 28 31 4-23 21 6 31-27-15-27 15 6-31L6 38l31-4z" fill="url(#sg1)" stroke="#c77700" stroke-width="5" stroke-linejoin="round"/></svg><span id="cn" class="zero">٠</span><span id="cof">من ١١</span></div><div id="pop" aria-hidden="true"></div><div id="fade"></div><div id="toast"></div><div id="menu"><div class="box"><h2>اختر المستوى</h2><div class="row" id="lvls"></div><h2>سرعة الحصان</h2><div class="row sp" id="spds"></div><button class="close" id="mclose">متابعة</button></div></div><div id="conf"></div><div id="card"><div class="st">⭐</div><div class="tx"></div><div class="sub" id="csub"></div><button id="again" style="display:none">العب مرة أخرى</button></div><div id="start"><div class="box"><h1>عدّ النجوم مع الفارس</h1><p id="stp">اجمع النجوم وعُدّها من ١ إلى ١١</p><button id="go">ابدأ ◀</button></div></div><div id="hud"><div id="info">جارٍ التحميل…</div><div id="fps"></div></div>
 <script type="module">
 import * as THREE from './js/three.module.js';
 import {GLTFLoader} from './js/jsm/loaders/GLTFLoader.js';
@@ -499,10 +499,26 @@ function limAt(s_){if(!HASB)return LIM;const d=Math.abs(s_-SB);return LIM-(LIM-L
 const qYaw=new THREE.Quaternion(),qRoll=new THREE.Quaternion(),AXY=V(0,1,0),AXX=V(1,0,0);
 function place(s){s=Math.min(Math.max(s,0),L);const pa=pathAt(s);rig.matrix.copy(yawBasis(s,pa));rig.matrix.decompose(rig.position,rig.quaternion,rig.scale);
  const k=latV/VL;rig.quaternion.premultiply(qYaw.setFromAxisAngle(AXY,-0.2*k));rig.quaternion.multiply(qRoll.setFromAxisAngle(AXX,ROLLS*0.09*k));
- rig.position.set(pa.p.x-pa.t.z*lat,roadH(s)-HORSE.footMin+U*0.01-GK*(lowAt(animT)-LOWMIN),pa.p.z+pa.t.x*lat);rig.updateMatrixWorld(true);
+ rig.quaternion.multiply(qPit.setFromAxisAngle(AXZ,jumpPitch()));rig.position.set(pa.p.x-pa.t.z*lat,roadH(s)-HORSE.footMin+U*0.01-GK*(lowAt(animT)-LOWMIN)+jumpH(),pa.p.z+pa.t.x*lat);rig.updateMatrixWorld(true);
  sun.position.set(pa.p.x+U*40,U*70+roadH(s),pa.p.z-U*25);sun.target.position.set(pa.p.x,roadH(s),pa.p.z);
  fill.position.set(pa.p.x-pa.t.z*U*6-pa.t.x*U*3,roadH(s)+U*4,pa.p.z+pa.t.x*U*6-pa.t.z*U*3);fill.target.position.set(pa.p.x,roadH(s)+U*0.6,pa.p.z);}
 const ROLLS=-1;
+/* ---------- jump (child-triggered only) ---------- */
+const bJ=document.getElementById('bJ');const qPit=new THREE.Quaternion(),AXZ=V(0,0,1);const JD=1.0,JHT=0.55*U,PMAX=+(qs.get('jpitch')||0.16);let JT=-1;
+const jU=()=>JT<0?0:Math.min(1,JT/JD);
+function jumpH(){if(JT<0)return 0;const u=jU();return JHT*(1-(2*u-1)*(2*u-1));}
+function jumpPitch(){if(JT<0)return 0;const u=jU();return PMAX*Math.sin(2*Math.PI*u);}
+function jumpW(){if(JT<0)return 0;const u=jU();return sm(0,0.22,u)*(1-sm(0.78,1,u));}
+function jump(){if(gstate!=='run'||paused||JT>=0||!playing)return false;JT=0;bJ.classList.add('on');return true;}
+let PFLY=0;{let best=-1;for(let k=0;k<96;k++){const t=k*DUR/96;if(t<WB||t>=LP)continue;let tot=0;trk.forEach(tr=>{tot+=tr[k][2]-Math.min(...tr.map(q=>q[2]));});if(tot>best){best=tot;PFLY=t;}}}
+const jP=new Float32Array(HB.length*3),jQ=new Float32Array(HB.length*4),jkp=V(0,0,0),jkq=new THREE.Quaternion(),jqa=new THREE.Quaternion();
+function jumpPose(){const w=jumpW();if(w<=0)return;
+ HB.forEach((b,i)=>{jP[i*3]=b.position.x;jP[i*3+1]=b.position.y;jP[i*3+2]=b.position.z;jQ[i*4]=b.quaternion.x;jQ[i*4+1]=b.quaternion.y;jQ[i*4+2]=b.quaternion.z;jQ[i*4+3]=b.quaternion.w;});
+ jkp.copy(KG.position);jkq.copy(KG.quaternion);const ks=KG.scale.x;
+ const pp=PFLY*LP/DUR;mixer.setTime(PFLY);ridePose(pp);
+ HB.forEach((b,i)=>{b.position.set(jP[i*3]+(b.position.x-jP[i*3])*w,jP[i*3+1]+(b.position.y-jP[i*3+1])*w,jP[i*3+2]+(b.position.z-jP[i*3+2])*w);jqa.set(jQ[i*4],jQ[i*4+1],jQ[i*4+2],jQ[i*4+3]).slerp(b.quaternion,w);b.quaternion.copy(jqa);});
+ const e=KG.scale.x;KG.position.lerpVectors(jkp,KG.position,w);KG.quaternion.copy(jkq).slerp(KG.quaternion,w);KG.scale.setScalar(ks+(e-ks)*w);
+ kmix.setTime(ph(animT)*DUR/LP);}
 function updateCam(dt,snap){const pa=pathAt(sPos),p=pa.p,t=pa.t;const y=roadH(sPos);const lx=-t.z*lat,lz=t.x*lat;
  const port=innerWidth<innerHeight,CD=+(qs.get('cd')||(port?2.5:2.0)),CH=+(qs.get('ch')||(port?1.6:1.5)),CA=+(qs.get('ca')||(port?2.4:2.4)),CL=+(qs.get('cl')||(port?0.55:0.6));
  const want=V(p.x+lx*0.6-t.x*U*CD,y+U*CH,p.z+lz*0.6-t.z*U*CD),look=V(p.x+lx*0.85+t.x*U*CA,y+U*CL,p.z+lz*0.85+t.z*U*CA);
@@ -573,7 +589,7 @@ function collect(st,k){if(st.done||counted.has(k))return;st.done=true;counted.ad
  sfx('plop');sayNum(n);                      // same order as the submarine: short effect, then the number's recording
  updateCounter(true);popNumber(n);startBurst(st.g.position,1);flyStar(st.g.position);const bf=bufs[NUMF[n]];slowT=Math.max(1.0,(bf?bf.duration:0.8)+0.3);
  if(n===NT){gstate='win';cardT0=gT;sfx('win');sayPhrase();}}
-function resetGame(){startEl.style.display='none';audioReset();sPos=U*2;animT=sPos/GROUND_SPEED;lat=latV=steer=0;sp=0.3;gstate='run';gT=0;collected=0;slowT=0;lap=1;counted.clear();hideCard();popEl.classList.remove('go');conf.innerHTML='';bT=-1;burst.visible=false;$('fade').classList.remove('on');$('toast').classList.remove('show');updateCounter(false);
+function resetGame(){JT=-1;bJ.classList.remove('on');startEl.style.display='none';audioReset();sPos=U*2;animT=sPos/GROUND_SPEED;lat=latV=steer=0;sp=0.3;gstate='run';gT=0;collected=0;slowT=0;lap=1;counted.clear();hideCard();popEl.classList.remove('go');conf.innerHTML='';bT=-1;burst.visible=false;$('fade').classList.remove('on');$('toast').classList.remove('show');updateCounter(false);
  stars.forEach(st=>{st.done=false;st.anim=-1;st.g.visible=true;st.inner.scale.setScalar(st.sc);st.halo.scale.setScalar(HS);});layoutAll();place(sPos);updateCam(0,true);}
 function startLevel(n){if(envFor(n)!==ENV&&!qs.get('noreload')){const p=new URLSearchParams(location.search);p.set('level',n);p.delete('env');p.set('sp',String(speedMul));location.replace(location.pathname+'?'+p.toString());return;}applyLevel(n);resetGame();}
 let lapDone=true;function remMsg(r){return 'باقي '+countWord(r)+' '+itemInfo().emoji;}
@@ -606,8 +622,8 @@ function gameStep(dt){gT+=dt;const run=gstate==='run';
  if(gstate==='win'&&gT-cardT0>0.7&&!card.classList.contains('show')){showCard('أحسنت! جمعت '+ar(NT)+' '+itemInfo().many,'',true,'🏆');confetti();startBurst(stars[NT-1].g.position,2);}
  stars.forEach(st=>{if(st.anim>=0){st.anim+=dt;const u=Math.min(1,st.anim/0.5);st.inner.scale.setScalar(st.sc*(1+1.4*u));st.halo.scale.setScalar(HS*(1+u*0.9));st.inner.rotation.y+=dt*14;if(u>=1)st.g.visible=false;}});
  if(bT>=0){bT+=dt;const k=bT/0.9;for(let i=0;i<BN;i++){bP[i*3]+=bV[i].x*dt;bP[i*3+1]+=bV[i].y*dt-U*1.2*dt*bT;bP[i*3+2]+=bV[i].z*dt;bV[i].multiplyScalar(Math.exp(-dt*2.5));}burst.geometry.attributes.position.needsUpdate=true;burst.material.opacity=Math.max(0,1-k);if(k>=1){bT=-1;burst.visible=false;}}}
-function frame(dt){if(playing&&!paused&&dt>0)gameStep(dt);if(envTick)envTick(dt);
- applyPose(animT);place(sPos);horse.updateMatrixWorld(true);KG.updateMatrixWorld(true);
+function frame(dt){if(playing&&!paused&&dt>0){gameStep(dt);if(JT>=0){JT+=dt;if(JT>=JD){JT=-1;bJ.classList.remove('on');}}}if(envTick)envTick(dt);
+ applyPose(animT);jumpPose();place(sPos);horse.updateMatrixWorld(true);KG.updateMatrixWorld(true);
  const now=performance.now()/1000;stars.forEach(st=>{if(st.anim<0){const dd=Math.hypot(st.g.position.x-cam.position.x,st.g.position.z-cam.position.z);st.inner.scale.setScalar(st.sc*(1+1.1*cl01((dd-9*U)/(30*U)))*(st.rose?0.55+0.45*cl01((dd-1.5*U)/(3.5*U)):1));st.inner.rotation.y=st.spin==='wobble'?Math.sin(now*1.7+st.ph)*0.75:now*1.6+st.ph;st.g.position.y=st.y0+Math.sin(now*2+st.ph)*U*0.06;}});
  updNature(now);
  if(camMode==='chase')updateCam(dt,false);else if(camMode==='side')sideCam(dt,false);else ctl.update();}
@@ -616,9 +632,11 @@ const bL=document.getElementById('bL'),bR=document.getElementById('bR');
 function bind(b,key){const on=e=>{e.preventDefault();audio();inp[key]=1;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}};const off=e=>{inp[key]=0;b.classList.remove('on');};
  b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);b.addEventListener('contextmenu',e=>e.preventDefault());}
 bind(bL,'L');bind(bR,'R');
+bJ.addEventListener('pointerdown',e=>{e.preventDefault();audio();jump();});bJ.addEventListener('contextmenu',e=>e.preventDefault());
 const KM_={ArrowLeft:'L',ArrowRight:'R',a:'L',d:'R',A:'L',D:'R'};
 addEventListener('keydown',e=>{const k=KM_[e.key];if(k){e.preventDefault();audio();inp[k]=1;(k==='L'?bL:bR).classList.add('on');}});
 addEventListener('keyup',e=>{const k=KM_[e.key];if(k){inp[k]=0;(k==='L'?bL:bR).classList.remove('on');}});
+addEventListener('keydown',e=>{if(e.key===' '||e.code==='Space'){if(gstate==='run'&&startEl.style.display==='none'){e.preventDefault();if(!e.repeat){audio();jump();}}}});
 addEventListener('blur',()=>{inp.L=inp.R=0;bL.classList.remove('on');bR.classList.remove('on');});
 document.getElementById('rst').onclick=()=>{audio();resetGame();};againBtn.onclick=()=>{audio();resetGame();};
 function begin(){audio();startEl.style.display='none';resetGame();}
@@ -658,8 +676,8 @@ window.api={setS:s=>{sPos=s;animT=s/GROUND_SPEED;frame(0);updateCam(0,true);},se
    out.push({t:+t.toFixed(3),hipsMinusSaddle:d.toArray().map(x=>+x.toFixed(4)),handsMidToRein:+a.clone().add(b).multiplyScalar(0.5).distanceTo(rx).toFixed(3),reinAnchor:rx.toArray().map(x=>+x.toFixed(2))});}
   const dx=out.map(o=>o.hipsMinusSaddle),mn=[0,1,2].map(i=>Math.min(...dx.map(a=>a[i]))),mx=[0,1,2].map(i=>Math.max(...dx.map(a=>a[i])));const hr2=out.map(o=>o.handsMidToRein);
   return{hipsOffsetRange:mn.map((x,i)=>+(mx[i]-x).toFixed(4)),handsToReinMin:Math.min(...hr2),handsToReinMax:Math.max(...hr2),samples:out.length}},
- loopInfo:()=>LOOPINFO,v3:{state:()=>({env:ENV,item:level.item,levelId:level.id,NT,lap,paused,speedMul,collected,slowT,counted:[...counted],sPos,lat,latV,steer,sp,gstate,LIM,LIMB,limNow:limAt(sPos),U,HALF,L,SB,stars:stars.map(q=>({s:q.s,off:q.off,done:q.done}))}),press:(k,v)=>{inp[k]=v;},collectStar:k=>collect(stars[k],k),startLevel,SPEEDS,remaining:()=>remainingList().length,toast:()=>({show:$('toast').classList.contains('show'),tx:$('toast').textContent}),hint:()=>({L:bL.classList.contains('hint'),R:bR.classList.contains('hint')}),bufInfo:()=>Object.fromEntries(Object.entries(bufs).map(([f,b])=>{const d=b.getChannelData(0);let pk=0,ss=0;for(let i=0;i<d.length;i++){const v=Math.abs(d[i]);if(v>pk)pk=v;ss+=d[i]*d[i];}return[f,{dur:+b.duration.toFixed(3),peak:+pk.toFixed(3),rms:+Math.sqrt(ss/d.length).toFixed(4),sr:b.sampleRate}]})),audioLog:aLog,sayLog,audioState:()=>({ctx:AC&&AC.state,loaded:Object.keys(bufs).length,missing:Object.keys(missing),queue:Qu.length,muted}),audioInit:audio,cnt:()=>cn.textContent,popText:()=>popEl.textContent,cardText:()=>({show:card.classList.contains('show'),tx:card.querySelector('.tx').textContent,sub:csub.textContent,btn:againBtn.style.display}),set:(s_,l_)=>{sPos=s_;lat=l_;latV=0;steer=0;},reset:resetGame,step:(dt)=>{frame(dt);},cardShown:()=>card.classList.contains('show'),hit:(st)=>hit(st),pathAt,place,HIT:[HIT_A,HIT_B],tick:(n,dt)=>{for(let i=0;i<n;i++){gameStep(dt);}}},
- camera:cam,HM,KM,THREE,S,rig,horse,RIDER_SLOT,rideBone,mixer,KG,knight};
+ loopInfo:()=>LOOPINFO,v3:{jump:()=>jump(),jumpState:()=>({JT,u:jU(),h:jumpH(),hU:jumpH()/U,w:jumpW(),pitch:jumpPitch(),PFLY}),state:()=>({env:ENV,item:level.item,levelId:level.id,NT,lap,paused,speedMul,collected,slowT,counted:[...counted],sPos,lat,latV,steer,sp,gstate,LIM,LIMB,limNow:limAt(sPos),U,HALF,L,SB,stars:stars.map(q=>({s:q.s,off:q.off,done:q.done}))}),press:(k,v)=>{inp[k]=v;},collectStar:k=>collect(stars[k],k),startLevel,SPEEDS,remaining:()=>remainingList().length,toast:()=>({show:$('toast').classList.contains('show'),tx:$('toast').textContent}),hint:()=>({L:bL.classList.contains('hint'),R:bR.classList.contains('hint')}),bufInfo:()=>Object.fromEntries(Object.entries(bufs).map(([f,b])=>{const d=b.getChannelData(0);let pk=0,ss=0;for(let i=0;i<d.length;i++){const v=Math.abs(d[i]);if(v>pk)pk=v;ss+=d[i]*d[i];}return[f,{dur:+b.duration.toFixed(3),peak:+pk.toFixed(3),rms:+Math.sqrt(ss/d.length).toFixed(4),sr:b.sampleRate}]})),audioLog:aLog,sayLog,audioState:()=>({ctx:AC&&AC.state,loaded:Object.keys(bufs).length,missing:Object.keys(missing),queue:Qu.length,muted}),audioInit:audio,cnt:()=>cn.textContent,popText:()=>popEl.textContent,cardText:()=>({show:card.classList.contains('show'),tx:card.querySelector('.tx').textContent,sub:csub.textContent,btn:againBtn.style.display}),set:(s_,l_)=>{sPos=s_;lat=l_;latV=0;steer=0;},reset:resetGame,step:(dt)=>{frame(dt);},cardShown:()=>card.classList.contains('show'),hit:(st)=>hit(st),pathAt,place,HIT:[HIT_A,HIT_B],tick:(n,dt)=>{for(let i=0;i<n;i++){gameStep(dt);}}},
+ render:()=>R.render(S,cam),camera:cam,HM,KM,THREE,S,rig,horse,RIDER_SLOT,rideBone,mixer,KG,knight};
 window.READY=1;
 if(qs.get('bench')){const o=document.createElement('div');o.style.cssText='position:fixed;left:8px;top:48px;background:#000c;color:#0f0;padding:8px 10px;font:13px monospace;z-index:9;direction:ltr;white-space:pre';document.body.appendChild(o);
  const ts=[];let t0=performance.now(),prev=t0;const gl=R.getContext();const dbg=gl.getExtension('WEBGL_debug_renderer_info');const gpu=dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):'?';
