@@ -1,0 +1,206 @@
+{
+  "section": "words",
+  "mode": "whole-word",
+  "items": [
+    {
+      "id": "word-w01",
+      "section": "words",
+      "text": "قَرَأَ",
+      "filename": "verb_03.mp3",
+      "path": "assets/audio/educational/verbs/verb_03.mp3",
+      "sha256": "1eecbc56ff51c76f79c1840f933bf92f38c46e830a52d4390356b1eaf19fcd19"
+    },
+    {
+      "id": "word-w02",
+      "section": "words",
+      "text": "كَتَبَ",
+      "filename": "verb_01.mp3",
+      "path": "assets/audio/educational/verbs/verb_01.mp3",
+      "sha256": "f958db6bcc7abd91500c73a9b8cd0c5629db27e656c046ee24f6a7c2978ddfc9"
+    },
+    {
+      "id": "word-w03",
+      "section": "words",
+      "text": "جَلَسَ",
+      "filename": "extra_041.mp3",
+      "path": "assets/audio/educational/words/extra_041.mp3",
+      "sha256": "3d36ed49a9ebad19ebad1d27469f66593da1033b432ca724b9029a8b7cdb4081"
+    },
+    {
+      "id": "word-w04",
+      "section": "words",
+      "text": "زَرَعَ",
+      "filename": "wbk3_04_zay-raa-ain.mp3",
+      "path": "assets/audio/educational/words/wbk3_04_zay-raa-ain.mp3",
+      "sha256": "2372a9d9eb848cffbde11e91e0af93a25593907c4ed5dfd8a2435fed4aff1f8b"
+    },
+    {
+      "id": "word-w05",
+      "section": "words",
+      "text": "أَكَلَ",
+      "filename": "wbk3_05_alef-kaf-lam.mp3",
+      "path": "assets/audio/educational/words/wbk3_05_alef-kaf-lam.mp3",
+      "sha256": "4d5b8d2ccf64c98d4475baf64571a69c3d6b9ffa5a9cca4a71089b31f06f4788"
+    },
+    {
+      "id": "word-w06",
+      "section": "words",
+      "text": "رَفَعَ",
+      "filename": "wbk3_06_raa-faa-ain.mp3",
+      "path": "assets/audio/educational/words/wbk3_06_raa-faa-ain.mp3",
+      "sha256": "9e777661f6d7ee332196a5c7f649ce0c4d34eb39f14db71144b6f002094b36e1"
+    },
+    {
+      "id": "word-w07",
+      "section": "words",
+      "text": "طَلَعَ",
+      "filename": "verb_04.mp3",
+      "path": "assets/audio/educational/verbs/verb_04.mp3",
+      "sha256": "14972c2d5bad41e1225508f526cf02630e220d717051cfe3c94d0ef9ea97b283"
+    },
+    {
+      "id": "word-w08",
+      "section": "words",
+      "text": "حَرَثَ",
+      "filename": "verb_05.mp3",
+      "path": "assets/audio/educational/verbs/verb_05.mp3",
+      "sha256": "f61ab866508167893fd471e3b77e0c672ac4551fa300bc6275a556417a86c993"
+    },
+    {
+      "id": "word-w09",
+      "section": "words",
+      "text": "رَسَمَ",
+      "filename": "wbk3_09_raa-seen-meem.mp3",
+      "path": "assets/audio/educational/words/wbk3_09_raa-seen-meem.mp3",
+      "sha256": "882b9fef892f2212cea9c98cfbad5b4af65c98fdbf82fdfe70bd7b48e758f6f4"
+    },
+    {
+      "id": "word-w10",
+      "section": "words",
+      "text": "دَخَلَ",
+      "filename": "verb_10.mp3",
+      "path": "assets/audio/educational/verbs/verb_10.mp3",
+      "sha256": "c133c906be7772703773bff63953f1fcefcbee7fe9a4af8aed9f2f4e27c9ea7f"
+    },
+    {
+      "id": "word-w11",
+      "section": "words",
+      "text": "غَرَسَ",
+      "filename": "wbk3_11_ghain-raa-seen.mp3",
+      "path": "assets/audio/educational/words/wbk3_11_ghain-raa-seen.mp3",
+      "sha256": "68d63480eca11681d53e42d9aa01cd35e9ab9f14a78311d3a75e1d99da87cba6"
+    },
+    {
+      "id": "word-w12",
+      "section": "words",
+      "text": "فَتَحَ",
+      "filename": "extra_212.mp3",
+      "path": "assets/audio/educational/words/extra_212.mp3",
+      "sha256": "fb5719ec0dea5bc45176be8aad8dc88035898237ef955072717497949b0fccd9"
+    },
+    {
+      "id": "word-w13",
+      "section": "words",
+      "text": "أَخَذَ",
+      "filename": "verb_06.mp3",
+      "path": "assets/audio/educational/verbs/verb_06.mp3",
+      "sha256": "f3932152bfa19a6556262b6df3d457a0a400b33b45d4fad810d75efc62f97fdb"
+    },
+    {
+      "id": "word-w14",
+      "section": "words",
+      "text": "هَرَبَ",
+      "filename": "wbk3_14_ha-raa-ba.mp3",
+      "path": "assets/audio/educational/words/wbk3_14_ha-raa-ba.mp3",
+      "sha256": "987e69559d66407c845faede15e54a2375b56e6914e8b053b88eae8d6e3ec65a"
+    },
+    {
+      "id": "word-w15",
+      "section": "words",
+      "text": "وَقَفَ",
+      "filename": "wbk3_15_waw-qaf-faa.mp3",
+      "path": "assets/audio/educational/words/wbk3_15_waw-qaf-faa.mp3",
+      "sha256": "f5931b55c215dc9a67d4825a2818bbcf90ae96b251af64481c4e85c0b317c31d"
+    },
+    {
+      "id": "word-w16",
+      "section": "words",
+      "text": "نَظَرَ",
+      "filename": "wbk3_16_noon-zaa-raa.mp3",
+      "path": "assets/audio/educational/words/wbk3_16_noon-zaa-raa.mp3",
+      "sha256": "d720a8eedf3d8be66edaddbd9bd14305f62936ae324da3409a7b8eb4467bf6b1"
+    },
+    {
+      "id": "word-w17",
+      "section": "words",
+      "text": "خَرَجَ",
+      "filename": "verb_07.mp3",
+      "path": "assets/audio/educational/verbs/verb_07.mp3",
+      "sha256": "8eae54a7d17732b82fc0e9af2dacef46bc6729395fc2c3acbaad27d6074786c6"
+    },
+    {
+      "id": "word-w18",
+      "section": "words",
+      "text": "حَمَلَ",
+      "filename": "verb_09.mp3",
+      "path": "assets/audio/educational/verbs/verb_09.mp3",
+      "sha256": "9e9f8818898b23471eb5753bf62bed092fc756b0ef95537c23e4496b90ecd710"
+    },
+    {
+      "id": "word-w19",
+      "section": "words",
+      "text": "وَقَعَ",
+      "filename": "wbk3_19_waw-qaf-ain.mp3",
+      "path": "assets/audio/educational/words/wbk3_19_waw-qaf-ain.mp3",
+      "sha256": "eb53043d2b9424138b99bca7287f35282d2dd79c2c0c4a88adad34acb328b5a3"
+    },
+    {
+      "id": "word-w20",
+      "section": "words",
+      "text": "كَسَرَ",
+      "filename": "wbk3_20_kaf-seen-raa.mp3",
+      "path": "assets/audio/educational/words/wbk3_20_kaf-seen-raa.mp3",
+      "sha256": "9252763fabe875326c04a3576b539816cfd85555b437bce6a0fdc098d30480c8"
+    },
+    {
+      "id": "word-w21",
+      "section": "words",
+      "text": "نَشَرَ",
+      "filename": "wbk3_21_noon-sheen-raa.mp3",
+      "path": "assets/audio/educational/words/wbk3_21_noon-sheen-raa.mp3",
+      "sha256": "133f99e08a68e995e526b0a230ed3cad6e23b70ea1edab408d58f55569d9b149"
+    },
+    {
+      "id": "word-w22",
+      "section": "words",
+      "text": "نَبَتَ",
+      "filename": "wbk3_22_noon-ba-ta.mp3",
+      "path": "assets/audio/educational/words/wbk3_22_noon-ba-ta.mp3",
+      "sha256": "eb4157ffa10e8ae2fea4fd2a64fb2dcbcc06d60455a4f6f9fe457df472ca35a1"
+    },
+    {
+      "id": "word-w23",
+      "section": "words",
+      "text": "خَبَزَ",
+      "filename": "verb_08.mp3",
+      "path": "assets/audio/educational/verbs/verb_08.mp3",
+      "sha256": "490f609d4e3c4d664c2e666040ececa824002e0bc54cacfed0110d22f67a6fc4"
+    },
+    {
+      "id": "word-w24",
+      "section": "words",
+      "text": "جَمَعَ",
+      "filename": "verb_11.mp3",
+      "path": "assets/audio/educational/verbs/verb_11.mp3",
+      "sha256": "fddc8f986fc160a9b416c1ea0cd1c6642427a1d83b173d0941bad362f149114f"
+    },
+    {
+      "id": "word-w25",
+      "section": "words",
+      "text": "وَجَدَ",
+      "filename": "verb_12.mp3",
+      "path": "assets/audio/educational/verbs/verb_12.mp3",
+      "sha256": "3e7bc0fa413d0f13bff1181c7cfdb0cf9ea799356f658c2335e6b7421851a12f"
+    }
+  ]
+}

@@ -1,0 +1,222 @@
+{
+  "section": "letters",
+  "mode": "whole-recording",
+  "items": [
+    {
+      "id": "letter-1",
+      "section": "letters",
+      "text": "أَ",
+      "filename": "letter_01_alef.mp3",
+      "path": "assets/audio/educational/letters/letter_01_alef.mp3",
+      "sha256": "97416e360f424af35f7a1c954d2aec1bac49963a16b081563cef2ed1c34fdc17"
+    },
+    {
+      "id": "letter-2",
+      "section": "letters",
+      "text": "بَ",
+      "filename": "letter_02_ba.mp3",
+      "path": "assets/audio/educational/letters/letter_02_ba.mp3",
+      "sha256": "bb858a86886571ccfeddf9af994fd93574c0a3d5b5d5d562bbb58e4d95524645"
+    },
+    {
+      "id": "letter-3",
+      "section": "letters",
+      "text": "تَ",
+      "filename": "letter_03_ta.mp3",
+      "path": "assets/audio/educational/letters/letter_03_ta.mp3",
+      "sha256": "b3e3110834534ec826d1ec1845534d4ab12ba22f53941cc42feb272d646a4bc7"
+    },
+    {
+      "id": "letter-4",
+      "section": "letters",
+      "text": "ثَ",
+      "filename": "letter_04_tha.mp3",
+      "path": "assets/audio/educational/letters/letter_04_tha.mp3",
+      "sha256": "65010276b11230bbbf8406e1e9e018cfabcb941a165827a75ba4e6a82e860623"
+    },
+    {
+      "id": "letter-5",
+      "section": "letters",
+      "text": "جَ",
+      "filename": "letter_05_jeem.mp3",
+      "path": "assets/audio/educational/letters/letter_05_jeem.mp3",
+      "sha256": "82a2f1962d0e298cd7d89f6475c6297f60da6b9b17d3969a16c36bf18c007eba"
+    },
+    {
+      "id": "letter-6",
+      "section": "letters",
+      "text": "حَ",
+      "filename": "letter_06_haa.mp3",
+      "path": "assets/audio/educational/letters/letter_06_haa.mp3",
+      "sha256": "6880452e214c3feb421341891e0018eef830afde27b03ff1500d4fc82f6b1d5b"
+    },
+    {
+      "id": "letter-7",
+      "section": "letters",
+      "text": "خَ",
+      "filename": "letter_07_khaa.mp3",
+      "path": "assets/audio/educational/letters/letter_07_khaa.mp3",
+      "sha256": "f8eeaf45cf7c46d986c0e71ae9b6a2a38992b967b851cdd941fac7fec08c213e"
+    },
+    {
+      "id": "letter-8",
+      "section": "letters",
+      "text": "دَ",
+      "filename": "letter_08_dal.mp3",
+      "path": "assets/audio/educational/letters/letter_08_dal.mp3",
+      "sha256": "d5d257e9b5ffe0dfd3250ddd2d5503b031e1306f67a148ef0564c07b66086c3f"
+    },
+    {
+      "id": "letter-10",
+      "section": "letters",
+      "text": "رَ",
+      "filename": "letter_10_raa.mp3",
+      "path": "assets/audio/educational/letters/letter_10_raa.mp3",
+      "sha256": "5231ef418dedc7298c182b090ea36416429e3dbb5fa2b1d96ff72aa39917c595"
+    },
+    {
+      "id": "letter-11",
+      "section": "letters",
+      "text": "زَ",
+      "filename": "letter_11_zay.mp3",
+      "path": "assets/audio/educational/letters/letter_11_zay.mp3",
+      "sha256": "bcd1b65885058b460c58502de2a421979d91b2698deb4715f3cae9269039b910"
+    },
+    {
+      "id": "letter-12",
+      "section": "letters",
+      "text": "سَ",
+      "filename": "letter_12_seen.mp3",
+      "path": "assets/audio/educational/letters/letter_12_seen.mp3",
+      "sha256": "694e47552dc0f309112113047922d8a4d42d7ce5b69eecc4a97c06d5a6bbeec3"
+    },
+    {
+      "id": "letter-13",
+      "section": "letters",
+      "text": "شَ",
+      "filename": "letter_13_sheen.mp3",
+      "path": "assets/audio/educational/letters/letter_13_sheen.mp3",
+      "sha256": "caafbc1e5614e3b4b3bc3806d48044f660d1564597bd23ffa964b6980ddc070f"
+    },
+    {
+      "id": "letter-14",
+      "section": "letters",
+      "text": "صَ",
+      "filename": "letter_14_sad.mp3",
+      "path": "assets/audio/educational/letters/letter_14_sad.mp3",
+      "sha256": "a452a6b2d1b89db06d99aeb637e3140ede30805abbeea70d2714041abd8cbc0e"
+    },
+    {
+      "id": "letter-15",
+      "section": "letters",
+      "text": "ضَ",
+      "filename": "letter_15_dad.mp3",
+      "path": "assets/audio/educational/letters/letter_15_dad.mp3",
+      "sha256": "cae3851c59277950cb965fffbdef7f32ae02c626e46c7cb53032ed4da77df21f"
+    },
+    {
+      "id": "letter-16",
+      "section": "letters",
+      "text": "طَ",
+      "filename": "letter_16_taa.mp3",
+      "path": "assets/audio/educational/letters/letter_16_taa.mp3",
+      "sha256": "e5ed56be6e6d22bb9145f93a49aab94ed52fa9b2e604b54e7fae4e3c41cc44c3"
+    },
+    {
+      "id": "letter-17",
+      "section": "letters",
+      "text": "ظَ",
+      "filename": "letter_17_zaa.mp3",
+      "path": "assets/audio/educational/letters/letter_17_zaa.mp3",
+      "sha256": "55e95a08900af165f9b0fd2bc7a1806db4f02a3d6ece68020e155c77f22f458c"
+    },
+    {
+      "id": "letter-18",
+      "section": "letters",
+      "text": "عَ",
+      "filename": "letter_18_ain.mp3",
+      "path": "assets/audio/educational/letters/letter_18_ain.mp3",
+      "sha256": "24d52fc22d4edcc7e08eb0b942e5d2a1d7c78a26e3a332761310eaa3c102161d"
+    },
+    {
+      "id": "letter-19",
+      "section": "letters",
+      "text": "غَ",
+      "filename": "letter_19_ghain.mp3",
+      "path": "assets/audio/educational/letters/letter_19_ghain.mp3",
+      "sha256": "34a24d0d9f8ad12643eb314c29a9240e9717095e8d1e83fa83dac7a3a35dd22e"
+    },
+    {
+      "id": "letter-20",
+      "section": "letters",
+      "text": "فَ",
+      "filename": "letter_20_faa.mp3",
+      "path": "assets/audio/educational/letters/letter_20_faa.mp3",
+      "sha256": "276bfdaf4b2a74edf3fd5649a5a9a0767b5e3a233ff7e98af3c8765b3302586f"
+    },
+    {
+      "id": "letter-21",
+      "section": "letters",
+      "text": "قَ",
+      "filename": "letter_21_qaf.mp3",
+      "path": "assets/audio/educational/letters/letter_21_qaf.mp3",
+      "sha256": "40e9d2bef7d3e9321e83103c6595bd1b5a94cf3710adb70abff2e61003f7d9e3"
+    },
+    {
+      "id": "letter-22",
+      "section": "letters",
+      "text": "كَ",
+      "filename": "letter_22_kaf.mp3",
+      "path": "assets/audio/educational/letters/letter_22_kaf.mp3",
+      "sha256": "307dff08d9011aaddbf2b5053ed1c28c29651a7f7841f82e5a95882cc7caeb16"
+    },
+    {
+      "id": "letter-23",
+      "section": "letters",
+      "text": "لَ",
+      "filename": "letter_23_lam.mp3",
+      "path": "assets/audio/educational/letters/letter_23_lam.mp3",
+      "sha256": "a9b6d651da5ca71f2b0e50d7db1f0d58530d197804b60e57698d73d7121bd1b9"
+    },
+    {
+      "id": "letter-24",
+      "section": "letters",
+      "text": "مَ",
+      "filename": "letter_24_meem.mp3",
+      "path": "assets/audio/educational/letters/letter_24_meem.mp3",
+      "sha256": "2b87f10b5b3a1b7e5a379b6b117b978a06268a6f084d82c6aacafa7c28d358f7"
+    },
+    {
+      "id": "letter-25",
+      "section": "letters",
+      "text": "نَ",
+      "filename": "letter_25_noon.mp3",
+      "path": "assets/audio/educational/letters/letter_25_noon.mp3",
+      "sha256": "3d82e5a2345ba27920ed4f91ff4edfd12d7243003a9255e846cf3933a1b42da2"
+    },
+    {
+      "id": "letter-26",
+      "section": "letters",
+      "text": "هَـ",
+      "filename": "letter_26_ha.mp3",
+      "path": "assets/audio/educational/letters/letter_26_ha.mp3",
+      "sha256": "5d11414c8fa9922706079857db01dae3b32ca5c64d14af1b7b80274ebf1118a7"
+    },
+    {
+      "id": "letter-27",
+      "section": "letters",
+      "text": "وَ",
+      "filename": "letter_27_waw.mp3",
+      "path": "assets/audio/educational/letters/letter_27_waw.mp3",
+      "sha256": "18ecb0a769ec06e8dc2e5bcc474b9bcc2318a9bdcf283a63d464f23808ceeed7"
+    },
+    {
+      "id": "letter-28",
+      "section": "letters",
+      "text": "يَ",
+      "filename": "letter_28_yaa.mp3",
+      "path": "assets/audio/educational/letters/letter_28_yaa.mp3",
+      "sha256": "12bf0adf3593002eda28259b13b336670e60645eb4480a7ed913d35f16330212"
+    }
+  ]
+}

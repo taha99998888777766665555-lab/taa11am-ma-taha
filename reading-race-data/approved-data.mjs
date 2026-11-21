@@ -1,0 +1,582 @@
+// Exact recordings approved in Telegram 357647. No runtime directory discovery.
+export const SOURCE_COMMIT="64a03eb4e8b3e00251336e3e7649af913e4ddc8b";
+const rows=[
+  {
+    "id": "letter-1",
+    "section": "letters",
+    "text": "أَ",
+    "filename": "letter_01_alef.mp3",
+    "path": "assets/audio/educational/letters/letter_01_alef.mp3",
+    "sha256": "97416e360f424af35f7a1c954d2aec1bac49963a16b081563cef2ed1c34fdc17"
+  },
+  {
+    "id": "letter-2",
+    "section": "letters",
+    "text": "بَ",
+    "filename": "letter_02_ba.mp3",
+    "path": "assets/audio/educational/letters/letter_02_ba.mp3",
+    "sha256": "bb858a86886571ccfeddf9af994fd93574c0a3d5b5d5d562bbb58e4d95524645"
+  },
+  {
+    "id": "letter-3",
+    "section": "letters",
+    "text": "تَ",
+    "filename": "letter_03_ta.mp3",
+    "path": "assets/audio/educational/letters/letter_03_ta.mp3",
+    "sha256": "b3e3110834534ec826d1ec1845534d4ab12ba22f53941cc42feb272d646a4bc7"
+  },
+  {
+    "id": "letter-4",
+    "section": "letters",
+    "text": "ثَ",
+    "filename": "letter_04_tha.mp3",
+    "path": "assets/audio/educational/letters/letter_04_tha.mp3",
+    "sha256": "65010276b11230bbbf8406e1e9e018cfabcb941a165827a75ba4e6a82e860623"
+  },
+  {
+    "id": "letter-5",
+    "section": "letters",
+    "text": "جَ",
+    "filename": "letter_05_jeem.mp3",
+    "path": "assets/audio/educational/letters/letter_05_jeem.mp3",
+    "sha256": "82a2f1962d0e298cd7d89f6475c6297f60da6b9b17d3969a16c36bf18c007eba"
+  },
+  {
+    "id": "letter-6",
+    "section": "letters",
+    "text": "حَ",
+    "filename": "letter_06_haa.mp3",
+    "path": "assets/audio/educational/letters/letter_06_haa.mp3",
+    "sha256": "6880452e214c3feb421341891e0018eef830afde27b03ff1500d4fc82f6b1d5b"
+  },
+  {
+    "id": "letter-7",
+    "section": "letters",
+    "text": "خَ",
+    "filename": "letter_07_khaa.mp3",
+    "path": "assets/audio/educational/letters/letter_07_khaa.mp3",
+    "sha256": "f8eeaf45cf7c46d986c0e71ae9b6a2a38992b967b851cdd941fac7fec08c213e"
+  },
+  {
+    "id": "letter-8",
+    "section": "letters",
+    "text": "دَ",
+    "filename": "letter_08_dal.mp3",
+    "path": "assets/audio/educational/letters/letter_08_dal.mp3",
+    "sha256": "d5d257e9b5ffe0dfd3250ddd2d5503b031e1306f67a148ef0564c07b66086c3f"
+  },
+  {
+    "id": "letter-10",
+    "section": "letters",
+    "text": "رَ",
+    "filename": "letter_10_raa.mp3",
+    "path": "assets/audio/educational/letters/letter_10_raa.mp3",
+    "sha256": "5231ef418dedc7298c182b090ea36416429e3dbb5fa2b1d96ff72aa39917c595"
+  },
+  {
+    "id": "letter-11",
+    "section": "letters",
+    "text": "زَ",
+    "filename": "letter_11_zay.mp3",
+    "path": "assets/audio/educational/letters/letter_11_zay.mp3",
+    "sha256": "bcd1b65885058b460c58502de2a421979d91b2698deb4715f3cae9269039b910"
+  },
+  {
+    "id": "letter-12",
+    "section": "letters",
+    "text": "سَ",
+    "filename": "letter_12_seen.mp3",
+    "path": "assets/audio/educational/letters/letter_12_seen.mp3",
+    "sha256": "694e47552dc0f309112113047922d8a4d42d7ce5b69eecc4a97c06d5a6bbeec3"
+  },
+  {
+    "id": "letter-13",
+    "section": "letters",
+    "text": "شَ",
+    "filename": "letter_13_sheen.mp3",
+    "path": "assets/audio/educational/letters/letter_13_sheen.mp3",
+    "sha256": "caafbc1e5614e3b4b3bc3806d48044f660d1564597bd23ffa964b6980ddc070f"
+  },
+  {
+    "id": "letter-14",
+    "section": "letters",
+    "text": "صَ",
+    "filename": "letter_14_sad.mp3",
+    "path": "assets/audio/educational/letters/letter_14_sad.mp3",
+    "sha256": "a452a6b2d1b89db06d99aeb637e3140ede30805abbeea70d2714041abd8cbc0e"
+  },
+  {
+    "id": "letter-15",
+    "section": "letters",
+    "text": "ضَ",
+    "filename": "letter_15_dad.mp3",
+    "path": "assets/audio/educational/letters/letter_15_dad.mp3",
+    "sha256": "cae3851c59277950cb965fffbdef7f32ae02c626e46c7cb53032ed4da77df21f"
+  },
+  {
+    "id": "letter-16",
+    "section": "letters",
+    "text": "طَ",
+    "filename": "letter_16_taa.mp3",
+    "path": "assets/audio/educational/letters/letter_16_taa.mp3",
+    "sha256": "e5ed56be6e6d22bb9145f93a49aab94ed52fa9b2e604b54e7fae4e3c41cc44c3"
+  },
+  {
+    "id": "letter-17",
+    "section": "letters",
+    "text": "ظَ",
+    "filename": "letter_17_zaa.mp3",
+    "path": "assets/audio/educational/letters/letter_17_zaa.mp3",
+    "sha256": "55e95a08900af165f9b0fd2bc7a1806db4f02a3d6ece68020e155c77f22f458c"
+  },
+  {
+    "id": "letter-18",
+    "section": "letters",
+    "text": "عَ",
+    "filename": "letter_18_ain.mp3",
+    "path": "assets/audio/educational/letters/letter_18_ain.mp3",
+    "sha256": "24d52fc22d4edcc7e08eb0b942e5d2a1d7c78a26e3a332761310eaa3c102161d"
+  },
+  {
+    "id": "letter-19",
+    "section": "letters",
+    "text": "غَ",
+    "filename": "letter_19_ghain.mp3",
+    "path": "assets/audio/educational/letters/letter_19_ghain.mp3",
+    "sha256": "34a24d0d9f8ad12643eb314c29a9240e9717095e8d1e83fa83dac7a3a35dd22e"
+  },
+  {
+    "id": "letter-20",
+    "section": "letters",
+    "text": "فَ",
+    "filename": "letter_20_faa.mp3",
+    "path": "assets/audio/educational/letters/letter_20_faa.mp3",
+    "sha256": "276bfdaf4b2a74edf3fd5649a5a9a0767b5e3a233ff7e98af3c8765b3302586f"
+  },
+  {
+    "id": "letter-21",
+    "section": "letters",
+    "text": "قَ",
+    "filename": "letter_21_qaf.mp3",
+    "path": "assets/audio/educational/letters/letter_21_qaf.mp3",
+    "sha256": "40e9d2bef7d3e9321e83103c6595bd1b5a94cf3710adb70abff2e61003f7d9e3"
+  },
+  {
+    "id": "letter-22",
+    "section": "letters",
+    "text": "كَ",
+    "filename": "letter_22_kaf.mp3",
+    "path": "assets/audio/educational/letters/letter_22_kaf.mp3",
+    "sha256": "307dff08d9011aaddbf2b5053ed1c28c29651a7f7841f82e5a95882cc7caeb16"
+  },
+  {
+    "id": "letter-23",
+    "section": "letters",
+    "text": "لَ",
+    "filename": "letter_23_lam.mp3",
+    "path": "assets/audio/educational/letters/letter_23_lam.mp3",
+    "sha256": "a9b6d651da5ca71f2b0e50d7db1f0d58530d197804b60e57698d73d7121bd1b9"
+  },
+  {
+    "id": "letter-24",
+    "section": "letters",
+    "text": "مَ",
+    "filename": "letter_24_meem.mp3",
+    "path": "assets/audio/educational/letters/letter_24_meem.mp3",
+    "sha256": "2b87f10b5b3a1b7e5a379b6b117b978a06268a6f084d82c6aacafa7c28d358f7"
+  },
+  {
+    "id": "letter-25",
+    "section": "letters",
+    "text": "نَ",
+    "filename": "letter_25_noon.mp3",
+    "path": "assets/audio/educational/letters/letter_25_noon.mp3",
+    "sha256": "3d82e5a2345ba27920ed4f91ff4edfd12d7243003a9255e846cf3933a1b42da2"
+  },
+  {
+    "id": "letter-26",
+    "section": "letters",
+    "text": "هَـ",
+    "filename": "letter_26_ha.mp3",
+    "path": "assets/audio/educational/letters/letter_26_ha.mp3",
+    "sha256": "5d11414c8fa9922706079857db01dae3b32ca5c64d14af1b7b80274ebf1118a7"
+  },
+  {
+    "id": "letter-27",
+    "section": "letters",
+    "text": "وَ",
+    "filename": "letter_27_waw.mp3",
+    "path": "assets/audio/educational/letters/letter_27_waw.mp3",
+    "sha256": "18ecb0a769ec06e8dc2e5bcc474b9bcc2318a9bdcf283a63d464f23808ceeed7"
+  },
+  {
+    "id": "letter-28",
+    "section": "letters",
+    "text": "يَ",
+    "filename": "letter_28_yaa.mp3",
+    "path": "assets/audio/educational/letters/letter_28_yaa.mp3",
+    "sha256": "12bf0adf3593002eda28259b13b336670e60645eb4480a7ed913d35f16330212"
+  },
+  {
+    "id": "syllable-s02",
+    "section": "syllables",
+    "text": "كَتَـ",
+    "filename": "l2_02.mp3",
+    "path": "assets/audio/educational/syllables/l2_02.mp3",
+    "sha256": "d9f10507c9e6c7203849368d675d7f1037277141543d4e9cf6cd934e5f92c95f"
+  },
+  {
+    "id": "syllable-s03",
+    "section": "syllables",
+    "text": "جَلَـ",
+    "filename": "wbk2_03_jeem-lam.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_03_jeem-lam.mp3",
+    "sha256": "5954115a969e3cfa884fa42b0d628909a320cbf3662a04ce5e49ddb674f88784"
+  },
+  {
+    "id": "syllable-s04",
+    "section": "syllables",
+    "text": "زَرَ",
+    "filename": "wbk2_04_zay-raa.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_04_zay-raa.mp3",
+    "sha256": "b548730c10369fe3c83c089e4ad2769c0a6639dccb54e6b7e31dcc34dcae1937"
+  },
+  {
+    "id": "syllable-s05",
+    "section": "syllables",
+    "text": "أَكَـ",
+    "filename": "l2_09.mp3",
+    "path": "assets/audio/educational/syllables/l2_09.mp3",
+    "sha256": "be048e7209fff091c45d31ee5883d608c654c5308cb63980aab64c9890a82393"
+  },
+  {
+    "id": "syllable-s06",
+    "section": "syllables",
+    "text": "رَفَـ",
+    "filename": "wbk2_06_raa-faa.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_06_raa-faa.mp3",
+    "sha256": "c1b681e8988a4450cb6911050d1c7f716db72844a86f5a6e86a6caac1bdcd57f"
+  },
+  {
+    "id": "syllable-s07",
+    "section": "syllables",
+    "text": "طَلَـ",
+    "filename": "l2_12.mp3",
+    "path": "assets/audio/educational/syllables/l2_12.mp3",
+    "sha256": "11a0e5de140d71252e6f44b74729bb5070c75493dcaf73d6f514f6032ebf0af6"
+  },
+  {
+    "id": "syllable-s09",
+    "section": "syllables",
+    "text": "رَسَـ",
+    "filename": "wbk2_09_raa-seen.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_09_raa-seen.mp3",
+    "sha256": "e527e096de84624ea8a0488f5e514f59ed3d6ed86640935ecc3e28510e281187"
+  },
+  {
+    "id": "syllable-s10",
+    "section": "syllables",
+    "text": "دَخَـ",
+    "filename": "l2_07.mp3",
+    "path": "assets/audio/educational/syllables/l2_07.mp3",
+    "sha256": "9e20dad0ee58e6b3fae5362546b2ada6726ecf5ca92bdd0eb55be2bb62a58a21"
+  },
+  {
+    "id": "syllable-s11",
+    "section": "syllables",
+    "text": "غَرَ",
+    "filename": "wbk2_11_ghain-raa.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_11_ghain-raa.mp3",
+    "sha256": "f78d24780dc2d91ad2b1dec193b12c546b3f61b2afdab2e877807371b81a803f"
+  },
+  {
+    "id": "syllable-s12",
+    "section": "syllables",
+    "text": "فَتَـ",
+    "filename": "l2_14.mp3",
+    "path": "assets/audio/educational/syllables/l2_14.mp3",
+    "sha256": "37331bbce865b95a383006cf0d89827a92ca87797fa7d9d4ba9f9257e7694683"
+  },
+  {
+    "id": "syllable-s13",
+    "section": "syllables",
+    "text": "أَخَـ",
+    "filename": "wbk2_13_alef-khaa.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_13_alef-khaa.mp3",
+    "sha256": "ed085662411e03022ccb12f0f5d39caa5c28eb3ca83fe8c5c0e48f092d50af81"
+  },
+  {
+    "id": "syllable-s14",
+    "section": "syllables",
+    "text": "هَرَ",
+    "filename": "wbk2_14_ha-raa.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_14_ha-raa.mp3",
+    "sha256": "f967202151f1e428e330660d50d96d0c3e2327024a537c7f13de3341df71b13e"
+  },
+  {
+    "id": "syllable-s15",
+    "section": "syllables",
+    "text": "وَقَـ",
+    "filename": "wbk2_15_waw-qaf.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_15_waw-qaf.mp3",
+    "sha256": "0d3621275decadca1096d97707aca0366ce908a4b14a139e76616d9cd8e5e837"
+  },
+  {
+    "id": "syllable-s16",
+    "section": "syllables",
+    "text": "نَظَـ",
+    "filename": "l2_03.mp3",
+    "path": "assets/audio/educational/syllables/l2_03.mp3",
+    "sha256": "d2ebc1b83adef330086b04360bb298c7df950a4c05031b4f2a905197ba25cbfc"
+  },
+  {
+    "id": "syllable-s17",
+    "section": "syllables",
+    "text": "مَكَـ",
+    "filename": "wbk2_17_meem-kaf.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_17_meem-kaf.mp3",
+    "sha256": "be79d3b5362aee3ec3028b8bcef42e0bb21ea4ede3043679d8f4943478f9ed4c"
+  },
+  {
+    "id": "syllable-s18",
+    "section": "syllables",
+    "text": "حَمَـ",
+    "filename": "wbk2_18_haa-meem.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_18_haa-meem.mp3",
+    "sha256": "ba3f579fc8d19f6d83c07e6890fb481acaa82cd2767f2856889291b8ac62adc1"
+  },
+  {
+    "id": "syllable-s20",
+    "section": "syllables",
+    "text": "شَرَ",
+    "filename": "wbk2_20_sheen-raa.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_20_sheen-raa.mp3",
+    "sha256": "1f66cbda753569c739612f28a946bd8a29e27278b3b21777f764a22b61ea57af"
+  },
+  {
+    "id": "syllable-s22",
+    "section": "syllables",
+    "text": "نَبَـ",
+    "filename": "wbk2_22_noon-ba.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_22_noon-ba.mp3",
+    "sha256": "ff1125a861bad0329d1c843cb57219189312fc9b2cbe9bff2a5ef1b8842a9007"
+  },
+  {
+    "id": "syllable-s24",
+    "section": "syllables",
+    "text": "جَمَـ",
+    "filename": "l2_04.mp3",
+    "path": "assets/audio/educational/syllables/l2_04.mp3",
+    "sha256": "4a07d2990175ecb8bbf9f65e57f484818628a215d53fa8e1b5f93c37852e17e6"
+  },
+  {
+    "id": "syllable-s25",
+    "section": "syllables",
+    "text": "وَجَـ",
+    "filename": "wbk2_25_waw-jeem.mp3",
+    "path": "assets/audio/educational/syllables/wbk2_25_waw-jeem.mp3",
+    "sha256": "0986ed570962c557c5c360edd112b8973c90931bd7ea65c05f0ab8d663c55e71"
+  },
+  {
+    "id": "word-w01",
+    "section": "words",
+    "text": "قَرَأَ",
+    "filename": "verb_03.mp3",
+    "path": "assets/audio/educational/verbs/verb_03.mp3",
+    "sha256": "1eecbc56ff51c76f79c1840f933bf92f38c46e830a52d4390356b1eaf19fcd19"
+  },
+  {
+    "id": "word-w02",
+    "section": "words",
+    "text": "كَتَبَ",
+    "filename": "verb_01.mp3",
+    "path": "assets/audio/educational/verbs/verb_01.mp3",
+    "sha256": "f958db6bcc7abd91500c73a9b8cd0c5629db27e656c046ee24f6a7c2978ddfc9"
+  },
+  {
+    "id": "word-w03",
+    "section": "words",
+    "text": "جَلَسَ",
+    "filename": "extra_041.mp3",
+    "path": "assets/audio/educational/words/extra_041.mp3",
+    "sha256": "3d36ed49a9ebad19ebad1d27469f66593da1033b432ca724b9029a8b7cdb4081"
+  },
+  {
+    "id": "word-w04",
+    "section": "words",
+    "text": "زَرَعَ",
+    "filename": "wbk3_04_zay-raa-ain.mp3",
+    "path": "assets/audio/educational/words/wbk3_04_zay-raa-ain.mp3",
+    "sha256": "2372a9d9eb848cffbde11e91e0af93a25593907c4ed5dfd8a2435fed4aff1f8b"
+  },
+  {
+    "id": "word-w05",
+    "section": "words",
+    "text": "أَكَلَ",
+    "filename": "wbk3_05_alef-kaf-lam.mp3",
+    "path": "assets/audio/educational/words/wbk3_05_alef-kaf-lam.mp3",
+    "sha256": "4d5b8d2ccf64c98d4475baf64571a69c3d6b9ffa5a9cca4a71089b31f06f4788"
+  },
+  {
+    "id": "word-w06",
+    "section": "words",
+    "text": "رَفَعَ",
+    "filename": "wbk3_06_raa-faa-ain.mp3",
+    "path": "assets/audio/educational/words/wbk3_06_raa-faa-ain.mp3",
+    "sha256": "9e777661f6d7ee332196a5c7f649ce0c4d34eb39f14db71144b6f002094b36e1"
+  },
+  {
+    "id": "word-w07",
+    "section": "words",
+    "text": "طَلَعَ",
+    "filename": "verb_04.mp3",
+    "path": "assets/audio/educational/verbs/verb_04.mp3",
+    "sha256": "14972c2d5bad41e1225508f526cf02630e220d717051cfe3c94d0ef9ea97b283"
+  },
+  {
+    "id": "word-w08",
+    "section": "words",
+    "text": "حَرَثَ",
+    "filename": "verb_05.mp3",
+    "path": "assets/audio/educational/verbs/verb_05.mp3",
+    "sha256": "f61ab866508167893fd471e3b77e0c672ac4551fa300bc6275a556417a86c993"
+  },
+  {
+    "id": "word-w09",
+    "section": "words",
+    "text": "رَسَمَ",
+    "filename": "wbk3_09_raa-seen-meem.mp3",
+    "path": "assets/audio/educational/words/wbk3_09_raa-seen-meem.mp3",
+    "sha256": "882b9fef892f2212cea9c98cfbad5b4af65c98fdbf82fdfe70bd7b48e758f6f4"
+  },
+  {
+    "id": "word-w10",
+    "section": "words",
+    "text": "دَخَلَ",
+    "filename": "verb_10.mp3",
+    "path": "assets/audio/educational/verbs/verb_10.mp3",
+    "sha256": "c133c906be7772703773bff63953f1fcefcbee7fe9a4af8aed9f2f4e27c9ea7f"
+  },
+  {
+    "id": "word-w11",
+    "section": "words",
+    "text": "غَرَسَ",
+    "filename": "wbk3_11_ghain-raa-seen.mp3",
+    "path": "assets/audio/educational/words/wbk3_11_ghain-raa-seen.mp3",
+    "sha256": "68d63480eca11681d53e42d9aa01cd35e9ab9f14a78311d3a75e1d99da87cba6"
+  },
+  {
+    "id": "word-w12",
+    "section": "words",
+    "text": "فَتَحَ",
+    "filename": "extra_212.mp3",
+    "path": "assets/audio/educational/words/extra_212.mp3",
+    "sha256": "fb5719ec0dea5bc45176be8aad8dc88035898237ef955072717497949b0fccd9"
+  },
+  {
+    "id": "word-w13",
+    "section": "words",
+    "text": "أَخَذَ",
+    "filename": "verb_06.mp3",
+    "path": "assets/audio/educational/verbs/verb_06.mp3",
+    "sha256": "f3932152bfa19a6556262b6df3d457a0a400b33b45d4fad810d75efc62f97fdb"
+  },
+  {
+    "id": "word-w14",
+    "section": "words",
+    "text": "هَرَبَ",
+    "filename": "wbk3_14_ha-raa-ba.mp3",
+    "path": "assets/audio/educational/words/wbk3_14_ha-raa-ba.mp3",
+    "sha256": "987e69559d66407c845faede15e54a2375b56e6914e8b053b88eae8d6e3ec65a"
+  },
+  {
+    "id": "word-w15",
+    "section": "words",
+    "text": "وَقَفَ",
+    "filename": "wbk3_15_waw-qaf-faa.mp3",
+    "path": "assets/audio/educational/words/wbk3_15_waw-qaf-faa.mp3",
+    "sha256": "f5931b55c215dc9a67d4825a2818bbcf90ae96b251af64481c4e85c0b317c31d"
+  },
+  {
+    "id": "word-w16",
+    "section": "words",
+    "text": "نَظَرَ",
+    "filename": "wbk3_16_noon-zaa-raa.mp3",
+    "path": "assets/audio/educational/words/wbk3_16_noon-zaa-raa.mp3",
+    "sha256": "d720a8eedf3d8be66edaddbd9bd14305f62936ae324da3409a7b8eb4467bf6b1"
+  },
+  {
+    "id": "word-w17",
+    "section": "words",
+    "text": "خَرَجَ",
+    "filename": "verb_07.mp3",
+    "path": "assets/audio/educational/verbs/verb_07.mp3",
+    "sha256": "8eae54a7d17732b82fc0e9af2dacef46bc6729395fc2c3acbaad27d6074786c6"
+  },
+  {
+    "id": "word-w18",
+    "section": "words",
+    "text": "حَمَلَ",
+    "filename": "verb_09.mp3",
+    "path": "assets/audio/educational/verbs/verb_09.mp3",
+    "sha256": "9e9f8818898b23471eb5753bf62bed092fc756b0ef95537c23e4496b90ecd710"
+  },
+  {
+    "id": "word-w19",
+    "section": "words",
+    "text": "وَقَعَ",
+    "filename": "wbk3_19_waw-qaf-ain.mp3",
+    "path": "assets/audio/educational/words/wbk3_19_waw-qaf-ain.mp3",
+    "sha256": "eb53043d2b9424138b99bca7287f35282d2dd79c2c0c4a88adad34acb328b5a3"
+  },
+  {
+    "id": "word-w20",
+    "section": "words",
+    "text": "كَسَرَ",
+    "filename": "wbk3_20_kaf-seen-raa.mp3",
+    "path": "assets/audio/educational/words/wbk3_20_kaf-seen-raa.mp3",
+    "sha256": "9252763fabe875326c04a3576b539816cfd85555b437bce6a0fdc098d30480c8"
+  },
+  {
+    "id": "word-w21",
+    "section": "words",
+    "text": "نَشَرَ",
+    "filename": "wbk3_21_noon-sheen-raa.mp3",
+    "path": "assets/audio/educational/words/wbk3_21_noon-sheen-raa.mp3",
+    "sha256": "133f99e08a68e995e526b0a230ed3cad6e23b70ea1edab408d58f55569d9b149"
+  },
+  {
+    "id": "word-w22",
+    "section": "words",
+    "text": "نَبَتَ",
+    "filename": "wbk3_22_noon-ba-ta.mp3",
+    "path": "assets/audio/educational/words/wbk3_22_noon-ba-ta.mp3",
+    "sha256": "eb4157ffa10e8ae2fea4fd2a64fb2dcbcc06d60455a4f6f9fe457df472ca35a1"
+  },
+  {
+    "id": "word-w23",
+    "section": "words",
+    "text": "خَبَزَ",
+    "filename": "verb_08.mp3",
+    "path": "assets/audio/educational/verbs/verb_08.mp3",
+    "sha256": "490f609d4e3c4d664c2e666040ececa824002e0bc54cacfed0110d22f67a6fc4"
+  },
+  {
+    "id": "word-w24",
+    "section": "words",
+    "text": "جَمَعَ",
+    "filename": "verb_11.mp3",
+    "path": "assets/audio/educational/verbs/verb_11.mp3",
+    "sha256": "fddc8f986fc160a9b416c1ea0cd1c6642427a1d83b173d0941bad362f149114f"
+  },
+  {
+    "id": "word-w25",
+    "section": "words",
+    "text": "وَجَدَ",
+    "filename": "verb_12.mp3",
+    "path": "assets/audio/educational/verbs/verb_12.mp3",
+    "sha256": "3e7bc0fa413d0f13bff1181c7cfdb0cf9ea799356f658c2335e6b7421851a12f"
+  }
+];
+rows.forEach(Object.freeze);
+export const APPROVED=Object.freeze(rows);

@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "verifiedQuestions": 72,
+  "blockedAudioRoleChecks": 45,
+  "browser": "Chromium actual browser Web Crypto, fetch and Blob",
+  "scope": "Data module only. No game or UI integration."
+}

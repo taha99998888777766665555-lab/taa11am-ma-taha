@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "assertions": 763,
+  "acceptedAudioRoleChecks": 216,
+  "blockedAudioRoleChecks": 45,
+  "verifiedQuestions": 72,
+  "bankCounts": {
+    "letters": 27,
+    "syllables": 20,
+    "words": 25
+  },
+  "originalRecordingsUnchanged": 74,
+  "wordsMode": "whole-word-only",
+  "runtime": "Node 22 Web Crypto / Blob",
+  "scope": "Data module only. No existing app imports module; no UI, race, student-state or playback integration tested."
+}
