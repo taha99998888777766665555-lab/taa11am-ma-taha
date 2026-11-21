@@ -1,0 +1,158 @@
+{
+  "status": "PASS",
+  "letter": "جَ",
+  "rounds": [
+    {
+      "round": 1,
+      "startPlays": 1,
+      "correctPassPlays": 1
+    },
+    {
+      "round": 2,
+      "startPlays": 1,
+      "correctPassPlays": 1
+    },
+    {
+      "round": 3,
+      "startPlays": 1,
+      "correctPassPlays": 1
+    },
+    {
+      "round": 4,
+      "startPlays": 1,
+      "correctPassPlays": 1
+    },
+    {
+      "round": 5,
+      "startPlays": 1,
+      "correctPassPlays": 1
+    }
+  ],
+  "totalPlays": 10,
+  "startPlays": 5,
+  "correctPlays": 5,
+  "wrongGatePlays": 0,
+  "overlap": false,
+  "confirmationEndToNextStartGapMs": [
+    240.40000000037253,
+    240.20000000018626,
+    240.20000000018626,
+    240.20000000018626
+  ],
+  "finalConfirmationBeforeFinish": true,
+  "starsCollected": 5,
+  "events": [
+    {
+      "kind": "play",
+      "t": 2067.2000000001863,
+      "active": 0,
+      "round": "الجولة ١ من ٥ ★ ٠ من ١٥",
+      "phase": "pending"
+    },
+    {
+      "kind": "ended",
+      "t": 2814.9000000003725
+    },
+    {
+      "kind": "play",
+      "t": 20822.200000000186,
+      "active": 0,
+      "round": "الجولة ١ من ٥ ★ ١ من ١٥",
+      "phase": "gates"
+    },
+    {
+      "kind": "ended",
+      "t": 21492.900000000373
+    },
+    {
+      "kind": "play",
+      "t": 21733.300000000745,
+      "active": 0,
+      "round": "الجولة ٢ من ٥ ★ ١ من ١٥",
+      "phase": "pending"
+    },
+    {
+      "kind": "ended",
+      "t": 22431.5
+    },
+    {
+      "kind": "play",
+      "t": 29822,
+      "active": 0,
+      "round": "الجولة ٢ من ٥ ★ ٢ من ١٥",
+      "phase": "gates"
+    },
+    {
+      "kind": "ended",
+      "t": 30541
+    },
+    {
+      "kind": "play",
+      "t": 30781.200000000186,
+      "active": 0,
+      "round": "الجولة ٣ من ٥ ★ ٢ من ١٥",
+      "phase": "pending"
+    },
+    {
+      "kind": "ended",
+      "t": 31476.700000000186
+    },
+    {
+      "kind": "play",
+      "t": 38821.200000000186,
+      "active": 0,
+      "round": "الجولة ٣ من ٥ ★ ٣ من ١٥",
+      "phase": "gates"
+    },
+    {
+      "kind": "ended",
+      "t": 39491.700000000186
+    },
+    {
+      "kind": "play",
+      "t": 39731.90000000037,
+      "active": 0,
+      "round": "الجولة ٤ من ٥ ★ ٣ من ١٥",
+      "phase": "pending"
+    },
+    {
+      "kind": "ended",
+      "t": 40430.300000000745
+    },
+    {
+      "kind": "play",
+      "t": 47820.90000000037,
+      "active": 0,
+      "round": "الجولة ٤ من ٥ ★ ٤ من ١٥",
+      "phase": "gates"
+    },
+    {
+      "kind": "ended",
+      "t": 48490.200000000186
+    },
+    {
+      "kind": "play",
+      "t": 48730.40000000037,
+      "active": 0,
+      "round": "الجولة ٥ من ٥ ★ ٤ من ١٥",
+      "phase": "pending"
+    },
+    {
+      "kind": "ended",
+      "t": 49428.800000000745
+    },
+    {
+      "kind": "play",
+      "t": 56753.90000000037,
+      "active": 0,
+      "round": "الجولة ٥ من ٥ ★ ٥ من ١٥",
+      "phase": "gates"
+    },
+    {
+      "kind": "ended",
+      "t": 57425.60000000056
+    }
+  ],
+  "errors": [],
+  "physicalDevice": false
+}

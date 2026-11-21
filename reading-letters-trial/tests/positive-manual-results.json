@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "manualReplayDuringConfirmation": true,
+  "totalPlaysThroughSecondRoundStart": 4,
+  "noOverlap": true,
+  "nextStartAfterManualEndGapMs": 240.20000000018626,
+  "cancelOnExit": true,
+  "events": [
+    {
+      "kind": "play",
+      "t": 1895.2000000001863,
+      "active": 0
+    },
+    {
+      "kind": "end",
+      "t": 2709.100000000559
+    },
+    {
+      "kind": "play",
+      "t": 10651.600000000559,
+      "active": 0
+    },
+    {
+      "kind": "play",
+      "t": 10698.600000000559,
+      "active": 0
+    },
+    {
+      "kind": "end",
+      "t": 11437.5
+    },
+    {
+      "kind": "play",
+      "t": 11677.700000000186,
+      "active": 0
+    }
+  ]
+}

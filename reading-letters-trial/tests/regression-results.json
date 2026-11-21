@@ -1,10 +1,10 @@
 {
   "status": "PASS",
-  "defaultCanvasOldHash": "c39b32acc9a38eb96dbd71d4eabfa09ae82a3e8ac921d132771d7c85abbb6bda",
-  "defaultCanvasNewHash": "c39b32acc9a38eb96dbd71d4eabfa09ae82a3e8ac921d132771d7c85abbb6bda",
-  "defaultRenderPixelIdentical": true,
+  "defaultCanvasOldHash": "035a737f0e92701ddcfaa07fc5cc624d702fcab656349cebb9f1919e0d561315",
+  "defaultCanvasNewHash": "035a737f0e92701ddcfaa07fc5cc624d702fcab656349cebb9f1919e0d561315",
+  "defaultRenderAndMovementTraceIdentical": true,
   "sourceChangesExactlyFourOptInSites": true,
   "movementAndGateTimingUnchanged": true,
   "originalAudioAndProgressCodeUnchanged": true,
-  "scope": "Deterministic browser render with no reading painter supplied, plus exact inverse source comparison to main; not a full original-app end-to-end test"
+  "scope": "Deterministic 600-frame browser movement, wrong-gate state and render with no reading options supplied, plus exact inverse source comparison to main; not a full original-app end-to-end test"
 }
