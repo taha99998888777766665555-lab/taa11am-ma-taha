@@ -1,11 +1,24 @@
 {
   "status": "PASS",
-  "pickerTargetsTested": 27,
   "layouts": [
     {
       "width": 305,
       "scrollWidth": 305,
-      "choiceSizes": [
+      "steering": [
+        {
+          "w": 79,
+          "h": 72
+        },
+        {
+          "w": 79,
+          "h": 72
+        },
+        {
+          "w": 79,
+          "h": 72
+        }
+      ],
+      "choices": [
         {
           "w": 80.328125,
           "h": 96
@@ -23,7 +36,21 @@
     {
       "width": 375,
       "scrollWidth": 375,
-      "choiceSizes": [
+      "steering": [
+        {
+          "w": 102.328125,
+          "h": 72
+        },
+        {
+          "w": 102.328125,
+          "h": 72
+        },
+        {
+          "w": 102.34375,
+          "h": 72
+        }
+      ],
+      "choices": [
         {
           "w": 101,
           "h": 104.796875
@@ -41,7 +68,21 @@
     {
       "width": 1265,
       "scrollWidth": 1265,
-      "choiceSizes": [
+      "steering": [
+        {
+          "w": 316,
+          "h": 72
+        },
+        {
+          "w": 316,
+          "h": 72
+        },
+        {
+          "w": 316,
+          "h": 72
+        }
+      ],
+      "choices": [
         {
           "w": 314.65625,
           "h": 133.59375
@@ -57,11 +98,12 @@
       ]
     }
   ],
+  "pickerStarts": 27,
   "performanceSample": {
     "frames": 120,
-    "averageMs": 16.57666666666667,
-    "p95Ms": 16.700000000000728
+    "meanMs": 16.563333333335656,
+    "p95Ms": 16.80000000000109
   },
   "errors": [],
-  "caveat": "Sample on test browser, not evidence of performance on a physical phone or interactive whiteboard"
+  "physicalDevice": false
 }

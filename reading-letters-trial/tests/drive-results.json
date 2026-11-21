@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "collisionLateralTolerance": 0.3,
+  "starDistances": [
+    2200,
+    4500,
+    6800
+  ],
+  "zoneDistance": 8400,
+  "results": [
+    {
+      "name": "all three collected with lateral steering",
+      "stars": 3,
+      "retryDoesNotReset": true
+    },
+    {
+      "name": "zero stars still reaches gates",
+      "stars": 0,
+      "retryDoesNotReset": true
+    },
+    {
+      "name": "crossing interpolation, not post-frame lane",
+      "stars": 3,
+      "retryDoesNotReset": true
+    },
+    {
+      "name": "large forward jump cannot duplicate a star",
+      "stars": 1,
+      "retryDoesNotReset": true
+    }
+  ]
+}

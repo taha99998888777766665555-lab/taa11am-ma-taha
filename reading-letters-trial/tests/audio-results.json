@@ -12,7 +12,9 @@
         5,
         6
       ],
-      "overlapAtEnd": false
+      "overlapAtEnd": false,
+      "starsCollected": 5,
+      "starsNotRequired": true
     },
     {
       "letter": "جَ",
@@ -25,7 +27,9 @@
         5,
         6
       ],
-      "overlapAtEnd": false
+      "overlapAtEnd": false,
+      "starsCollected": 5,
+      "starsNotRequired": true
     }
   ],
   "errors": [],

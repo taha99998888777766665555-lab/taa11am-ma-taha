@@ -1,0 +1,69 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "width": 390,
+      "rounds": [
+        {
+          "round": 1,
+          "starCollectionMs": [
+            2142,
+            3009,
+            3842
+          ],
+          "gatesAfterMs": 4630,
+          "total": 3
+        },
+        {
+          "round": 2,
+          "starCollectionMs": [
+            509,
+            1325,
+            2142
+          ],
+          "gatesAfterMs": 2931,
+          "total": 6
+        },
+        {
+          "round": 3,
+          "starCollectionMs": [
+            531,
+            1343,
+            2160
+          ],
+          "gatesAfterMs": 2948,
+          "total": 9
+        },
+        {
+          "round": 4,
+          "starCollectionMs": [
+            528,
+            1345,
+            2161
+          ],
+          "gatesAfterMs": 2949,
+          "total": 12
+        },
+        {
+          "round": 5,
+          "starCollectionMs": [
+            512,
+            1329,
+            2146
+          ],
+          "gatesAfterMs": 2927,
+          "total": 15
+        }
+      ],
+      "plays": 5,
+      "stars": 15,
+      "chimes": 15,
+      "wrongGateRetries": 2,
+      "starsNotRepeatedOnRetry": true,
+      "maxGateTextAtReactPhaseHandoff": 15,
+      "errors": [],
+      "durationMs": 58793
+    }
+  ],
+  "physicalDeviceTest": false
+}

@@ -10915,6 +10915,7 @@ function rr3CreateEngine(cfg) {
             ctx.globalAlpha = 1;
             if (S.gate && S.gate.kind === "road" && f.abs >= S.gate.a0 && f.abs < S.gate.a0 + ROADK) { ctx.globalAlpha = Math.max(0.25, 1 - fog * 0.55); drawRoadLetters(f, S.gate); ctx.globalAlpha = 1; }
             else if (f.abs === gateAbs && S.gate && S.gate.kind !== "road") { drawPad(n, S.gate, W, hy); ctx.globalAlpha = Math.max(0.2, 1 - fog * 0.6); drawGantry(f, S.gate); ctx.globalAlpha = 1; }
+            if (cfg.readingRoadPainter) cfg.readingRoadPainter(ctx, f, U, ROADW);
             if (f.abs === finAbs) drawFinish(n, f);
             const cs = byAbs[f.abs];
             if (cs) cs.forEach(function (c) {
@@ -10959,6 +10960,7 @@ function rr3CreateEngine(cfg) {
             if (document.hidden) return;
             if (fitDirty) fit();
             update(dt);
+            if (cfg.readingAfterUpdate) cfg.readingAfterUpdate(S, dt);
             render();
         } catch (e) { fail(e); }
     }

@@ -3,8 +3,8 @@
   "approvedLetterBytes": 27,
   "blockedThalEmbedded": false,
   "generatedEngineMatchesTrialBranch": true,
-  "engineBlockSha256": "07bd6ab43828fa42b6862d23a781429625e03361c36bb3d66e99ddc0d3fa3410",
+  "engineBlockSha256": "63345ff268857d5ca66673af0ef21b9b98762a5dee598cc9328ff6bf942c79cd",
   "hostStorageWrites": 0,
   "originalAudioUnchanged": true,
-  "engineOptInPainterSites": 2
+  "engineOptInSites": 4
 }
