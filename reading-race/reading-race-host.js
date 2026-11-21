@@ -423,6 +423,8 @@ function renderLetters() {
 function open() {
   build();
   teardown();
+  /* إيقاف أي سباق قديم نشط قبل فتح الشاشة (لا يمس تقدمه) */
+  try { if (typeof rr3Teardown === 'function') rr3Teardown(); } catch (e) { /* لا شيء */ }
   try {
     if (!G.bank) {
       G.bank = createReadingBank('letters', { loadBytes });
