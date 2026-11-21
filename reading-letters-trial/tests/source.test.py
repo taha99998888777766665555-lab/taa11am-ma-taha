@@ -6,7 +6,7 @@ REPO=HERE.parent.parent
 GENERATED=Path(sys.argv[1])/'src'
 source=(REPO/'script.js').read_bytes()
 block=source[source.index(b'/* RR3-ENGINE-BEGIN */'):source.index(b'/* RR3-ENGINE-END */')+len(b'/* RR3-ENGINE-END */')]
-assert (GENERATED/'engine-original.js').read_bytes()==block+b'\nexport {rr3CreateEngine};\n'
+assert (GENERATED/'engine-original.js').read_bytes()==block+b'\nexport {rr3CreateEngine, RR3_CAR_COLORS, RR3_THEMES};\n'
 assert hashlib.sha256(block).hexdigest()=='1173029cc765fa19dfddb27e0edfb48fad7cc4a8434778a9e76ac1f7105af190'
 allow=json.loads((REPO/'reading-race-data/allowlist.json').read_text())
 letters=[r for r in allow['approved'] if r['section']=='letters']

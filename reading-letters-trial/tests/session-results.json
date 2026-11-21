@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "pickerCount": 27,
+  "blockedThal": false,
+  "helpCounts": [
+    3,
+    2,
+    1
+  ],
+  "sameTarget": "أَ",
+  "completedRounds": 5,
+  "orders": [
+    [
+      "letter-2",
+      "letter-10",
+      "letter-1"
+    ],
+    [
+      "letter-13",
+      "letter-1",
+      "letter-5"
+    ],
+    [
+      "letter-1",
+      "letter-8",
+      "letter-16"
+    ],
+    [
+      "letter-12",
+      "letter-19",
+      "letter-1"
+    ],
+    [
+      "letter-22",
+      "letter-1",
+      "letter-15"
+    ]
+  ],
+  "audioEvents": 12,
+  "allPlayedBytesMatchSelectedLetter": true,
+  "noNetworkMp3": true,
+  "errors": [],
+  "browser": "Chromium actual private hosted preview, mobile viewport, not a physical phone"
+}

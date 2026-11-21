@@ -14,7 +14,7 @@ a=s.index(b'/* RR3-ENGINE-BEGIN */');b=s.index(b'/* RR3-ENGINE-END */')+len(b'/*
 block=s[a:b]
 expected='1173029cc765fa19dfddb27e0edfb48fad7cc4a8434778a9e76ac1f7105af190'
 if hashlib.sha256(block).hexdigest()!=expected:raise ValueError('existing engine changed; review required')
-(OUT/'src/engine-original.js').write_bytes(block+b'\nexport {rr3CreateEngine};\n')
+(OUT/'src/engine-original.js').write_bytes(block+b'\nexport {rr3CreateEngine, RR3_CAR_COLORS, RR3_THEMES};\n')
 shutil.copytree(REPO/'reading-race-data',OUT/'src/bank',dirs_exist_ok=True)
 shutil.rmtree(OUT/'src/bank/tests')
 for name in ['human-review-results.json','README-ar.md']:(OUT/'src/bank'/name).unlink()
