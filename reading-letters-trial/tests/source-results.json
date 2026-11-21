@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "approvedLetterBytes": 27,
+  "blockedThalEmbedded": false,
+  "engineBlockByteIdentical": true,
+  "engineBlockSha256": "1173029cc765fa19dfddb27e0edfb48fad7cc4a8434778a9e76ac1f7105af190",
+  "hostStorageWrites": 0,
+  "originalSourceUnchanged": true
+}

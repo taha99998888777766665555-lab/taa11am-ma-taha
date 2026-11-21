@@ -1,0 +1,15 @@
+{
+  "rounds": [
+    "دَ",
+    "رَ",
+    "زَ",
+    "سَ",
+    "شَ"
+  ],
+  "errors": [],
+  "wrongDoesNotMove": true,
+  "correctMoves": true,
+  "approvedBlobPlayback": true,
+  "completion": true,
+  "environment": "Chromium browser, 390px mobile viewport; not a physical phone"
+}
