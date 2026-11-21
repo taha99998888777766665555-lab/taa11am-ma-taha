@@ -9,5 +9,12 @@
 - `script.js`: المواضع الأربعة الاختيارية في المحرك (سُلّمت)، + `cfg.readingTheme` الاختياري، + فحص تنظيف في `showScreen` لا يعمل إلا إن وُجدت جلسة قراءة.
 - `index.html`: بطاقة «سباق الحروف بالفتحة» في قسم الألعاب، وsection جديد، وlink للـCSS، وscript module.
 
-## قبل النشر (لم يُنفَّذ، بانتظار موافقة المالك)
-`service-worker.js`: رفع `CACHE_VERSION` وإضافة ملفات `reading-race/*` و`reading-race-data/approved-data.mjs` و`reading-banks.mjs` إلى `APP_SHELL`، ثم اختبار التحميل الأول وتحديث الكاش القديم. أصوات الحروف مخزّنة مسبقًا أصلًا (LESSON_AUDIO).
+## الكاش دون إنترنت (نُفِّذ على الفرع)
+`service-worker.js`: `CACHE_VERSION` صار `taha-app-v70`، وأُضيفت إلى `APP_SHELL` ملفات `reading-race/*` (المضيف والجمع والرسام والأنماط) و`reading-race-data/reading-banks.mjs` و`approved-data.mjs`. أصوات الحروف مخزنة أصلًا عبر `LESSON_AUDIO`. اختبار الترقية والعمل دون إنترنت: `tests/reading-race/offline-upgrade.js`.
+
+## معاينة اللعبة قبل النشر
+من جذر المشروع على الفرع `reading-letters-race-integration`:
+
+    python3 -m http.server 8080
+
+ثم افتح `http://localhost:8080/index.html` ← الألعاب ← «سباق الحروف بالفتحة». لا تفتح الملف مباشرة من القرص (file://) لأن التحقق من الصوت يحتاج localhost أو https. لتجربة التشغيل دون إنترنت: افتح اللعبة مرة وانتظر ثوانيَ، حدّث الصفحة مرتين، ثم أوقف الخادم أو اختر Offline في أدوات المطور وجرّب.

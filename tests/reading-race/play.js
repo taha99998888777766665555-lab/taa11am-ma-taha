@@ -9,15 +9,15 @@ await p.click(`.rlr-letter[data-letter="${L}"]`);await p.click('.rlr-go');
 const log=[];const t0=Date.now();let wrongLeft=WRONG,round=0,lastFin=false;
 while(Date.now()-t0<170000){
  await p.waitForTimeout(250);
- const st=await p.evaluate(()=>({fin:!document.querySelector('.rlr-finish').hidden,gates:!document.querySelector('.rlr-choices').hidden,stats:document.querySelector('.rlr-stats').textContent,stars:document.querySelector('.rlr-steer').hidden}));
+ const st=await p.evaluate(()=>({fin:!document.querySelector('.rlr-game').hidden&&!document.querySelector('.rlr-finish').hidden,gates:!document.querySelector('.rlr-choices').hidden,stats:document.querySelector('.rlr-stats').textContent,stars:document.querySelector('.rlr-steer').hidden}));
  if(st.fin){lastFin=true;break}
  if(st.gates){
   const info=await p.$$eval('.rlr-choice',bs=>bs.map(b=>({id:b.dataset.id,dis:b.disabled,t:b.textContent})));
   if(info.every(x=>x.dis))continue;
   const cur=await p.evaluate(()=>document.querySelector('.rlr-stats').textContent);
   const ok=info.findIndex(x=>x.id===L&&!x.dis);
-  if(wrongLeft>0&&round===0){const w=info.findIndex(x=>x.id!==L&&!x.dis);if(w>=0){wrongLeft--;log.push('wrong click '+w);await p.click(`.rlr-choice[data-lane="${w}"]`);await p.waitForTimeout(1500);continue}}
-  if(ok>=0){log.push('correct click r'+cur);await p.click(`.rlr-choice[data-lane="${ok}"]`);round++;await p.waitForTimeout(1200)}
+  if(wrongLeft>0&&round===0){const w=info.findIndex(x=>x.id!==L&&!x.dis);if(w>=0){wrongLeft--;log.push('wrong click '+w);await p.click(`.rlr-choice[data-lane="${w}"]`,{timeout:3000}).catch(()=>{});await p.waitForTimeout(1500);continue}}
+  if(ok>=0){log.push('correct click r'+cur);await p.click(`.rlr-choice[data-lane="${ok}"]`,{timeout:3000}).catch(()=>{});round++;await p.waitForTimeout(1200)}
  }else if(!st.stars===false){ /* steering: nudge to centre */ }
 }
 const fin=await p.evaluate(()=>({txt:document.querySelector('.rlr-star-finish').textContent,fb:document.querySelector('.rlr-feedback').textContent}));

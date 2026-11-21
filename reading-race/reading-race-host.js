@@ -335,7 +335,7 @@ function build() {
   u.stats = el('div', { class: 'rlr-stats' });
   u.stage = el('div', { class: 'rlr-stage', 'aria-label': 'مضمار السباق وبوابات الحروف' });
   u.feedback = el('p', { class: 'rlr-feedback', role: 'status', 'aria-live': 'polite' });
-  u.finishBox = el('div', { class: 'rlr-finish' });
+  u.finishBox = el('div', { class: 'rlr-finish', hidden: '' });
   u.finishText = el('p', { class: 'rlr-star-finish' });
   u.again = el('button', { type: 'button', class: 'rlr-go', text: 'سباق جديد' });
   u.again.addEventListener('click', () => { void start(); });

@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v69";
+const CACHE_VERSION = "taha-app-v70";
 const CACHE_NAME = CACHE_VERSION;
 
 /* لعبة «مغامرة الفارس – تعلّم العد»: كاش مستقل لا يُمسح عند تحديث التطبيق (13 MB لا تُنزَّل من جديد
@@ -39,6 +39,12 @@ const APP_SHELL = [
     "./addition-heroes/heroes.js",
     "./ui2.css",
     "./ui2.js",
+    "./reading-race/reading-race-host.js",
+    "./reading-race/reading-drive.js",
+    "./reading-race/reading-painters.js",
+    "./reading-race/reading-race.css",
+    "./reading-race-data/reading-banks.mjs",
+    "./reading-race-data/approved-data.mjs",
     "./assets/images/numhub/boy_point.webp",
     "./assets/images/numhub/sub.webp",
     "./assets/images/numhub/fish_blue.webp",
