@@ -1929,6 +1929,11 @@ function showScreen(screenId) {
     stopAllAudio();
     invalidateLetterGameSession();
 
+    /* «سباق الحروف بالفتحة»: إنهاء جلسته (صوت/رسم/مؤقتات) عند مغادرة شاشته بأي تنقل عام */
+    if (screenId !== "readingLettersRace" && typeof window.__readingRaceTeardown === "function") {
+        try { window.__readingRaceTeardown(); } catch (e) { /* لا شيء */ }
+    }
+
     if (
         typeof matchingGame !== "undefined" &&
         matchingGame.active &&
@@ -9785,7 +9790,7 @@ function rr3CreateEngine(cfg) {
     const ROAD_WAIT = 220, HIT_PRE = 350;
     const hooks = cfg.hooks || {};
     const rounds = cfg.rounds;
-    const th = RR3_THEMES[(cfg.theme || 0) % RR3_THEMES.length];
+    const th = cfg.readingTheme || RR3_THEMES[(cfg.theme || 0) % RR3_THEMES.length];   /* readingTheme: اختياري ومعزول؛ يستعمله «سباق الحروف بالفتحة» فقط */
     const fogRGB = th.fog;
     const reduced = !!cfg.reduced;
     const root = cfg.root;

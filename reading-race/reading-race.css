@@ -1,0 +1,42 @@
+/* «سباق الحروف بالفتحة» — أنماط معزولة تحت #readingLettersRace فقط (لا قواعد عامة) */
+#readingLettersRace{--rl-teal:#0f766e;--rl-ink:#1f2937;--rl-page:#ffffff;--rl-raised:#eef4f6;--rl-line:#cbd5e1;--rl-mute:#64748b;--rl-gold:#866015}
+#readingLettersRace [hidden]{display:none!important}
+#readingLettersRace .rlr-wrap{max-width:1100px;margin:0 auto;padding:12px;direction:rtl;color:var(--rl-ink)}
+#readingLettersRace .rlr-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+#readingLettersRace .rlr-back{min-height:56px;padding:0 18px;border:2px solid var(--rl-teal);border-radius:14px;background:var(--rl-page);color:var(--rl-ink);font:700 18px/1.4 'Noto Naskh Arabic',Tahoma,Arial,sans-serif;cursor:pointer}
+#readingLettersRace .rlr-title{font:700 22px/1.4 'Noto Naskh Arabic',Tahoma,Arial,sans-serif}
+#readingLettersRace .rlr-h{margin:0 0 6px;font-size:24px}
+#readingLettersRace .rlr-p{margin:0 0 12px;font-size:18px;line-height:1.8}
+#readingLettersRace .rlr-note{min-height:28px;text-align:center;font-size:17px}
+#readingLettersRace .rlr-pick{display:flex;flex-direction:column;gap:12px;background:var(--rl-page);border:1px solid var(--rl-line);border-radius:16px;padding:16px}
+#readingLettersRace .rlr-letters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+#readingLettersRace .rlr-letter{min-height:76px;background:var(--rl-page);color:var(--rl-ink);border:1px solid var(--rl-line);border-radius:12px;font:600 38px/1.8 'Noto Naskh Arabic',Arial,sans-serif;cursor:pointer}
+#readingLettersRace .rlr-letter.rlr-on{border:3px solid var(--rl-teal);background:var(--rl-raised)}
+#readingLettersRace .rlr-go,#readingLettersRace .rlr-sec{min-height:60px;padding:0 20px;border-radius:14px;border:2px solid var(--rl-teal);font:700 20px/1.4 'Noto Naskh Arabic',Tahoma,Arial,sans-serif;cursor:pointer}
+#readingLettersRace .rlr-go{background:var(--rl-teal);color:#fff}
+#readingLettersRace .rlr-sec{background:var(--rl-page);color:var(--rl-ink)}
+#readingLettersRace .rlr-go:disabled,#readingLettersRace .rlr-sec:disabled{opacity:.5;cursor:default}
+#readingLettersRace button:focus-visible{outline:4px solid var(--rl-ink);outline-offset:3px}
+#readingLettersRace .rlr-game{display:flex;flex-direction:column;gap:10px}
+#readingLettersRace .rlr-listen{margin-inline-start:auto}
+#readingLettersRace .rlr-progress{height:8px;border-radius:9px;background:var(--rl-raised);overflow:hidden}
+#readingLettersRace .rlr-progress span{display:block;height:100%;background:var(--rl-teal);transition:width .4s}
+#readingLettersRace .rlr-stats{text-align:center;font-size:16px}
+#readingLettersRace .rlr-star-count{display:inline-block;margin-inline-start:12px;color:var(--rl-gold);font-weight:700}
+#readingLettersRace .rlr-stage{position:relative;width:100%;height:clamp(230px,34vh,380px);overflow:hidden;border-radius:16px;background:#e5f2fc}
+#readingLettersRace .rlr-stage:empty{display:none}
+#readingLettersRace .rlr-stage .rr3-root{position:absolute;inset:0;direction:rtl}
+#readingLettersRace .rlr-stage canvas{display:block;width:100%;height:100%;pointer-events:none}
+#readingLettersRace .rlr-stage .rr3-top,#readingLettersRace .rlr-stage .rr3-dots,#readingLettersRace .rlr-stage .rr3-target,#readingLettersRace .rlr-stage .rr3-msg,#readingLettersRace .rlr-stage .rr3-ctl,#readingLettersRace .rlr-stage .rr3-teach,#readingLettersRace .rlr-stage .rr3-lv,#readingLettersRace .rlr-stage .rr3-result{display:none!important}
+#readingLettersRace .rlr-feedback{margin:0;font-size:18px;line-height:1.8;text-align:center;min-height:40px}
+#readingLettersRace .rlr-finish{display:flex;flex-direction:column;gap:10px;align-items:center}
+#readingLettersRace .rlr-star-finish{margin:0;text-align:center;font-size:22px;color:var(--rl-gold)}
+#readingLettersRace .rlr-wait{margin:0;text-align:center;min-height:72px}
+#readingLettersRace .rlr-steer,#readingLettersRace .rlr-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;direction:ltr}
+#readingLettersRace .rlr-steer button{min-height:72px;font:600 20px/1.5 Arial,sans-serif;border:2px solid var(--rl-teal);border-radius:12px;background:var(--rl-page);color:var(--rl-ink);cursor:pointer}
+#readingLettersRace .rlr-choice{min-height:92px;border:2px solid var(--rl-teal);border-radius:12px;background:var(--rl-page);color:var(--rl-ink);font:600 56px/1.8 'Noto Naskh Arabic',Arial,sans-serif;cursor:pointer;padding:0 10px;direction:rtl}
+#readingLettersRace .rlr-choice:hover:not(:disabled){background:var(--rl-raised)}
+#readingLettersRace .rlr-choice:disabled{opacity:.65}
+#readingLettersRace .rlr-choice:disabled[aria-label="بوابة مستبعدة"]{background:var(--rl-raised);border-color:var(--rl-line);color:var(--rl-mute);font-family:Arial,sans-serif;font-size:36px}
+@media(min-width:768px){#readingLettersRace .rlr-stage{height:clamp(240px,38vh,520px)}#readingLettersRace .rlr-letters{grid-template-columns:repeat(9,minmax(0,1fr))}#readingLettersRace .rlr-choice{font-size:72px;min-height:124px}}
+@media(max-width:350px){#readingLettersRace .rlr-stage{height:320px}#readingLettersRace .rlr-letters{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#readingLettersRace .rlr-letter{font-size:32px;min-height:65px}#readingLettersRace .rlr-choice{font-size:48px;min-height:96px}}

@@ -29,6 +29,7 @@
     rel="stylesheet"
     href="style.css"
 >
+<link rel="stylesheet" href="reading-race/reading-race.css">
 
 <link
     rel="stylesheet"
@@ -2999,6 +3000,35 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
 
 
             <!-- =====================================
+                 🏁 سباق الحروف بالفتحة (بطاقة مستقلة؛ لا تستبدل «سباق الحروف»)
+            ====================================== -->
+
+            <button
+                type="button"
+                id="openReadingLettersRace"
+                class="game-launch-card letter-race-game-card"
+            >
+
+                <div class="game-card-icon">
+                    🏁
+                </div>
+
+                <h3>
+                    سباق الحروف بالفتحة
+                </h3>
+
+                <p>
+                    اختر حرفًا، اسمعه، واجمع النجوم ثم اعبر البوابة الصحيحة
+                </p>
+
+                <span>
+                    ابدأ السباق ▶
+                </span>
+
+            </button>
+
+
+            <!-- =====================================
                  🧩 لعبة المطابقة
             ====================================== -->
 
@@ -3919,6 +3949,13 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
         <span class="knight-bar-title">🛡️ مغامرة الفارس – تعلّم العد</span>
     </div>
     <iframe id="knightFrame" class="knight-frame" title="مغامرة الفارس – تعلّم العد" allow="autoplay" data-src="knight-counting/index.html?level=11"></iframe>
+</section>
+
+<!-- =========================================================
+     🏁 سباق الحروف بالفتحة — يُبنى محتواها برمجيًا في reading-race/reading-race-host.js
+========================================================= -->
+<section id="readingLettersRace" class="screen" aria-label="سباق الحروف بالفتحة">
+    <div id="rlrWrap" class="rlr-wrap"></div>
 </section>
 
 <!-- =========================================================
@@ -5882,6 +5919,7 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
 </main>
 
 <script src="script.js"></script>
+<script type="module" src="reading-race/reading-race-host.js"></script>
 <script src="wbk2-data.js"></script>
 <script src="wbk2.js"></script>
 <script src="wbk3-data.js"></script>
