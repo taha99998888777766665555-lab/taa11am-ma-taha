@@ -10764,7 +10764,7 @@ function rr3CreateEngine(cfg) {
                 ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.font = "900 " + Math.round(ph * 0.7) + "px 'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif";
                 ctx.fillText(r.options[j], cx, top + ph * 0.58);
-            }
+            } else if (cfg.readingInactiveGatePainter) { cfg.readingInactiveGatePainter(ctx, cx, top, pw, ph); }
         }
     }
 
@@ -10875,7 +10875,7 @@ function rr3CreateEngine(cfg) {
             const ph = (S.wheel * 6) % 0.3;
             const bounce = S.speed > 50 ? Math.sin(S.t * 22) * 0.004 : 0;
             const tilt = S.tilt + (S.wobble ? Math.sin(S.t * 30) * S.wobble * 0.5 : 0);
-            rr3DrawCar(ctx, cx, cy, wpx, { color: RR3_CAR_COLORS[0], tilt: reduced ? tilt * 0.4 : tilt, bounce: bounce, phase: ph, brake: S.speed < 600 && S.started, glow: S.glow, night: (th.lit || 0) > 0.4, boost: S.started ? Math.min(1, S.speed / 5200) : 0 });
+            (cfg.readingCarPainter || rr3DrawCar)(ctx, cx, cy, wpx, { color: RR3_CAR_COLORS[0], tilt: reduced ? tilt * 0.4 : tilt, bounce: bounce, phase: ph, brake: S.speed < 600 && S.started, glow: S.glow, night: (th.lit || 0) > 0.4, boost: S.started ? Math.min(1, S.speed / 5200) : 0 });
         };
         for (let n = DRAW - 1; n >= 0; n--) {
             const f = info[n];

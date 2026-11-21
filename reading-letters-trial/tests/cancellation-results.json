@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "letterChangeStopsAudio": true,
+  "oldDelayedStartSuppressed": true,
+  "newLetterAutomaticPlays": 1,
+  "replayPresses": 3,
+  "replayCalls": 3,
+  "maxConcurrentObserved": 1,
+  "allPausedOnExit": true
+}

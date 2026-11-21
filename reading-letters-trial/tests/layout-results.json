@@ -59,7 +59,7 @@
   ],
   "performanceSample": {
     "frames": 120,
-    "averageMs": 16.558333333334122,
+    "averageMs": 16.57666666666667,
     "p95Ms": 16.700000000000728
   },
   "errors": [],

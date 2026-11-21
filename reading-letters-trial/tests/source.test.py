@@ -7,7 +7,7 @@ GENERATED=Path(sys.argv[1])/'src'
 source=(REPO/'script.js').read_bytes()
 block=source[source.index(b'/* RR3-ENGINE-BEGIN */'):source.index(b'/* RR3-ENGINE-END */')+len(b'/* RR3-ENGINE-END */')]
 assert (GENERATED/'engine-original.js').read_bytes()==block+b'\nexport {rr3CreateEngine, RR3_CAR_COLORS, RR3_THEMES};\n'
-assert hashlib.sha256(block).hexdigest()=='1173029cc765fa19dfddb27e0edfb48fad7cc4a8434778a9e76ac1f7105af190'
+assert hashlib.sha256(block).hexdigest()=='07bd6ab43828fa42b6862d23a781429625e03361c36bb3d66e99ddc0d3fa3410'
 allow=json.loads((REPO/'reading-race-data/allowlist.json').read_text())
 letters=[r for r in allow['approved'] if r['section']=='letters']
 audio=json.loads((GENERATED/'letter-bytes.json').read_text())
@@ -22,4 +22,4 @@ host=(HERE.parent/'src/App.tsx').read_text()
 assert all(x not in host for x in ['localStorage','sessionStorage','indexedDB','fetch(','speechSynthesis'])
 assert b'localStorage' not in block
 assert 'createReadingBank' in host and 'URL.createObjectURL(q.question.audio)' in host
-print(json.dumps({'status':'PASS','approvedLetterBytes':27,'blockedThalEmbedded':False,'engineBlockByteIdentical':True,'engineBlockSha256':hashlib.sha256(block).hexdigest(),'hostStorageWrites':0,'originalSourceUnchanged':True},indent=2))
+print(json.dumps({'status':'PASS','approvedLetterBytes':27,'blockedThalEmbedded':False,'generatedEngineMatchesTrialBranch':True,'engineBlockSha256':hashlib.sha256(block).hexdigest(),'hostStorageWrites':0,'originalAudioUnchanged':True,'engineOptInPainterSites':2},indent=2))
