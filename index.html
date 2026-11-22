@@ -3194,6 +3194,34 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
             </button>
 
 
+            <!-- =====================================
+                 🦘 قافز المنصات (الأعداد ١٥–٣٠)
+            ====================================== -->
+
+            <button
+                class="game-launch-card qafiz-game-card"
+                onclick="startQafizGame()"
+            >
+
+                <div class="game-card-icon">
+                    🦘
+                </div>
+
+                <h3>
+                    قافز المنصات
+                </h3>
+
+                <p>
+                    اقفز بين المنصات في الغابة والجبال والبحار، واجمع العدد ثم افتح البوابة
+                </p>
+
+                <span>
+                    هيا نلعب ▶
+                </span>
+
+            </button>
+
+
         </div>
 
 
@@ -3949,6 +3977,17 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
         <span class="knight-bar-title">🛡️ مغامرة الفارس – تعلّم العد</span>
     </div>
     <iframe id="knightFrame" class="knight-frame" title="مغامرة الفارس – تعلّم العد" allow="autoplay" data-src="knight-counting/index.html?level=11"></iframe>
+</section>
+
+<!-- =========================================================
+     🦘 قافز المنصات — لعبة مستقلة تُعرض داخل إطار (qafiz-platformer/)
+     لا تقرأ ولا تكتب بيانات الطلاب أو النجوم؛ الإطار لا يُحمَّل إلا عند فتح الشاشة ويُفرَّغ عند مغادرتها
+========================================================= -->
+<section id="qafizGame" class="screen" aria-label="قافز المنصات">
+    <div class="qafiz-bar">
+        <button type="button" class="qafiz-back" onclick="exitQafizGame()" aria-label="رجوع إلى الألعاب"><span aria-hidden="true" class="qafiz-back-arrow">➜</span><span class="qafiz-back-text">رجوع للألعاب</span></button>
+    </div>
+    <iframe id="qafizFrame" class="qafiz-frame" title="قافز المنصات" allow="autoplay" data-src="qafiz-platformer/index.html"></iframe>
 </section>
 
 <!-- =========================================================
@@ -5929,6 +5968,7 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
 <script src="nav.js"></script>
 <script src="heroes-app.js"></script>
 <script src="knight-app.js"></script>
+<script src="qafiz-app.js"></script>
 <script src="submarine.js"></script>
 <script src="pwa-install.js"></script>
 <script src="ui2.js"></script>
