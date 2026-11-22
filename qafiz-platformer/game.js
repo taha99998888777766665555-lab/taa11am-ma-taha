@@ -126,15 +126,17 @@ Error generating stack: `+e.message+`
  .qz-play .pj-audio-warn{bottom:64px}
  .qz-play .pj-ctl{min-height:48px}
 }
+/* sea: tools keep 44px touch targets everywhere */
+.sea-page.qz-play .sea-tools button{min-height:44px;min-width:56px}
+.sea-page.qz-play .sea-help{display:none!important}
 /* sea: the stage fills the height, walking controls overlay its bottom like the forest */
 @media(orientation:landscape){
- .sea-page.qz-play .sea-root{position:relative;max-width:none}
+ .sea-page.qz-play .sea-root{position:relative;max-width:none;height:100dvh;overflow:hidden}
  .sea-page.qz-play .sea-stage{height:calc(100dvh - 52px)!important;min-height:0!important;aspect-ratio:auto!important}
  .sea-page.qz-play.sea-edge-page .sea-stage{height:min(calc(100dvh - 52px),56.25vw)!important}
  .sea-page.qz-play .sea-stage:has(.sea-overlay[style*="display: flex"]){min-height:min(290px,calc(100dvh - 52px))!important}
  .sea-page.qz-play .sea-bar{margin:0 0 4px!important;padding:0 8px;height:48px;box-sizing:border-box;flex-wrap:nowrap;overflow:hidden}
  .sea-page.qz-play .sea-bar button{min-height:44px}
- .sea-page.qz-play .sea-tools button{min-height:44px;min-width:56px}
  .sea-page.qz-play .sea-root>.sea-controls{position:absolute;left:8px;right:8px;bottom:6px;margin:0;padding:0;z-index:6;pointer-events:none}
  .sea-page.qz-play .sea-root>.sea-controls .sea-movement{pointer-events:none}
  .sea-page.qz-play .sea-root>.sea-controls button{pointer-events:auto;min-height:48px;height:48px;opacity:.94}
