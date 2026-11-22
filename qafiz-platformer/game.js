@@ -130,7 +130,7 @@ Error generating stack: `+e.message+`
 .sea-page.qz-play .sea-tools button{min-height:44px;min-width:56px}
 .sea-page.qz-play .sea-help{display:none!important}
 .sea-page.qz-play .sea-bar .sea-target{flex:0 0 auto;white-space:nowrap}
-.sea-page.qz-play .sea-bar .sea-target button{white-space:nowrap}
+.sea-page.qz-play .sea-bar .sea-target button{white-space:nowrap;min-height:44px}
 .sea-page.qz-play .sea-bar .sea-tools{min-width:0;gap:6px}
 /* sea: the stage fills the height, walking controls overlay its bottom like the forest */
 @media(orientation:landscape){
