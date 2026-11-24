@@ -16611,3 +16611,14 @@ body.dark-mode #assetCredits .credits-item a, body.night #assetCredits .credits-
   #qafizGame .qafiz-back-arrow { font-size: 20px; line-height: 1; }
   #qafizGame .qafiz-frame { height: 100%; }
 }
+
+/* =========================================================
+   📖 «بيت الكلمات» — يحلّ محل واجهة قسم الكلمات (الشيفرة القديمة باقية مخفية)
+   ========================================================= */
+#words > :not(.bk-host) { display: none !important; }
+#words.screen.active { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 5000; display: flex; flex-direction: column; background: #fff6e5; animation: none; padding: 0; margin: 0; }
+#words .bk-host { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#words .bk-bar { flex: none; height: 56px; display: flex; align-items: center; padding: 0 10px; padding-top: env(safe-area-inset-top, 0px); box-sizing: content-box; background: #1b2a3a; direction: rtl; }
+#words .bk-back { min-width: 56px; height: 46px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 3px solid #fff; border-radius: 14px; background: #ffc93c; color: #1b2a3a; font-family: inherit; font-weight: 700; font-size: 18px; cursor: pointer; }
+#words .bk-back:focus-visible { outline: 4px solid #fff; outline-offset: 2px; }
+#words .bk-frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 0; background: #fff6e5; display: block; }

@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v71";
+const CACHE_VERSION = "taha-app-v72";
 const CACHE_NAME = CACHE_VERSION;
 
 /* لعبة «مغامرة الفارس – تعلّم العد»: كاش مستقل لا يُمسح عند تحديث التطبيق (13 MB لا تُنزَّل من جديد
@@ -15,6 +15,9 @@ const KNIGHT_PATH = "/knight-counting/";
    عند تغيير أي ملف في qafiz-platformer/ يُرفع رقم QAFIZ_CACHE ويُعاد توليد qafiz-assets.js. */
 const QAFIZ_CACHE = "taha-qafiz-game-v1";
 const QAFIZ_PATH = "/qafiz-platformer/";
+/* «بيت الكلمات»: كاش مستقل (صفحة واحدة ~١٠م.ب) يُملأ عند أول فتح متصلًا؛ يُرفع رقمه عند تغيير الصفحة */
+const BK_CACHE = "taha-bk-v1";
+const BK_PATH = "/beit-al-kalimat/";
 try { importScripts("qafiz-assets.js"); } catch (e) { /* بصمت */ }
 try { importScripts("knight-assets.js"); } catch (e) { /* بصمت: غيابها لا يعطّل التطبيق */ }
 
@@ -35,6 +38,7 @@ const APP_SHELL = [
     "./nav.js",
     "./heroes-app.js",
     "./qafiz-app.js",
+    "./bk-app.js",
     "./submarine.js",
     "./submarine.css",
     "./numhub.css",
@@ -414,7 +418,7 @@ self.addEventListener("activate", event => {
             .then(keys =>
                 Promise.all(
                     keys
-                        .filter(key => key !== CACHE_NAME && key !== KNIGHT_CACHE && key !== QAFIZ_CACHE)
+                        .filter(key => key !== CACHE_NAME && key !== KNIGHT_CACHE && key !== QAFIZ_CACHE && key !== BK_CACHE)
                         .map(key => caches.delete(key))
                 )
             )
@@ -574,6 +578,36 @@ self.addEventListener("message", event => {
     );
 });
 
+/* =========================================================
+   📖 «بيت الكلمات»: خدمة من كاشها المستقل أولًا (بأفضل جهد؛ فشلها لا يمس APP_SHELL)
+========================================================= */
+async function bkResponse(request) {
+    let cache = null;
+    try { cache = await caches.open(BK_CACHE); } catch (e) { /* بصمت */ }
+    const key = request.url.split("?")[0].split("#")[0];
+    if (cache) {
+        const hit = await cache.match(key).catch(() => null);
+        if (hit) return hit;
+    }
+    try {
+        const response = await fetch(request.method === "GET" ? new Request(request.url, { cache: "reload" }) : request);
+        if (cache && response && response.status === 200 && !request.headers.has("range")) {
+            cache.put(key, response.clone()).catch(() => {});
+        }
+        return response;
+    } catch (e) {
+        if (request.mode === "navigate" || request.destination === "iframe") {
+            return new Response(
+                '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+                '<body style="font-family:system-ui,sans-serif;direction:rtl;text-align:center;padding:12vh 6vw;background:#fff6e5;color:#123">' +
+                '<h2>يحتاج «بيت الكلمات» إلى اتصال بالإنترنت أول مرة</h2><p>افتح القسم مرة واحدة وأنت متصل، وبعدها يعمل دون إنترنت.</p></body>',
+                { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } }
+            );
+        }
+        return Response.error();
+    }
+}
+
 /* الصفحة تطلب فحص أصوات الدرس وإكمال الناقص (يعمل فقط عند وجود اتصال) */
 self.addEventListener("message", event => {
     if (!event.data || event.data.type !== "ENSURE_LESSON_AUDIO") return;
@@ -602,6 +636,12 @@ self.addEventListener("fetch", event => {
     /* قافز المنصات: مسار مستقل بكاشها */
     if (request.url.indexOf(QAFIZ_PATH) !== -1) {
         event.respondWith(qafizResponse(request));
+        return;
+    }
+
+    /* بيت الكلمات: مسار مستقل بكاشه */
+    if (request.url.indexOf(BK_PATH) !== -1) {
+        event.respondWith(bkResponse(request));
         return;
     }
 

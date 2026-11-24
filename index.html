@@ -1724,6 +1724,15 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
     class="screen"
 >
 
+<!-- «بيت الكلمات» (V8.1) يحلّ محل واجهة الكلمات القديمة: إطار مستقل بيانات طلابه في مفاتيح wsb_* ولا يمسّ بيانات التطبيق.
+     بقية محتوى هذه الشاشة (الدروس والمستويات القديمة) باقٍ في الشيفرة مخفيًا ولم يُحذف منه شيء. -->
+<div class="bk-host">
+    <div class="bk-bar">
+        <button type="button" class="bk-back" onclick="showScreen('home')" aria-label="الرئيسية"><span aria-hidden="true" class="bk-back-arrow">➜</span><span class="bk-back-text">الرئيسية</span></button>
+    </div>
+    <iframe id="bkFrame" class="bk-frame" title="بيت الكلمات" allow="autoplay" data-src="beit-al-kalimat/index.html"></iframe>
+</div>
+
 <!-- ============================================================
      🆕 شبكة اختيار مستويات الكلمات (نقطة الدخول)
 ============================================================ -->
@@ -5969,6 +5978,7 @@ body:not([data-ui="v2"]):not(.ta-inner) .hm-title.hp-sign {
 <script src="heroes-app.js"></script>
 <script src="knight-app.js"></script>
 <script src="qafiz-app.js"></script>
+<script src="bk-app.js"></script>
 <script src="submarine.js"></script>
 <script src="pwa-install.js"></script>
 <script src="ui2.js"></script>
