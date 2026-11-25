@@ -1,9 +1,13 @@
 {
- "track": "kasra",
  "status": "provisional-listening (pending teacher review)",
- "source": "teacher voice recordings (8) + approved generated voice (20); no new generation",
+ "tracks": [
+  "kasra",
+  "damma"
+ ],
+ "source": "teacher voice recordings + approved generated voice (kasra); teacher voice recordings (damma); no new generation",
  "items": [
   {
+   "track": "kasra",
    "step": 7,
    "index": 0,
    "text": "إِ",
@@ -14,6 +18,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 1,
    "text": "بِ",
@@ -24,6 +29,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 2,
    "text": "تِ",
@@ -34,6 +40,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 3,
    "text": "ثِ",
@@ -44,6 +51,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 4,
    "text": "جِ",
@@ -54,6 +62,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 5,
    "text": "حِ",
@@ -64,6 +73,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 6,
    "text": "خِ",
@@ -74,6 +84,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 7,
    "text": "دِ",
@@ -84,6 +95,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 8,
    "text": "ذِ",
@@ -94,6 +106,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 9,
    "text": "رِ",
@@ -104,6 +117,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 10,
    "text": "زِ",
@@ -114,6 +128,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 11,
    "text": "سِ",
@@ -124,6 +139,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 12,
    "text": "شِ",
@@ -134,6 +150,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 13,
    "text": "صِ",
@@ -144,6 +161,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 14,
    "text": "ضِ",
@@ -154,6 +172,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 15,
    "text": "طِ",
@@ -164,6 +183,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 16,
    "text": "ظِ",
@@ -174,6 +194,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 17,
    "text": "عِ",
@@ -184,6 +205,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 18,
    "text": "غِ",
@@ -194,6 +216,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 19,
    "text": "فِ",
@@ -204,6 +227,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 20,
    "text": "قِ",
@@ -214,6 +238,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 21,
    "text": "كِ",
@@ -224,6 +249,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 22,
    "text": "لِ",
@@ -234,6 +260,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 23,
    "text": "مِ",
@@ -244,6 +271,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 24,
    "text": "نِ",
@@ -254,6 +282,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 25,
    "text": "هِ",
@@ -264,6 +293,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 26,
    "text": "وِ",
@@ -274,6 +304,7 @@
    "status": "provisional-listening"
   },
   {
+   "track": "kasra",
    "step": 7,
    "index": 27,
    "text": "يِ",
@@ -281,6 +312,314 @@
    "file": "audio/kasra/L-254b8c9d.cc8d1ef2.mp3",
    "sha256": "cc8d1ef20afd6d65067dcc46ba5d3286e519ceb9ed706155fdc708dbac8da38e",
    "bytes": 11327,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 0,
+   "text": "أُ",
+   "bank_id": "L-1a73536b",
+   "file": "audio/damma/L-1a73536b.b7152602.mp3",
+   "sha256": "b7152602f316f599780e931a486bfd729dc68e296586643622cda44dd65d5923",
+   "bytes": 10493,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 1,
+   "text": "بُ",
+   "bank_id": "L-db369760",
+   "file": "audio/damma/L-db369760.df6730ae.mp3",
+   "sha256": "df6730ae6c5c85ae1bdd60006ba1270f9e0f526b317f38029c32b9ab745f0413",
+   "bytes": 13000,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 2,
+   "text": "تُ",
+   "bank_id": "L-7d3d3519",
+   "file": "audio/damma/L-7d3d3519.221a5321.mp3",
+   "sha256": "221a5321242243b6e8d5596b80000f4a823d3b8e95d84d0b523976ddfb0df416",
+   "bytes": 12164,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 3,
+   "text": "ثُ",
+   "bank_id": "L-a18d3e54",
+   "file": "audio/damma/L-a18d3e54.94cd58df.mp3",
+   "sha256": "94cd58df7bf039e159798216c8d762cf1036f3c6dc9e3f7494c94fb59fed1e11",
+   "bytes": 10493,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 4,
+   "text": "جُ",
+   "bank_id": "L-43abf3ef",
+   "file": "audio/damma/L-43abf3ef.abaf63ed.mp3",
+   "sha256": "abaf63ed0a08a4e83708a09dfbf887680a2866b2c7f6b0897c0cd70d758dffa4",
+   "bytes": 12164,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 5,
+   "text": "حُ",
+   "bank_id": "L-4e8278d7",
+   "file": "audio/damma/L-4e8278d7.dd690859.mp3",
+   "sha256": "dd690859a48e40ad384861fb738a069d73713b783b4498107667b3f6e105b734",
+   "bytes": 11328,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 6,
+   "text": "خُ",
+   "bank_id": "L-7997846d",
+   "file": "audio/damma/L-7997846d.56686816.mp3",
+   "sha256": "56686816cedc0cf11cb828547764a73153b3669f99bd2acb3bdb98b903deac68",
+   "bytes": 15508,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 7,
+   "text": "دُ",
+   "bank_id": "L-d9b353b6",
+   "file": "audio/damma/L-d9b353b6.971956d8.mp3",
+   "sha256": "971956d8f30cc2a6b9c9ebad8d422986d11cdc6a0b4616dc95189aeff50a92a4",
+   "bytes": 13000,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 8,
+   "text": "ذُ",
+   "bank_id": "L-cff38b65",
+   "file": "audio/damma/L-cff38b65.336e86c9.mp3",
+   "sha256": "336e86c9d887f9348b94a509545322aee4ccd0b456f484babf8996a75c9ce8c5",
+   "bytes": 14254,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 9,
+   "text": "رُ",
+   "bank_id": "L-e2a40595",
+   "file": "audio/damma/L-e2a40595.e8ba2b98.mp3",
+   "sha256": "e8ba2b98b27b3c9141ecd60872c9f3fbd112ad5dfc8ddfc165d1c222a2903c26",
+   "bytes": 12164,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 10,
+   "text": "زُ",
+   "bank_id": "L-98f3b177",
+   "file": "audio/damma/L-98f3b177.ca4037cb.mp3",
+   "sha256": "ca4037cb7e8fd8058b4590dd6106e660c8b0be6e1128bf334a4d479df6b1f0b3",
+   "bytes": 12164,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 11,
+   "text": "سُ",
+   "bank_id": "L-f48613ac",
+   "file": "audio/damma/L-f48613ac.55bfb82c.mp3",
+   "sha256": "55bfb82ca18b5b78d854a452f86cc0558ddbd8ab6351f47be451c21af8f79a56",
+   "bytes": 13836,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 12,
+   "text": "شُ",
+   "bank_id": "L-0b4e8308",
+   "file": "audio/damma/L-0b4e8308.886a6c9f.mp3",
+   "sha256": "886a6c9f8cf1f7e65052405dd217fa65dbd566752d2e9d27a9076259bd01df5b",
+   "bytes": 13418,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 13,
+   "text": "صُ",
+   "bank_id": "L-7811e9fc",
+   "file": "audio/damma/L-7811e9fc.ad495f88.mp3",
+   "sha256": "ad495f88d65520507a50d00954c266bec3a7396049c379572cce482de04ff140",
+   "bytes": 13836,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 14,
+   "text": "ضُ",
+   "bank_id": "L-2d126971",
+   "file": "audio/damma/L-2d126971.ffa06e78.mp3",
+   "sha256": "ffa06e78a11e49399f629b7a9df786c057b2833e8f9ce0ad9f4a27e7852cfd03",
+   "bytes": 14254,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 15,
+   "text": "طُ",
+   "bank_id": "L-026a18ec",
+   "file": "audio/damma/L-026a18ec.f39e3303.mp3",
+   "sha256": "f39e33031ea74d834bf43f19ec4183c64d7a58c79b7465bb014a6fdbf4381260",
+   "bytes": 10911,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 16,
+   "text": "ظُ",
+   "bank_id": "L-3030375c",
+   "file": "audio/damma/L-3030375c.c739d03c.mp3",
+   "sha256": "c739d03c0f258a6f9c74c9b8a6a2cad1ed4bb7e1d46c1d37f0c00dc3c8baa5b7",
+   "bytes": 14254,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 17,
+   "text": "عُ",
+   "bank_id": "L-9ff8c5a5",
+   "file": "audio/damma/L-9ff8c5a5.37b2543d.mp3",
+   "sha256": "37b2543d53736ecb76b6cc896eec68e205187d4f7dead3c5bec36a99d5e10b23",
+   "bytes": 15090,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 18,
+   "text": "غُ",
+   "bank_id": "L-60611110",
+   "file": "audio/damma/L-60611110.498b5347.mp3",
+   "sha256": "498b53479b62a90dbf72370daa3762433675745acf8f832dca4c45a078f3d5a8",
+   "bytes": 17598,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 19,
+   "text": "فُ",
+   "bank_id": "L-a0b18472",
+   "file": "audio/damma/L-a0b18472.e20c1f34.mp3",
+   "sha256": "e20c1f34879718bfc79b3686295043b9c1aa7452163a362e0b30f077a4208529",
+   "bytes": 10911,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 20,
+   "text": "قُ",
+   "bank_id": "L-7084c042",
+   "file": "audio/damma/L-7084c042.2152f4bd.mp3",
+   "sha256": "2152f4bdba5a17aaab5cbc82e75d6ee6489247e976593abd94d1778bf1a6dbdd",
+   "bytes": 12164,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 21,
+   "text": "كُ",
+   "bank_id": "L-6f94d563",
+   "file": "audio/damma/L-6f94d563.08b05d12.mp3",
+   "sha256": "08b05d12687b4e1357b35b4cb52326bfb8c116c98cf2d890dc86d38375792378",
+   "bytes": 13418,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 22,
+   "text": "لُ",
+   "bank_id": "L-4fa06a5a",
+   "file": "audio/damma/L-4fa06a5a.40c4b13b.mp3",
+   "sha256": "40c4b13bef6169fd78afaeaaec735e1b48de3bca324da4ffdfcc750ef2be1b9f",
+   "bytes": 16762,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 23,
+   "text": "مُ",
+   "bank_id": "L-a41bdb0b",
+   "file": "audio/damma/L-a41bdb0b.9f70731b.mp3",
+   "sha256": "9f70731b8bb911cf070d6c200a5c6480bb7a993ef921aaa6da4d97c560e54dd8",
+   "bytes": 19688,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 24,
+   "text": "نُ",
+   "bank_id": "L-35548ef6",
+   "file": "audio/damma/L-35548ef6.f4e40b89.mp3",
+   "sha256": "f4e40b89fc2cbaafce090f73d9df6b0bc3eb717df17e5c326112d716540cdd6e",
+   "bytes": 13000,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 25,
+   "text": "هُ",
+   "bank_id": "L-e5003bc2",
+   "file": "audio/damma/L-e5003bc2.525ba958.mp3",
+   "sha256": "525ba958fdf00fd8246977c20d14552f502c4d28c265220a56e9c929a950074c",
+   "bytes": 14254,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 26,
+   "text": "وُ",
+   "bank_id": "L-37fbe890",
+   "file": "audio/damma/L-37fbe890.eb898881.mp3",
+   "sha256": "eb898881a8d0b8fc68fd98b04d4095c93c0b5f8a79245c34501f22591a5c5bdb",
+   "bytes": 15508,
+   "status": "provisional-listening"
+  },
+  {
+   "track": "damma",
+   "step": 13,
+   "index": 27,
+   "text": "يُ",
+   "bank_id": "L-eff307e0",
+   "file": "audio/damma/L-eff307e0.a049cadf.mp3",
+   "sha256": "a049cadf124d4dc07641c33f250e1a00d094b51cbbe9b3e443cd03624f3088a2",
+   "bytes": 13836,
    "status": "provisional-listening"
   }
  ]

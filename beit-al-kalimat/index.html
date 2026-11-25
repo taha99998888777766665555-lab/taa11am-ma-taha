@@ -1336,10 +1336,12 @@ function partsOf(w,t){ return t==='sentence'? w.split(' ') : clusters(w).map(clu
 function itemWord(s,id){ return s.items[+id.split('-')[1]]; }
 /* خطاف الصوت: معرّف العنصر -> رابط تسجيل معتمد. null = لا تسجيل بعد. لا يعتمد عليه أي نشاط. */
 var AUDIO = (typeof window!=='undefined' && window.BK_AUDIO) ? window.BK_AUDIO : {};
-var _AUB = {};
-function _auPlay(u){ try{ var a=new Audio(u); var p=a.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
+var _AUB = {}, _auCur = null, _auTok = 0;
+function stopApproved(){ _auTok++; try{ if(_auCur){ _auCur.pause(); _auCur.currentTime=0; } }catch(e){} _auCur=null; }
+function _auPlay(u){ try{ var a=new Audio(u); _auCur=a; var p=a.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
 function _auLoad(u,then){ try{ if(_AUB[u]){ if(then) then(_AUB[u]); return; } fetch(u).then(function(r){ if(!r.ok) throw 0; return r.blob(); }).then(function(b){ _AUB[u]=URL.createObjectURL(b); if(then) then(_AUB[u]); }).catch(function(){ if(then) then(u); }); }catch(e){ if(then) then(u); } }
-function playApproved(id){ var u = AUDIO[id]; if(!u) return false; try{ if(_AUB[u]) _auPlay(_AUB[u]); else _auLoad(u,_auPlay); return true; }catch(e){ return false; } }
+/* تشغيل واحد فقط في كل مرة: أي نقرة جديدة توقف السابق (فلا تداخل)، وتُلغى أي نقرة ما زال ملفها يُحمَّل */
+function playApproved(id){ var u = AUDIO[id]; if(!u) return false; try{ stopApproved(); var t=_auTok; var go=function(src){ if(t!==_auTok) return; _auPlay(src); }; if(_AUB[u]) go(_AUB[u]); else _auLoad(u,go); return true; }catch(e){ return false; } }
 setTimeout(function(){ try{ var seen={}; Object.keys(AUDIO).forEach(function(k){ var u=AUDIO[k]; if(!seen[u]){ seen[u]=1; _auLoad(u); } }); }catch(e){} },1500);
 
 /* ---------- أدوات ---------- */
@@ -1477,7 +1479,7 @@ function render(){
 document.getElementById('btnBack').addEventListener('click',function(){
   if(R.view==='imgact') go('img'); else if(R.view==='img'||R.view==='builder'||R.view==='emap'||R.view==='profs'||(R.view==='act'&&R.act==='session')) go('map'); else if(R.view==='act') go('step',R.step); else if(R.view==='step') go('track',R.trk); else go('map');
 });
-var TIMERS=[]; function later(f,ms){ TIMERS.push(setTimeout(f,ms)); } function clearTimers(){ TIMERS.forEach(clearTimeout); TIMERS=[]; }
+var TIMERS=[]; function later(f,ms){ TIMERS.push(setTimeout(f,ms)); } function clearTimers(){ TIMERS.forEach(clearTimeout); TIMERS=[]; try{ stopApproved(); }catch(e){} }
 
 function head(h,p){ var d=el('div','head'); d.appendChild(el('h1',null,h)); if(p) d.appendChild(el('p',null,p)); return d; }
 
@@ -1704,6 +1706,7 @@ function qWrite(){
   var bc=el('button','btn btn-ghost','أمسح وأعيد'); bc.id='btnClear'; bc.addEventListener('click',function(){ if(ctx) ctx.clearRect(0,0,cv.width,cv.height); drawn=0; wrap.dataset.drawn=0; });
   var bh=el('button','btn btn-ghost','تلميح'); bh.id='btnHint'; bh.addEventListener('click',function(){ c.hint=true; g.style.opacity='.45'; });
   br.appendChild(bc); br.appendChild(bh);
+  if(AUDIO[c.id]){ var bs=el('button','btn btn-primary','استمع'); bs.id='btnListenW'; bs.setAttribute('aria-label','استمع إلى نطق الحرف'); bs.style.cssText='padding:.55rem 1.2rem;font-size:.95rem'; bs.addEventListener('click',function(){ playApproved(c.id); }); br.insertBefore(bs,br.firstChild); }
   var sc=el('button','selfcheck'); sc.id='selfCheck'; sc.innerHTML='<span class="box"></span><span>كتبتُ الحرف — يُسجَّل بعد تأكيد المعلم</span>'; body.appendChild(sc);
   var tc=el('div','btn-row teacher-only'); tc.id='tConfirm'; tc.hidden=true;
   sc.addEventListener('click',function(){
