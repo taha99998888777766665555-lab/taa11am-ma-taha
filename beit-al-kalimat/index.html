@@ -1336,6 +1336,8 @@ function partsOf(w,t){ return t==='sentence'? w.split(' ') : clusters(w).map(clu
 function itemWord(s,id){ return s.items[+id.split('-')[1]]; }
 /* خطاف الصوت: معرّف العنصر -> رابط تسجيل معتمد. null = لا تسجيل بعد. لا يعتمد عليه أي نشاط. */
 var AUDIO = (typeof window!=='undefined' && window.BK_AUDIO) ? window.BK_AUDIO : {};
+/* معرّفات الأنشطة الفعلية تبدأ بـ S (مثل S7-0) بينما الخريطة مفاتيحها «خطوة-فهرس»: نضيف الاسمين */
+(function(){ try{ Object.keys(AUDIO).forEach(function(k){ if(k.charAt(0)!=='S') AUDIO['S'+k]=AUDIO[k]; }); }catch(e){} })();
 var _AUB = {}, _auCur = null, _auTok = 0;
 function stopApproved(){ _auTok++; try{ if(_auCur){ _auCur.pause(); _auCur.currentTime=0; } }catch(e){} _auCur=null; }
 function _auPlay(u){ try{ var a=new Audio(u); _auCur=a; var p=a.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }

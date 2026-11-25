@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v75";
+const CACHE_VERSION = "taha-app-v76";
 const CACHE_NAME = CACHE_VERSION;
 
 /* لعبة «مغامرة الفارس – تعلّم العد»: كاش مستقل لا يُمسح عند تحديث التطبيق (13 MB لا تُنزَّل من جديد
@@ -16,7 +16,7 @@ const KNIGHT_PATH = "/knight-counting/";
 const QAFIZ_CACHE = "taha-qafiz-game-v1";
 const QAFIZ_PATH = "/qafiz-platformer/";
 /* «بيت الكلمات»: كاش مستقل (صفحة واحدة ~١٠م.ب) يُملأ عند أول فتح متصلًا؛ يُرفع رقمه عند تغيير الصفحة */
-const BK_CACHE = "taha-bk-v4";
+const BK_CACHE = "taha-bk-v5";
 const BK_PATH = "/beit-al-kalimat/";
 try { importScripts("qafiz-assets.js"); } catch (e) { /* بصمت */ }
 try { importScripts("knight-assets.js"); } catch (e) { /* بصمت: غيابها لا يعطّل التطبيق */ }
