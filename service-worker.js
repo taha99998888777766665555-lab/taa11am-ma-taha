@@ -3,7 +3,7 @@
    service-worker.js — دعم العمل دون إنترنت والتثبيت
 ========================================================= */
 
-const CACHE_VERSION = "taha-app-v72";
+const CACHE_VERSION = "taha-app-v73";
 const CACHE_NAME = CACHE_VERSION;
 
 /* لعبة «مغامرة الفارس – تعلّم العد»: كاش مستقل لا يُمسح عند تحديث التطبيق (13 MB لا تُنزَّل من جديد
@@ -16,7 +16,7 @@ const KNIGHT_PATH = "/knight-counting/";
 const QAFIZ_CACHE = "taha-qafiz-game-v1";
 const QAFIZ_PATH = "/qafiz-platformer/";
 /* «بيت الكلمات»: كاش مستقل (صفحة واحدة ~١٠م.ب) يُملأ عند أول فتح متصلًا؛ يُرفع رقمه عند تغيير الصفحة */
-const BK_CACHE = "taha-bk-v1";
+const BK_CACHE = "taha-bk-v2";
 const BK_PATH = "/beit-al-kalimat/";
 try { importScripts("qafiz-assets.js"); } catch (e) { /* بصمت */ }
 try { importScripts("knight-assets.js"); } catch (e) { /* بصمت: غيابها لا يعطّل التطبيق */ }
@@ -585,6 +585,15 @@ async function bkResponse(request) {
     let cache = null;
     try { cache = await caches.open(BK_CACHE); } catch (e) { /* بصمت */ }
     const key = request.url.split("?")[0].split("#")[0];
+    /* خريطة الأصوات: الشبكة أولًا (فيصل أي استبدال لتسجيل فورًا دون مسّ بقية الأصوات)، والكاش عند انقطاع الشبكة */
+    if (cache && key.endsWith("/audio/audio-map.js")) {
+        try {
+            const fresh = await fetch(new Request(request.url, { cache: "reload" }));
+            if (fresh && fresh.status === 200) { cache.put(key, fresh.clone()).catch(() => {}); return fresh; }
+        } catch (e) { /* بلا شبكة: من الكاش */ }
+        const old = await cache.match(key).catch(() => null);
+        if (old) return old;
+    }
     if (cache) {
         const hit = await cache.match(key).catch(() => null);
         if (hit) return hit;

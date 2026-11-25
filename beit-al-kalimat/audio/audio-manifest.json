@@ -1,0 +1,287 @@
+{
+ "track": "kasra",
+ "status": "provisional-listening (pending teacher review)",
+ "source": "teacher voice recordings (8) + approved generated voice (20); no new generation",
+ "items": [
+  {
+   "step": 7,
+   "index": 0,
+   "text": "إِ",
+   "bank_id": "L-66b95b11",
+   "file": "audio/kasra/L-66b95b11.1e805672.mp3",
+   "sha256": "1e805672873884e44b269404993f91e76693b33ac049d1fca881ad84fd46db10",
+   "bytes": 15926,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 1,
+   "text": "بِ",
+   "bank_id": "L-3d7326a9",
+   "file": "audio/kasra/L-3d7326a9.5287f66c.mp3",
+   "sha256": "5287f66c8e5989e263eb3c4eacbb4409a95206176d870e152d4c5bb57d6ca145",
+   "bytes": 13835,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 2,
+   "text": "تِ",
+   "bank_id": "L-ecbc66cf",
+   "file": "audio/kasra/L-ecbc66cf.83a0c28f.mp3",
+   "sha256": "83a0c28f4d9d5c03aad8848ca324899f8632ab97024947c712cdab1cc06ebb09",
+   "bytes": 12581,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 3,
+   "text": "ثِ",
+   "bank_id": "L-1d95774d",
+   "file": "audio/kasra/L-1d95774d.a48e35ee.mp3",
+   "sha256": "a48e35eec3988de8aa71ec2d7697f974bfe15a2021ba1a9757a10aa086513f88",
+   "bytes": 10074,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 4,
+   "text": "جِ",
+   "bank_id": "L-2c87e1b8",
+   "file": "audio/kasra/L-2c87e1b8.5aff1c37.mp3",
+   "sha256": "5aff1c37e5f5136d93a89ad2f960510371fecc0a0b505deed639045b51f64416",
+   "bytes": 11327,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 5,
+   "text": "حِ",
+   "bank_id": "L-3aa0f2c8",
+   "file": "audio/kasra/L-3aa0f2c8.8c160cc3.mp3",
+   "sha256": "8c160cc372cd3b854345477c3923e7695ceeb3e17dbd42e0011c2e14bdda4dc6",
+   "bytes": 12581,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 6,
+   "text": "خِ",
+   "bank_id": "L-b1c4627e",
+   "file": "audio/kasra/L-b1c4627e.b8c7b00c.mp3",
+   "sha256": "b8c7b00cc326cd8e5fdb42c4cc823e666fd71f89be60736c24f4683d5629187a",
+   "bytes": 16344,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 7,
+   "text": "دِ",
+   "bank_id": "L-9f6c1f31",
+   "file": "audio/kasra/L-9f6c1f31.da50796e.mp3",
+   "sha256": "da50796ea8210eda9fb32cfedb558fc5d9815771dd90634ff53ca969ecf5f17a",
+   "bytes": 13835,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 8,
+   "text": "ذِ",
+   "bank_id": "L-06d0f2d2",
+   "file": "audio/kasra/L-06d0f2d2.b7be6ba2.mp3",
+   "sha256": "b7be6ba20ff175742e588f5ce4876bec387205154491ad46adaf099141c7ed29",
+   "bytes": 12581,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 9,
+   "text": "رِ",
+   "bank_id": "L-490c376a",
+   "file": "audio/kasra/L-490c376a.f73acf44.mp3",
+   "sha256": "f73acf44de8b0f962f17559cd9d610987724630c12892f0d15dc88b81062cfd5",
+   "bytes": 18016,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 10,
+   "text": "زِ",
+   "bank_id": "L-59c2d7fe",
+   "file": "audio/kasra/L-59c2d7fe.54c56ca9.mp3",
+   "sha256": "54c56ca9453d82a396e48fd4e590791d54aa5f0dff2d48b95a31e09cf47c62dc",
+   "bytes": 13835,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 11,
+   "text": "سِ",
+   "bank_id": "L-48428bcc",
+   "file": "audio/kasra/L-48428bcc.ee0ba410.mp3",
+   "sha256": "ee0ba410e98164204c6c0d460d33aaa09480124708edb1e6fb9aff11a718e078",
+   "bytes": 18434,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 12,
+   "text": "شِ",
+   "bank_id": "L-ea70aacb",
+   "file": "audio/kasra/L-ea70aacb.809f4f52.mp3",
+   "sha256": "809f4f52d177987f1563d66b803679b8c9a42c42d57a5f606f71a6aa078ea939",
+   "bytes": 12581,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 13,
+   "text": "صِ",
+   "bank_id": "L-b7321073",
+   "file": "audio/kasra/L-b7321073.7b2ead26.mp3",
+   "sha256": "7b2ead265e58d81bbef3283d4aec005cd232b24dbf6d998cc5bc01b0546fd01a",
+   "bytes": 11327,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 14,
+   "text": "ضِ",
+   "bank_id": "L-dde84cf8",
+   "file": "audio/kasra/L-dde84cf8.85b73c8d.mp3",
+   "sha256": "85b73c8d41639b71fb6ef37b3ba534ad3c4144a7d237213f79b751078ea57153",
+   "bytes": 19270,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 15,
+   "text": "طِ",
+   "bank_id": "L-55a140b9",
+   "file": "audio/kasra/L-55a140b9.958f8d63.mp3",
+   "sha256": "958f8d630c98dc459ab83617a2a92c88042743b156ceb3cb24aaf20c48f42a6b",
+   "bytes": 12581,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 16,
+   "text": "ظِ",
+   "bank_id": "L-ae1f0fd0",
+   "file": "audio/kasra/L-ae1f0fd0.8c78bc2a.mp3",
+   "sha256": "8c78bc2a34b1e7ae92f100cc0a9816bc63441c7156e3da3f7e45c363636eb3ad",
+   "bytes": 11327,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 17,
+   "text": "عِ",
+   "bank_id": "L-4eb20327",
+   "file": "audio/kasra/L-4eb20327.fbbf6cc5.mp3",
+   "sha256": "fbbf6cc5d4b031d2d8e5b48b50240c17ce4f72670546bde01f609b13f55b8633",
+   "bytes": 13835,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 18,
+   "text": "غِ",
+   "bank_id": "L-d8a82d80",
+   "file": "audio/kasra/L-d8a82d80.8ed29cd3.mp3",
+   "sha256": "8ed29cd330e27a5c006d58433071f51d4469a1eaaab5687ec8cb6ae1ccb91535",
+   "bytes": 13835,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 19,
+   "text": "فِ",
+   "bank_id": "L-c7f392de",
+   "file": "audio/kasra/L-c7f392de.b5bf5786.mp3",
+   "sha256": "b5bf57861ef0a3b4fd4613721be713ab066086d5eb216ea18333d0061c1db491",
+   "bytes": 13835,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 20,
+   "text": "قِ",
+   "bank_id": "L-a38e1b27",
+   "file": "audio/kasra/L-a38e1b27.a72a6b70.mp3",
+   "sha256": "a72a6b70df1a732da9612768b2fd79927ade6509d8298b5bf1deec7bd85eef68",
+   "bytes": 12581,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 21,
+   "text": "كِ",
+   "bank_id": "L-d51eedf0",
+   "file": "audio/kasra/L-d51eedf0.f1d097c0.mp3",
+   "sha256": "f1d097c0156318ddde4c502e65cd718032f68f73dacc0d4303fce777137825d7",
+   "bytes": 18434,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 22,
+   "text": "لِ",
+   "bank_id": "L-dbb8df58",
+   "file": "audio/kasra/L-dbb8df58.cebabbe3.mp3",
+   "sha256": "cebabbe39bffe24fb8751f2e49143a38496971450640e0ee9fd2df28f6c780f3",
+   "bytes": 13835,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 23,
+   "text": "مِ",
+   "bank_id": "L-e43a63dd",
+   "file": "audio/kasra/L-e43a63dd.9954426b.mp3",
+   "sha256": "9954426bd27b021a051b559d555531bbbf7835d3d4ddbe9a09dbf7703056c041",
+   "bytes": 13836,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 24,
+   "text": "نِ",
+   "bank_id": "L-5405ba18",
+   "file": "audio/kasra/L-5405ba18.0a09cd3c.mp3",
+   "sha256": "0a09cd3ce6a565c888b67555494712c8fe10c59a134e598992fbb75806680df5",
+   "bytes": 11327,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 25,
+   "text": "هِ",
+   "bank_id": "L-36869348",
+   "file": "audio/kasra/L-36869348.c1ea4616.mp3",
+   "sha256": "c1ea4616ca83adcb809addd425f3061850dd759b7caa748eb9054ca87cec7cd8",
+   "bytes": 11327,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 26,
+   "text": "وِ",
+   "bank_id": "L-ba8b0a81",
+   "file": "audio/kasra/L-ba8b0a81.963fa778.mp3",
+   "sha256": "963fa7786830b77dacf2dd775d25858c29456caa98017a6d2dcc4635e8dc424c",
+   "bytes": 9657,
+   "status": "provisional-listening"
+  },
+  {
+   "step": 7,
+   "index": 27,
+   "text": "يِ",
+   "bank_id": "L-254b8c9d",
+   "file": "audio/kasra/L-254b8c9d.cc8d1ef2.mp3",
+   "sha256": "cc8d1ef20afd6d65067dcc46ba5d3286e519ceb9ed706155fdc708dbac8da38e",
+   "bytes": 11327,
+   "status": "provisional-listening"
+  }
+ ]
+}
