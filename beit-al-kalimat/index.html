@@ -1346,6 +1346,10 @@ function _auLoad(u,then){ try{ if(_AUB[u]){ if(then) then(_AUB[u]); return; } fe
 function playApproved(id){ var u = AUDIO[id]; if(!u) return false; try{ stopApproved(); var t=_auTok; var go=function(src){ if(t!==_auTok) return; _auPlay(src); }; if(_AUB[u]) go(_AUB[u]); else _auLoad(u,go); return true; }catch(e){ return false; } }
 setTimeout(function(){ try{ var seen={}; Object.keys(AUDIO).forEach(function(k){ var u=AUDIO[k]; if(!seen[u]){ seen[u]=1; _auLoad(u); } }); }catch(e){} },1500);
 
+/* زر «استمع» موحّد (سماعة + نص) لكل الأنشطة؛ لا يظهر إلا إن وُجد تسجيل معتمد للعنصر */
+var LISTEN_SVG='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2" y="14" width="5" height="7" rx="2"/><rect x="17" y="14" width="5" height="7" rx="2"/></svg>';
+function mkListen(id,bid){ if(!AUDIO[id]) return null; var b=el('button','btn btn-primary'); b.id=bid; b.setAttribute('aria-label','استمع إلى نطق الحرف'); b.style.cssText='padding:.55rem 1.2rem;font-size:.95rem;display:inline-flex;align-items:center;gap:.4rem'; b.innerHTML=LISTEN_SVG+'<span>استمع</span>'; b.addEventListener('click',function(){ playApproved(id); }); return b; }
+
 /* ---------- أدوات ---------- */
 var U = 16;
 function px(n){ return Math.round(n*U); }
@@ -1708,7 +1712,7 @@ function qWrite(){
   var bc=el('button','btn btn-ghost','أمسح وأعيد'); bc.id='btnClear'; bc.addEventListener('click',function(){ if(ctx) ctx.clearRect(0,0,cv.width,cv.height); drawn=0; wrap.dataset.drawn=0; });
   var bh=el('button','btn btn-ghost','تلميح'); bh.id='btnHint'; bh.addEventListener('click',function(){ c.hint=true; g.style.opacity='.45'; });
   br.appendChild(bc); br.appendChild(bh);
-  if(AUDIO[c.id]){ var bs=el('button','btn btn-primary','استمع'); bs.id='btnListenW'; bs.setAttribute('aria-label','استمع إلى نطق الحرف'); bs.style.cssText='padding:.55rem 1.2rem;font-size:.95rem'; bs.addEventListener('click',function(){ playApproved(c.id); }); br.insertBefore(bs,br.firstChild); }
+  var bs=mkListen(c.id,'btnListenW'); if(bs) br.insertBefore(bs,br.firstChild);
   var sc=el('button','selfcheck'); sc.id='selfCheck'; sc.innerHTML='<span class="box"></span><span>كتبتُ الحرف — يُسجَّل بعد تأكيد المعلم</span>'; body.appendChild(sc);
   var tc=el('div','btn-row teacher-only'); tc.id='tConfirm'; tc.hidden=true;
   sc.addEventListener('click',function(){
@@ -1736,6 +1740,8 @@ function qRead(){
   var bl=el('button','btn btn-primary','شاهد الترتيب'); bl.id='btnListen';
   var ba=el('button','btn btn-coral','أُحَلِّلُ'); ba.id='btnAnalyze'; var bh=el('button','btn btn-ghost','تلميح'); bh.id='btnHint';
   br.appendChild(bl); if(multi) br.appendChild(ba); br.appendChild(bh);
+  var bsR=mkListen(c.id,'btnListenR'); if(bsR) br.insertBefore(bsR,br.firstChild);
+  if(AUDIO[c.id]){ rb.style.cursor='pointer'; rb.addEventListener('click',function(){ playApproved(c.id); }); }
   function glow(i){ setStackHl(rw,i); var ti=(sent&&i>=0)?wordOf[i]:i; [].forEach.call(row.children,function(t,k){t.classList.toggle('glow',k===ti);}); }
   function showAna(){
     row.innerHTML=''; row.hidden=false;
@@ -1833,6 +1839,8 @@ function qChoose(){
   body.appendChild(head('اختر المطابق',round==='near'?'انتبه: البدائل متشابهة':'انظر جيدًا ثم اختر'));
   var card=el('div','card'); body.appendChild(card);
   var sentC=(itemType(A.s,c.id)==='sentence'); var tg=makeWordStack(w,{size:wsize(sentC?4:(clusters(w).length>1?5:7))}); card.appendChild(ruledBox(tg)); card.lastChild.style.maxWidth=sentC?'100%':px(20)+'px';
+  /* «استمع» للحرف المعروض: في «أتعرّف وأختار» و«أراجع» فقط؛ في «أختبر نفسي» لا صوت قبل الإجابة */
+  if(A.act==='choose'||A.act==='review'){ var bsC=mkListen(c.id,'btnListenC'); if(bsC){ var lr=el('div','btn-row'); lr.appendChild(bsC); card.appendChild(lr); } }
   var fb=el('div','feedback'); fb.id='fb'; card.appendChild(fb);
   var opts=el('div','opts'+(sentC?' one':'')); opts.id='opts'; body.appendChild(opts);
   var all=shuffle([w].concat(distractors(A.s,c.id,round)));
@@ -1840,7 +1848,7 @@ function qChoose(){
     var b=el('button','opt'); b.dataset.ok=(x===w)?'1':'0'; b.dataset.w=x; b.appendChild(makeWordStack(x,{size:wsize(sentC?2.6:(clusters(x).length>1?3.3:4.2))}));
     b.addEventListener('click',function(){
       if(c.done||b.classList.contains('bad')) return;
-      if(x===w){ b.classList.add('ok'); fb.textContent='أحسنت!'; fb.className='feedback okk'; finishQ(); nx.disabled=false; if(!reduced()) tg.classList.add('bounce'); }
+      if(x===w){ b.classList.add('ok'); fb.textContent='أحسنت!'; fb.className='feedback okk'; playApproved(c.id); finishQ(); nx.disabled=false; if(!reduced()) tg.classList.add('bounce'); }
       else { if(c.fa==null) c.fa='no'; c.wrong++;logErr(c,w,x,'ch'); b.classList.add('wrong','bad'); fb.textContent='ليس هذا — جرّب مرة أخرى'; fb.className='feedback err'; }
     });
     opts.appendChild(b);
