@@ -10,6 +10,10 @@ pre{background:#111;color:#9f9;padding:.6rem;border-radius:8px;white-space:pre-w
 <div class="row"><button id="b1" class="o">نغمة WebAudio ٤٤٠ هرتز</button><button id="b2" class="o">نغمة عبر عنصر audio</button><button id="b3" class="g">نطق عربي (speechSynthesis)</button><div class="meter"><i id="m0"></i></div><small>إن لم تسمع أي شيء هنا فالمشكلة في الجهاز أو المتصفح أو مخرج الصوت، لا في التسجيلات.</small></div>
 <h2>٢) التسجيلات الثلاثة</h2><div id="rows"></div>
 <h2>٣) عناصر تشغيل أصلية للمتصفح (فيها شريط الصوت)</h2><div id="natives"></div>
+<h2>٣-ب) فحص نسخة التطبيق المخزّنة عندك (الكاش وService Worker)</h2>
+<div class="row"><button id="c1" class="o">افحص نسخة التطبيق</button><small> يبيّن أي نسخة من «بيت الكلمات» يقدّمها المتصفح لك فعليًا وهل خريطة الأصوات سليمة.</small></div>
+<h2>٣-ج) التطبيق نفسه داخل هذه الصفحة مع تسجيل كل ما يحدث</h2>
+<div class="row"><button id="c2" class="o">حمّل «بيت الكلمات» هنا</button><button id="c3" class="g">شغّل S7-0 عبر محرك التطبيق</button><small> بعد التحميل تنقّل بنقرات عادية (مسار الكسرة ← أقرأ الحروف ← أقرأ بنفسي ← شاهد الترتيب) وسيُسجَّل كل تشغيل في السجل بالأسفل.</small><div id="host"></div></div>
 <h2>٤) الحالة والتقرير</h2><div id="env"></div><p><button id="copy">نسخ التقرير</button> <button class="g" id="clear">مسح السجل</button></p><pre id="log"></pre>
 <script>
 var ITEMS=[{k:'fatha',n:'الفتحة',t:'أَ',u:'beit-al-kalimat/audio/fatha/L-efe4842c.21b027ce.mp3'},{k:'kasra',n:'الكسرة',t:'إِ',u:'beit-al-kalimat/audio/kasra/L-66b95b11.1e805672.mp3'},{k:'damma',n:'الضمة',t:'أُ',u:'beit-al-kalimat/audio/damma/L-1a73536b.b7152602.mp3'}];
@@ -30,5 +34,20 @@ ITEMS.forEach(function(it){var r=document.createElement('div');r.className='row'
 var n=document.createElement('div');n.className='row';n.innerHTML=it.n+' '+it.t+'<audio controls preload="auto" src="'+it.u+'"></audio>';nat.appendChild(n);evs(n.querySelector('audio'),'[native '+it.n+']');});
 document.getElementById('copy').onclick=function(){var t=document.getElementById('env').textContent+'\n'+LOG.join('\n');function sel(){var r=document.createRange();r.selectNodeContents(document.getElementById('log'));var s=getSelection();s.removeAllRanges();s.addRange(r);L('log selected - copy manually');}if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){L('copied')},sel);else sel();};
 document.getElementById('clear').onclick=function(){LOG=[];document.getElementById('log').textContent='';};
+
+document.getElementById('c1').onclick=function(){L('--- app version check');
+ var sc=navigator.serviceWorker;L('SW controller: '+(sc&&sc.controller?sc.controller.scriptURL:'none'));
+ (sc&&sc.getRegistration?sc.getRegistration():Promise.resolve(null)).then(function(r){L('SW registration: '+(r?('active='+(r.active&&r.active.state)+' waiting='+(r.waiting&&r.waiting.state)+' installing='+(r.installing&&r.installing.state)):'none'));});
+ (window.caches?caches.keys():Promise.resolve([])).then(function(k){L('caches: '+k.join(', '));});
+ fetch('service-worker.js',{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){L('server service-worker.js: '+((t.match(/CACHE_VERSION\s*=\s*"([^"]+)"/)||[])[1])+' / '+((t.match(/BK_CACHE\s*=\s*"([^"]+)"/)||[])[1]));});
+ fetch('beit-al-kalimat/index.html').then(function(r){return r.text()}).then(function(t){L('app index.html (as served to you): '+t.length+' chars, S-prefix fix present='+(t.indexOf("charAt(0)!=='S'")>-1)+', audio-map script tag='+(t.indexOf('audio/audio-map.js')>-1));});
+ fetch('beit-al-kalimat/audio/audio-map.js').then(function(r){return r.text()}).then(function(t){var n=(t.match(/"\d+-\d+"|'\d+-\d+'|\b\d+-\d+\b/g)||[]).length;L('audio-map.js: '+t.length+' chars, ~'+n+' keys');});
+};
+var HF=null;
+function hookWin(w,tag){try{var P=w.HTMLMediaElement.prototype;if(P.__dg)return;P.__dg=1;var O=P.play;P.play=function(){var a=this;L('['+tag+'] play() called src='+String(a.currentSrc||a.src).slice(0,40)+' muted='+a.muted+' vol='+a.volume);['playing','pause','ended','error'].forEach(function(e){a.addEventListener(e,function(){L('['+tag+'] '+e+' ct='+a.currentTime.toFixed(2)+' dur='+(a.duration||0).toFixed(2)+(a.error?' ERR code='+a.error.code:''));});});var r=O.apply(this,arguments);if(r&&r.then)r.then(function(){L('['+tag+'] play() resolved')},function(e){L('['+tag+'] play() REJECTED '+e.name+': '+e.message)});return r;};w.addEventListener('error',function(e){L('['+tag+'] JS error: '+e.message)});w.addEventListener('unhandledrejection',function(e){L('['+tag+'] unhandled rejection: '+e.reason)});}catch(e){L('hook fail '+e)}}
+document.getElementById('c2').onclick=function(){var h=document.getElementById('host');h.innerHTML='';var f=document.createElement('iframe');f.setAttribute('allow','autoplay');f.style.cssText='width:100%;height:520px;border:2px solid #1b7a6b;border-radius:10px;background:#fff';f.src='beit-al-kalimat/index.html';HF=f;
+ f.addEventListener('load',function(){var w=f.contentWindow;hookWin(w,'app');var n=w.BK_AUDIO?Object.keys(w.BK_AUDIO).length:'NO BK_AUDIO';L('app iframe loaded: BK_AUDIO keys='+n+' AUDIO[S7-0]='+(w.AUDIO&&w.AUDIO['S7-0']?'yes':'NO')+' playApproved='+typeof w.playApproved);var d=w.document;d.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('button');if(t)L('[app] click on button id='+(t.id||'-')+' text='+t.textContent.trim().slice(0,20));},true);});
+ h.appendChild(f);L('loading app iframe...');};
+document.getElementById('c3').onclick=function(){if(!HF){L('حمّل التطبيق أولًا');return;}try{L('[engine] playApproved(S7-0) -> '+HF.contentWindow.playApproved('S7-0'));}catch(e){L('[engine] ERR '+e)}};
 window.addEventListener('error',function(e){L('JS error: '+e.message)});env();L('ready');
 </script></body></html>
